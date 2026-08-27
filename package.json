@@ -1,0 +1,8 @@
+{
+  "name": "vijaya-durga-billing",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix website install && npm --prefix website run build"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "buildCommand": "npm --prefix website install && npm --prefix website run build",
+  "outputDirectory": "website/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
