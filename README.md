@@ -1,12 +1,12 @@
-# VIJAYA DURGA AGENCIES — Seafood Invoicing & Billing System
+# Seafood Invoicing & Trade Billing System
 
-A modern, full-stack Seafood Trade Billing and Invoicing Web Application with Progressive Web App (PWA) capabilities, GST compliance, WhatsApp sharing, customer ledger tracking, and traditional receipt PDF generation.
+A modern, full-stack Trade Billing and Invoicing Web Application with Progressive Web App (PWA) capabilities, GST compliance, WhatsApp sharing, customer ledger tracking, and traditional receipt PDF generation.
 
 ---
 
 ## 🌟 Key Features
 
-- **🌸 Traditional Indian Tax Invoice**: High-resolution monochrome divine emblems (Lord Vinayaka, Maa Durga, Ram Darbar), Karur Vysya Bank details, GSTIN (`37KATPS1500Q1ZR`), and clean receipt typography.
+- **🌸 Traditional Indian Tax Invoice**: High-resolution monochrome divine emblems, bank details, customizable GSTIN, and clean receipt typography.
 - **📝 Interactive Table Entry Pad**: Create bills with live quantity × rate calculations, auto-summed totals, tax breakdowns, and customer auto-complete.
 - **📱 WhatsApp Sharing**: Native PDF file attachment sharing on mobile & WhatsApp Web direct message sharing with invoice links.
 - **📒 Customer Ledger & Outstanding Tracking**: Real-time receivables dashboard with 1-click WhatsApp payment reminders including bank details.
@@ -41,14 +41,13 @@ npm run dev
 ## 🌐 Cloud Deployment Guide
 
 ### Deploying Frontend on Vercel
-1. Push this repository to GitHub.
-2. Go to [Vercel Dashboard](https://vercel.com/new).
-3. Import your GitHub repository.
-4. **Root Directory**: Select `website`.
-5. **Framework Preset**: `Vite`.
-6. **Environment Variables**:
-   - `VITE_API_URL`: `https://your-backend-url.onrender.com/api` (URL of your deployed backend).
-7. Click **Deploy**!
+1. Go to [Vercel Dashboard](https://vercel.com/new).
+2. Import your GitHub repository.
+3. **Root Directory**: Select `website`.
+4. **Framework Preset**: `Vite`.
+5. **Environment Variables**:
+   - `VITE_API_URL`: `https://<YOUR_BACKEND_URL>/api` (URL of your deployed backend).
+6. Click **Deploy**!
 
 ### Deploying Backend (e.g. Render / Railway)
 1. In Render / Railway, create a new **Web Service**.
