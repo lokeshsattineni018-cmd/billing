@@ -1,12 +1,30 @@
 const mongoose = require('mongoose');
 
+let cachedConnection = null;
+
 const connectDB = async () => {
+  if (cachedConnection && mongoose.connection.readyState === 1) {
+    return cachedConnection;
+  }
+
+  if (mongoose.connection.readyState >= 1) {
+    return mongoose.connection;
+  }
+
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    throw new Error('MONGODB_URI is not set in environment variables');
+  }
+
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
-    console.log(`MongoDB connected: ${conn.connection.host}`);
+    cachedConnection = await mongoose.connect(uri, {
+      bufferCommands: false,
+    });
+    console.log(`MongoDB connected: ${cachedConnection.connection.host}`);
+    return cachedConnection;
   } catch (error) {
     console.error(`MongoDB connection error: ${error.message}`);
-    process.exit(1);
+    throw error;
   }
 };
 
