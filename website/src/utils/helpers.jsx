@@ -1,0 +1,138 @@
+import { useState, useEffect, useCallback } from 'react';
+
+export function useToast() {
+  const [toast, setToast] = useState(null);
+
+  const showToast = useCallback((message, type = 'success') => {
+    setToast({ message, type });
+  }, []);
+
+  const hideToast = useCallback(() => {
+    setToast(null);
+  }, []);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  return { toast, showToast, hideToast };
+}
+
+export function Toast({ toast, onClose }) {
+  if (!toast) return null;
+
+  return (
+    <div className={`toast ${toast.type}`} onClick={onClose}>
+      <span className="toast-message">{toast.message}</span>
+    </div>
+  );
+}
+
+export function formatCurrency(amount) {
+  return `₹ ${Number(amount || 0).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+export function formatDate(date) {
+  return new Date(date).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+export function formatDateTime(date) {
+  return new Date(date).toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+/**
+ * Export Invoices to CSV formatted for CA / GST Filing
+ */
+export function exportBillsToCSV(bills, filename = 'GST_Invoices_Report.csv') {
+  if (!bills || bills.length === 0) return false;
+
+  const headers = [
+    'Invoice No',
+    'Invoice Date',
+    'Customer Name (M/s)',
+    'Customer GSTIN',
+    'Customer Phone',
+    'HSN Code',
+    'Description',
+    'Quantity (KG)',
+    'Unit Rate (₹)',
+    'Taxable Value (₹)',
+    'CGST Rate',
+    'CGST Amount (₹)',
+    'SGST Rate',
+    'SGST Amount (₹)',
+    'IGST Amount (₹)',
+    'Total Amount (₹)',
+    'Payment Status',
+  ];
+
+  const escapeField = (text) => {
+    if (text === null || text === undefined) return '""';
+    const str = String(text).replace(/"/g, '""');
+    return `"${str}"`;
+  };
+
+  const rows = [];
+  bills.forEach((b) => {
+    const d = new Date(b.date);
+    const dateFormatted = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+
+    const items = b.items && b.items.length > 0 ? b.items : [{
+      particulars: b.particulars || 'Fresh Seafood / Prawns Supply',
+      hsn: b.hsn || '0306',
+      quantity: b.quantity,
+      rate: b.rate,
+      amount: b.total,
+    }];
+
+    items.forEach((it, idx) => {
+      rows.push([
+        escapeField(b.billNo),
+        escapeField(dateFormatted),
+        escapeField(b.companyName),
+        escapeField(b.companyGstin || '37KATPS1500Q1ZR'),
+        escapeField(b.customerPhone || ''),
+        escapeField(it.hsn || '0306'),
+        escapeField(it.particulars || 'Fresh Seafood / Prawns Supply'),
+        escapeField(it.quantity || 0),
+        escapeField(it.rate || 0),
+        escapeField(idx === 0 ? (b.taxableValue || b.total) : it.amount),
+        escapeField(idx === 0 ? (b.cgstRate || '') : ''),
+        escapeField(idx === 0 ? (b.cgstAmount || 0) : 0),
+        escapeField(idx === 0 ? (b.sgstRate || '') : ''),
+        escapeField(idx === 0 ? (b.sgstAmount || 0) : 0),
+        escapeField(idx === 0 ? (b.igstAmount || 0) : 0),
+        escapeField(idx === 0 ? (b.grandTotal || b.total) : it.amount),
+        escapeField(b.paymentStatus || 'Pending'),
+      ].join(','));
+    });
+  });
+
+  const csvContent = '\uFEFF' + [headers.map(escapeField).join(','), ...rows].join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  return true;
+}
