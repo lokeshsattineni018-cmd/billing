@@ -83,7 +83,10 @@ function Sidebar({ isOpen, onClose, onInstall }) {
             type="button"
             className="btn btn-primary"
             style={{ width: '100%', padding: '11px 12px', fontSize: '0.85rem', background: 'linear-gradient(135deg, #0b5394, #2563eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: '8px', fontWeight: 700 }}
-            onClick={onInstall}
+            onClick={() => {
+              onClose();
+              setTimeout(() => onInstall(), 150);
+            }}
           >
             <DownloadIcon size={16} /> Install App on Phone
           </button>
