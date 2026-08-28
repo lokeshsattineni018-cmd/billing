@@ -54,6 +54,7 @@ export const billsAPI = {
 // Dashboard
 export const dashboardAPI = {
   summary: () => api.get('/dashboard/summary'),
+  getDailySummary: () => api.get('/dashboard/daily-summary'),
 };
 
 export default api;
