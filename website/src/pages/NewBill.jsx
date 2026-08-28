@@ -312,13 +312,83 @@ export default function NewBill() {
           </div>
         </div>
 
-        {/* Table Format Entry */}
+        {/* Bill Items Section */}
         <div style={{ marginTop: '20px', marginBottom: '16px' }}>
           <label className="form-label" style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--accent-primary)', marginBottom: '8px', display: 'block' }}>
-            Bill Items Table
+            Bill Items
           </label>
-          <div className="table-container" style={{ border: '1px solid var(--border-color)', borderRadius: '8px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-            <table className="table" style={{ margin: 0, minWidth: '700px' }}>
+
+          {/* Mobile Item Cards (Visible on Mobile & Tablets) */}
+          <div className="mobile-items-list">
+            {items.map((item, index) => (
+              <div key={index} className="mobile-item-card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Item #{index + 1}</span>
+                  {items.length > 1 && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      style={{ color: '#ef4444', padding: '2px 8px', fontSize: '0.85rem' }}
+                      onClick={() => handleRemoveItem(index)}
+                    >
+                      ✕ Remove
+                    </button>
+                  )}
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '8px' }}>
+                  <label className="form-label" style={{ fontSize: '0.78rem' }}>Description / Goods *</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={item.particulars}
+                    onChange={(e) => handleItemChange(index, 'particulars', e.target.value)}
+                    placeholder="e.g. Fresh Seafood / Prawns Supply"
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.78rem' }}>Qty (KG) *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      className="form-input"
+                      style={{ fontWeight: 700, fontSize: '1rem', textAlign: 'right' }}
+                      value={item.quantity}
+                      onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.78rem' }}>Price (₹/KG) *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      className="form-input"
+                      style={{ fontWeight: 700, fontSize: '1rem', textAlign: 'right' }}
+                      value={item.rate}
+                      onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '8px 12px', borderRadius: '6px', marginTop: '4px' }}>
+                  <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Item Amount:</span>
+                  <span style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+                    {formatCurrency(item.amount || 0)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table Format Entry */}
+          <div className="table-container desktop-only-table" style={{ border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+            <table className="table" style={{ margin: 0 }}>
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-secondary)' }}>
                   <th style={{ width: '45px', textAlign: 'center' }}>S.No</th>

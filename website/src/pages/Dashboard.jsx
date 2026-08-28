@@ -162,48 +162,79 @@ export default function Dashboard() {
         </div>
 
         {data?.recentBills?.length > 0 ? (
-          <div className="table-container">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Invoice #</th>
-                  <th>Date</th>
-                  <th>Company Name</th>
-                  <th className="text-right">Qty (KG)</th>
-                  <th>Status</th>
-                  {canSeeSales && <th className="text-right">Total Amount</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {data.recentBills.map((bill) => (
-                  <tr
-                    key={bill._id}
-                    className="clickable-row"
-                    onClick={() => navigate(`/bills/${bill._id}`)}
-                  >
-                    <td>
-                      <span className="badge badge-blue">#{bill.billNo}</span>
-                    </td>
-                    <td>{formatDate(bill.date)}</td>
-                    <td style={{ fontWeight: 600, color: 'var(--accent-primary)' }}>
-                      {bill.companyName}
-                    </td>
-                    <td className="text-right">{bill.quantity} kg</td>
-                    <td>
-                      <span className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}>
-                        {bill.paymentStatus || 'Pending'}
-                      </span>
-                    </td>
+          <>
+            {/* Mobile List View */}
+            <div className="mobile-bills-list">
+              {data.recentBills.map((bill) => (
+                <div
+                  key={bill._id}
+                  className="mobile-bill-card"
+                  onClick={() => navigate(`/bills/${bill._id}`)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span className="badge badge-blue">#{bill.billNo}</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{formatDate(bill.date)}</span>
+                  </div>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {bill.companyName}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{bill.quantity} kg</span>
                     {canSeeSales && (
-                      <td className="text-right" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
                         {formatCurrency(bill.grandTotal || bill.total)}
-                      </td>
+                      </span>
                     )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="table-container desktop-only-table">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Invoice #</th>
+                    <th>Date</th>
+                    <th>Company Name</th>
+                    <th className="text-right">Qty (KG)</th>
+                    <th>Status</th>
+                    {canSeeSales && <th className="text-right">Total Amount</th>}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {data.recentBills.map((bill) => (
+                    <tr
+                      key={bill._id}
+                      className="clickable-row"
+                      onClick={() => navigate(`/bills/${bill._id}`)}
+                    >
+                      <td>
+                        <span className="badge badge-blue">#{bill.billNo}</span>
+                      </td>
+                      <td>{formatDate(bill.date)}</td>
+                      <td style={{ fontWeight: 600, color: 'var(--accent-primary)' }}>
+                        {bill.companyName}
+                      </td>
+                      <td className="text-right">{bill.quantity} kg</td>
+                      <td>
+                        <span className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}>
+                          {bill.paymentStatus || 'Pending'}
+                        </span>
+                      </td>
+                      {canSeeSales && (
+                        <td className="text-right" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                          {formatCurrency(bill.grandTotal || bill.total)}
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
           <div className="empty-state">
             <p>No invoices created yet</p>
