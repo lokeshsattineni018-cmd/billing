@@ -8,7 +8,8 @@ const router = express.Router();
 
 // Generate JWT
 const signToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+  const secret = process.env.JWT_SECRET || 'vijaya-durga-super-secret-key-2024';
+  return jwt.sign({ id }, secret, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 };

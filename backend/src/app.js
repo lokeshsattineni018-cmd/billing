@@ -17,15 +17,12 @@ const app = express();
 // Middleware to ensure DB is connected for serverless invocations
 app.use(async (req, res, next) => {
   try {
-    if (process.env.MONGODB_URI) {
-      await connectDB();
-      // Auto-seed default users once
-      autoSeedUsers().catch(() => {});
-    }
+    await connectDB();
+    autoSeedUsers().catch(() => {});
     next();
   } catch (err) {
     console.error('Database connection error in middleware:', err);
-    res.status(500).json({ message: 'Database connection failed. Please verify MONGODB_URI in Vercel Environment Variables.' });
+    res.status(500).json({ message: 'Database connection failed: ' + err.message });
   }
 });
 
