@@ -852,41 +852,18 @@ a:hover {
   top: 0;
   left: 0;
   right: 0;
-  height: 60px;
-  background: var(--bg-sidebar);
-  z-index: 99;
+  height: 54px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+  z-index: 900;
   align-items: center;
-  padding: 0 20px;
+  justify-content: space-between;
+  padding: 0 14px;
 }
 
-.hamburger {
-  background: none;
-  border: none;
-  color: #ffffff;
-  font-size: 1.4rem;
-  cursor: pointer;
-  padding: 6px;
-}
-
-.mobile-header .brand-text {
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 1.25rem;
-  color: #ffffff;
-  margin-left: 12px;
-  letter-spacing: 1px;
-}
-
-.sidebar-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(2px);
-  z-index: 99;
+.desktop-only-sidebar {
+  display: flex;
 }
 
 /* ── Animations ── */
@@ -946,30 +923,30 @@ a:hover {
 
 @media (max-width: 768px) {
   .mobile-header {
-    display: flex;
+    display: flex !important;
+  }
+
+  .desktop-only-sidebar {
+    display: none !important;
   }
 
   .sidebar {
-    transform: translateX(-100%);
-    width: 270px;
+    display: none !important;
   }
 
-  .sidebar.open {
-    transform: translateX(0);
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
-  }
-
-  .sidebar-overlay.visible {
-    display: block;
+  .sidebar-overlay {
+    display: none !important;
   }
 
   .main-content {
-    margin-left: 0;
-    padding-top: 60px;
+    margin-left: 0 !important;
+    padding-top: 66px !important;
+    padding-bottom: 76px !important;
+    min-height: 100vh;
   }
 
   .page-container {
-    padding: 20px 14px;
+    padding: 12px 14px !important;
   }
 
   .page-header h2 {
