@@ -67,38 +67,32 @@ export default function Dashboard() {
     <div className="page-container fade-in">
       <Toast toast={toast} />
 
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '14px' }}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
         <div>
-          <h2>Dashboard</h2>
-          <p>{canSeeSales ? "Business Overview & Daily Trading Summary" : "Employee Portal — Create & manage invoices"}</p>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>Dashboard</h2>
+          <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+            {canSeeSales ? "Business Overview & Trading Summary" : "Create & manage invoices"}
+          </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', width: '100%', maxWidth: '380px' }}>
           {canSeeSales && (
             <button
               className="btn btn-whatsapp"
               onClick={handleOpenDailySummary}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 12px', fontSize: '0.88rem' }}
             >
               <WhatsAppIcon size={18} color="#ffffff" /> Daily Summary
             </button>
           )}
 
           <button
-            className="btn btn-primary btn-large"
+            className="btn btn-primary"
             onClick={() => navigate('/new-bill')}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 12px', fontSize: '0.88rem', background: '#0b5394' }}
           >
             <PlusIcon size={18} /> New Invoice
           </button>
-
-          {canSeeSales && (
-            <button
-              className="btn btn-secondary btn-large"
-              onClick={() => navigate('/ledger')}
-            >
-              Customer Ledger
-            </button>
-          )}
         </div>
       </div>
 
