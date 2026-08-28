@@ -21,7 +21,7 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-function Sidebar({ isOpen, onClose, installPrompt, onInstall }) {
+function Sidebar({ isOpen, onClose, onInstall }) {
   const { user, logout } = useAuth();
 
   const isOwnerOrAdmin = user?.role === 'owner' || user?.role === 'admin';
@@ -77,18 +77,17 @@ function Sidebar({ isOpen, onClose, installPrompt, onInstall }) {
           ))}
         </nav>
 
-        {installPrompt && (
-          <div style={{ padding: '0 12px 12px 12px' }}>
-            <button
-              type="button"
-              className="btn btn-primary"
-              style={{ width: '100%', padding: '10px 12px', fontSize: '0.82rem', background: '#0b5394' }}
-              onClick={onInstall}
-            >
-              <DownloadIcon size={14} /> Install Mobile App
-            </button>
-          </div>
-        )}
+        {/* Permanent Install App Button */}
+        <div style={{ padding: '12px 14px' }}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            style={{ width: '100%', padding: '11px 12px', fontSize: '0.85rem', background: 'linear-gradient(135deg, #0b5394, #2563eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: '8px', fontWeight: 700 }}
+            onClick={onInstall}
+          >
+            <DownloadIcon size={16} /> Install App on Phone
+          </button>
+        </div>
 
         <div className="sidebar-footer">
           <div className="sidebar-user">
@@ -112,6 +111,7 @@ function Sidebar({ isOpen, onClose, installPrompt, onInstall }) {
 function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
@@ -124,33 +124,45 @@ function AppLayout() {
   }, []);
 
   const handleInstallApp = async () => {
-    if (!installPrompt) return;
-    installPrompt.prompt();
-    const { outcome } = await installPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setInstallPrompt(null);
+    if (installPrompt) {
+      installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setInstallPrompt(null);
+      }
+    } else {
+      setShowInstallGuide(true);
     }
   };
+
+  const isIOS = typeof navigator !== 'undefined' && (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
   return (
     <div className="app-layout">
       {/* Mobile Header */}
-      <div className="mobile-header">
-        <button className="hamburger" onClick={() => setSidebarOpen(true)}>☰</button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '10px' }}>
+      <div className="mobile-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button className="hamburger" onClick={() => setSidebarOpen(true)}>☰</button>
           <img
             src={logoImg}
             alt="Logo"
-            style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+            style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }}
           />
-          <span className="brand-text" style={{ fontSize: '0.98rem', fontWeight: 800 }}>VIJAYA DURGA AGENCIES</span>
+          <span className="brand-text" style={{ fontSize: '0.92rem', fontWeight: 800 }}>VIJAYA DURGA</span>
         </div>
+
+        <button
+          className="btn btn-primary btn-sm"
+          style={{ padding: '6px 10px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px', background: '#0b5394' }}
+          onClick={handleInstallApp}
+        >
+          <DownloadIcon size={14} /> Install App
+        </button>
       </div>
 
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        installPrompt={installPrompt}
         onInstall={handleInstallApp}
       />
 
@@ -187,6 +199,55 @@ function AppLayout() {
           <span>Ledger</span>
         </NavLink>
       </nav>
+
+      {/* Install App Helper Guide Modal */}
+      {showInstallGuide && (
+        <div className="modal-backdrop" onClick={() => setShowInstallGuide(false)}>
+          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <img src={logoImg} alt="App Icon" style={{ width: '36px', height: '36px', borderRadius: '50%' }} />
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Install App on Phone</h3>
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowInstallGuide(false)}>✕</button>
+            </div>
+
+            <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+              {isIOS ? (
+                <div>
+                  <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                    📱 On iPhone / Safari:
+                  </p>
+                  <ol style={{ paddingLeft: '20px', margin: 0 }}>
+                    <li style={{ marginBottom: '6px' }}>Tap the <strong>Share</strong> button (box with upward arrow) at the bottom of Safari.</li>
+                    <li style={{ marginBottom: '6px' }}>Scroll down and tap <strong>"Add to Home Screen"</strong> (➕).</li>
+                    <li>Tap <strong>"Add"</strong> in the top right.</li>
+                  </ol>
+                </div>
+              ) : (
+                <div>
+                  <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                    📱 On Android / Chrome:
+                  </p>
+                  <ol style={{ paddingLeft: '20px', margin: 0 }}>
+                    <li style={{ marginBottom: '6px' }}>Tap the <strong>3 dots (⋮)</strong> menu in the top right of Chrome.</li>
+                    <li style={{ marginBottom: '6px' }}>Tap <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</li>
+                    <li>Confirm by tapping <strong>"Install"</strong>.</li>
+                  </ol>
+                </div>
+              )}
+            </div>
+
+            <button
+              className="btn btn-primary"
+              style={{ width: '100%', marginTop: '18px', padding: '12px' }}
+              onClick={() => setShowInstallGuide(false)}
+            >
+              Got it!
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
