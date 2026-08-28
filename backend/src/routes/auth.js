@@ -8,10 +8,17 @@ const router = express.Router();
 
 // Generate JWT
 const signToken = (id) => {
-  const secret = process.env.JWT_SECRET || 'vijaya-durga-super-secret-key-2024';
-  return jwt.sign({ id }, secret, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  });
+  const secret = (process.env.JWT_SECRET && process.env.JWT_SECRET.trim()) || 'vijaya-durga-super-secret-key-2024';
+  let expiresIn = '7d';
+  if (typeof process.env.JWT_EXPIRES_IN === 'string') {
+    const cleaned = process.env.JWT_EXPIRES_IN.replace(/['"]/g, '').trim();
+    if (/^\d+[smhdwy]?$/i.test(cleaned)) {
+      expiresIn = cleaned;
+    }
+  } else if (typeof process.env.JWT_EXPIRES_IN === 'number' && process.env.JWT_EXPIRES_IN > 0) {
+    expiresIn = process.env.JWT_EXPIRES_IN;
+  }
+  return jwt.sign({ id }, secret, { expiresIn });
 };
 
 /**
