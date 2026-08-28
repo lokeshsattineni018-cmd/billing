@@ -11,7 +11,10 @@ const connectDB = async () => {
     return mongoose.connection;
   }
 
-  const uri = process.env.MONGODB_URI || 'mongodb+srv://lokeshsattineni018_db_user:Ee8p5cKgOTUH0Y2T@cluster0.jaruuh3.mongodb.net/vijaya_durga?retryWrites=true&w=majority';
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    throw new Error('MONGODB_URI environment variable is required. Please set it in Vercel Environment Variables.');
+  }
 
   try {
     cachedConnection = await mongoose.connect(uri, {
