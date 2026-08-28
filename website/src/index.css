@@ -1279,6 +1279,63 @@ a:hover {
   overflow-y: auto !important;
 }
 
+/* ── Print Media Rules ── */
+.print-only-layout {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  body, html {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Hide all UI elements during printing */
+  .no-print,
+  .mobile-header,
+  .mobile-bottom-nav,
+  .sidebar,
+  .desktop-only-sidebar,
+  .sidebar-overlay,
+  .action-buttons,
+  .modal-backdrop,
+  header,
+  nav,
+  button,
+  .toast {
+    display: none !important;
+  }
+
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    min-height: auto !important;
+  }
+
+  .page-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .print-only-layout {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+
 
 
 

@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDateTime, useToast, Toast } from '../utils/helpers';
-import { PrintIcon, DownloadIcon, ArrowLeftIcon, WhatsAppIcon, PlusIcon } from '../components/Icons';
+import { PrintIcon, DownloadIcon, WhatsAppIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
+import logoImg from '../assets/logo.png';
 
 export default function BillDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { toast, showToast } = useToast();
   const [bill, setBill] = useState(null);
@@ -25,6 +27,14 @@ export default function BillDetail() {
     try {
       const response = await billsAPI.getById(id);
       setBill(response.data);
+
+      // Check if redirected from NewBill with autoprint=true
+      const searchParams = new URLSearchParams(location.search);
+      if (searchParams.get('autoprint') === 'true') {
+        setTimeout(() => {
+          window.print();
+        }, 350);
+      }
     } catch (error) {
       console.error('Failed to load invoice:', error);
     } finally {
@@ -32,9 +42,20 @@ export default function BillDetail() {
     }
   };
 
+  // Keyboard shortcut Ctrl+P / Cmd+P
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        handlePrint();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handlePrint = () => {
-    const pdfUrl = billsAPI.getPDF(id);
-    window.open(pdfUrl, '_blank');
+    window.print();
   };
 
   const handleDownloadPDF = async () => {
@@ -64,7 +85,6 @@ export default function BillDetail() {
     const amountStr = formatCurrency(bill.grandTotal || bill.total);
     const phone = bill.customerPhone ? bill.customerPhone.replace(/[^0-9]/g, '') : '';
 
-    // 1. Try sharing the actual PDF file using Web Share API (native share on mobile & supported desktop)
     if (navigator.canShare && navigator.share) {
       try {
         const response = await fetch(pdfUrl);
@@ -90,7 +110,6 @@ export default function BillDetail() {
       }
     }
 
-    // 2. Direct WhatsApp Web / App share with message and PDF link
     const message = `*VIJAYA DURGA AGENCIES*
 *Tax Invoice #${bill.billNo}*
 
@@ -118,11 +137,12 @@ Thank you for your business!`;
       setBill(response.data);
       showToast(`Invoice #${bill.billNo} payment status updated to ${newStatus}`);
     } catch (error) {
-      showToast('Failed to update payment status', 'error');
+      showToast('Failed to update status', 'error');
     }
   };
 
   if (loading) return <div className="spinner"></div>;
+
   if (!bill) {
     return (
       <div className="page-container">
@@ -150,52 +170,63 @@ Thank you for your business!`;
     <div className="page-container fade-in">
       <Toast toast={toast} />
 
-      <div className="bill-detail-header">
+      {/* Screen Header (Hidden during Print) */}
+      <div className="bill-detail-header no-print">
         <div>
-          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.65rem', fontWeight: 800 }}>
-            Invoice <span style={{ color: 'var(--accent-primary)' }}>#{bill.billNo}</span>
+          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>
+            Invoice <span style={{ color: '#0b5394' }}>#{bill.billNo}</span>
           </h2>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '4px', fontSize: '0.88rem' }}>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '2px', fontSize: '0.85rem' }}>
             {formatDateTime(bill.date)}
           </p>
         </div>
 
-        <div className="action-buttons" style={{ flexWrap: 'wrap' }}>
+        <div className="action-buttons" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button
             className="btn btn-primary"
-            style={{ fontWeight: 700, padding: '10px 18px' }}
-            onClick={handleDownloadPDF}
+            style={{ fontWeight: 700, padding: '10px 18px', background: '#0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={handlePrint}
+            title="Direct Print (Ctrl + P)"
           >
-            <DownloadIcon size={18} /> Download PDF
+            <PrintIcon size={18} /> Print Invoice
           </button>
+
           <button
             className="btn btn-whatsapp"
-            style={{ fontWeight: 700, padding: '10px 18px' }}
+            style={{ fontWeight: 700, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
             onClick={handleShareWhatsApp}
             disabled={sharing}
           >
-            <WhatsAppIcon size={18} color="#ffffff" /> {sharing ? 'Sharing...' : 'Share on WhatsApp'}
+            <WhatsAppIcon size={18} color="#ffffff" /> {sharing ? 'Sharing...' : 'WhatsApp'}
           </button>
+
           <button
             className="btn btn-secondary"
+            style={{ padding: '10px 14px' }}
+            onClick={handleDownloadPDF}
+          >
+            <DownloadIcon size={16} /> PDF
+          </button>
+
+          <button
+            className="btn btn-secondary"
+            style={{ padding: '10px 14px' }}
             onClick={() => navigate('/new-bill', { state: { cloneBill: bill } })}
             title="Create a new bill pre-filled with this customer and items"
           >
             <PlusIcon size={16} /> Re-Bill
           </button>
-          <button className="btn btn-secondary" onClick={handlePrint}>
-            <PrintIcon size={16} /> Print
-          </button>
-          <button className="btn btn-ghost" onClick={() => navigate('/bills')}>
+
+          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/bills')}>
             <ArrowLeftIcon size={16} /> Back
           </button>
         </div>
       </div>
 
-      {/* Invoice Details Card */}
-      <div className="card" style={{ marginBottom: '24px' }}>
+      {/* Screen Invoice Details Card (Hidden during Print) */}
+      <div className="card no-print" style={{ marginBottom: '24px' }}>
         <div className="card-header">
-          <h3 className="card-title">Invoice Header</h3>
+          <h3 className="card-title">Invoice Details</h3>
           <span className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`} style={{ fontSize: '0.82rem', padding: '5px 12px' }}>
             Status: {bill.paymentStatus || 'Pending'}
           </span>
@@ -243,22 +274,20 @@ Thank you for your business!`;
                 <th style={{ width: '90px', textAlign: 'center' }}>HSN</th>
                 <th style={{ width: '120px', textAlign: 'right' }}>QTY (KG)</th>
                 <th style={{ width: '120px', textAlign: 'right' }}>PRICE (₹)</th>
-                <th style={{ width: '100px', textAlign: 'center' }}>TAX RATE</th>
                 {canSeeSales && <th style={{ width: '140px', textAlign: 'right' }}>AMOUNT (₹)</th>}
               </tr>
             </thead>
             <tbody>
-              {itemsList.map((it, idx) => (
-                <tr key={idx}>
-                  <td style={{ textAlign: 'center', fontWeight: 600 }}>{idx + 1}</td>
-                  <td style={{ fontWeight: 600 }}>{it.particulars || 'Fresh Seafood / Prawns Supply'}</td>
-                  <td style={{ textAlign: 'center' }}>{it.hsn || '0306'}</td>
-                  <td style={{ textAlign: 'right' }}>{it.quantity} kg</td>
-                  <td style={{ textAlign: 'right' }}>{formatCurrency(it.rate)}</td>
-                  <td style={{ textAlign: 'center' }}>{it.taxRate || '—'}</td>
+              {itemsList.map((item, index) => (
+                <tr key={index}>
+                  <td style={{ textAlign: 'center', fontWeight: 600 }}>{item.sno || index + 1}</td>
+                  <td style={{ fontWeight: 600 }}>{item.particulars}</td>
+                  <td style={{ textAlign: 'center' }}>{item.hsn || '0306'}</td>
+                  <td className="text-right" style={{ fontWeight: 600 }}>{item.quantity} kg</td>
+                  <td className="text-right">{formatCurrency(item.rate)}</td>
                   {canSeeSales && (
-                    <td style={{ textAlign: 'right', fontWeight: 700 }}>
-                      {formatCurrency(it.amount || it.quantity * it.rate)}
+                    <td className="text-right" style={{ fontWeight: 700 }}>
+                      {formatCurrency(item.amount || item.quantity * item.rate)}
                     </td>
                   )}
                 </tr>
@@ -267,38 +296,146 @@ Thank you for your business!`;
           </table>
         </div>
 
-        {/* Update Payment Status Section for Owner/Admin */}
+        {/* Grand Total */}
+        <div className="invoice-total-section">
+          <div className="invoice-total-box" style={{ background: '#f8fafc', border: '1px solid var(--border-color)', padding: '16px 20px', borderRadius: '10px' }}>
+            <div className="invoice-total-label" style={{ fontSize: '0.85rem' }}>TOTAL AMOUNT</div>
+            <div className="invoice-total-value" style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0b5394' }}>
+              {formatCurrency(bill.grandTotal || bill.total)}
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Status Toggle (Owner/Admin) */}
         {canUpdateStatus && (
-          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Update Payment Status:</span>
-            <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+              Update Payment Status:
+            </span>
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button
-                className={`btn ${bill.paymentStatus === 'Paid' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+                className={`btn btn-sm ${bill.paymentStatus === 'Paid' ? 'btn-primary' : 'btn-secondary'}`}
+                style={bill.paymentStatus === 'Paid' ? { background: '#16a34a' } : {}}
                 onClick={() => handleUpdatePaymentStatus('Paid')}
-                disabled={bill.paymentStatus === 'Paid'}
               >
                 Mark as Paid
               </button>
               <button
-                className={`btn ${bill.paymentStatus === 'Pending' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+                className={`btn btn-sm ${bill.paymentStatus !== 'Paid' ? 'btn-primary' : 'btn-secondary'}`}
+                style={bill.paymentStatus !== 'Paid' ? { background: '#d97706' } : {}}
                 onClick={() => handleUpdatePaymentStatus('Pending')}
-                disabled={bill.paymentStatus === 'Pending'}
               >
                 Mark as Pending
               </button>
             </div>
           </div>
         )}
+      </div>
 
-        {/* Calculated Total (Visible to Owner & Admin) */}
-        {canSeeSales && (
-          <div className="invoice-total-section">
-            <div className="invoice-total-box">
-              <div className="invoice-total-label">GRAND TOTAL</div>
-              <div className="invoice-total-value">{formatCurrency(bill.grandTotal || bill.total)}</div>
+      {/* ── DEDICATED HIGH-RES PRINT LAYOUT (Visible ONLY during window.print()) ── */}
+      <div className="print-only-layout">
+        <div style={{ border: '2px solid #000000', padding: '24px', background: '#ffffff', color: '#000000', fontFamily: 'Arial, sans-serif' }}>
+          
+          {/* Top Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #000000', paddingBottom: '14px', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <img src={logoImg} alt="Emblem" style={{ width: '65px', height: '65px', borderRadius: '50%', objectFit: 'cover' }} />
+              <div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                  TAX INVOICE (ORIGINAL FOR RECIPIENT)
+                </div>
+                <h1 style={{ fontSize: '1.6rem', fontWeight: '900', margin: '2px 0', color: '#000000' }}>
+                  VIJAYA DURGA AGENCIES
+                </h1>
+                <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>
+                  WHOLESALE SEAFOOD & PRAWNS TRADERS
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#333333' }}>
+                  D.No. 4-23, Main Road, Undi / Bhimavaram, W.G. Dist, Andhra Pradesh
+                </div>
+              </div>
+            </div>
+            <div style={{ textAlign: 'right', fontSize: '0.8rem' }}>
+              <div><strong>GSTIN:</strong> 37KATPS1500Q1ZR</div>
+              <div><strong>Cell:</strong> 9848136363</div>
+              <div><strong>State:</strong> Andhra Pradesh (37)</div>
             </div>
           </div>
-        )}
+
+          {/* Bill Meta Row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', border: '1px solid #000000', padding: '10px 14px', marginBottom: '14px', fontSize: '0.85rem' }}>
+            <div>
+              <div style={{ fontSize: '0.72rem', color: '#555555', textTransform: 'uppercase' }}>Billed To:</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 'bold', margin: '2px 0' }}>{bill.companyName}</div>
+              {bill.customerPhone && <div>Cell: {bill.customerPhone}</div>}
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '1.15rem', fontWeight: '900' }}>INVOICE #{bill.billNo}</div>
+              <div><strong>Date:</strong> {new Date(bill.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+              <div><strong>Payment:</strong> {bill.paymentStatus || 'Pending'}</div>
+            </div>
+          </div>
+
+          {/* Items Table */}
+          <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000000', marginBottom: '14px', fontSize: '0.85rem' }}>
+            <thead>
+              <tr style={{ background: '#f0f0f0', borderBottom: '1px solid #000000' }}>
+                <th style={{ borderRight: '1px solid #000000', padding: '8px 6px', width: '40px', textAlign: 'center' }}>S.No</th>
+                <th style={{ borderRight: '1px solid #000000', padding: '8px 10px', textAlign: 'left' }}>Description of Goods</th>
+                <th style={{ borderRight: '1px solid #000000', padding: '8px 6px', width: '70px', textAlign: 'center' }}>HSN</th>
+                <th style={{ borderRight: '1px solid #000000', padding: '8px 10px', width: '100px', textAlign: 'right' }}>Quantity</th>
+                <th style={{ borderRight: '1px solid #000000', padding: '8px 10px', width: '100px', textAlign: 'right' }}>Rate (₹)</th>
+                <th style={{ padding: '8px 10px', width: '130px', textAlign: 'right' }}>Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {itemsList.map((it, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid #e0e0e0' }}>
+                  <td style={{ borderRight: '1px solid #000000', padding: '8px 6px', textAlign: 'center' }}>{it.sno || idx + 1}</td>
+                  <td style={{ borderRight: '1px solid #000000', padding: '8px 10px', fontWeight: 'bold' }}>{it.particulars}</td>
+                  <td style={{ borderRight: '1px solid #000000', padding: '8px 6px', textAlign: 'center' }}>{it.hsn || '0306'}</td>
+                  <td style={{ borderRight: '1px solid #000000', padding: '8px 10px', textAlign: 'right', fontWeight: 'bold' }}>{it.quantity} kg</td>
+                  <td style={{ borderRight: '1px solid #000000', padding: '8px 10px', textAlign: 'right' }}>{Number(it.rate).toFixed(2)}</td>
+                  <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold' }}>
+                    {Number(it.amount || it.quantity * it.rate).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Totals & Bank Row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '14px', border: '1px solid #000000', padding: '12px 14px', marginBottom: '14px', fontSize: '0.82rem' }}>
+            <div>
+              <div style={{ fontWeight: 'bold', marginBottom: '4px', textDecoration: 'underline' }}>BANK PAYMENT DETAILS:</div>
+              <div>Bank Name: <strong>Karur Vysya Bank</strong></div>
+              <div>Account Name: <strong>VIJAYA DURGA AGENCIES</strong></div>
+              <div>Account No: <strong>4103135000008500</strong></div>
+              <div>IFSC Code: <strong>KVBL0004103</strong></div>
+              <div>Branch: <strong>Undi Branch</strong></div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '0.9rem', marginBottom: '4px' }}>
+                Items Subtotal: <strong>₹ {Number(bill.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
+              </div>
+              <div style={{ borderTop: '2px solid #000000', paddingTop: '6px', fontSize: '1.35rem', fontWeight: '900' }}>
+                Total: ₹ {Number(bill.grandTotal || bill.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </div>
+            </div>
+          </div>
+
+          {/* Signatures Footer */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '28px', fontSize: '0.82rem' }}>
+            <div>
+              <div>Customer Signature: __________________</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontWeight: 'bold', marginBottom: '32px' }}>For VIJAYA DURGA AGENCIES</div>
+              <div>Authorised Signatory</div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   );

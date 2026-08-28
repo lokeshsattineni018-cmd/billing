@@ -195,17 +195,28 @@ export default function NewBill() {
       showToast(`Invoice #${invoice.billNo} created successfully`);
 
       if (actionType === 'print') {
-        const pdfUrl = billsAPI.getPDF(invoice._id);
-        window.open(pdfUrl, '_blank');
+        navigate(`/bills/${invoice._id}?autoprint=true`);
+      } else {
+        navigate(`/bills/${invoice._id}`);
       }
-
-      setTimeout(() => navigate(`/bills/${invoice._id}`), 350);
     } catch (error) {
       showToast(error.response?.data?.message || 'Failed to create invoice', 'error');
     } finally {
       setSaving(false);
     }
   };
+
+  // Keyboard shortcut Ctrl+Enter / Cmd+Enter to Save & Print
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleSave('print');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [companyName, customerPhone, items, date, paymentStatus]);
 
   const matchingCustomers = customersList.filter((c) =>
     companyName.trim() &&
@@ -569,8 +580,9 @@ export default function NewBill() {
               style={{ width: '100%', padding: '14px', fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: '8px', background: '#0b5394' }}
               onClick={() => handleSave('print')}
               disabled={saving}
+              title="Press Ctrl + Enter to Save and Print immediately"
             >
-              <PrintIcon size={20} /> {saving ? 'Saving...' : 'Save & Print PDF'}
+              <PrintIcon size={20} /> {saving ? 'Saving...' : 'Save & Print (Ctrl + Enter)'}
             </button>
 
             <button
