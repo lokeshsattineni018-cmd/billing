@@ -110,24 +110,41 @@ function Sidebar({ isOpen, onClose, onInstall }) {
 
 function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState(null);
+  const [installPrompt, setInstallPrompt] = useState(window.deferredInstallPrompt || null);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
 
   useEffect(() => {
+    if (window.deferredInstallPrompt) {
+      setInstallPrompt(window.deferredInstallPrompt);
+    }
+
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
+      window.deferredInstallPrompt = e;
       setInstallPrompt(e);
     };
 
+    const handlePWAInstallable = () => {
+      if (window.deferredInstallPrompt) {
+        setInstallPrompt(window.deferredInstallPrompt);
+      }
+    };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('pwa-installable', handlePWAInstallable);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('pwa-installable', handlePWAInstallable);
+    };
   }, []);
 
   const handleInstallApp = async () => {
-    if (installPrompt) {
-      installPrompt.prompt();
-      const { outcome } = await installPrompt.userChoice;
+    const promptEvent = installPrompt || window.deferredInstallPrompt;
+    if (promptEvent) {
+      promptEvent.prompt();
+      const { outcome } = await promptEvent.userChoice;
       if (outcome === 'accepted') {
+        window.deferredInstallPrompt = null;
         setInstallPrompt(null);
       }
     } else {
