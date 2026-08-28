@@ -1077,26 +1077,118 @@ a:hover {
   }
 }
 
-/* ── Modal Styles ── */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  padding: 16px;
+/* ── Mobile Bills Cards & Bottom Navigation Bar ── */
+.mobile-bills-list {
+  display: none;
 }
 
-.modal-content {
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
-  border: 1px solid var(--border-color);
-  max-width: 520px;
-  width: 100%;
+.desktop-only-table {
+  display: block;
 }
+
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-bills-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .desktop-only-table {
+    display: none;
+  }
+
+  .mobile-bill-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .mobile-bill-card:active {
+    transform: scale(0.99);
+  }
+
+  .mobile-bill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .mobile-bill-body {
+    cursor: pointer;
+  }
+
+  .mobile-bill-actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  /* Bottom Navigation Bar */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
+    z-index: 1000;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 4px;
+  }
+
+  .mobile-bottom-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    height: 100%;
+    color: #64748b;
+    text-decoration: none;
+    font-size: 0.72rem;
+    font-weight: 600;
+    gap: 3px;
+    transition: color 0.15s ease;
+  }
+
+  .mobile-bottom-tab.active {
+    color: #0b5394;
+    font-weight: 700;
+  }
+
+  .mobile-add-btn {
+    background: linear-gradient(135deg, #0b5394, #2563eb);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(11, 83, 148, 0.35);
+    margin-top: -12px;
+  }
+
+  /* Padding at bottom of page so bottom bar doesn't cover content */
+  .main-content {
+    padding-bottom: 76px !important;
+  }
+}
+
 

@@ -246,7 +246,67 @@ Thank you for your business!`;
           <div className="spinner"></div>
         ) : bills.length > 0 ? (
           <>
-            <div className="table-container">
+            {/* Mobile Cards View (Visible on Phones & Tablets) */}
+            <div className="mobile-bills-list">
+              {bills.map((bill) => (
+                <div key={bill._id} className="mobile-bill-card">
+                  <div className="mobile-bill-header" onClick={() => navigate(`/bills/${bill._id}`)}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="badge badge-blue" style={{ fontSize: '0.9rem', padding: '4px 8px' }}>#{bill.billNo}</span>
+                      <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{formatDate(bill.date)}</span>
+                    </div>
+                    <span
+                      className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}
+                      style={{ cursor: canUpdateStatus ? 'pointer' : 'default', padding: '4px 10px', fontSize: '0.82rem' }}
+                      onClick={(e) => handleTogglePaymentStatus(e, bill)}
+                    >
+                      {bill.paymentStatus || 'Pending'}
+                    </span>
+                  </div>
+
+                  <div className="mobile-bill-body" onClick={() => navigate(`/bills/${bill._id}`)}>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                      {bill.companyName}
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                      <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>Weight: <strong>{bill.quantity} kg</strong></span>
+                      {canSeeSales && (
+                        <span style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+                          {formatCurrency(bill.grandTotal || bill.total)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mobile-bill-actions">
+                    <button
+                      className="btn btn-primary btn-sm"
+                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 8px', fontSize: '0.85rem' }}
+                      onClick={(e) => handleDownloadPDF(e, bill._id, bill.billNo)}
+                    >
+                      <DownloadIcon size={16} /> Download PDF
+                    </button>
+                    <button
+                      className="btn btn-whatsapp btn-sm"
+                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 8px', fontSize: '0.85rem' }}
+                      onClick={(e) => handleShareWhatsApp(e, bill)}
+                    >
+                      <WhatsAppIcon size={16} color="#ffffff" /> WhatsApp
+                    </button>
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      style={{ padding: '10px 12px' }}
+                      onClick={(e) => handlePrint(e, bill._id)}
+                    >
+                      <PrintIcon size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View (Visible on Laptop & Desktop) */}
+            <div className="table-container desktop-only-table">
               <table className="table">
                 <thead>
                   <tr>

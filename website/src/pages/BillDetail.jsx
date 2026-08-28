@@ -160,22 +160,31 @@ Thank you for your business!`;
           </p>
         </div>
 
-        <div className="action-buttons">
+        <div className="action-buttons" style={{ flexWrap: 'wrap' }}>
+          <button
+            className="btn btn-primary"
+            style={{ fontWeight: 700, padding: '10px 18px' }}
+            onClick={handleDownloadPDF}
+          >
+            <DownloadIcon size={18} /> Download PDF
+          </button>
+          <button
+            className="btn btn-whatsapp"
+            style={{ fontWeight: 700, padding: '10px 18px' }}
+            onClick={handleShareWhatsApp}
+            disabled={sharing}
+          >
+            <WhatsAppIcon size={18} color="#ffffff" /> {sharing ? 'Sharing...' : 'Share on WhatsApp'}
+          </button>
           <button
             className="btn btn-secondary"
             onClick={() => navigate('/new-bill', { state: { cloneBill: bill } })}
             title="Create a new bill pre-filled with this customer and items"
           >
-            <PlusIcon size={16} /> Re-Bill / Duplicate
+            <PlusIcon size={16} /> Re-Bill
           </button>
-          <button className="btn btn-whatsapp" onClick={handleShareWhatsApp} disabled={sharing}>
-            <WhatsAppIcon size={16} color="#ffffff" /> {sharing ? 'Sharing...' : 'Share on WhatsApp'}
-          </button>
-          <button className="btn btn-primary" onClick={handlePrint}>
-            <PrintIcon size={16} /> Print Invoice
-          </button>
-          <button className="btn btn-secondary" onClick={handleDownloadPDF}>
-            <DownloadIcon size={16} /> Download PDF
+          <button className="btn btn-secondary" onClick={handlePrint}>
+            <PrintIcon size={16} /> Print
           </button>
           <button className="btn btn-ghost" onClick={() => navigate('/bills')}>
             <ArrowLeftIcon size={16} /> Back

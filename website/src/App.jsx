@@ -165,6 +165,28 @@ function AppLayout() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+
+      {/* Mobile Bottom Navigation Bar for Simple 1-Page Mobile Use */}
+      <nav className="mobile-bottom-nav">
+        <NavLink to="/" end className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
+          <DashboardIcon size={20} />
+          <span>Home</span>
+        </NavLink>
+        <NavLink to="/new-bill" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
+          <div className="mobile-add-btn">
+            <PlusIcon size={22} color="#ffffff" />
+          </div>
+          <span>New Bill</span>
+        </NavLink>
+        <NavLink to="/bills" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
+          <InvoiceIcon size={20} />
+          <span>Invoices</span>
+        </NavLink>
+        <NavLink to="/ledger" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
+          <TrendingUpIcon size={20} />
+          <span>Ledger</span>
+        </NavLink>
+      </nav>
     </div>
   );
 }
