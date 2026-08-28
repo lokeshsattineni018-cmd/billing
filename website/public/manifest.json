@@ -1,17 +1,26 @@
 {
+  "id": "/",
   "short_name": "VDA Billing",
-  "name": "Vijaya Durga Agencies - SRSF Billing",
-  "description": "Seafood Trade Billing & Invoice Management System",
+  "name": "VIJAYA DURGA AGENCIES",
+  "description": "VIJAYA DURGA AGENCIES Seafood Trade Invoicing & Billing Portal",
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
     },
     {
       "src": "/icons/icon-512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512.png",
@@ -21,8 +30,10 @@
     }
   ],
   "start_url": "/",
-  "background_color": "#0f172a",
+  "scope": "/",
+  "background_color": "#ffffff",
   "theme_color": "#0b5394",
   "display": "standalone",
-  "orientation": "portrait"
+  "orientation": "portrait",
+  "prefer_related_applications": false
 }
