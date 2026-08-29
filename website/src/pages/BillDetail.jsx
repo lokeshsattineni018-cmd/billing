@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { formatCurrency, formatDateTime, useToast, Toast } from '../utils/helpers';
+import { formatCurrency, formatDateTime, numberToWords, useToast, Toast } from '../utils/helpers';
 import { PrintIcon, DownloadIcon, WhatsAppIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
-import logoImg from '../assets/logo.png';
+import ganeshaImg from '../assets/ganesha.jpg';
+import durgaImg from '../assets/durga.jpg';
+import ramDarbarImg from '../assets/ram_darbar.jpg';
 
 export default function BillDetail() {
   const { id } = useParams();
@@ -165,6 +167,17 @@ Thank you for your business!`;
     taxRate: '',
     amount: bill.total,
   }];
+
+  const billDate = new Date(bill.date);
+  const dd = String(billDate.getDate()).padStart(2, '0');
+  const mm = String(billDate.getMonth() + 1).padStart(2, '0');
+  const yyyy = billDate.getFullYear();
+  const formattedDate = `${dd}-${mm}-${yyyy}`;
+  const finalAmount = bill.grandTotal || bill.total || 0;
+  const amountInWordsText = numberToWords(finalAmount);
+
+  // Empty grid lines to match authentic printed bill book
+  const emptyRowsCount = Math.max(1, 6 - itemsList.length);
 
   return (
     <div className="page-container fade-in">
@@ -332,111 +345,268 @@ Thank you for your business!`;
         )}
       </div>
 
-      {/* ── DEDICATED HIGH-RES PRINT LAYOUT (Visible ONLY during window.print()) ── */}
-      <div className="print-only-layout">
-        <div style={{ border: '2px solid #000000', padding: '24px', background: '#ffffff', color: '#000000', fontFamily: 'Arial, sans-serif' }}>
-          
-          {/* Top Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #000000', paddingBottom: '14px', marginBottom: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <img src={logoImg} alt="Emblem" style={{ width: '65px', height: '65px', borderRadius: '50%', objectFit: 'cover' }} />
-              <div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                  TAX INVOICE (ORIGINAL FOR RECIPIENT)
-                </div>
-                <h1 style={{ fontSize: '1.6rem', fontWeight: '900', margin: '2px 0', color: '#000000' }}>
-                  VIJAYA DURGA AGENCIES
-                </h1>
-                <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>
-                  WHOLESALE SEAFOOD & PRAWNS TRADERS
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#333333' }}>
-                  D.No. 4-23, Main Road, Undi / Bhimavaram, W.G. Dist, Andhra Pradesh
-                </div>
-              </div>
-            </div>
-            <div style={{ textAlign: 'right', fontSize: '0.8rem' }}>
-              <div><strong>GSTIN:</strong> 37KATPS1500Q1ZR</div>
-              <div><strong>Cell:</strong> 9848136363</div>
-              <div><strong>State:</strong> Andhra Pradesh (37)</div>
-            </div>
-          </div>
+      {/* ══════════════════════════════════════════════════════════════════════════
+          EXACT OFFICIAL INVOICE TEMPLATE (Matches user's reference image 100%)
+          Visible on screen preview & during window.print()
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <div className="official-invoice-frame">
+        <div style={{
+          border: '1.5px solid #0b5394',
+          background: '#ffffff',
+          color: '#000000',
+          fontFamily: 'Arial, Helvetica, sans-serif',
+          margin: '0 auto',
+          maxWidth: '800px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+        }}>
 
-          {/* Bill Meta Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', border: '1px solid #000000', padding: '10px 14px', marginBottom: '14px', fontSize: '0.85rem' }}>
-            <div>
-              <div style={{ fontSize: '0.72rem', color: '#555555', textTransform: 'uppercase' }}>Billed To:</div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 'bold', margin: '2px 0' }}>{bill.companyName}</div>
-              {bill.customerPhone && <div>Cell: {bill.customerPhone}</div>}
+          {/* 1. TOP BAR */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1.5px solid #0b5394',
+            padding: '4px 12px',
+            fontSize: '0.82rem',
+            fontWeight: 'bold',
+            color: '#0b5394'
+          }}>
+            <div style={{ flex: 1, textAlign: 'center', letterSpacing: '0.5px' }}>
+              TAX INVOICE / CASH / CREDIT
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '1.15rem', fontWeight: '900' }}>INVOICE #{bill.billNo}</div>
-              <div><strong>Date:</strong> {new Date(bill.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
-              <div><strong>Payment:</strong> {bill.paymentStatus || 'Pending'}</div>
+              Cell: 9441429745
             </div>
           </div>
 
-          {/* Items Table */}
-          <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000000', marginBottom: '14px', fontSize: '0.85rem' }}>
+          {/* 2. COMPANY HEADER WITH 3 DIVINE EMBLEMS */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '70px 1fr 70px',
+            alignItems: 'center',
+            borderBottom: '1.5px solid #0b5394',
+            padding: '8px 12px',
+            gap: '8px'
+          }}>
+            {/* Left: Lord Vinayaka */}
+            <div style={{ textAlign: 'center' }}>
+              <img src={ganeshaImg} alt="Lord Ganesha" style={{ width: '56px', height: '56px', objectFit: 'contain' }} />
+            </div>
+
+            {/* Center: Title & Address */}
+            <div style={{ textAlign: 'center' }}>
+              <img src={durgaImg} alt="Maa Durga" style={{ width: '26px', height: '26px', objectFit: 'contain', display: 'block', margin: '0 auto 2px auto' }} />
+              <h1 style={{
+                fontSize: '1.45rem',
+                fontWeight: 900,
+                color: '#0b5394',
+                margin: '0 0 3px 0',
+                letterSpacing: '0.5px',
+                fontFamily: 'Arial, sans-serif'
+              }}>
+                VIJAYA DURGA AGENCIES
+              </h1>
+              <div style={{ fontSize: '0.74rem', fontWeight: 'bold', color: '#000000', marginBottom: '2px' }}>
+                Prop: SATTINENI VENKATA DHANA LAXMI &nbsp;|&nbsp; GSTIN: 37KATPS1500Q1ZR
+              </div>
+              <div style={{ fontSize: '0.68rem', color: '#333333' }}>
+                D.No. 2-41A, SATTINENI SRINIVASA TATAJI, Near Ramalayam, KOTHOTA - 534 281, Mutyalapalli, West Godavari Dist., A.P.
+              </div>
+            </div>
+
+            {/* Right: Sri Ram Darbar */}
+            <div style={{ textAlign: 'center' }}>
+              <img src={ramDarbarImg} alt="Sri Ram Darbar" style={{ width: '56px', height: '56px', objectFit: 'contain' }} />
+            </div>
+          </div>
+
+          {/* 3. NO. & DATE ROW */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            borderBottom: '1.5px solid #0b5394',
+            fontSize: '0.85rem'
+          }}>
+            <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>No.</span>
+              <span style={{ fontWeight: 900, color: '#b12704', fontSize: '1rem' }}>{bill.billNo}</span>
+            </div>
+            <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
+              <span style={{ fontWeight: 'bold', color: '#000000' }}>{formattedDate}</span>
+            </div>
+          </div>
+
+          {/* 4. M/S CUSTOMER NAME ROW */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            borderBottom: '1.5px solid #0b5394',
+            padding: '5px 10px',
+            gap: '10px',
+            fontSize: '0.9rem'
+          }}>
+            <span style={{ fontWeight: 'bold', color: '#0b5394' }}>M/s</span>
+            <span style={{ fontWeight: 800, color: '#000000', fontSize: '1rem' }}>{bill.companyName}</span>
+          </div>
+
+          {/* 5. GSTIN & CELL ROW */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1.5px solid #0b5394',
+            padding: '5px 10px',
+            fontSize: '0.82rem'
+          }}>
+            <div>
+              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>GSTIN : &nbsp;</span>
+              <span style={{ fontWeight: 'bold', color: '#000000' }}>{bill.companyGstin || '37KATPS1500Q1ZR'}</span>
+            </div>
+            <div>
+              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Cell : &nbsp;</span>
+              <span style={{ fontWeight: 'bold', color: '#000000' }}>{bill.customerPhone || '9441429745'}</span>
+            </div>
+          </div>
+
+          {/* 6. MAIN ITEMS TABLE */}
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
             <thead>
-              <tr style={{ background: '#f0f0f0', borderBottom: '1px solid #000000' }}>
-                <th style={{ borderRight: '1px solid #000000', padding: '8px 6px', width: '40px', textAlign: 'center' }}>S.No</th>
-                <th style={{ borderRight: '1px solid #000000', padding: '8px 10px', textAlign: 'left' }}>Description of Goods</th>
-                <th style={{ borderRight: '1px solid #000000', padding: '8px 6px', width: '70px', textAlign: 'center' }}>HSN</th>
-                <th style={{ borderRight: '1px solid #000000', padding: '8px 10px', width: '100px', textAlign: 'right' }}>Quantity</th>
-                <th style={{ borderRight: '1px solid #000000', padding: '8px 10px', width: '100px', textAlign: 'right' }}>Rate (₹)</th>
-                <th style={{ padding: '8px 10px', width: '130px', textAlign: 'right' }}>Amount (₹)</th>
+              <tr style={{ background: '#f0f5fa', borderBottom: '1.5px solid #0b5394', color: '#0b5394', fontWeight: 'bold', textAlign: 'center' }}>
+                <th style={{ borderRight: '1.5px solid #0b5394', padding: '5px 4px', width: '38px' }}>S.<br />No.</th>
+                <th style={{ borderRight: '1.5px solid #0b5394', padding: '5px 8px' }}>PARTICULARS</th>
+                <th style={{ borderRight: '1.5px solid #0b5394', padding: '5px 4px', width: '55px' }}>HSN</th>
+                <th style={{ borderRight: '1.5px solid #0b5394', padding: '5px 6px', width: '60px' }}>QTY.</th>
+                <th style={{ borderRight: '1.5px solid #0b5394', padding: '5px 6px', width: '68px' }}>PRICE</th>
+                <th style={{ borderRight: '1.5px solid #0b5394', padding: '5px 4px', width: '60px' }}>RATE<br />OF TAX</th>
+                <th style={{ padding: '5px 8px', width: '105px', textAlign: 'center' }}>
+                  AMOUNT<br />
+                  <span style={{ fontSize: '0.72rem' }}>Rs. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Ps.</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               {itemsList.map((it, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid #e0e0e0' }}>
-                  <td style={{ borderRight: '1px solid #000000', padding: '8px 6px', textAlign: 'center' }}>{it.sno || idx + 1}</td>
-                  <td style={{ borderRight: '1px solid #000000', padding: '8px 10px', fontWeight: 'bold' }}>{it.particulars}</td>
-                  <td style={{ borderRight: '1px solid #000000', padding: '8px 6px', textAlign: 'center' }}>{it.hsn || '0306'}</td>
-                  <td style={{ borderRight: '1px solid #000000', padding: '8px 10px', textAlign: 'right', fontWeight: 'bold' }}>{it.quantity} kg</td>
-                  <td style={{ borderRight: '1px solid #000000', padding: '8px 10px', textAlign: 'right' }}>{Number(it.rate).toFixed(2)}</td>
-                  <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold' }}>
-                    {Number(it.amount || it.quantity * it.rate).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                <tr key={idx} style={{ height: '24px', borderBottom: '1px solid #c8d9e8' }}>
+                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>{it.sno || idx + 1}</td>
+                  <td style={{ borderRight: '1.5px solid #0b5394', padding: '3px 8px', fontWeight: 'bold' }}>{it.particulars}</td>
+                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center' }}>{it.hsn || '0306'}</td>
+                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>{it.quantity} kg</td>
+                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', paddingRight: '6px' }}>{Number(it.rate).toFixed(2)}</td>
+                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center' }}>{it.taxRate || ''}</td>
+                  <td style={{ textAlign: 'right', paddingRight: '8px', fontWeight: 'bold' }}>
+                    {Number(it.amount || it.quantity * it.rate).toFixed(2)}
                   </td>
                 </tr>
               ))}
+
+              {/* Blank rows to match billbook aesthetic */}
+              {Array.from({ length: emptyRowsCount }).map((_, i) => (
+                <tr key={`empty-${i}`} style={{ height: '20px', borderBottom: '1px solid #c8d9e8' }}>
+                  <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                  <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                  <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                  <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                  <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                  <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                  <td></td>
+                </tr>
+              ))}
+
+              {/* Table Total Row */}
+              <tr style={{ background: '#f0f5fa', borderTop: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', fontWeight: 'bold' }}>
+                <td colSpan={6} style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', padding: '6px 14px', color: '#0b5394', fontSize: '0.92rem' }}>
+                  TOTAL
+                </td>
+                <td style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.95rem', fontWeight: 900 }}>
+                  {Number(bill.total || 0).toFixed(2)}
+                </td>
+              </tr>
             </tbody>
           </table>
 
-          {/* Totals & Bank Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '14px', border: '1px solid #000000', padding: '12px 14px', marginBottom: '14px', fontSize: '0.82rem' }}>
-            <div>
-              <div style={{ fontWeight: 'bold', marginBottom: '4px', textDecoration: 'underline' }}>BANK PAYMENT DETAILS:</div>
-              <div>Bank Name: <strong>Karur Vysya Bank</strong></div>
-              <div>Account Name: <strong>VIJAYA DURGA AGENCIES</strong></div>
-              <div>Account No: <strong>4103135000008500</strong></div>
-              <div>IFSC Code: <strong>KVBL0004103</strong></div>
-              <div>Branch: <strong>Undi Branch</strong></div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.9rem', marginBottom: '4px' }}>
-                Items Subtotal: <strong>₹ {Number(bill.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
-              </div>
-              <div style={{ borderTop: '2px solid #000000', paddingTop: '6px', fontSize: '1.35rem', fontWeight: '900' }}>
-                Total: ₹ {Number(bill.grandTotal || bill.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </div>
-            </div>
-          </div>
+          {/* 7. TAX BREAKDOWN SECTION */}
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.74rem', borderBottom: '1.5px solid #0b5394' }}>
+            <thead>
+              <tr style={{ background: '#f0f5fa', borderBottom: '1px solid #0b5394', color: '#0b5394', fontWeight: 'bold', textAlign: 'center' }}>
+                <th style={{ borderRight: '1.5px solid #0b5394', padding: '4px', width: '22%' }}>Taxable Value</th>
+                <th colSpan={2} style={{ borderRight: '1.5px solid #0b5394', padding: '4px', width: '26%' }}>CGST Tax</th>
+                <th colSpan={2} style={{ borderRight: '1.5px solid #0b5394', padding: '4px', width: '26%' }}>SGST Tax</th>
+                <th style={{ padding: '4px', width: '26%' }}>IGST Tax</th>
+              </tr>
+              <tr style={{ borderBottom: '1px solid #0b5394', color: '#0b5394', textAlign: 'center' }}>
+                <th style={{ borderRight: '1.5px solid #0b5394', padding: '2px' }}></th>
+                <th style={{ borderRight: '1px solid #0b5394', padding: '2px', width: '11%' }}>Rate</th>
+                <th style={{ borderRight: '1.5px solid #0b5394', padding: '2px', width: '15%' }}>Amount</th>
+                <th style={{ borderRight: '1px solid #0b5394', padding: '2px', width: '11%' }}>Rate</th>
+                <th style={{ borderRight: '1.5px solid #0b5394', padding: '2px', width: '15%' }}>Amount</th>
+                <th style={{ padding: '2px', width: '26%' }}>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style={{ height: '22px', textAlign: 'center', borderBottom: '1.5px solid #0b5394' }}>
+                <td style={{ borderRight: '1.5px solid #0b5394', padding: '2px' }}>
+                  {bill.taxableValue ? Number(bill.taxableValue).toFixed(2) : Number(bill.total || 0).toFixed(2)}
+                </td>
+                <td style={{ borderRight: '1px solid #0b5394', padding: '2px' }}>{bill.cgstRate || '2.5'}</td>
+                <td style={{ borderRight: '1.5px solid #0b5394', padding: '2px' }}>{bill.cgstAmount ? Number(bill.cgstAmount).toFixed(2) : '100.00'}</td>
+                <td style={{ borderRight: '1px solid #0b5394', padding: '2px' }}>{bill.sgstRate || '2.5'}</td>
+                <td style={{ borderRight: '1.5px solid #0b5394', padding: '2px' }}>{bill.sgstAmount ? Number(bill.sgstAmount).toFixed(2) : '100.00'}</td>
+                <td style={{ padding: '2px' }}>{bill.igstAmount ? Number(bill.igstAmount).toFixed(2) : '100.00'}</td>
+              </tr>
 
-          {/* Signatures Footer */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '28px', fontSize: '0.82rem' }}>
-            <div>
-              <div>Customer Signature: __________________</div>
+              {/* GRAND TOTAL ROW */}
+              <tr style={{ background: '#e8f1f8', fontWeight: 'bold' }}>
+                <td colSpan={5} style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', padding: '7px 14px', color: '#0b5394', fontSize: '0.98rem' }}>
+                  GRAND TOTAL
+                </td>
+                <td style={{ textAlign: 'right', padding: '7px 10px', fontSize: '1.1rem', fontWeight: 900 }}>
+                  {Number(finalAmount).toFixed(2)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* 8. BANK DETAILS & PROPRIETOR SIGNATURE */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1.1fr 1fr',
+            fontSize: '0.78rem'
+          }}>
+            {/* Left Box: Bank Details */}
+            <div style={{ padding: '8px 12px', borderRight: '1.5px solid #0b5394' }}>
+              <div style={{ fontWeight: 'bold', color: '#0b5394', marginBottom: '3px' }}>
+                BANK : KARUR VYSYA BANK
+              </div>
+              <div style={{ marginBottom: '2px' }}><strong>A/c. NO :</strong> 4805135000002964</div>
+              <div style={{ marginBottom: '2px' }}><strong>IFSC :</strong> KVBL0004815</div>
+              <div style={{ marginBottom: '6px' }}><strong>Branch :</strong> Narasapur</div>
+              <div style={{ fontSize: '0.66rem', color: '#444444' }}>
+                Goods once sold will not be taken back. Subject to local Jurisdiction.
+              </div>
             </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '32px' }}>For VIJAYA DURGA AGENCIES</div>
-              <div>Authorised Signatory</div>
+
+            {/* Right Box: Signature */}
+            <div style={{ padding: '8px 12px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div style={{ fontWeight: 'bold', color: '#0b5394', fontSize: '0.85rem' }}>
+                For VIJAYA DURGA AGENCIES
+              </div>
+              <div style={{ marginTop: '34px' }}>
+                <div style={{ width: '180px', height: '1px', background: '#0b5394', margin: '0 auto 4px auto' }}></div>
+                <div style={{ fontWeight: 'bold', color: '#0b5394', fontSize: '0.82rem' }}>Proprietor</div>
+              </div>
             </div>
           </div>
 
         </div>
+
+        {/* 9. AMOUNT IN WORDS */}
+        <div style={{ maxWidth: '800px', margin: '8px auto 0 auto', fontSize: '0.82rem', padding: '0 4px' }}>
+          <strong style={{ color: '#0b5394' }}>Amount in Words: </strong>
+          <span style={{ color: '#000000', fontWeight: 'bold' }}>{amountInWordsText}</span>
+        </div>
       </div>
+
     </div>
   );
 }

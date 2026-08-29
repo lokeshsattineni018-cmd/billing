@@ -1280,14 +1280,14 @@ a:hover {
 }
 
 /* ── Print Media Rules ── */
-.print-only-layout {
-  display: none;
+.official-invoice-frame {
+  margin-top: 20px;
 }
 
 @media print {
   @page {
     size: A4 portrait;
-    margin: 10mm;
+    margin: 8mm;
   }
 
   body, html {
@@ -1296,6 +1296,8 @@ a:hover {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* Hide all UI elements during printing */
@@ -1327,7 +1329,7 @@ a:hover {
     max-width: 100% !important;
   }
 
-  .print-only-layout {
+  .official-invoice-frame {
     display: block !important;
     width: 100% !important;
     margin: 0 !important;
