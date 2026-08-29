@@ -125,7 +125,7 @@ Phone: ${settings?.phone || '9441429745'}`;
           </div>
         </div>
 
-        <div className="stat-card" style={{ borderLeft: '4px solid #6366f1' }}>
+        <div className="stat-card" style={{ borderLeft: '4px solid #0f172a' }}>
           <div className="stat-info">
             <div className="stat-value">
               {formatCurrency(ledgerData.summary?.totalRevenue || 0)}

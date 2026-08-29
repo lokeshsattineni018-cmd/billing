@@ -1,31 +1,31 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Telugu:wght@700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
 :root {
-  /* ── Modern High-End Palette ── */
+  /* ── Modern High-End Clean Slate Palette ── */
   --bg-primary: #f8fafc;
   --bg-secondary: #ffffff;
   --bg-card: #ffffff;
   --bg-card-hover: #f1f5f9;
   --bg-input: #f8fafc;
-  --bg-sidebar: #0f172a;
+  --bg-sidebar: #ffffff;
 
-  --accent-primary: #4f46e5;
-  --accent-secondary: #6366f1;
-  --accent-gradient: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-  --accent-light: rgba(99, 102, 241, 0.08);
+  --accent-primary: #0f172a;
+  --accent-secondary: #334155;
+  --accent-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  --accent-light: #f1f5f9;
   
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
   
   --border-color: #e2e8f0;
-  --border-active: #6366f1;
+  --border-active: #0f172a;
   --border-hover: #cbd5e1;
 
   --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.03), 0 1px 2px -1px rgba(15, 23, 42, 0.02);
   --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.04), 0 2px 4px -2px rgba(15, 23, 42, 0.03);
   --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.02);
-  --shadow-indigo: 0 4px 14px 0 rgba(79, 70, 229, 0.3);
+  --shadow-indigo: 0 2px 8px 0 rgba(15, 23, 42, 0.12);
 
   /* ── Typography ── */
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -348,9 +348,9 @@ a:hover {
 }
 
 .stat-icon-wrapper.indigo {
-  background: var(--accent-light);
-  border-color: rgba(99, 102, 241, 0.15);
-  color: var(--accent-primary);
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
 }
 
 .stat-icon-wrapper.emerald {
@@ -365,7 +365,7 @@ a:hover {
   color: #64748b;
 }
 
-/* ── Buttons (High-End Indigo & Outline) ── */
+/* ── Buttons (Clean White & Slate) ── */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -383,14 +383,15 @@ a:hover {
 }
 
 .btn-primary {
-  background: var(--accent-gradient);
+  background: #0f172a;
   color: #ffffff;
-  box-shadow: var(--shadow-indigo);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
 }
 
 .btn-primary:hover {
+  background: #1e293b;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
 }
 
 .btn-secondary {
@@ -562,9 +563,9 @@ a:hover {
 }
 
 .badge-blue {
-  background: var(--accent-light);
-  color: var(--accent-primary);
-  border-color: rgba(99, 102, 241, 0.2);
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
 }
 
 .badge-green {
