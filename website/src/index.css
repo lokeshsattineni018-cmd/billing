@@ -383,15 +383,17 @@ a:hover {
 }
 
 .btn-primary {
-  background: #0f172a;
+  background: #0b5394;
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+  border-color: #0b5394;
+  box-shadow: 0 2px 6px rgba(11, 83, 148, 0.2);
 }
 
 .btn-primary:hover {
-  background: #1e293b;
+  background: #083c6c;
+  border-color: #083c6c;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 4px 12px rgba(11, 83, 148, 0.3);
 }
 
 .btn-secondary {

@@ -33,10 +33,15 @@ export function AuthProvider({ children }) {
     return userData;
   };
 
-  const logout = () => {
+  const logout = (skipConfirm = false) => {
+    if (!skipConfirm) {
+      const confirmed = window.confirm('Are you sure you want to sign out / log out?');
+      if (!confirmed) return false;
+    }
     localStorage.removeItem('srsf_token');
     localStorage.removeItem('srsf_user');
     setUser(null);
+    return true;
   };
 
   return (

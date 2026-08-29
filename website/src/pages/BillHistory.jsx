@@ -191,44 +191,74 @@ Thank you for your business!`;
       </div>
 
       {/* Search & Filters */}
-      <form className="search-bar" onSubmit={handleSearch}>
+      <form className="search-bar" onSubmit={handleSearch} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px', marginBottom: '16px' }}>
         <input
           type="text"
           className="form-input"
           placeholder="Search by company name or invoice number..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          style={{ flex: 2 }}
         />
-        <input
-          type="date"
-          className="form-input"
-          style={{ maxWidth: '160px' }}
-          value={dateFrom}
-          onChange={(e) => setDateFrom(e.target.value)}
-          title="From Date"
-        />
-        <input
-          type="date"
-          className="form-input"
-          style={{ maxWidth: '160px' }}
-          value={dateTo}
-          onChange={(e) => setDateTo(e.target.value)}
-          title="To Date"
-        />
-        <select
-          className="form-select"
-          style={{ maxWidth: '150px' }}
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="">All Statuses</option>
-          <option value="Paid">Paid Only</option>
-          <option value="Pending">Pending Only</option>
-        </select>
-        <button type="submit" className="btn btn-primary">
-          <SearchIcon size={16} /> Search
-        </button>
-        <button type="button" className="btn btn-ghost" onClick={clearFilters}>Clear</button>
+        
+        {/* Labeled From & To Date Pickers */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', flex: 1.5, minWidth: '240px' }}>
+          <div>
+            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '2px' }}>
+              From Date
+            </label>
+            <input
+              type="date"
+              className="form-input"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '2px' }}>
+              To Date
+            </label>
+            <input
+              type="date"
+              className="form-input"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div style={{ minWidth: '140px' }}>
+          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '2px' }}>
+            Payment Status
+          </label>
+          <select
+            className="form-select"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">All Statuses</option>
+            <option value="Paid">Paid Only</option>
+            <option value="Pending">Pending Only</option>
+          </select>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            style={{ background: '#0b5394', color: '#ffffff', border: '1px solid #0b5394', fontWeight: 700, padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <SearchIcon size={16} color="#ffffff" /> Search
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            style={{ padding: '10px 14px', color: '#64748b' }}
+            onClick={clearFilters}
+          >
+            Clear
+          </button>
+        </div>
       </form>
 
       {/* Bills Table */}
@@ -289,16 +319,30 @@ Thank you for your business!`;
 
                   <div className="mobile-bill-actions">
                     <button
-                      className="btn btn-primary btn-sm"
-                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 8px', fontSize: '0.85rem' }}
+                      className="btn btn-secondary btn-sm"
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        padding: '10px 8px',
+                        fontSize: '0.85rem',
+                        background: '#ffffff',
+                        border: '1.5px solid #0b5394',
+                        color: '#0b5394',
+                        fontWeight: 700,
+                        borderRadius: '6px',
+                        boxShadow: '0 1px 3px rgba(11, 83, 148, 0.08)'
+                      }}
                       onClick={(e) => handleDownloadPDF(e, bill._id, bill.billNo)}
                     >
-                      <DownloadIcon size={16} /> Download PDF
+                      <DownloadIcon size={16} color="#0b5394" /> Download PDF
                     </button>
                     {!bill.isVoided && (
                       <button
                         className="btn btn-whatsapp btn-sm"
-                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 8px', fontSize: '0.85rem' }}
+                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 8px', fontSize: '0.85rem', fontWeight: 700, borderRadius: '6px' }}
                         onClick={(e) => handleShareWhatsApp(e, bill)}
                       >
                         <WhatsAppIcon size={16} color="#ffffff" /> WhatsApp
@@ -306,10 +350,11 @@ Thank you for your business!`;
                     )}
                     <button
                       className="btn btn-secondary btn-sm"
-                      style={{ padding: '10px 12px' }}
+                      style={{ padding: '10px 14px', background: '#ffffff', border: '1px solid #cbd5e1', color: '#0b5394', borderRadius: '6px' }}
                       onClick={(e) => handlePrint(e, bill._id)}
+                      title="Print Invoice"
                     >
-                      <PrintIcon size={16} />
+                      <PrintIcon size={16} color="#0b5394" />
                     </button>
                   </div>
                 </div>
