@@ -1,14 +1,15 @@
 const express = require('express');
 const Bill = require('../models/Bill');
-const { protect } = require('../middleware/auth');
+const { protect, restrictTo } = require('../middleware/auth');
 
 const router = express.Router();
 
 /**
  * GET /api/dashboard/summary
  * Today's sales, this month's sales, total receivables, total invoices, and recent invoices
+ * (Owner and Admin only)
  */
-router.get('/summary', protect, async (req, res) => {
+router.get('/summary', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
     const now = new Date();
 
@@ -74,8 +75,9 @@ router.get('/summary', protect, async (req, res) => {
 /**
  * GET /api/dashboard/daily-summary
  * Detailed daily business summary with top buyer and WhatsApp-formatted message
+ * (Owner and Admin only)
  */
-router.get('/daily-summary', protect, async (req, res) => {
+router.get('/daily-summary', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());

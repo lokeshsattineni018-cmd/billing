@@ -16,7 +16,8 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ message: 'Not authorized — no token provided' });
     }
 
-    const secret = process.env.JWT_SECRET || 'vijaya-durga-super-secret-key-2024';
+    const { getJwtSecret } = require('./security');
+    const secret = getJwtSecret();
     const decoded = jwt.verify(token, secret);
     const user = await User.findById(decoded.id);
 

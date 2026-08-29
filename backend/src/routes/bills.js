@@ -4,15 +4,16 @@ const Bill = require('../models/Bill');
 const Settings = require('../models/Settings');
 const { getNextSequence } = require('../models/Counter');
 const { protect, restrictTo } = require('../middleware/auth');
+const { billCreateLimiter, escapeRegex } = require('../middleware/security');
 
 const router = express.Router();
 
 /**
  * GET /api/bills/ledger
  * Customer Ledger with total invoiced, paid, and outstanding balances
- * (Excludes voided bills)
+ * (Owner and Admin only — protects confidential customer financial ledgers)
  */
-router.get('/ledger', protect, async (req, res) => {
+router.get('/ledger', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
     const customers = await Bill.aggregate([
       {
@@ -75,31 +76,32 @@ router.get('/ledger', protect, async (req, res) => {
  */
 router.get('/', protect, async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
     const skip = (page - 1) * limit;
 
     const filter = {};
 
-    if (req.query.search) {
+    if (req.query.search && typeof req.query.search === 'string') {
       const search = req.query.search.trim();
+      const escaped = escapeRegex(search);
       const billNoSearch = parseInt(search);
 
-      if (!isNaN(billNoSearch)) {
+      if (!isNaN(billNoSearch) && String(billNoSearch) === search) {
         filter.$or = [
           { billNo: billNoSearch },
-          { companyName: { $regex: search, $options: 'i' } },
+          { companyName: { $regex: escaped, $options: 'i' } },
         ];
       } else {
-        filter.companyName = { $regex: search, $options: 'i' };
+        filter.companyName = { $regex: escaped, $options: 'i' };
       }
     }
 
-    if (req.query.customer) {
-      filter.companyName = req.query.customer;
+    if (req.query.customer && typeof req.query.customer === 'string') {
+      filter.companyName = req.query.customer.trim();
     }
 
-    if (req.query.status) {
+    if (req.query.status && ['Pending', 'Paid'].includes(req.query.status)) {
       filter.paymentStatus = req.query.status;
     }
 
@@ -111,18 +113,18 @@ router.get('/', protect, async (req, res) => {
 
     if (req.query.from || req.query.to) {
       filter.date = {};
-      if (req.query.from) {
+      if (req.query.from && !isNaN(new Date(req.query.from).getTime())) {
         filter.date.$gte = new Date(req.query.from);
       }
-      if (req.query.to) {
+      if (req.query.to && !isNaN(new Date(req.query.to).getTime())) {
         const toDate = new Date(req.query.to);
         toDate.setHours(23, 59, 59, 999);
         filter.date.$lte = toDate;
       }
     }
 
-    // Export all if limit === -1
-    const isExport = req.query.limit === '-1' || req.query.all === 'true';
+    // Export all if limit === -1 and user is owner/admin
+    const isExport = (req.query.limit === '-1' || req.query.all === 'true') && ['owner', 'admin'].includes(req.user.role);
 
     const [bills, total] = await Promise.all([
       isExport
@@ -190,7 +192,6 @@ function calculateVerifiedBillTotals(items, cgstAmount = 0, sgstAmount = 0, igst
   const numSgst = Math.round((parseFloat(sgstAmount) || 0) * 100) / 100;
   const numIgst = Math.round((parseFloat(igstAmount) || 0) * 100) / 100;
 
-  // Traditional mandi trade total = subtotal (or subtotal + tax if applied)
   const grandTotal = Math.round((subtotal + numCgst + numSgst + numIgst) * 100) / 100;
 
   return {
@@ -205,9 +206,9 @@ function calculateVerifiedBillTotals(items, cgstAmount = 0, sgstAmount = 0, igst
 
 /**
  * POST /api/bills
- * Create a new invoice with server-side calculation and route-level validation
+ * Create a new invoice with rate limiting, server-side calculation, and route validation
  */
-router.post('/', protect, [
+router.post('/', protect, billCreateLimiter, [
   body('companyName').trim().notEmpty().withMessage('Company name is required'),
   body('date').optional().isISO8601().withMessage('Invoice date must be a valid date format'),
   body('items').custom((value, { req }) => {
@@ -261,17 +262,16 @@ router.post('/', protect, [
       paymentStatus,
     } = req.body;
 
-    // Fetch GSTIN dynamically from Settings (Task 4: Remove hardcoded fallback)
+    // Fetch GSTIN dynamically from Settings
     let settings = await Settings.findOne();
     if (!settings || !settings.gstin) {
       return res.status(400).json({
-        message: 'Business GSTIN is not configured in Settings. Please set your business GSTIN in the Settings page first.',
+        message: 'Business GSTIN is not configured in Settings. Please set your business GSTIN in Settings first.',
       });
     }
 
     const gstin = (companyGstin?.trim() || settings.gstin).trim();
 
-    // Prepare items array
     if (!items || !Array.isArray(items) || items.length === 0) {
       items = [{
         sno: 1,
@@ -284,7 +284,6 @@ router.post('/', protect, [
       }];
     }
 
-    // 1. Server-Side Recalculation & Total Verification (Task 1)
     let calculated;
     try {
       calculated = calculateVerifiedBillTotals(items, cgstAmount, sgstAmount, igstAmount);
@@ -293,7 +292,6 @@ router.post('/', protect, [
     }
 
     const clientProvidedTotal = parseFloat(total) || parseFloat(grandTotal) || 0;
-    // Verify client total matches within 1.00 rounding tolerance (either subtotal or grandTotal with tax)
     const matchesSubtotal = Math.abs(clientProvidedTotal - calculated.subtotal) <= 1.00;
     const matchesGrandTotal = Math.abs(clientProvidedTotal - calculated.grandTotal) <= 1.00;
 
@@ -310,7 +308,7 @@ router.post('/', protect, [
       date: date ? new Date(date) : new Date(),
       companyName: companyName.trim(),
       companyGstin: gstin,
-      customerPhone: customerPhone ? customerPhone.replace(/\D/g, '') : '',
+      customerPhone: customerPhone ? customerPhone.replace(/\D/g, '').slice(0, 10) : '',
       particulars: calculated.processedItems[0]?.particulars || 'Fresh Seafood / Prawns Supply',
       hsn: calculated.processedItems[0]?.hsn || '0306',
       quantity: calculated.processedItems[0]?.quantity,
@@ -340,7 +338,7 @@ router.post('/', protect, [
 
 /**
  * PUT /api/bills/:id
- * Edit existing invoice (Task 2: Same-day typo correction window)
+ * Edit existing invoice (Same-day correction with IDOR protection)
  */
 router.put('/:id', protect, [
   body('companyName').optional().trim().notEmpty().withMessage('Company name cannot be empty'),
@@ -361,14 +359,15 @@ router.put('/:id', protect, [
       return res.status(400).json({ message: 'Cannot edit a voided invoice.' });
     }
 
-    // Check same-day edit window (unless user is admin)
+    // IDOR & Authorization check: only admin/owner or original creator on the same calendar day
+    const isOwnerOrAdmin = ['owner', 'admin'].includes(req.user.role);
+    const isCreator = bill.createdBy?.toString() === req.user._id?.toString();
     const billDate = new Date(bill.createdAt || bill.date);
-    const today = new Date();
-    const isSameDay = billDate.toDateString() === today.toDateString();
+    const isSameDay = billDate.toDateString() === new Date().toDateString();
 
-    if (!isSameDay && req.user.role !== 'admin' && req.user.role !== 'owner') {
+    if (!isOwnerOrAdmin && (!isCreator || !isSameDay)) {
       return res.status(403).json({
-        message: 'Invoices can only be edited on the same calendar day they were issued.',
+        message: 'You can only edit your own invoices on the same day they were created.',
       });
     }
 
@@ -387,9 +386,9 @@ router.put('/:id', protect, [
     } = req.body;
 
     if (companyName) bill.companyName = companyName.trim();
-    if (customerPhone !== undefined) bill.customerPhone = customerPhone.replace(/\D/g, '');
-    if (date) bill.date = new Date(date);
-    if (paymentStatus) bill.paymentStatus = paymentStatus;
+    if (customerPhone !== undefined) bill.customerPhone = customerPhone.replace(/\D/g, '').slice(0, 10);
+    if (date && isOwnerOrAdmin) bill.date = new Date(date);
+    if (paymentStatus && isOwnerOrAdmin) bill.paymentStatus = paymentStatus;
 
     if (items && Array.isArray(items) && items.length > 0) {
       const calculated = calculateVerifiedBillTotals(
@@ -428,9 +427,9 @@ router.put('/:id', protect, [
 
 /**
  * PATCH /api/bills/:id/void
- * Void an invoice (Task 2: Keep record in DB for audit trail, never hard-delete)
+ * Void an invoice (Owner and Admin only)
  */
-router.patch('/:id/void', protect, [
+router.patch('/:id/void', protect, restrictTo('owner', 'admin'), [
   body('reason').optional().trim(),
 ], async (req, res) => {
   try {

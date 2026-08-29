@@ -3,14 +3,16 @@ const jwt = require('jsonwebtoken');
 const Bill = require('../models/Bill');
 const User = require('../models/User');
 const { generateBillPDFBuffer } = require('../services/pdfService');
+const { getJwtSecret, generalLimiter } = require('../middleware/security');
 
 const router = express.Router();
 
 /**
  * GET /api/bills/:id/pdf
- * Generate and stream Amazon-style PDF invoice
+ * Generate and stream verified PDF invoice
+ * Requires valid JWT via Authorization header or token query parameter
  */
-router.get('/:id/pdf', async (req, res) => {
+router.get('/:id/pdf', generalLimiter, async (req, res) => {
   try {
     let token = req.query.token;
     if (!token && req.headers.authorization?.startsWith('Bearer')) {
@@ -18,12 +20,13 @@ router.get('/:id/pdf', async (req, res) => {
     }
 
     if (!token) {
-      return res.status(401).send('Not authorized - missing token');
+      return res.status(401).send('Not authorized - missing authentication token');
     }
 
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const secret = getJwtSecret();
+      decoded = jwt.verify(token, secret);
     } catch (err) {
       return res.status(401).send('Invalid or expired token. Please log in again.');
     }
@@ -41,7 +44,7 @@ router.get('/:id/pdf', async (req, res) => {
     const pdfBuffer = await generateBillPDFBuffer(bill);
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="Invoice-${bill.billNo}.pdf"`);
+    res.setHeader('Content-Disposition', `inline; filename="Invoice-${bill.billNo}${bill.isVoided ? '-VOIDED' : ''}.pdf"`);
     res.setHeader('Content-Length', pdfBuffer.length);
     res.send(pdfBuffer);
   } catch (error) {

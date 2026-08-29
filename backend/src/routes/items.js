@@ -1,7 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const Item = require('../models/Item');
-const { protect } = require('../middleware/auth');
+const { protect, restrictTo } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -20,9 +20,9 @@ router.get('/', protect, async (req, res) => {
 
 /**
  * POST /api/items
- * Create a new item
+ * Create a new item (Owner / Admin only)
  */
-router.post('/', protect, [
+router.post('/', protect, restrictTo('owner', 'admin'), [
   body('name').trim().notEmpty().withMessage('Item name is required'),
   body('defaultRate').isFloat({ min: 0 }).withMessage('Default rate must be a positive number'),
 ], async (req, res) => {
@@ -33,8 +33,8 @@ router.post('/', protect, [
     }
 
     const item = await Item.create({
-      name: req.body.name,
-      defaultRate: req.body.defaultRate,
+      name: req.body.name.trim(),
+      defaultRate: parseFloat(req.body.defaultRate) || 0,
     });
 
     res.status(201).json(item);
@@ -45,17 +45,25 @@ router.post('/', protect, [
 
 /**
  * PUT /api/items/:id
- * Update an item (name, rate)
+ * Update an item (Owner / Admin only)
  */
-router.put('/:id', protect, async (req, res) => {
+router.put('/:id', protect, restrictTo('owner', 'admin'), [
+  body('name').optional().trim().notEmpty().withMessage('Item name cannot be empty'),
+  body('defaultRate').optional().isFloat({ min: 0 }).withMessage('Rate must be positive'),
+], async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const item = await Item.findById(req.params.id);
     if (!item || !item.isActive) {
       return res.status(404).json({ message: 'Item not found' });
     }
 
-    if (req.body.name !== undefined) item.name = req.body.name;
-    if (req.body.defaultRate !== undefined) item.defaultRate = req.body.defaultRate;
+    if (req.body.name !== undefined) item.name = req.body.name.trim();
+    if (req.body.defaultRate !== undefined) item.defaultRate = parseFloat(req.body.defaultRate);
 
     await item.save();
     res.json(item);
@@ -66,9 +74,9 @@ router.put('/:id', protect, async (req, res) => {
 
 /**
  * DELETE /api/items/:id
- * Soft-delete an item
+ * Soft-delete an item (Owner / Admin only)
  */
-router.delete('/:id', protect, async (req, res) => {
+router.delete('/:id', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
     const item = await Item.findById(req.params.id);
     if (!item) {

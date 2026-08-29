@@ -1,7 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const connectDB = require('./config/db');
+const { sanitizeMongoInput, generalLimiter } = require('./middleware/security');
 
 // Route imports
 const authRoutes = require('./routes/auth');
@@ -14,14 +16,48 @@ const pdfRoutes = require('./routes/pdf');
 
 const app = express();
 
-// Standard Middlewares
-app.use(cors({
-  origin: true,
-  credentials: true,
+// Security Headers via Helmet
+app.use(helmet({
+  contentSecurityPolicy: false, // Allows PDF streaming and inline preview
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
-app.use(express.json());
 
-// Request logger for debugging in Vercel
+// Strictly Configured CORS
+const allowedOrigins = [
+  'https://billing-snowy-three.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin matches allowed list or vercel preview domains
+    const isAllowed = allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin);
+    if (isAllowed) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS blocked request from unauthorized origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// Body parser with size limits to prevent body-overflow DoS
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// NoSQL / MongoDB Operator Injection Sanitization
+app.use(sanitizeMongoInput);
+
+// General API Rate Limiting
+app.use('/api', generalLimiter);
+
+// Request logger for serverless observability
 app.use((req, res, next) => {
   console.log(`[${req.method}] ${req.url}`);
   next();
@@ -66,8 +102,8 @@ app.use((req, res) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).json({ message: 'Internal server error', error: err.message });
+  console.error('Server error:', err.message);
+  res.status(err.status || 500).json({ message: err.message || 'Internal server error' });
 });
 
 module.exports = app;
