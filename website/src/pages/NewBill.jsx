@@ -2,11 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { billsAPI, settingsAPI } from '../services/api';
 import { formatCurrency, useToast, Toast } from '../utils/helpers';
-import { PrintIcon, PlusIcon, WhatsAppIcon, ArrowLeftIcon } from '../components/Icons';
+import { useLanguage } from '../context/LanguageContext';
+import { PrintIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
 
 export default function NewBill() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
   const { toast, showToast } = useToast();
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -27,11 +29,13 @@ export default function NewBill() {
     },
   ]);
 
-  const [cgstRate, setCgstRate] = useState('');
-  const [cgstAmount, setCgstAmount] = useState('');
-  const [sgstRate, setSgstRate] = useState('');
-  const [sgstAmount, setSgstAmount] = useState('');
-  const [igstAmount, setIgstAmount] = useState('');
+  // Tax Details
+  const [showTaxSection, setShowTaxSection] = useState(true);
+  const [cgstRate, setCgstRate] = useState('2.5');
+  const [cgstAmount, setCgstAmount] = useState('100.00');
+  const [sgstRate, setSgstRate] = useState('2.5');
+  const [sgstAmount, setSgstAmount] = useState('100.00');
+  const [igstAmount, setIgstAmount] = useState('100.00');
 
   const [customersList, setCustomersList] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -47,6 +51,11 @@ export default function NewBill() {
       setCompanyName(clone.companyName || '');
       setCustomerPhone(clone.customerPhone || '');
       if (clone.companyGstin) setCompanyGstin(clone.companyGstin);
+      if (clone.cgstRate) setCgstRate(clone.cgstRate);
+      if (clone.cgstAmount) setCgstAmount(String(clone.cgstAmount));
+      if (clone.sgstRate) setSgstRate(clone.sgstRate);
+      if (clone.sgstAmount) setSgstAmount(String(clone.sgstAmount));
+      if (clone.igstAmount) setIgstAmount(String(clone.igstAmount));
       if (clone.items && clone.items.length > 0) {
         setItems(clone.items.map((it, idx) => ({ ...it, sno: idx + 1 })));
       } else {
@@ -141,8 +150,7 @@ export default function NewBill() {
   };
 
   const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-  const totalTax = (parseFloat(cgstAmount) || 0) + (parseFloat(sgstAmount) || 0) + (parseFloat(igstAmount) || 0);
-  const grandTotal = Math.round((subtotal + totalTax) * 100) / 100;
+  const grandTotal = subtotal; // Traditional wholesale trade bill total
 
   const handleSave = async (actionType = 'save') => {
     if (!companyName.trim()) {
@@ -178,9 +186,9 @@ export default function NewBill() {
         quantity: parseFloat(items[0]?.quantity) || 0,
         rate: parseFloat(items[0]?.rate) || 0,
         taxableValue: subtotal,
-        cgstRate,
+        cgstRate: cgstRate.trim(),
         cgstAmount: parseFloat(cgstAmount) || 0,
-        sgstRate,
+        sgstRate: sgstRate.trim(),
         sgstAmount: parseFloat(sgstAmount) || 0,
         igstRate: '',
         igstAmount: parseFloat(igstAmount) || 0,
@@ -216,7 +224,7 @@ export default function NewBill() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [companyName, customerPhone, items, date, paymentStatus]);
+  }, [companyName, customerPhone, items, date, paymentStatus, cgstRate, cgstAmount, sgstRate, sgstAmount, igstAmount]);
 
   const matchingCustomers = customersList.filter((c) =>
     companyName.trim() &&
@@ -231,18 +239,18 @@ export default function NewBill() {
       {/* Page Title & Back */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0 }}>New Invoice</h2>
+          <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>{t('newInvoiceTitle')}</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', margin: '2px 0 0 0' }}>
-            GSTIN: <span style={{ fontWeight: 600, color: 'var(--accent-primary)' }}>{companyGstin}</span>
+            GSTIN: <span style={{ fontWeight: 600, color: '#0b5394' }}>{companyGstin}</span>
           </p>
         </div>
         <button className="btn btn-ghost btn-sm" onClick={() => navigate('/')}>
-          <ArrowLeftIcon size={16} /> Back
+          <ArrowLeftIcon size={16} /> {t('back')}
         </button>
       </div>
 
-      {/* Structured Billing Form */}
-      <div className="card new-bill-card" style={{ padding: '20px 16px' }}>
+      {/* Structured Billing Form Card */}
+      <div className="card new-bill-card" style={{ padding: '20px 16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
 
         {/* ── STEP 1: CUSTOMER DETAILS ── */}
         <div style={{ marginBottom: '22px' }}>
@@ -250,19 +258,19 @@ export default function NewBill() {
             <div style={{ background: '#0b5394', color: '#ffffff', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800 }}>
               1
             </div>
-            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              Buyer / Customer Info
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
+              {t('step1Customer')}
             </h3>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
             {/* Customer Name input with dropdown */}
             <div className="form-group" style={{ marginBottom: 0, position: 'relative' }} ref={dropdownRef}>
-              <label className="form-label">Customer / Company Name *</label>
+              <label className="form-label" style={{ fontWeight: 700 }}>{t('customerName')} *</label>
               <input
                 type="text"
                 className="form-input form-input-lg"
-                placeholder="Enter customer name..."
+                placeholder={t('customerNamePlaceholder')}
                 value={companyName}
                 onChange={(e) => {
                   setCompanyName(e.target.value);
@@ -302,9 +310,9 @@ export default function NewBill() {
                       onMouseDown={() => handleSelectCustomer(c)}
                     >
                       <div>
-                        <strong style={{ color: 'var(--text-primary)', fontSize: '0.92rem' }}>{c.companyName}</strong>
+                        <strong style={{ color: '#0f172a', fontSize: '0.92rem' }}>{c.companyName}</strong>
                         {c.customerPhone && (
-                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginLeft: '8px' }}>
+                          <span style={{ fontSize: '0.78rem', color: '#64748b', marginLeft: '8px' }}>
                             Cell: {c.customerPhone}
                           </span>
                         )}
@@ -318,7 +326,7 @@ export default function NewBill() {
 
             {/* Customer Phone */}
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Phone / WhatsApp (Optional)</label>
+              <label className="form-label" style={{ fontWeight: 700 }}>{t('customerPhone')}</label>
               <input
                 type="tel"
                 className="form-input"
@@ -339,18 +347,18 @@ export default function NewBill() {
               <div style={{ background: '#0b5394', color: '#ffffff', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800 }}>
                 2
               </div>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                Weighing & Goods Details
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
+                {t('step2Goods')}
               </h3>
             </div>
 
             <button
               type="button"
               className="btn btn-secondary btn-sm"
-              style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', fontSize: '0.8rem' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', fontSize: '0.8rem', fontWeight: 700 }}
               onClick={handleAddItem}
             >
-              <PlusIcon size={14} /> Add Item
+              <PlusIcon size={14} /> {t('addItem')}
             </button>
           </div>
 
@@ -368,7 +376,7 @@ export default function NewBill() {
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0b5394' }}>Item #{index + 1}</span>
+                  <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0b5394' }}>{t('item')} #{index + 1}</span>
                   {items.length > 1 && (
                     <button
                       type="button"
@@ -376,13 +384,13 @@ export default function NewBill() {
                       style={{ color: '#ef4444', padding: '2px 6px', fontSize: '0.8rem' }}
                       onClick={() => handleRemoveItem(index)}
                     >
-                      ✕ Remove
+                      ✕ {t('remove')}
                     </button>
                   )}
                 </div>
 
                 <div className="form-group" style={{ marginBottom: '8px' }}>
-                  <label className="form-label" style={{ fontSize: '0.76rem' }}>Description of Goods</label>
+                  <label className="form-label" style={{ fontSize: '0.76rem' }}>{t('goodsDescription')}</label>
                   <input
                     type="text"
                     className="form-input"
@@ -394,7 +402,7 @@ export default function NewBill() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label" style={{ fontSize: '0.76rem' }}>Weight (KG) *</label>
+                    <label className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>{t('weightKg')} *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -408,7 +416,7 @@ export default function NewBill() {
                   </div>
 
                   <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label" style={{ fontSize: '0.76rem' }}>Rate (₹/KG) *</label>
+                    <label className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>{t('ratePerKg')} *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -423,7 +431,7 @@ export default function NewBill() {
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', border: '1px solid #e2e8f0', padding: '10px 12px', borderRadius: '6px', marginTop: '6px' }}>
-                  <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Amount:</span>
+                  <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 600 }}>{t('itemAmount')}:</span>
                   <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0b5394' }}>
                     {formatCurrency(item.amount || 0)}
                   </span>
@@ -433,23 +441,23 @@ export default function NewBill() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="table-container desktop-only-table" style={{ border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+          <div className="table-container desktop-only-table" style={{ border: '1px solid #e2e8f0', borderRadius: '8px' }}>
             <table className="table" style={{ margin: 0 }}>
               <thead>
-                <tr style={{ backgroundColor: 'var(--bg-secondary)' }}>
-                  <th style={{ width: '45px', textAlign: 'center' }}>S.No</th>
-                  <th>PARTICULARS</th>
-                  <th style={{ width: '90px', textAlign: 'center' }}>HSN</th>
-                  <th style={{ width: '120px', textAlign: 'right' }}>QTY (KG) *</th>
-                  <th style={{ width: '120px', textAlign: 'right' }}>PRICE (₹) *</th>
-                  <th style={{ width: '130px', textAlign: 'right' }}>AMOUNT (₹)</th>
+                <tr style={{ backgroundColor: '#f8fafc' }}>
+                  <th style={{ width: '45px', textAlign: 'center' }}>{t('sno')}</th>
+                  <th>{t('particulars')}</th>
+                  <th style={{ width: '90px', textAlign: 'center' }}>{t('hsn')}</th>
+                  <th style={{ width: '120px', textAlign: 'right' }}>{t('weightKg')} *</th>
+                  <th style={{ width: '120px', textAlign: 'right' }}>{t('price')} (₹) *</th>
+                  <th style={{ width: '130px', textAlign: 'right' }}>{t('amount')} (₹)</th>
                   <th style={{ width: '45px', textAlign: 'center' }}></th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item, index) => (
                   <tr key={index}>
-                    <td style={{ textAlign: 'center', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    <td style={{ textAlign: 'center', fontWeight: 600, color: '#64748b' }}>
                       {index + 1}
                     </td>
                     <td>
@@ -496,7 +504,7 @@ export default function NewBill() {
                         placeholder="0.00"
                       />
                     </td>
-                    <td style={{ textAlign: 'right', fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                    <td style={{ textAlign: 'right', fontWeight: 700, fontSize: '0.95rem', color: '#0f172a' }}>
                       {formatCurrency(item.amount || 0)}
                     </td>
                     <td style={{ textAlign: 'center' }}>
@@ -517,6 +525,75 @@ export default function NewBill() {
               </tbody>
             </table>
           </div>
+
+          {/* ── Tax Details Breakdown Box ── */}
+          <div style={{ marginTop: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b5394' }}>
+                🏛️ {t('taxDetails')}
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.74rem' }}>{t('cgstRate')}</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={cgstRate}
+                  onChange={(e) => setCgstRate(e.target.value)}
+                  placeholder="2.5"
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.74rem' }}>{t('cgstAmount')}</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="form-input"
+                  value={cgstAmount}
+                  onChange={(e) => setCgstAmount(e.target.value)}
+                  placeholder="100.00"
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.74rem' }}>{t('sgstRate')}</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={sgstRate}
+                  onChange={(e) => setSgstRate(e.target.value)}
+                  placeholder="2.5"
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.74rem' }}>{t('sgstAmount')}</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="form-input"
+                  value={sgstAmount}
+                  onChange={(e) => setSgstAmount(e.target.value)}
+                  placeholder="100.00"
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.74rem' }}>{t('igstAmount')}</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="form-input"
+                  value={igstAmount}
+                  onChange={(e) => setIgstAmount(e.target.value)}
+                  placeholder="100.00"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '18px 0' }} />
@@ -527,27 +604,27 @@ export default function NewBill() {
             <div style={{ background: '#0b5394', color: '#ffffff', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800 }}>
               3
             </div>
-            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              Payment & Total
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
+              {t('step3Payment')}
             </h3>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Payment Status</label>
+              <label className="form-label" style={{ fontWeight: 700 }}>{t('paymentStatus')}</label>
               <select
                 className="form-input"
                 value={paymentStatus}
                 onChange={(e) => setPaymentStatus(e.target.value)}
                 style={{ fontWeight: 700 }}
               >
-                <option value="Pending">⏳ Pending</option>
-                <option value="Paid">✅ Paid</option>
+                <option value="Pending">⏳ {t('pending')}</option>
+                <option value="Paid">✅ {t('paid')}</option>
               </select>
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Invoice Date</label>
+              <label className="form-label" style={{ fontWeight: 700 }}>{t('invoiceDate')}</label>
               <input
                 type="date"
                 className="form-input"
@@ -558,13 +635,13 @@ export default function NewBill() {
           </div>
 
           {/* Grand Total Highlight Card */}
-          <div style={{ background: 'linear-gradient(135deg, #0b5394 0%, #1e40af 100%)', borderRadius: '12px', padding: '16px 20px', color: '#ffffff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', boxShadow: '0 4px 14px rgba(11, 83, 148, 0.25)' }}>
+          <div style={{ background: '#0b5394', borderRadius: '10px', padding: '16px 20px', color: '#ffffff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', boxShadow: '0 4px 14px rgba(11, 83, 148, 0.2)' }}>
             <div>
-              <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.85, fontWeight: 600 }}>
-                Total Bill Amount
+              <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.9, fontWeight: 700 }}>
+                {t('totalBillAmount')}
               </div>
-              <div style={{ fontSize: '0.78rem', opacity: 0.75, marginTop: '2px' }}>
-                {items.length} item(s) included
+              <div style={{ fontSize: '0.78rem', opacity: 0.8, marginTop: '2px' }}>
+                {items.length} {t('itemsIncluded')}
               </div>
             </div>
             <div style={{ fontSize: '1.75rem', fontWeight: 900, letterSpacing: '-0.5px' }}>
@@ -582,7 +659,7 @@ export default function NewBill() {
               disabled={saving}
               title="Press Ctrl + Enter to Save and Print immediately"
             >
-              <PrintIcon size={20} /> {saving ? 'Saving...' : 'Save & Print (Ctrl + Enter)'}
+              <PrintIcon size={20} /> {saving ? t('saving') : t('saveAndPrint')}
             </button>
 
             <button
@@ -592,7 +669,7 @@ export default function NewBill() {
               onClick={() => handleSave('save')}
               disabled={saving}
             >
-              Save Only
+              {t('saveOnly')}
             </button>
 
             <button
@@ -601,7 +678,7 @@ export default function NewBill() {
               style={{ width: '100%', padding: '10px', fontSize: '0.9rem', color: '#64748b' }}
               onClick={() => navigate('/')}
             >
-              Cancel
+              {t('cancel')}
             </button>
           </div>
         </div>

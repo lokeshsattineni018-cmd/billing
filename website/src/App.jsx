@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import NewBill from './pages/NewBill';
@@ -23,41 +24,68 @@ function ProtectedRoute({ children }) {
 
 function Sidebar({ onInstall }) {
   const { user, logout } = useAuth();
+  const { lang, toggleLang, t } = useLanguage();
 
-  const isOwnerOrAdmin = user?.role === 'owner' || user?.role === 'admin';
+  const isAdmin = user?.role === 'admin';
 
   const navItems = [
-    { path: '/', label: 'Dashboard', icon: <DashboardIcon size={18} /> },
-    { path: '/new-bill', label: 'New Invoice', icon: <PlusIcon size={18} /> },
-    { path: '/bills', label: 'Invoice History', icon: <InvoiceIcon size={18} /> },
-    ...(isOwnerOrAdmin
-      ? [{ path: '/ledger', label: 'Customer Ledger', icon: <TrendingUpIcon size={18} /> }]
+    { path: '/', label: t('dashboard'), icon: <DashboardIcon size={18} /> },
+    { path: '/new-bill', label: t('newInvoice'), icon: <PlusIcon size={18} /> },
+    { path: '/bills', label: t('invoiceHistory'), icon: <InvoiceIcon size={18} /> },
+    ...(isAdmin
+      ? [{ path: '/ledger', label: t('customerLedger'), icon: <TrendingUpIcon size={18} /> }]
       : []),
-    { path: '/settings', label: 'Settings', icon: <SettingsIcon size={18} /> },
+    { path: '/settings', label: t('settings'), icon: <SettingsIcon size={18} /> },
   ];
 
   return (
     <aside className="sidebar desktop-only-sidebar">
-      <div className="sidebar-brand" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '24px 16px 20px 16px' }}>
+      {/* Brand Header */}
+      <div className="sidebar-brand" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '20px 16px 16px 16px' }}>
         <img
           src={logoImg}
           alt="VIJAYA DURGA AGENCIES Logo"
           style={{
-            width: '54px',
-            height: '54px',
+            width: '52px',
+            height: '52px',
             borderRadius: '50%',
             objectFit: 'cover',
-            border: '2px solid rgba(255, 255, 255, 0.25)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-            marginBottom: '10px',
+            border: '2px solid #0b5394',
+            boxShadow: '0 4px 10px rgba(11, 83, 148, 0.15)',
+            marginBottom: '8px',
           }}
         />
-        <h1 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff', letterSpacing: '0.5px', lineHeight: '1.2' }}>
+        <h1 style={{ fontSize: '1rem', fontWeight: 900, color: '#0b5394', letterSpacing: '0.5px', lineHeight: '1.2' }}>
           VIJAYA DURGA
         </h1>
-        <p style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+        <p style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
           AGENCIES • BILLING
         </p>
+      </div>
+
+      {/* Language Switcher Button in Sidebar */}
+      <div style={{ padding: '8px 14px 4px 14px' }}>
+        <button
+          type="button"
+          onClick={toggleLang}
+          style={{
+            width: '100%',
+            padding: '8px 10px',
+            fontSize: '0.82rem',
+            fontWeight: 700,
+            background: '#f1f5f9',
+            border: '1px solid #cbd5e1',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            color: '#0b5394',
+          }}
+        >
+          🌐 {lang === 'en' ? 'తెలుగులోకి మార్చండి' : 'Switch to English'}
+        </button>
       </div>
 
       <nav className="sidebar-nav">
@@ -75,14 +103,14 @@ function Sidebar({ onInstall }) {
       </nav>
 
       {/* Permanent Install App Button on Desktop */}
-      <div style={{ padding: '12px 14px' }}>
+      <div style={{ padding: '8px 14px' }}>
         <button
           type="button"
           className="btn btn-primary"
-          style={{ width: '100%', padding: '11px 12px', fontSize: '0.85rem', background: 'linear-gradient(135deg, #0b5394, #2563eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: '8px', fontWeight: 700 }}
+          style={{ width: '100%', padding: '10px 12px', fontSize: '0.82rem', background: '#0b5394', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: '6px', fontWeight: 700 }}
           onClick={onInstall}
         >
-          <DownloadIcon size={16} /> Install App
+          <DownloadIcon size={15} /> {t('installApp')}
         </button>
       </div>
 
@@ -97,7 +125,7 @@ function Sidebar({ onInstall }) {
           </div>
         </div>
         <button className="logout-btn" onClick={logout}>
-          <LogoutIcon size={16} /> Sign Out
+          <LogoutIcon size={16} /> {t('signOut')}
         </button>
       </div>
     </aside>
@@ -107,8 +135,11 @@ function Sidebar({ onInstall }) {
 function AppLayout() {
   const [installPrompt, setInstallPrompt] = useState(window.deferredInstallPrompt || null);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
-  const { logout } = useAuth();
+  const { user } = useAuth();
+  const { lang, toggleLang, t } = useLanguage();
   const navigate = useNavigate();
+
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     if (window.deferredInstallPrompt) {
@@ -164,61 +195,81 @@ function AppLayout() {
           <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0b5394' }}>VIJAYA DURGA</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {/* Mobile Language Switcher */}
+          <button
+            type="button"
+            onClick={toggleLang}
+            style={{
+              padding: '5px 8px',
+              fontSize: '0.74rem',
+              fontWeight: 800,
+              background: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              borderRadius: '6px',
+              color: '#0b5394',
+            }}
+          >
+            {lang === 'en' ? 'తెలుగు' : 'English'}
+          </button>
+
           <button
             className="btn btn-primary btn-sm"
-            style={{ padding: '6px 10px', fontSize: '0.76rem', display: 'flex', alignItems: 'center', gap: '4px', background: '#0b5394', borderRadius: '6px' }}
+            style={{ padding: '5px 8px', fontSize: '0.74rem', display: 'flex', alignItems: 'center', gap: '4px', background: '#0b5394', borderRadius: '6px' }}
             onClick={handleInstallApp}
           >
-            <DownloadIcon size={13} /> Install App
+            <DownloadIcon size={13} /> {t('installApp')}
           </button>
+
           <button
             className="btn btn-ghost btn-sm"
             style={{ padding: '6px', color: '#64748b' }}
             onClick={() => navigate('/settings')}
-            title="Settings"
+            title={t('settings')}
           >
             <SettingsIcon size={18} />
           </button>
         </div>
       </header>
 
-      {/* Desktop Sidebar (Hidden on mobile) */}
+      {/* Desktop Sidebar */}
       <Sidebar onInstall={handleInstallApp} />
 
-      {/* Main Single Page Content */}
+      {/* Main Content Area */}
       <main className="main-content">
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/new-bill" element={<NewBill />} />
           <Route path="/bills" element={<BillHistory />} />
           <Route path="/bills/:id" element={<BillDetail />} />
-          <Route path="/ledger" element={<CustomerLedger />} />
+          {isAdmin && <Route path="/ledger" element={<CustomerLedger />} />}
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
 
-      {/* Clean Mobile Bottom Navigation Bar (No merge, fixed at bottom) */}
+      {/* Clean Mobile Bottom Navigation Bar */}
       <nav className="mobile-bottom-nav">
         <NavLink to="/" end className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
           <DashboardIcon size={20} />
-          <span>Home</span>
+          <span>{t('dashboard')}</span>
         </NavLink>
         <NavLink to="/new-bill" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
           <div className="mobile-add-btn">
             <PlusIcon size={22} color="#ffffff" />
           </div>
-          <span>New Bill</span>
+          <span>{t('newInvoice')}</span>
         </NavLink>
         <NavLink to="/bills" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
           <InvoiceIcon size={20} />
-          <span>Invoices</span>
+          <span>{t('invoiceHistory')}</span>
         </NavLink>
-        <NavLink to="/ledger" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
-          <TrendingUpIcon size={20} />
-          <span>Ledger</span>
-        </NavLink>
+        {isAdmin && (
+          <NavLink to="/ledger" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
+            <TrendingUpIcon size={20} />
+            <span>{t('customerLedger')}</span>
+          </NavLink>
+        )}
       </nav>
 
       {/* Install App Helper Modal */}
@@ -277,17 +328,19 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<LoginWrapper />} />
-          <Route
-            path="/*"
-            element={
-              <ProtectedRoute>
-                <AppLayout />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
+        <LanguageProvider>
+          <Routes>
+            <Route path="/login" element={<LoginWrapper />} />
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </LanguageProvider>
       </AuthProvider>
     </BrowserRouter>
   );
