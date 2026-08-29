@@ -102,10 +102,13 @@ const billSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// Indexes for search and filtering
+// Indexes for high-performance search and filtering
 billSchema.index({ companyName: 'text' });
 billSchema.index({ date: -1 });
 billSchema.index({ billNo: -1 });
 billSchema.index({ isVoided: 1 });
+billSchema.index({ isVoided: 1, date: -1, billNo: -1 });
+billSchema.index({ companyName: 1, isVoided: 1, date: -1 });
+billSchema.index({ paymentStatus: 1, isVoided: 1, date: -1 });
 
 module.exports = mongoose.model('Bill', billSchema);

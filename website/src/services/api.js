@@ -45,6 +45,7 @@ export const settingsAPI = {
 export const billsAPI = {
   list: (params) => api.get('/bills', { params }),
   getLedger: () => api.get('/bills/ledger'),
+  getCustomers: () => api.get('/bills/customers/list'),
   getById: (id) => api.get(`/bills/${id}`),
   create: (data) => api.post('/bills', data),
   update: (id, data) => api.put(`/bills/${id}`, data),

@@ -128,8 +128,8 @@ router.get('/', protect, async (req, res) => {
 
     const [bills, total] = await Promise.all([
       isExport
-        ? Bill.find(filter).populate('createdBy', 'name').populate('voidedBy', 'name').sort({ billNo: -1 })
-        : Bill.find(filter).populate('createdBy', 'name').populate('voidedBy', 'name').sort({ billNo: -1 }).skip(skip).limit(limit),
+        ? Bill.find(filter).populate('createdBy', 'name').populate('voidedBy', 'name').sort({ billNo: -1 }).lean()
+        : Bill.find(filter).populate('createdBy', 'name').populate('voidedBy', 'name').sort({ billNo: -1 }).skip(skip).limit(limit).lean(),
       Bill.countDocuments(filter),
     ]);
 
@@ -144,6 +144,35 @@ router.get('/', protect, async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * GET /api/bills/customers
+ * High-speed indexed customer list for quick autocomplete
+ */
+router.get('/customers/list', protect, async (req, res) => {
+  try {
+    const customers = await Bill.aggregate([
+      {
+        $match: {
+          companyName: { $exists: true, $ne: '', $nin: ['null', 'undefined'] },
+          isVoided: { $ne: true },
+        },
+      },
+      {
+        $group: {
+          _id: '$companyName',
+          companyName: { $first: '$companyName' },
+          customerPhone: { $last: '$customerPhone' },
+        },
+      },
+      { $sort: { companyName: 1 } },
+      { $limit: 250 },
+    ]);
+    res.json({ customers });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 

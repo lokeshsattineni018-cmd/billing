@@ -2,19 +2,18 @@ const path = require('path');
 const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const Settings = require('../models/Settings');
-const { ganeshaBase64, durgaBase64, ramDarbarBase64 } = require('../assets/logosData');
+const logos = require('../assets/logosData');
+const ganeshaBase64 = (logos.ganeshaBase64 || logos.GANESHA_BASE64 || '').replace(/^data:image\/\w+;base64,/, '');
+const durgaBase64 = (logos.durgaBase64 || logos.DURGA_BASE64 || '').replace(/^data:image\/\w+;base64,/, '');
+const ramDarbarBase64 = (logos.ramDarbarBase64 || logos.RAM_DARBAR_BASE64 || '').replace(/^data:image\/\w+;base64,/, '');
+
+// Pre-cached in-memory binary image buffers (zero encoding overhead per request)
+const ganeshaBuffer = Buffer.from(ganeshaBase64, 'base64');
+const durgaBuffer = Buffer.from(durgaBase64, 'base64');
+const ramDarbarBuffer = Buffer.from(ramDarbarBase64, 'base64');
 
 /**
  * Generate Traditional Indian Trade Invoice for VIJAYA DURGA AGENCIES
- * Featuring:
- *   - Top bar: TAX INVOICE on top-left, || జై శ్రీరామ్ || in middle, and Cell: 9441429745 on top-right
- *   - Embedded Base64 Divine Logos: Lord Vinayaka (Left), Maa Durga (Center), Ram Darbar (Right)
- *   - Non-bold clean Quantity text
- *   - GSTIN : 37KATPS1500Q1ZR under company name
- *   - Table with multiple item rows and TOTAL row
- *   - Tax breakdown table (Taxable Value | CGST | SGST | IGST)
- *   - Dedicated GRAND TOTAL box after tax table
- *   - Bank Details: Karur Vysya Bank, A/c: 4805135000002964, IFSC: KVBL0004815, Narasapur
  */
 async function generateBillPDFBuffer(bill) {
   return new Promise(async (resolve, reject) => {
@@ -46,11 +45,6 @@ async function generateBillPDFBuffer(bill) {
       const borderBlue = '#0b5394';
       const textDark = '#000000';
       const lineW = 0.85;
-
-      // In-memory binary image buffers (100% reliable on Vercel Serverless)
-      const ganeshaBuffer = Buffer.from(ganeshaBase64, 'base64');
-      const durgaBuffer = Buffer.from(durgaBase64, 'base64');
-      const ramDarbarBuffer = Buffer.from(ramDarbarBase64, 'base64');
 
       let y = 28;
 

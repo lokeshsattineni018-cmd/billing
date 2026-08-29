@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
 const connectDB = require('./config/db');
 const { sanitizeMongoInput, generalLimiter } = require('./middleware/security');
 
@@ -15,6 +16,9 @@ const dashboardRoutes = require('./routes/dashboard');
 const pdfRoutes = require('./routes/pdf');
 
 const app = express();
+
+// High-speed gzip/deflate response compression
+app.use(compression());
 
 // Security Headers via Helmet
 app.use(helmet({

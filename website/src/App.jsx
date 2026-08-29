@@ -1,17 +1,18 @@
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import NewBill from './pages/NewBill';
-import BillHistory from './pages/BillHistory';
-import BillDetail from './pages/BillDetail';
-import CustomerLedger from './pages/CustomerLedger';
-import Settings from './pages/Settings';
 import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon } from './components/Icons';
 import logoImg from './assets/logo.png';
 import './index.css';
+
+const Login = lazy(() => import('./pages/Login'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const NewBill = lazy(() => import('./pages/NewBill'));
+const BillHistory = lazy(() => import('./pages/BillHistory'));
+const BillDetail = lazy(() => import('./pages/BillDetail'));
+const CustomerLedger = lazy(() => import('./pages/CustomerLedger'));
+const Settings = lazy(() => import('./pages/Settings'));
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -246,15 +247,17 @@ function AppLayout() {
 
       {/* Main Content Area */}
       <main className="main-content">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/new-bill" element={<NewBill />} />
-          <Route path="/bills" element={<BillHistory />} />
-          <Route path="/bills/:id" element={<BillDetail />} />
-          {isAdmin && <Route path="/ledger" element={<CustomerLedger />} />}
-          <Route path="/settings" element={<Settings />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <Suspense fallback={<div className="spinner" style={{ minHeight: '60vh' }}></div>}>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/new-bill" element={<NewBill />} />
+            <Route path="/bills" element={<BillHistory />} />
+            <Route path="/bills/:id" element={<BillDetail />} />
+            {isAdmin && <Route path="/ledger" element={<CustomerLedger />} />}
+            <Route path="/settings" element={<Settings />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </main>
 
       {/* Clean Mobile Bottom Navigation Bar */}
@@ -358,5 +361,9 @@ export default function App() {
 function LoginWrapper() {
   const { user } = useAuth();
   if (user) return <Navigate to="/" replace />;
-  return <Login />;
+  return (
+    <Suspense fallback={<div className="spinner" style={{ minHeight: '100vh' }}></div>}>
+      <Login />
+    </Suspense>
+  );
 }

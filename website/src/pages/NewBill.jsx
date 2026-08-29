@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { billsAPI, settingsAPI } from '../services/api';
 import { formatCurrency, useToast, Toast } from '../utils/helpers';
@@ -102,28 +102,32 @@ export default function NewBill() {
     }
   }, [location.state]);
 
-  // Task 3: Auto-save draft to localStorage whenever form changes
+  // Debounced auto-save draft to localStorage (avoids input lag while typing)
   useEffect(() => {
-    if (companyName || items.some((it) => it.quantity || it.rate)) {
-      const draftData = {
-        date,
-        companyName,
-        customerPhone,
-        paymentStatus,
-        items,
-        cgstRate,
-        cgstAmount,
-        sgstRate,
-        sgstAmount,
-        igstAmount,
-        savedAt: new Date().toISOString(),
-      };
-      try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
-      } catch (e) {
-        console.warn('Failed to auto-save draft to localStorage', e);
+    const timer = setTimeout(() => {
+      if (companyName || items.some((it) => it.quantity || it.rate)) {
+        const draftData = {
+          date,
+          companyName,
+          customerPhone,
+          paymentStatus,
+          items,
+          cgstRate,
+          cgstAmount,
+          sgstRate,
+          sgstAmount,
+          igstAmount,
+          savedAt: new Date().toISOString(),
+        };
+        try {
+          localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
+        } catch (e) {
+          console.warn('Failed to auto-save draft to localStorage', e);
+        }
       }
-    }
+    }, 400);
+
+    return () => clearTimeout(timer);
   }, [date, companyName, customerPhone, paymentStatus, items, cgstRate, cgstAmount, sgstRate, sgstAmount, igstAmount]);
 
   useEffect(() => {
@@ -151,7 +155,7 @@ export default function NewBill() {
 
   const loadCustomers = async () => {
     try {
-      const response = await billsAPI.getLedger();
+      const response = await billsAPI.getCustomers();
       if (response.data && response.data.customers) {
         setCustomersList(response.data.customers);
       }
@@ -227,12 +231,15 @@ export default function NewBill() {
     showToast('Draft cleared');
   };
 
-  const subtotal = Math.round(items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) * 100) / 100;
-  const numCgst = parseFloat(cgstAmount) || 0;
-  const numSgst = parseFloat(sgstAmount) || 0;
-  const numIgst = parseFloat(igstAmount) || 0;
-  const totalTax = Math.round((numCgst + numSgst + numIgst) * 100) / 100;
-  const grandTotal = Math.round((subtotal + totalTax) * 100) / 100;
+  const { subtotal, totalTax, grandTotal } = useMemo(() => {
+    const sub = Math.round(items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) * 100) / 100;
+    const numCgst = parseFloat(cgstAmount) || 0;
+    const numSgst = parseFloat(sgstAmount) || 0;
+    const numIgst = parseFloat(igstAmount) || 0;
+    const tax = Math.round((numCgst + numSgst + numIgst) * 100) / 100;
+    const grand = Math.round((sub + tax) * 100) / 100;
+    return { subtotal: sub, totalTax: tax, grandTotal: grand };
+  }, [items, cgstAmount, sgstAmount, igstAmount]);
 
   const handleSave = async (actionType = 'save') => {
     if (!companyName.trim()) {
@@ -317,11 +324,14 @@ export default function NewBill() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [companyName, customerPhone, items, date, paymentStatus, cgstRate, cgstAmount, sgstRate, sgstAmount, igstAmount, companyGstin]);
 
-  const matchingCustomers = customersList.filter((c) =>
-    companyName.trim() &&
-    c.companyName?.toLowerCase().includes(companyName.toLowerCase()) &&
-    c.companyName?.toLowerCase() !== companyName.toLowerCase()
-  );
+  const matchingCustomers = useMemo(() => {
+    if (!companyName || !companyName.trim() || customersList.length === 0) return [];
+    const q = companyName.toLowerCase();
+    return customersList.filter((c) =>
+      c.companyName?.toLowerCase().includes(q) &&
+      c.companyName?.toLowerCase() !== q
+    );
+  }, [companyName, customersList]);
 
   return (
     <div className="page-container fade-in">
