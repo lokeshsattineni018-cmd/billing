@@ -135,7 +135,7 @@ function Sidebar({ onInstall }) {
 function AppLayout() {
   const [installPrompt, setInstallPrompt] = useState(window.deferredInstallPrompt || null);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { lang, toggleLang, t } = useLanguage();
   const navigate = useNavigate();
 
