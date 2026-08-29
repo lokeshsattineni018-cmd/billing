@@ -227,8 +227,12 @@ export default function NewBill() {
     showToast('Draft cleared');
   };
 
-  const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-  const grandTotal = subtotal; // Traditional wholesale trade bill total
+  const subtotal = Math.round(items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) * 100) / 100;
+  const numCgst = parseFloat(cgstAmount) || 0;
+  const numSgst = parseFloat(sgstAmount) || 0;
+  const numIgst = parseFloat(igstAmount) || 0;
+  const totalTax = Math.round((numCgst + numSgst + numIgst) * 100) / 100;
+  const grandTotal = Math.round((subtotal + totalTax) * 100) / 100;
 
   const handleSave = async (actionType = 'save') => {
     if (!companyName.trim()) {
@@ -760,29 +764,53 @@ export default function NewBill() {
             </div>
           </div>
 
-          {/* Clean White Total Bill Amount Card */}
+          {/* Dual Total Summary Card (Before Tax & After Tax) */}
           <div style={{
             background: '#ffffff',
             border: '2px solid #e2e8f0',
-            borderRadius: '10px',
+            borderRadius: '12px',
             padding: '16px 20px',
             color: '#0f172a',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
             marginBottom: '18px',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
           }}>
-            <div>
-              <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#64748b', fontWeight: 700 }}>
-                {t('totalBillAmount')}
+            {/* 1. Before Tax Row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <div>
+                <span style={{ fontSize: '0.86rem', color: '#475569', fontWeight: 700 }}>
+                  📄 {t('totalBeforeTax')}
+                </span>
+                <span style={{ fontSize: '0.74rem', color: '#94a3b8', marginLeft: '6px' }}>
+                  ({items.length} {t('itemsIncluded')})
+                </span>
               </div>
-              <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '2px' }}>
-                {items.length} {t('itemsIncluded')}
-              </div>
+              <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e293b' }}>
+                {formatCurrency(subtotal)}
+              </span>
             </div>
-            <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.5px' }}>
-              {formatCurrency(grandTotal)}
+
+            {/* 2. Tax Additions Row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', fontSize: '0.82rem', color: '#64748b' }}>
+              <span>
+                🏛️ {t('totalTaxAmount')} <span style={{ fontSize: '0.74rem', color: '#0b5394' }}>(CGST + SGST + IGST)</span>
+              </span>
+              <span style={{ fontWeight: 700, color: totalTax > 0 ? '#0b5394' : '#64748b' }}>
+                + {formatCurrency(totalTax)}
+              </span>
+            </div>
+
+            <div style={{ borderTop: '1.5px dashed #cbd5e1', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '0.86rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#0b5394', fontWeight: 900 }}>
+                  💰 {t('grandTotalAfterTax')}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '1px' }}>
+                  Final invoice payable amount
+                </div>
+              </div>
+              <div style={{ fontSize: '1.9rem', fontWeight: 900, color: '#0b5394', letterSpacing: '-0.5px' }}>
+                {formatCurrency(grandTotal)}
+              </div>
             </div>
           </div>
 
