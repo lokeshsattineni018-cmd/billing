@@ -5,6 +5,8 @@ import { formatCurrency, useToast, Toast } from '../utils/helpers';
 import { useLanguage } from '../context/LanguageContext';
 import { PrintIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
 
+const DRAFT_KEY = 'srsf_bill_draft';
+
 export default function NewBill() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,7 +16,7 @@ export default function NewBill() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [companyName, setCompanyName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [companyGstin, setCompanyGstin] = useState('37KATPS1500Q1ZR');
+  const [companyGstin, setCompanyGstin] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('Pending');
 
   const [items, setItems] = useState([
@@ -30,7 +32,6 @@ export default function NewBill() {
   ]);
 
   // Tax Details
-  const [showTaxSection, setShowTaxSection] = useState(true);
   const [cgstRate, setCgstRate] = useState('2.5');
   const [cgstAmount, setCgstAmount] = useState('100.00');
   const [sgstRate, setSgstRate] = useState('2.5');
@@ -40,16 +41,18 @@ export default function NewBill() {
   const [customersList, setCustomersList] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [hasDraftNotice, setHasDraftNotice] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
     loadSettings();
     loadCustomers();
 
+    // Check if cloning an existing bill
     if (location.state?.cloneBill) {
       const clone = location.state.cloneBill;
       setCompanyName(clone.companyName || '');
-      setCustomerPhone(clone.customerPhone || '');
+      setCustomerPhone(clone.customerPhone ? clone.customerPhone.replace(/\D/g, '').slice(0, 10) : '');
       if (clone.companyGstin) setCompanyGstin(clone.companyGstin);
       if (clone.cgstRate) setCgstRate(clone.cgstRate);
       if (clone.cgstAmount) setCgstAmount(String(clone.cgstAmount));
@@ -72,8 +75,56 @@ export default function NewBill() {
         ]);
       }
       showToast('Loaded details from invoice #' + clone.billNo);
+      return;
+    }
+
+    // Task 3: Check for saved offline draft on initial load
+    try {
+      const savedDraft = localStorage.getItem(DRAFT_KEY);
+      if (savedDraft) {
+        const draft = JSON.parse(savedDraft);
+        if (draft && (draft.companyName || (draft.items && draft.items.some((i) => i.quantity || i.rate)))) {
+          if (draft.companyName) setCompanyName(draft.companyName);
+          if (draft.customerPhone) setCustomerPhone(draft.customerPhone);
+          if (draft.date) setDate(draft.date);
+          if (draft.paymentStatus) setPaymentStatus(draft.paymentStatus);
+          if (draft.cgstRate) setCgstRate(draft.cgstRate);
+          if (draft.cgstAmount) setCgstAmount(draft.cgstAmount);
+          if (draft.sgstRate) setSgstRate(draft.sgstRate);
+          if (draft.sgstAmount) setSgstAmount(draft.sgstAmount);
+          if (draft.igstAmount) setIgstAmount(draft.igstAmount);
+          if (draft.items && draft.items.length > 0) setItems(draft.items);
+          setHasDraftNotice(true);
+        }
+      }
+    } catch (e) {
+      console.warn('Could not read draft from localStorage', e);
     }
   }, [location.state]);
+
+  // Task 3: Auto-save draft to localStorage whenever form changes
+  useEffect(() => {
+    if (companyName || items.some((it) => it.quantity || it.rate)) {
+      const draftData = {
+        date,
+        companyName,
+        customerPhone,
+        paymentStatus,
+        items,
+        cgstRate,
+        cgstAmount,
+        sgstRate,
+        sgstAmount,
+        igstAmount,
+        savedAt: new Date().toISOString(),
+      };
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
+      } catch (e) {
+        console.warn('Failed to auto-save draft to localStorage', e);
+      }
+    }
+  }, [date, companyName, customerPhone, paymentStatus, items, cgstRate, cgstAmount, sgstRate, sgstAmount, igstAmount]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -90,6 +141,8 @@ export default function NewBill() {
       const response = await settingsAPI.get();
       if (response.data && response.data.gstin) {
         setCompanyGstin(response.data.gstin);
+      } else {
+        showToast('Business GSTIN not set. Please update in Settings.', 'error');
       }
     } catch (error) {
       console.error('Failed to load settings:', error);
@@ -110,9 +163,15 @@ export default function NewBill() {
   const handleSelectCustomer = (customer) => {
     setCompanyName(customer.companyName);
     if (customer.customerPhone) {
-      setCustomerPhone(customer.customerPhone);
+      setCustomerPhone(customer.customerPhone.replace(/\D/g, '').slice(0, 10));
     }
     setShowSuggestions(false);
+  };
+
+  // Task 7: Restricted numeric-only 10-digit phone formatter
+  const handlePhoneChange = (e) => {
+    const numeric = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setCustomerPhone(numeric);
   };
 
   const handleItemChange = (index, field, value) => {
@@ -149,6 +208,25 @@ export default function NewBill() {
     setItems(filtered);
   };
 
+  const handleClearDraft = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    setCompanyName('');
+    setCustomerPhone('');
+    setItems([
+      {
+        sno: 1,
+        particulars: 'Fresh Seafood / Prawns Supply',
+        hsn: '0306',
+        quantity: '',
+        rate: '',
+        taxRate: '',
+        amount: 0,
+      },
+    ]);
+    setHasDraftNotice(false);
+    showToast('Draft cleared');
+  };
+
   const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
   const grandTotal = subtotal; // Traditional wholesale trade bill total
 
@@ -158,9 +236,9 @@ export default function NewBill() {
       return;
     }
 
-    const hasInvalidItem = items.some((it) => !it.quantity || !it.rate);
+    const hasInvalidItem = items.some((it) => !it.quantity || parseFloat(it.quantity) <= 0 || !it.rate || parseFloat(it.rate) <= 0);
     if (hasInvalidItem) {
-      showToast('Please enter Quantity (KG) and Price (₹) for all items', 'error');
+      showToast('Please enter a valid Quantity (> 0) and Price (> 0) for all items', 'error');
       return;
     }
 
@@ -200,6 +278,9 @@ export default function NewBill() {
       const response = await billsAPI.create(invoiceData);
       const invoice = response.data;
 
+      // Task 3: Clear draft upon successful creation
+      localStorage.removeItem(DRAFT_KEY);
+
       showToast(`Invoice #${invoice.billNo} created successfully`);
 
       if (actionType === 'print') {
@@ -208,7 +289,13 @@ export default function NewBill() {
         navigate(`/bills/${invoice._id}`);
       }
     } catch (error) {
-      showToast(error.response?.data?.message || 'Failed to create invoice', 'error');
+      // Task 3: Offline / Network failure draft retention
+      const isNetworkError = !error.response || error.code === 'ERR_NETWORK';
+      if (isNetworkError) {
+        showToast('Offline: Saved draft locally. You can resubmit once connection is restored.', 'error');
+      } else {
+        showToast(error.response?.data?.message || 'Failed to create invoice', 'error');
+      }
     } finally {
       setSaving(false);
     }
@@ -224,7 +311,7 @@ export default function NewBill() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [companyName, customerPhone, items, date, paymentStatus, cgstRate, cgstAmount, sgstRate, sgstAmount, igstAmount]);
+  }, [companyName, customerPhone, items, date, paymentStatus, cgstRate, cgstAmount, sgstRate, sgstAmount, igstAmount, companyGstin]);
 
   const matchingCustomers = customersList.filter((c) =>
     companyName.trim() &&
@@ -241,13 +328,41 @@ export default function NewBill() {
         <div>
           <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>{t('newInvoiceTitle')}</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', margin: '2px 0 0 0' }}>
-            GSTIN: <span style={{ fontWeight: 600, color: '#0b5394' }}>{companyGstin}</span>
+            GSTIN: <span style={{ fontWeight: 700, color: '#0b5394' }}>{companyGstin || 'Loading settings...'}</span>
           </p>
         </div>
         <button className="btn btn-ghost btn-sm" onClick={() => navigate('/')}>
           <ArrowLeftIcon size={16} /> {t('back')}
         </button>
       </div>
+
+      {/* Task 3: Draft Restored Notification Banner */}
+      {hasDraftNotice && (
+        <div style={{
+          background: '#eff6ff',
+          border: '1px solid #bfdbfe',
+          borderRadius: '8px',
+          padding: '10px 14px',
+          marginBottom: '14px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: '0.84rem',
+          color: '#1e3a8a',
+        }}>
+          <div>
+            📝 <strong>Restored offline draft</strong> from your previous unsaved session.
+          </div>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            style={{ padding: '2px 8px', color: '#ef4444', fontWeight: 700 }}
+            onClick={handleClearDraft}
+          >
+            Clear Draft
+          </button>
+        </div>
+      )}
 
       {/* Structured Billing Form Card */}
       <div className="card new-bill-card" style={{ padding: '20px 16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
@@ -324,15 +439,18 @@ export default function NewBill() {
               )}
             </div>
 
-            {/* Customer Phone */}
+            {/* Task 7: Formatted Numeric-Only Phone Number */}
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontWeight: 700 }}>{t('customerPhone')}</label>
+              <label className="form-label" style={{ fontWeight: 700 }}>
+                {t('customerPhone')} {customerPhone && <span style={{ fontSize: '0.72rem', color: customerPhone.length === 10 ? '#059669' : '#d97706' }}>({customerPhone.length}/10 digits)</span>}
+              </label>
               <input
                 type="tel"
                 className="form-input"
-                placeholder="e.g. 9876543210"
+                placeholder="10-digit mobile number"
                 value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
+                onChange={handlePhoneChange}
+                maxLength={10}
               />
             </div>
           </div>
@@ -406,7 +524,7 @@ export default function NewBill() {
                     <input
                       type="number"
                       step="0.01"
-                      min="0"
+                      min="0.01"
                       className="form-input form-input-lg"
                       style={{ fontWeight: 800, fontSize: '1.1rem', textAlign: 'right', color: '#0f172a' }}
                       value={item.quantity}
@@ -420,7 +538,7 @@ export default function NewBill() {
                     <input
                       type="number"
                       step="0.01"
-                      min="0"
+                      min="0.01"
                       className="form-input form-input-lg"
                       style={{ fontWeight: 800, fontSize: '1.1rem', textAlign: 'right', color: '#0f172a' }}
                       value={item.rate}
@@ -484,7 +602,7 @@ export default function NewBill() {
                       <input
                         type="number"
                         step="0.01"
-                        min="0"
+                        min="0.01"
                         className="form-input"
                         style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 600, fontSize: '0.92rem' }}
                         value={item.quantity}
@@ -493,15 +611,23 @@ export default function NewBill() {
                       />
                     </td>
                     <td>
+                      {/* Task 8: Tab-to-new-row on the last rate field */}
                       <input
                         type="number"
                         step="0.01"
-                        min="0"
+                        min="0.01"
                         className="form-input"
                         style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 600, fontSize: '0.92rem' }}
                         value={item.rate}
                         onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
+                        onKeyDown={(e) => {
+                          if (index === items.length - 1 && e.key === 'Tab' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleAddItem();
+                          }
+                        }}
                         placeholder="0.00"
+                        title={index === items.length - 1 ? 'Press Tab to automatically add a new row' : ''}
                       />
                     </td>
                     <td style={{ textAlign: 'right', fontWeight: 700, fontSize: '0.95rem', color: '#0f172a' }}>

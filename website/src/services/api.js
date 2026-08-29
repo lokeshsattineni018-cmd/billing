@@ -47,6 +47,8 @@ export const billsAPI = {
   getLedger: () => api.get('/bills/ledger'),
   getById: (id) => api.get(`/bills/${id}`),
   create: (data) => api.post('/bills', data),
+  update: (id, data) => api.put(`/bills/${id}`, data),
+  void: (id, reason) => api.patch(`/bills/${id}/void`, { reason }),
   updatePaymentStatus: (id, paymentStatus) => api.patch(`/bills/${id}/payment-status`, { paymentStatus }),
   getPDF: (id) => `${API_BASE_URL}/bills/${id}/pdf?token=${localStorage.getItem('srsf_token')}`,
 };

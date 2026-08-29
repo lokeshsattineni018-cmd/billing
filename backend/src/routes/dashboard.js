@@ -21,19 +21,19 @@ router.get('/summary', protect, async (req, res) => {
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
     const [todayStats, monthStats, receivablesStats, recentBills, totalBills] = await Promise.all([
-      // Today's aggregation
+      // Today's aggregation (excluding voided bills)
       Bill.aggregate([
-        { $match: { date: { $gte: startOfDay, $lt: endOfDay } } },
+        { $match: { date: { $gte: startOfDay, $lt: endOfDay }, isVoided: { $ne: true } } },
         { $group: { _id: null, totalSales: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
       ]),
-      // This month's aggregation
+      // This month's aggregation (excluding voided bills)
       Bill.aggregate([
-        { $match: { date: { $gte: startOfMonth, $lt: endOfMonth } } },
+        { $match: { date: { $gte: startOfMonth, $lt: endOfMonth }, isVoided: { $ne: true } } },
         { $group: { _id: null, totalSales: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
       ]),
-      // Total Outstanding Receivables
+      // Total Outstanding Receivables (excluding voided bills)
       Bill.aggregate([
-        { $match: { paymentStatus: { $ne: 'Paid' } } },
+        { $match: { paymentStatus: { $ne: 'Paid' }, isVoided: { $ne: true } } },
         { $group: { _id: null, totalPending: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, pendingCount: { $sum: 1 } } },
       ]),
       // Recent invoices (last 10)
@@ -43,7 +43,7 @@ router.get('/summary', protect, async (req, res) => {
         .limit(10)
         .lean(),
       // Total invoice count
-      Bill.countDocuments(),
+      Bill.countDocuments({ isVoided: { $ne: true } }),
     ]);
 
     const today = todayStats[0] || { totalSales: 0, billCount: 0 };

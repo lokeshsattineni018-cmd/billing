@@ -28,7 +28,7 @@ const billSchema = new mongoose.Schema({
   companyGstin: {
     type: String,
     trim: true,
-    default: '37KATPS1500Q1ZR',
+    required: [true, 'GSTIN is required'],
   },
   customerPhone: {
     type: String,
@@ -78,6 +78,22 @@ const billSchema = new mongoose.Schema({
     enum: ['Pending', 'Paid'],
     default: 'Pending',
   },
+  isVoided: {
+    type: Boolean,
+    default: false,
+  },
+  voidReason: {
+    type: String,
+    default: '',
+    trim: true,
+  },
+  voidedAt: {
+    type: Date,
+  },
+  voidedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -90,5 +106,6 @@ const billSchema = new mongoose.Schema({
 billSchema.index({ companyName: 'text' });
 billSchema.index({ date: -1 });
 billSchema.index({ billNo: -1 });
+billSchema.index({ isVoided: 1 });
 
 module.exports = mongoose.model('Bill', billSchema);

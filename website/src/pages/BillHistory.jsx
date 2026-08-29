@@ -148,13 +148,23 @@ Thank you for your business!`;
     e.stopPropagation();
     if (!canUpdateStatus) return;
 
+    if (bill.isVoided) {
+      showToast('Cannot change status of a voided invoice', 'error');
+      return;
+    }
+
     const newStatus = bill.paymentStatus === 'Paid' ? 'Pending' : 'Paid';
+    const confirmMsg = `Mark Invoice #${bill.billNo} (${bill.companyName}) as "${newStatus}"?`;
+    if (!window.confirm(confirmMsg)) {
+      return;
+    }
+
     try {
       await billsAPI.updatePaymentStatus(bill._id, newStatus);
       showToast(`Invoice #${bill.billNo} marked as ${newStatus}`);
       setBills(bills.map((b) => (b._id === bill._id ? { ...b, paymentStatus: newStatus } : b)));
     } catch (error) {
-      showToast('Failed to update payment status', 'error');
+      showToast(error.response?.data?.message || 'Failed to update payment status', 'error');
     }
   };
 
@@ -230,29 +240,47 @@ Thank you for your business!`;
             {/* Mobile Cards View (Visible on Phones & Tablets) */}
             <div className="mobile-bills-list">
               {bills.map((bill) => (
-                <div key={bill._id} className="mobile-bill-card">
-                  <div className="mobile-bill-header" onClick={() => navigate(`/bills/${bill._id}`)}>
+                <div key={bill._id} className="mobile-bill-card" style={bill.isVoided ? { background: '#fef2f2', border: '1px dashed #fca5a5', opacity: 0.85 } : {}}>
+                  <div className="mobile-bill-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span className="badge badge-blue" style={{ fontSize: '0.9rem', padding: '4px 8px' }}>#{bill.billNo}</span>
-                      <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{formatDate(bill.date)}</span>
+                      <span className="badge badge-blue">#{bill.billNo}</span>
+                      {bill.isVoided && (
+                        <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800 }}>
+                          ⛔ VOIDED
+                        </span>
+                      )}
+                      <span className="mobile-bill-date">{formatDate(bill.date)}</span>
                     </div>
-                    <span
-                      className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}
-                      style={{ cursor: canUpdateStatus ? 'pointer' : 'default', padding: '4px 10px', fontSize: '0.82rem' }}
-                      onClick={(e) => handleTogglePaymentStatus(e, bill)}
-                    >
-                      {bill.paymentStatus || 'Pending'}
-                    </span>
+                    {!bill.isVoided && (
+                      <span
+                        className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}
+                        style={{ cursor: canUpdateStatus ? 'pointer' : 'default', padding: '4px 10px', fontSize: '0.82rem' }}
+                        onClick={(e) => handleTogglePaymentStatus(e, bill)}
+                      >
+                        {bill.paymentStatus || 'Pending'}
+                      </span>
+                    )}
                   </div>
 
                   <div className="mobile-bill-body" onClick={() => navigate(`/bills/${bill._id}`)}>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                    <div style={{
+                      fontSize: '1.05rem',
+                      fontWeight: 700,
+                      color: bill.isVoided ? '#991b1b' : 'var(--text-primary)',
+                      marginBottom: '4px',
+                      textDecoration: bill.isVoided ? 'line-through' : 'none',
+                    }}>
                       {bill.companyName}
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
                       <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>Weight: <strong>{bill.quantity} kg</strong></span>
                       {canSeeSales && (
-                        <span style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+                        <span style={{
+                          fontSize: '1.15rem',
+                          fontWeight: 800,
+                          color: bill.isVoided ? '#dc2626' : 'var(--accent-primary)',
+                          textDecoration: bill.isVoided ? 'line-through' : 'none',
+                        }}>
                           {formatCurrency(bill.grandTotal || bill.total)}
                         </span>
                       )}
@@ -267,13 +295,15 @@ Thank you for your business!`;
                     >
                       <DownloadIcon size={16} /> Download PDF
                     </button>
-                    <button
-                      className="btn btn-whatsapp btn-sm"
-                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 8px', fontSize: '0.85rem' }}
-                      onClick={(e) => handleShareWhatsApp(e, bill)}
-                    >
-                      <WhatsAppIcon size={16} color="#ffffff" /> WhatsApp
-                    </button>
+                    {!bill.isVoided && (
+                      <button
+                        className="btn btn-whatsapp btn-sm"
+                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 8px', fontSize: '0.85rem' }}
+                        onClick={(e) => handleShareWhatsApp(e, bill)}
+                      >
+                        <WhatsAppIcon size={16} color="#ffffff" /> WhatsApp
+                      </button>
+                    )}
                     <button
                       className="btn btn-secondary btn-sm"
                       style={{ padding: '10px 12px' }}
@@ -302,17 +332,22 @@ Thank you for your business!`;
                 </thead>
                 <tbody>
                   {bills.map((bill) => (
-                    <tr key={bill._id}>
+                    <tr key={bill._id} style={bill.isVoided ? { background: '#fef2f2', opacity: 0.85 } : {}}>
                       <td>
                         <span className="badge badge-blue">#{bill.billNo}</span>
+                        {bill.isVoided && (
+                          <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800, marginLeft: '6px' }}>
+                            VOIDED
+                          </span>
+                        )}
                       </td>
                       <td>
                         <span
                           style={{
                             fontWeight: 600,
-                            color: 'var(--accent-primary)',
+                            color: bill.isVoided ? '#991b1b' : 'var(--accent-primary)',
                             cursor: 'pointer',
-                            textDecoration: 'underline',
+                            textDecoration: bill.isVoided ? 'line-through' : 'underline',
                           }}
                           onClick={() => navigate(`/bills/${bill._id}`)}
                           title="Click to view invoice details"
@@ -323,29 +358,41 @@ Thank you for your business!`;
                       <td>{formatDate(bill.date)}</td>
                       <td className="text-right">{bill.quantity} kg</td>
                       <td>
-                        <span
-                          className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}
-                          style={{ cursor: canUpdateStatus ? 'pointer' : 'default' }}
-                          onClick={(e) => handleTogglePaymentStatus(e, bill)}
-                          title={canUpdateStatus ? 'Click to toggle status' : ''}
-                        >
-                          {bill.paymentStatus || 'Pending'}
-                        </span>
+                        {bill.isVoided ? (
+                          <span className="badge" style={{ background: '#fecaca', color: '#991b1b', fontWeight: 700 }}>
+                            Voided
+                          </span>
+                        ) : (
+                          <span
+                            className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}
+                            style={{ cursor: canUpdateStatus ? 'pointer' : 'default' }}
+                            onClick={(e) => handleTogglePaymentStatus(e, bill)}
+                            title={canUpdateStatus ? 'Click to toggle status' : ''}
+                          >
+                            {bill.paymentStatus || 'Pending'}
+                          </span>
+                        )}
                       </td>
                       {canSeeSales && (
-                        <td className="text-right" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                        <td className="text-right" style={{
+                          fontWeight: 700,
+                          color: bill.isVoided ? '#dc2626' : 'var(--text-primary)',
+                          textDecoration: bill.isVoided ? 'line-through' : 'none',
+                        }}>
                           {formatCurrency(bill.grandTotal || bill.total)}
                         </td>
                       )}
                       <td className="text-center">
                         <div className="action-buttons" style={{ justifyContent: 'center' }}>
-                          <button
-                            className="btn btn-whatsapp btn-sm"
-                            onClick={(e) => handleShareWhatsApp(e, bill)}
-                            title="Share on WhatsApp"
-                          >
-                            <WhatsAppIcon size={14} color="#ffffff" /> Share
-                          </button>
+                          {!bill.isVoided && (
+                            <button
+                              className="btn btn-whatsapp btn-sm"
+                              onClick={(e) => handleShareWhatsApp(e, bill)}
+                              title="Share on WhatsApp"
+                            >
+                              <WhatsAppIcon size={14} color="#ffffff" /> Share
+                            </button>
+                          )}
                           <button
                             className="btn btn-secondary btn-sm"
                             onClick={(e) => handlePrint(e, bill._id)}

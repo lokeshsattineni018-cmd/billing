@@ -19,25 +19,9 @@ const { ganeshaBase64, durgaBase64, ramDarbarBase64 } = require('../assets/logos
 async function generateBillPDFBuffer(bill) {
   return new Promise(async (resolve, reject) => {
     try {
-      let settings = {
-        businessName: 'VIJAYA DURGA AGENCIES',
-        legalName: 'SATTINENI VENKATA DHANA LAXMI',
-        address: 'D.No. 2-41A, SATTINENI SRINIVASA TATAJI, Near Ramalayam, KOTHOTA - 534 281, Mutyalapalli, West Godavari Dist., A.P.',
-        phone: '9441429745',
-        gstin: '37KATPS1500Q1ZR',
-        bankName: 'KARUR VYSYA BANK',
-        accountNo: '4805135000002964',
-        ifsc: 'KVBL0004815',
-        branch: 'Narasapur',
-      };
-
-      try {
-        if (Settings.db?.readyState === 1) {
-          const dbSettings = await Settings.findOne().maxTimeMS(2000);
-          if (dbSettings) settings = { ...settings, ...dbSettings._doc };
-        }
-      } catch (dbErr) {
-        console.warn('Could not load DB settings for PDF, using default settings:', dbErr.message);
+      let settings = await Settings.findOne().lean();
+      if (!settings) {
+        throw new Error('Business settings not found in database. Please configure settings first.');
       }
 
       const doc = new PDFDocument({
@@ -209,7 +193,7 @@ async function generateBillPDFBuffer(bill) {
       const row5H = 20;
       doc.rect(L, y, W, row5H).stroke();
 
-      const customerGstin = bill.companyGstin || '37KATPS1500Q1ZR';
+      const customerGstin = bill.companyGstin || settings.gstin || '';
 
       doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
       doc.text('GSTIN : ', L + 8, y + 5.5);
@@ -471,12 +455,17 @@ async function generateBillPDFBuffer(bill) {
 
       y += footerH;
 
-      // ── Below Box: Amount in Words ──
-      y += 8;
-      const amountWords = numberToWords(finalAmount);
-      doc.font('Helvetica-Bold').fontSize(8).fillColor(primaryBlue);
-      doc.text('Amount in Words: ', L + 4, y, { continued: true });
-      doc.font('Helvetica').fillColor('#222222').text(amountWords);
+      // ── If Bill is Voided, draw prominent VOID watermark across document ──
+      if (bill.isVoided) {
+        doc.save();
+        doc.rotate(-45, { origin: [doc.page.width / 2, doc.page.height / 2] });
+        doc.font('Helvetica-Bold').fontSize(52).fillColor('#dc2626', 0.28);
+        doc.text('*** VOID / CANCELLED ***', 0, doc.page.height / 2 - 26, {
+          width: doc.page.width,
+          align: 'center',
+        });
+        doc.restore();
+      }
 
       doc.end();
     } catch (err) {
