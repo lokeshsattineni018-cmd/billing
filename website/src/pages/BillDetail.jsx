@@ -196,12 +196,12 @@ Thank you for your business!`;
 
         <div className="action-buttons" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button
-            className="btn btn-primary"
-            style={{ fontWeight: 700, padding: '10px 18px', background: '#0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}
+            className="btn btn-secondary"
+            style={{ fontWeight: 800, padding: '10px 18px', background: '#ffffff', border: '1.5px solid #0b5394', color: '#0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}
             onClick={handlePrint}
             title="Direct Print (Ctrl + P)"
           >
-            <PrintIcon size={18} /> Print Invoice
+            <PrintIcon size={18} color="#0b5394" /> Print Invoice
           </button>
 
           <button

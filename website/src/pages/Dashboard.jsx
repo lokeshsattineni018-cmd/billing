@@ -91,11 +91,11 @@ export default function Dashboard() {
           )}
 
           <button
-            className="btn btn-primary"
+            className="btn btn-secondary"
             onClick={() => navigate('/new-bill')}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 12px', fontSize: '0.88rem', background: '#0b5394' }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 12px', fontSize: '0.88rem', background: '#ffffff', border: '1.5px solid #0b5394', color: '#0b5394', fontWeight: 800 }}
           >
-            <PlusIcon size={18} /> {t('newInvoice')}
+            <PlusIcon size={18} color="#0b5394" /> {t('newInvoice')}
           </button>
         </div>
       </div>

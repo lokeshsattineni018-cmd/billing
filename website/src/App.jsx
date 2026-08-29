@@ -106,11 +106,11 @@ function Sidebar({ onInstall }) {
       <div style={{ padding: '8px 14px' }}>
         <button
           type="button"
-          className="btn btn-primary"
-          style={{ width: '100%', padding: '10px 12px', fontSize: '0.82rem', background: '#0b5394', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: '6px', fontWeight: 700 }}
+          className="btn btn-secondary"
+          style={{ width: '100%', padding: '10px 12px', fontSize: '0.82rem', background: '#ffffff', border: '1.5px solid #0b5394', color: '#0b5394', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: '6px', fontWeight: 700 }}
           onClick={onInstall}
         >
-          <DownloadIcon size={15} /> {t('installApp')}
+          <DownloadIcon size={15} color="#0b5394" /> {t('installApp')}
         </button>
       </div>
 
@@ -214,11 +214,11 @@ function AppLayout() {
           </button>
 
           <button
-            className="btn btn-primary btn-sm"
-            style={{ padding: '5px 8px', fontSize: '0.74rem', display: 'flex', alignItems: 'center', gap: '4px', background: '#0b5394', borderRadius: '6px' }}
+            className="btn btn-secondary btn-sm"
+            style={{ padding: '5px 8px', fontSize: '0.74rem', display: 'flex', alignItems: 'center', gap: '4px', background: '#ffffff', border: '1px solid #0b5394', color: '#0b5394', borderRadius: '6px', fontWeight: 700 }}
             onClick={handleInstallApp}
           >
-            <DownloadIcon size={13} /> {t('installApp')}
+            <DownloadIcon size={13} color="#0b5394" /> {t('installApp')}
           </button>
 
           <button

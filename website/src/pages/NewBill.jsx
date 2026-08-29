@@ -255,7 +255,7 @@ export default function NewBill() {
         {/* ── STEP 1: CUSTOMER DETAILS ── */}
         <div style={{ marginBottom: '22px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-            <div style={{ background: '#0b5394', color: '#ffffff', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800 }}>
+            <div style={{ background: '#eff6ff', color: '#0b5394', border: '1.5px solid #bfdbfe', width: '26px', height: '26px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.82rem', fontWeight: 800 }}>
               1
             </div>
             <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
@@ -344,7 +344,7 @@ export default function NewBill() {
         <div style={{ marginBottom: '22px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ background: '#0b5394', color: '#ffffff', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800 }}>
+              <div style={{ background: '#eff6ff', color: '#0b5394', border: '1.5px solid #bfdbfe', width: '26px', height: '26px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.82rem', fontWeight: 800 }}>
                 2
               </div>
               <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
@@ -601,7 +601,7 @@ export default function NewBill() {
         {/* ── STEP 3: PAYMENT STATUS & GRAND TOTAL ── */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-            <div style={{ background: '#0b5394', color: '#ffffff', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800 }}>
+            <div style={{ background: '#eff6ff', color: '#0b5394', border: '1.5px solid #bfdbfe', width: '26px', height: '26px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.82rem', fontWeight: 800 }}>
               3
             </div>
             <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
@@ -634,38 +634,63 @@ export default function NewBill() {
             </div>
           </div>
 
-          {/* Grand Total Highlight Card */}
-          <div style={{ background: '#0b5394', borderRadius: '10px', padding: '16px 20px', color: '#ffffff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', boxShadow: '0 4px 14px rgba(11, 83, 148, 0.2)' }}>
+          {/* Clean White Total Bill Amount Card */}
+          <div style={{
+            background: '#ffffff',
+            border: '2px solid #e2e8f0',
+            borderRadius: '10px',
+            padding: '16px 20px',
+            color: '#0f172a',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '18px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
+          }}>
             <div>
-              <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.9, fontWeight: 700 }}>
+              <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#64748b', fontWeight: 700 }}>
                 {t('totalBillAmount')}
               </div>
-              <div style={{ fontSize: '0.78rem', opacity: 0.8, marginTop: '2px' }}>
+              <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '2px' }}>
                 {items.length} {t('itemsIncluded')}
               </div>
             </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: 900, letterSpacing: '-0.5px' }}>
+            <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.5px' }}>
               {formatCurrency(grandTotal)}
             </div>
           </div>
 
-          {/* Action Buttons — Full Width on Mobile */}
+          {/* Action Buttons — Full Width & Clean White / Light Styling */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <button
               type="button"
               className="btn btn-primary"
-              style={{ width: '100%', padding: '14px', fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: '8px', background: '#0b5394' }}
+              style={{
+                width: '100%',
+                padding: '14px',
+                fontSize: '1rem',
+                fontWeight: 800,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                borderRadius: '8px',
+                background: '#ffffff',
+                border: '2px solid #0b5394',
+                color: '#0b5394',
+                boxShadow: '0 2px 8px rgba(11, 83, 148, 0.08)'
+              }}
               onClick={() => handleSave('print')}
               disabled={saving}
               title="Press Ctrl + Enter to Save and Print immediately"
             >
-              <PrintIcon size={20} /> {saving ? t('saving') : t('saveAndPrint')}
+              <PrintIcon size={20} color="#0b5394" /> {saving ? t('saving') : t('saveAndPrint')}
             </button>
 
             <button
               type="button"
               className="btn btn-secondary"
-              style={{ width: '100%', padding: '12px', fontSize: '0.95rem', fontWeight: 600, borderRadius: '8px' }}
+              style={{ width: '100%', padding: '12px', fontSize: '0.95rem', fontWeight: 600, borderRadius: '8px', background: '#ffffff', border: '1px solid #cbd5e1', color: '#334155' }}
               onClick={() => handleSave('save')}
               disabled={saving}
             >
