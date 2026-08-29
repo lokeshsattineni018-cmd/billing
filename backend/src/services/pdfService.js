@@ -2,23 +2,24 @@ const path = require('path');
 const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const Settings = require('../models/Settings');
+const { ganeshaBase64, durgaBase64, ramDarbarBase64 } = require('../assets/logosData');
 
 /**
  * Generate Traditional Indian Trade Invoice for VIJAYA DURGA AGENCIES
  * Featuring:
- *   - Top bar with TAX INVOICE and single Cell: 9441429745 (NO GSTIN at top)
- *   - Divine Logos: Lord Vinayaka (Left), Maa Durga (Center), Ram Darbar (Right)
+ *   - Top bar: TAX INVOICE on top-left, || జై శ్రీరామ్ || in middle, and Cell: 9441429745 on top-right
+ *   - Embedded Base64 Divine Logos: Lord Vinayaka (Left), Maa Durga (Center), Ram Darbar (Right)
+ *   - Non-bold clean Quantity text
  *   - GSTIN : 37KATPS1500Q1ZR under company name
  *   - Table with multiple item rows and TOTAL row
  *   - Tax breakdown table (Taxable Value | CGST | SGST | IGST)
  *   - Dedicated GRAND TOTAL box after tax table
  *   - Bank Details: Karur Vysya Bank, A/c: 4805135000002964, IFSC: KVBL0004815, Narasapur
- *   - NO "Payment Status: PENDING"
  */
 async function generateBillPDFBuffer(bill) {
   return new Promise(async (resolve, reject) => {
     try {
-      const settings = await Settings.findOne() || {
+      let settings = {
         businessName: 'VIJAYA DURGA AGENCIES',
         legalName: 'SATTINENI VENKATA DHANA LAXMI',
         address: 'D.No. 2-41A, SATTINENI SRINIVASA TATAJI, Near Ramalayam, KOTHOTA - 534 281, Mutyalapalli, West Godavari Dist., A.P.',
@@ -29,6 +30,15 @@ async function generateBillPDFBuffer(bill) {
         ifsc: 'KVBL0004815',
         branch: 'Narasapur',
       };
+
+      try {
+        if (Settings.db?.readyState === 1) {
+          const dbSettings = await Settings.findOne().maxTimeMS(2000);
+          if (dbSettings) settings = { ...settings, ...dbSettings._doc };
+        }
+      } catch (dbErr) {
+        console.warn('Could not load DB settings for PDF, using default settings:', dbErr.message);
+      }
 
       const doc = new PDFDocument({
         size: 'A4',
@@ -53,32 +63,31 @@ async function generateBillPDFBuffer(bill) {
       const textDark = '#000000';
       const lineW = 0.85;
 
-      // Paths to divine logos
-      const ganeshaPath = path.join(__dirname, '../assets/ganesha.jpg');
-      const ramDarbarPath = path.join(__dirname, '../assets/ram_darbar.jpg');
-      const durgaPath = path.join(__dirname, '../assets/durga.jpg');
-
-      const hasGanesha = fs.existsSync(ganeshaPath);
-      const hasRamDarbar = fs.existsSync(ramDarbarPath);
-      const hasDurga = fs.existsSync(durgaPath);
+      // In-memory binary image buffers (100% reliable on Vercel Serverless)
+      const ganeshaBuffer = Buffer.from(ganeshaBase64, 'base64');
+      const durgaBuffer = Buffer.from(durgaBase64, 'base64');
+      const ramDarbarBuffer = Buffer.from(ramDarbarBase64, 'base64');
 
       let y = 28;
 
       // ═══════════════════════════════════════════════════════
-      // 1. TOP BAR (TAX INVOICE / CASH / CREDIT | CELL)
-      // NO GSTIN at top row (as requested)
+      // 1. TOP BAR (TAX INVOICE [Left] | JAI SHREE RAM [Center] | CELL [Right])
       // ═══════════════════════════════════════════════════════
       const row1H = 20;
       doc.lineWidth(lineW).strokeColor(borderBlue);
       doc.rect(L, y, W, row1H).stroke();
 
-      // Clean centered text for TAX INVOICE
+      // Top Left: TAX INVOICE / CASH / CREDIT
       doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
-      doc.text('TAX INVOICE / CASH / CREDIT', L, y + 5.5, { width: W, align: 'center' });
+      doc.text('TAX INVOICE / CASH / CREDIT', L + 8, y + 5.5, { align: 'left' });
 
-      // Single phone number on right
-      doc.font('Helvetica-Bold').fontSize(8).fillColor(primaryBlue);
-      doc.text(`Cell: ${settings.phone || '9441429745'}`, L + 8, y + 6, { width: W - 16, align: 'right' });
+      // Top Center: Divine Invocation
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(primaryBlue);
+      doc.text('|| JAI SHREE RAM ||', L, y + 5.5, { width: W, align: 'center' });
+
+      // Top Right: Cell
+      doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
+      doc.text(`Cell: ${settings.phone || '9441429745'}`, L + 8, y + 5.5, { width: W - 16, align: 'right' });
 
       y += row1H;
 
@@ -91,27 +100,33 @@ async function generateBillPDFBuffer(bill) {
       const sideLogoSize = 58;
       const sideLogoY = y + 8;
 
-      // Left: Lord Vinayaka (Ganesha) Logo
-      if (hasGanesha) {
-        doc.image(ganeshaPath, L + 10, sideLogoY, { width: sideLogoSize, height: sideLogoSize });
+      // Left: Lord Vinayaka (Ganesha) Logo from Buffer
+      try {
+        doc.image(ganeshaBuffer, L + 10, sideLogoY, { width: sideLogoSize, height: sideLogoSize });
+      } catch (e) {
+        console.error('Ganesha logo error:', e);
       }
 
-      // Right: Ram Darbar Logo (Lord Ram, Sita Mata, Lakshman, Hanuman - all 4!)
-      if (hasRamDarbar) {
-        doc.image(ramDarbarPath, R - sideLogoSize - 10, sideLogoY, { width: sideLogoSize, height: sideLogoSize });
+      // Right: Ram Darbar Logo from Buffer
+      try {
+        doc.image(ramDarbarBuffer, R - sideLogoSize - 10, sideLogoY, { width: sideLogoSize, height: sideLogoSize });
+      } catch (e) {
+        console.error('Ram Darbar logo error:', e);
       }
 
       // Center Column
       const centerW = W - (sideLogoSize * 2) - 40;
       const centerX = L + sideLogoSize + 20;
 
-      // Center Top: Maa Durga Emblem
+      // Center Top: Maa Durga Emblem from Buffer
       const durgaSize = 28;
-      if (hasDurga) {
-        doc.image(durgaPath, centerX + (centerW / 2) - (durgaSize / 2), y + 4, {
+      try {
+        doc.image(durgaBuffer, centerX + (centerW / 2) - (durgaSize / 2), y + 4, {
           width: durgaSize,
           height: durgaSize,
         });
+      } catch (e) {
+        console.error('Durga logo error:', e);
       }
 
       // Center Trade Name
@@ -275,7 +290,9 @@ async function generateBillPDFBuffer(bill) {
         doc.text(String(index + 1), colX.sno + 2, y + 7, { width: cols.sno - 4, align: 'center' });
         doc.font('Helvetica-Bold').text(item.particulars || 'Fresh Seafood / Prawns Supply', colX.part + 6, y + 7, { width: cols.part - 12 });
         doc.font('Helvetica').fontSize(8.5).text(item.hsn || '0306', colX.hsn + 2, y + 7, { width: cols.hsn - 4, align: 'center' });
-        doc.fontSize(9);
+        
+        // Clean regular font for Qty (not overly bold)
+        doc.font('Helvetica').fontSize(9);
         doc.text(`${item.quantity} kg`, colX.qty + 2, y + 7, { width: cols.qty - 4, align: 'center' });
         doc.text(`${Number(item.rate).toFixed(2)}`, colX.price + 2, y + 7, { width: cols.price - 8, align: 'right' });
         doc.text(item.taxRate || '', colX.tax + 2, y + 7, { width: cols.tax - 4, align: 'center' });
@@ -454,7 +471,7 @@ async function generateBillPDFBuffer(bill) {
 
       y += footerH;
 
-      // ── Below Box: Amount in Words (NO Payment Status PENDING) ──
+      // ── Below Box: Amount in Words ──
       y += 8;
       const amountWords = numberToWords(finalAmount);
       doc.font('Helvetica-Bold').fontSize(8).fillColor(primaryBlue);

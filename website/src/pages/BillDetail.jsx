@@ -362,8 +362,8 @@ Thank you for your business!`;
 
           {/* 1. TOP BAR */}
           <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
+            display: 'grid',
+            gridTemplateColumns: '1fr auto 1fr',
             alignItems: 'center',
             borderBottom: '1.5px solid #0b5394',
             padding: '4px 12px',
@@ -371,8 +371,11 @@ Thank you for your business!`;
             fontWeight: 'bold',
             color: '#0b5394'
           }}>
-            <div style={{ flex: 1, textAlign: 'center', letterSpacing: '0.5px' }}>
+            <div style={{ textAlign: 'left', letterSpacing: '0.5px' }}>
               TAX INVOICE / CASH / CREDIT
+            </div>
+            <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 900, color: '#0b5394', letterSpacing: '1px', fontFamily: "'Noto Sans Telugu', 'Segoe UI', Arial, sans-serif" }}>
+              ॥ జై శ్రీరామ్ ॥
             </div>
             <div style={{ textAlign: 'right' }}>
               Cell: 9441429745
@@ -491,7 +494,7 @@ Thank you for your business!`;
                   <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>{it.sno || idx + 1}</td>
                   <td style={{ borderRight: '1.5px solid #0b5394', padding: '3px 8px', fontWeight: 'bold' }}>{it.particulars}</td>
                   <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center' }}>{it.hsn || '0306'}</td>
-                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>{it.quantity} kg</td>
+                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'normal' }}>{it.quantity} kg</td>
                   <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', paddingRight: '6px' }}>{Number(it.rate).toFixed(2)}</td>
                   <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center' }}>{it.taxRate || ''}</td>
                   <td style={{ textAlign: 'right', paddingRight: '8px', fontWeight: 'bold' }}>
