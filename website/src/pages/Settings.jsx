@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { settingsAPI } from '../services/api';
 import { useToast, Toast } from '../utils/helpers';
+import { useAuth } from '../context/AuthContext';
+import { LogoutIcon } from '../components/Icons';
 
 export default function Settings() {
+  const { logout } = useAuth();
   const { toast, showToast } = useToast();
   const [form, setForm] = useState({
     businessName: '',
@@ -213,6 +216,17 @@ export default function Settings() {
               <div>A/c No: {form.accountNo || '4805135000002964'}</div>
               <div>IFSC: {form.ifsc || 'KVBL0004815'} | Branch: {form.branch || 'Narasapur'}</div>
             </div>
+          </div>
+
+          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ width: '100%', padding: '12px', color: '#ef4444', border: '1px solid #fecaca', background: '#fff5f5', fontWeight: 700 }}
+              onClick={logout}
+            >
+              <LogoutIcon size={16} color="#ef4444" /> Sign Out of Account
+            </button>
           </div>
         </div>
       </div>

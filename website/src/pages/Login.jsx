@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { EyeIcon, EyeOffIcon } from '../components/Icons';
 import logoImg from '../assets/logo.png';
 
 export default function Login() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -32,19 +34,19 @@ export default function Login() {
             src={logoImg}
             alt="VIJAYA DURGA AGENCIES Logo"
             style={{
-              width: '96px',
-              height: '96px',
+              width: '90px',
+              height: '90px',
               borderRadius: '50%',
               objectFit: 'cover',
               boxShadow: '0 8px 24px rgba(11, 83, 148, 0.25)',
-              border: '3px solid #ffffff',
+              border: '3px solid #0b5394',
               marginBottom: '12px',
             }}
           />
-          <h1 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0b5394', letterSpacing: '0.5px', lineHeight: '1.2' }}>
+          <h1 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0b5394', letterSpacing: '0.5px', lineHeight: '1.2' }}>
             VIJAYA DURGA AGENCIES
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '4px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>
             Invoice & Billing Portal
           </p>
         </div>
@@ -53,7 +55,7 @@ export default function Login() {
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Email Address</label>
+            <label className="form-label" style={{ fontWeight: 700 }}>Email Address / Username</label>
             <input
               type="email"
               className="form-input form-input-lg"
@@ -66,20 +68,43 @@ export default function Login() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-input form-input-lg"
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <label className="form-label" style={{ fontWeight: 700 }}>Password</label>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="form-input form-input-lg"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{ paddingRight: '44px', width: '100%' }}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#64748b',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOffIcon size={20} color="#0b5394" /> : <EyeIcon size={20} color="#64748b" />}
+              </button>
+            </div>
           </div>
 
           <button
             type="submit"
             className="btn btn-primary btn-large"
+            style={{ width: '100%', marginTop: '8px', background: '#0b5394', fontWeight: 800 }}
             disabled={loading}
           >
             {loading ? 'Signing in...' : 'Sign In'}

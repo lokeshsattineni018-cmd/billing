@@ -115,33 +115,13 @@ export default function BillHistory() {
     }
   };
 
-  const handleShareWhatsApp = async (e, bill) => {
+  const handleShareWhatsApp = (e, bill) => {
     e.stopPropagation();
     const pdfUrl = billsAPI.getPDF(bill._id);
     const formattedDate = new Date(bill.date).toLocaleDateString('en-IN');
     const amountStr = formatCurrency(bill.grandTotal || bill.total);
-    const phone = bill.customerPhone ? bill.customerPhone.replace(/[^0-9]/g, '') : '';
-
-    if (navigator.canShare && navigator.share) {
-      try {
-        const response = await fetch(pdfUrl);
-        const blob = await response.blob();
-        const file = new File([blob], `Invoice-${bill.billNo}.pdf`, { type: 'application/pdf' });
-
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: `Tax Invoice #${bill.billNo} - VIJAYA DURGA AGENCIES`,
-            text: `*VIJAYA DURGA AGENCIES*\n*Tax Invoice #${bill.billNo}*\n📅 Date: ${formattedDate}\n💰 Total: ${amountStr}\n\nThank you for your business!`,
-          });
-          showToast('Shared successfully');
-          return;
-        }
-      } catch (err) {
-        if (err.name === 'AbortError') return;
-        console.error('File share fallback:', err);
-      }
-    }
+    const rawPhone = bill.customerPhone ? bill.customerPhone.replace(/[^0-9]/g, '') : '';
+    const cleanPhone = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
 
     const message = `*VIJAYA DURGA AGENCIES*
 *Tax Invoice #${bill.billNo}*
@@ -156,11 +136,12 @@ ${pdfUrl}
 
 Thank you for your business!`;
 
-    const waUrl = phone
-      ? `https://wa.me/${phone.length === 10 ? '91' + phone : phone}?text=${encodeURIComponent(message)}`
+    const waUrl = cleanPhone
+      ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`
       : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
 
     window.open(waUrl, '_blank');
+    showToast('Opening WhatsApp...');
   };
 
   const handleTogglePaymentStatus = async (e, bill) => {

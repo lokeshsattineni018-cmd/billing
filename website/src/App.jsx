@@ -227,7 +227,16 @@ function AppLayout() {
             onClick={() => navigate('/settings')}
             title={t('settings')}
           >
-            <SettingsIcon size={18} />
+            <SettingsIcon size={17} />
+          </button>
+
+          <button
+            className="btn btn-ghost btn-sm"
+            style={{ padding: '6px', color: '#ef4444' }}
+            onClick={logout}
+            title={t('signOut')}
+          >
+            <LogoutIcon size={17} color="#ef4444" />
           </button>
         </div>
       </header>
