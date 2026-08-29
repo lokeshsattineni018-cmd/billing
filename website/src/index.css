@@ -775,17 +775,8 @@ a:hover {
   justify-content: flex-end;
 }
 
-/* ── Search Bar ── */
 .search-bar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-}
-
-.search-bar .form-input {
-  flex: 1;
-  min-width: 200px;
+  margin-bottom: 20px;
 }
 
 /* ── Pagination ── */

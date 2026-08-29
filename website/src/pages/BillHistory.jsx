@@ -191,44 +191,60 @@ Thank you for your business!`;
       </div>
 
       {/* Search & Filters */}
-      <form className="search-bar" onSubmit={handleSearch} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px', marginBottom: '16px' }}>
-        <input
-          type="text"
-          className="form-input"
-          placeholder="Search by company name or invoice number..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ flex: 2 }}
-        />
+      <form
+        className="search-bar"
+        onSubmit={handleSearch}
+        style={{
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '10px',
+          padding: '16px',
+          marginBottom: '20px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: '12px',
+          alignItems: 'end',
+        }}
+      >
+        <div style={{ minWidth: '220px' }}>
+          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '4px' }}>
+            Search Customer / Invoice #
+          </label>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Search by name or number..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
         
-        {/* Labeled From & To Date Pickers */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', flex: 1.5, minWidth: '240px' }}>
-          <div>
-            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '2px' }}>
-              From Date
-            </label>
-            <input
-              type="date"
-              className="form-input"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-            />
-          </div>
-          <div>
-            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '2px' }}>
-              To Date
-            </label>
-            <input
-              type="date"
-              className="form-input"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-            />
-          </div>
+        <div>
+          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '4px' }}>
+            From Date
+          </label>
+          <input
+            type="date"
+            className="form-input"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+          />
         </div>
 
-        <div style={{ minWidth: '140px' }}>
-          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '2px' }}>
+        <div>
+          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '4px' }}>
+            To Date
+          </label>
+          <input
+            type="date"
+            className="form-input"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '4px' }}>
             Payment Status
           </label>
           <select
@@ -242,18 +258,18 @@ Thank you for your business!`;
           </select>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button
             type="submit"
             className="btn btn-primary"
-            style={{ background: '#0b5394', color: '#ffffff', border: '1px solid #0b5394', fontWeight: 700, padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            style={{ flex: 1, background: '#0b5394', color: '#ffffff', border: '1px solid #0b5394', fontWeight: 700, padding: '11px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
           >
             <SearchIcon size={16} color="#ffffff" /> Search
           </button>
           <button
             type="button"
             className="btn btn-ghost"
-            style={{ padding: '10px 14px', color: '#64748b' }}
+            style={{ padding: '11px 14px', color: '#64748b' }}
             onClick={clearFilters}
           >
             Clear

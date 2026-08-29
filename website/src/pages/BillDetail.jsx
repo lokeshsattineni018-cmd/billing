@@ -528,36 +528,41 @@ Thank you for your business!`;
             </div>
           </div>
 
-          {/* 2. COMPANY HEADER WITH 3 DIVINE EMBLEMS */}
+          {/* 2. COMPANY HEADER WITH 3 DIVINE EMBLEMS (Exact Reference Style) */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             borderBottom: '1.5px solid #0b5394',
-            padding: '6px 14px'
+            padding: '8px 16px'
           }}>
             {/* Lord Ganesha on Left */}
-            <div style={{ width: '56px', textAlign: 'center' }}>
+            <div style={{ width: '60px', textAlign: 'left', flexShrink: 0 }}>
               <img
                 src={ganeshaImg}
                 alt="Lord Ganesha"
-                style={{ width: '48px', height: '48px', objectFit: 'contain' }}
+                style={{ width: '56px', height: '56px', objectFit: 'contain' }}
               />
             </div>
 
-            {/* Center Company Details */}
-            <div style={{ flex: 1, textAlign: 'center', padding: '0 10px' }}>
+            {/* Center Company Details with Centered Durga Maa Emblem */}
+            <div style={{ flex: 1, textAlign: 'center', padding: '0 8px' }}>
+              <img
+                src={durgaImg}
+                alt="Durga Maa"
+                style={{ width: '32px', height: '32px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }}
+              />
               <h1 style={{
                 color: '#0b5394',
-                fontSize: '1.55rem',
+                fontSize: '1.65rem',
                 fontWeight: 900,
-                letterSpacing: '0.5px',
+                letterSpacing: '0.8px',
                 margin: '0 0 2px 0',
                 fontFamily: 'Arial, sans-serif'
               }}>
                 VIJAYA DURGA AGENCIES
               </h1>
-              <div style={{ fontSize: '0.78rem', fontWeight: 'bold', color: '#000000', margin: '2px 0' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#000000', margin: '2px 0' }}>
                 Prop: SATTINENI VENKATA DHANA LAXMI &nbsp;|&nbsp; GSTIN: {bill.companyGstin || '37KATPS1500Q1ZR'}
               </div>
               <div style={{ fontSize: '0.68rem', color: '#000000', lineHeight: '1.25' }}>
@@ -565,17 +570,12 @@ Thank you for your business!`;
               </div>
             </div>
 
-            {/* Durga Maa & Ram Darbar on Right */}
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-              <img
-                src={durgaImg}
-                alt="Durga Maa"
-                style={{ width: '48px', height: '48px', objectFit: 'contain' }}
-              />
+            {/* Ram Darbar on Right */}
+            <div style={{ width: '60px', textAlign: 'right', flexShrink: 0 }}>
               <img
                 src={ramDarbarImg}
                 alt="Ram Darbar"
-                style={{ width: '48px', height: '48px', objectFit: 'contain' }}
+                style={{ width: '56px', height: '56px', objectFit: 'contain' }}
               />
             </div>
           </div>
