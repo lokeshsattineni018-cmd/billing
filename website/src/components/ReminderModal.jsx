@@ -98,7 +98,7 @@ export default function ReminderModal({ billId, onClose }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
-              📢 Send Payment Reminder
+              Send Payment Reminder
             </h3>
             {data && (
               <p style={{ margin: '2px 0 0 0', fontSize: '0.84rem', color: '#64748b' }}>
@@ -126,7 +126,7 @@ export default function ReminderModal({ billId, onClose }) {
                 style={msgMode === 'whatsapp' ? { background: '#25D366', borderColor: '#25D366', color: '#ffffff' } : {}}
                 onClick={() => handleModeChange('whatsapp')}
               >
-                💬 WhatsApp Format
+                WhatsApp Format
               </button>
               <button
                 type="button"
@@ -134,7 +134,7 @@ export default function ReminderModal({ billId, onClose }) {
                 style={msgMode === 'sms' ? { background: '#0b5394', borderColor: '#0b5394', color: '#ffffff' } : {}}
                 onClick={() => handleModeChange('sms')}
               >
-                📱 SMS Format
+                SMS Format
               </button>
             </div>
 
@@ -142,7 +142,7 @@ export default function ReminderModal({ billId, onClose }) {
             <div style={{ marginBottom: '12px', fontSize: '0.85rem' }}>
               <span style={{ fontWeight: 700, color: '#475569' }}>Recipient Phone: </span>
               <span style={{ fontWeight: 800, color: '#0b5394' }}>
-                {data?.customerPhone ? `+91 ${data.customerPhone}` : '⚠️ No phone number saved on bill'}
+                {data?.customerPhone ? `+91 ${data.customerPhone}` : 'No phone number saved on bill'}
               </span>
             </div>
 
@@ -184,7 +184,7 @@ export default function ReminderModal({ billId, onClose }) {
                   onClick={handleSendSMS}
                   style={{ flex: 1, fontWeight: 800, padding: '12px 16px', background: '#0b5394', color: '#ffffff' }}
                 >
-                  📱 Send via Device SMS
+                  Send via Device SMS
                 </button>
               )}
               <button
@@ -193,7 +193,7 @@ export default function ReminderModal({ billId, onClose }) {
                 onClick={handleCopy}
                 style={{ padding: '12px 16px', fontWeight: 700 }}
               >
-                📋 Copy
+                Copy Text
               </button>
               <button
                 type="button"

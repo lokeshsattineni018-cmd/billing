@@ -95,7 +95,7 @@ export default function Reports() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
         <div>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-            📊 Sales & Financial Reports
+            Sales & Financial Reports
           </h2>
           <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0' }}>
             Comprehensive analytics, tax breakdown, and accounting exports (Admin Exclusive)
@@ -126,7 +126,7 @@ export default function Reports() {
             onClick={handleExportTally}
             style={{ fontWeight: 700, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #0b5394', color: '#0b5394' }}
           >
-            💼 Tally XML
+            Tally XML
           </button>
         </div>
       </div>
@@ -224,7 +224,7 @@ export default function Reports() {
           {/* Tax Breakdown Card */}
           {summary.totalTax > 0 && (
             <div className="card" style={{ padding: '18px', marginBottom: '24px' }}>
-              <h3 className="card-title" style={{ marginBottom: '12px' }}>🏛️ GST Tax Collection Breakdown</h3>
+              <h3 className="card-title" style={{ marginBottom: '12px' }}>GST Tax Collection Breakdown</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
                 <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>Taxable Value</div>
@@ -250,7 +250,7 @@ export default function Reports() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
             {/* Top Buyers Table */}
             <div className="card" style={{ padding: '18px' }}>
-              <h3 className="card-title" style={{ marginBottom: '14px' }}>🏆 Top Buyers for Selected Period</h3>
+              <h3 className="card-title" style={{ marginBottom: '14px' }}>Top Buyers for Selected Period</h3>
               {report.topBuyers?.length === 0 ? (
                 <p style={{ color: '#64748b', fontSize: '0.85rem' }}>No buyers recorded in this date range.</p>
               ) : (
@@ -283,7 +283,7 @@ export default function Reports() {
 
             {/* Items Breakdown Table */}
             <div className="card" style={{ padding: '18px' }}>
-              <h3 className="card-title" style={{ marginBottom: '14px' }}>🦐 Seafood Items Breakdown</h3>
+              <h3 className="card-title" style={{ marginBottom: '14px' }}>Seafood Items Breakdown</h3>
               {report.itemsBreakdown?.length === 0 ? (
                 <p style={{ color: '#64748b', fontSize: '0.85rem' }}>No items recorded in this date range.</p>
               ) : (

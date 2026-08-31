@@ -293,7 +293,7 @@ export default function NewBill() {
       localStorage.removeItem(DRAFT_KEY);
 
       if (invoice.creditWarning) {
-        alert(`⚠️ CREDIT LIMIT ALERT:\n${invoice.creditWarning}`);
+        alert(`CREDIT LIMIT ALERT:\n${invoice.creditWarning}`);
       } else {
         showToast(`Invoice #${invoice.billNo} created successfully`);
       }

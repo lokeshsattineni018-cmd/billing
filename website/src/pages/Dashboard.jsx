@@ -169,7 +169,7 @@ export default function Dashboard() {
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-              📈 Business Revenue & Sales Trends
+              Business Revenue & Sales Trends
             </h3>
             <button
               className="btn btn-ghost btn-sm"
@@ -184,7 +184,7 @@ export default function Dashboard() {
             <div style={{ gridColumn: 'span 2' }}>
               <RevenueTrendChart
                 data={analytics.dailyTrends}
-                title="📅 7-Day Revenue Trend (₹)"
+                title="7-Day Revenue Trend (INR)"
               />
             </div>
             <PaymentStatusDonut

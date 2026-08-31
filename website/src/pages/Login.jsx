@@ -51,7 +51,23 @@ export default function Login() {
           </p>
         </div>
 
-        {error && <div className="login-error">{error}</div>}
+        {error && (
+          <div
+            style={{
+              background: '#fef2f2',
+              border: '1.5px solid #f87171',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              color: '#991b1b',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              marginBottom: '20px',
+              textAlign: 'center',
+            }}
+          >
+            {error}
+          </div>
+        )}
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">

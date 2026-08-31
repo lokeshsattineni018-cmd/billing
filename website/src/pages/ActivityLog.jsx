@@ -40,21 +40,21 @@ export default function ActivityLog() {
   const getActionBadge = (action) => {
     switch (action) {
       case 'CREATE_BILL':
-        return <span className="badge" style={{ background: '#dcfce7', color: '#16a34a', fontWeight: 800 }}>➕ Created Bill</span>;
+        return <span className="badge" style={{ background: '#dcfce7', color: '#16a34a', fontWeight: 800 }}>Create Bill</span>;
       case 'EDIT_BILL':
-        return <span className="badge" style={{ background: '#e0f2fe', color: '#0284c7', fontWeight: 800 }}>✏️ Edited Bill</span>;
+        return <span className="badge" style={{ background: '#e0f2fe', color: '#0284c7', fontWeight: 800 }}>Edit Bill</span>;
       case 'VOID_BILL':
-        return <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800 }}>⛔ Voided Bill</span>;
+        return <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800 }}>Void Bill</span>;
       case 'UPDATE_PAYMENT_STATUS':
-        return <span className="badge" style={{ background: '#fef3c7', color: '#d97706', fontWeight: 800 }}>💳 Payment Update</span>;
+        return <span className="badge" style={{ background: '#fef3c7', color: '#d97706', fontWeight: 800 }}>Payment Update</span>;
       case 'SET_CREDIT_LIMIT':
-        return <span className="badge" style={{ background: '#f3e8ff', color: '#9333ea', fontWeight: 800 }}>⚙️ Credit Limit</span>;
+        return <span className="badge" style={{ background: '#f3e8ff', color: '#9333ea', fontWeight: 800 }}>Credit Limit</span>;
       case 'EXPORT_CSV':
-        return <span className="badge" style={{ background: '#f1f5f9', color: '#475569', fontWeight: 800 }}>📊 Exported CSV</span>;
+        return <span className="badge" style={{ background: '#f1f5f9', color: '#475569', fontWeight: 800 }}>Export CSV</span>;
       case 'EXPORT_TALLY':
-        return <span className="badge" style={{ background: '#f1f5f9', color: '#0b5394', fontWeight: 800 }}>💼 Exported Tally</span>;
+        return <span className="badge" style={{ background: '#f1f5f9', color: '#0b5394', fontWeight: 800 }}>Export Tally</span>;
       case 'SEND_REMINDER':
-        return <span className="badge" style={{ background: '#dcfce7', color: '#059669', fontWeight: 800 }}>📢 Sent Reminder</span>;
+        return <span className="badge" style={{ background: '#dcfce7', color: '#059669', fontWeight: 800 }}>Send Reminder</span>;
       default:
         return <span className="badge">{action}</span>;
     }
@@ -63,11 +63,11 @@ export default function ActivityLog() {
   const getRoleBadge = (role) => {
     switch (role) {
       case 'admin':
-        return <span style={{ color: '#0b5394', fontWeight: 800, fontSize: '0.82rem' }}>👑 Admin</span>;
+        return <span style={{ color: '#0b5394', fontWeight: 800, fontSize: '0.82rem' }}>Admin</span>;
       case 'owner':
-        return <span style={{ color: '#16a34a', fontWeight: 800, fontSize: '0.82rem' }}>👔 Owner</span>;
+        return <span style={{ color: '#16a34a', fontWeight: 800, fontSize: '0.82rem' }}>Owner</span>;
       default:
-        return <span style={{ color: '#64748b', fontWeight: 700, fontSize: '0.82rem' }}>👤 Staff</span>;
+        return <span style={{ color: '#64748b', fontWeight: 700, fontSize: '0.82rem' }}>Staff</span>;
     }
   };
 
@@ -79,7 +79,7 @@ export default function ActivityLog() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
         <div>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-            📜 Multi-User Activity & Audit Log
+            Multi-User Activity & Audit Log
           </h2>
           <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0' }}>
             Complete chronological audit trail of all staff, owner, and admin actions (Admin Exclusive)

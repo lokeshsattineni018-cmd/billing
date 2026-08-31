@@ -37,10 +37,10 @@ function Sidebar({ onInstall }) {
     { path: '/bills', label: t('invoiceHistory'), icon: <InvoiceIcon size={18} /> },
     ...(isAdmin
       ? [
-          { path: '/reports', label: '📊 Sales Reports', icon: <TrendingUpIcon size={18} /> },
-          { path: '/customers', label: '👥 Customers', icon: <TrendingUpIcon size={18} /> },
+          { path: '/reports', label: 'Sales Reports', icon: <TrendingUpIcon size={18} /> },
+          { path: '/customers', label: 'Customers Directory', icon: <TrendingUpIcon size={18} /> },
           { path: '/ledger', label: t('customerLedger'), icon: <TrendingUpIcon size={18} /> },
-          { path: '/activity-log', label: '📜 Activity Log', icon: <SettingsIcon size={18} /> },
+          { path: '/activity-log', label: 'Activity Log', icon: <SettingsIcon size={18} /> },
         ]
       : []),
     { path: '/settings', label: t('settings'), icon: <SettingsIcon size={18} /> },

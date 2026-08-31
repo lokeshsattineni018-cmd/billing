@@ -89,7 +89,7 @@ export default function CustomerDirectory() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
         <div>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-            👥 Customer Master Directory
+            Customer Master Directory
           </h2>
           <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0' }}>
             Manage customer credit limits, lifetime volume, contact info & receivables (Admin Exclusive)
@@ -192,15 +192,15 @@ export default function CustomerDirectory() {
                     <td style={{ textAlign: 'center' }}>
                       {c.creditStatus === 'EXCEEDED' ? (
                         <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800, fontSize: '0.75rem' }}>
-                          🔴 EXCEEDED ({c.creditUsedPercent}%)
+                          EXCEEDED ({c.creditUsedPercent}%)
                         </span>
                       ) : c.creditStatus === 'WARNING' ? (
                         <span className="badge" style={{ background: '#fef3c7', color: '#d97706', fontWeight: 800, fontSize: '0.75rem' }}>
-                          🟡 NEAR LIMIT ({c.creditUsedPercent}%)
+                          NEAR LIMIT ({c.creditUsedPercent}%)
                         </span>
                       ) : c.creditLimit > 0 ? (
                         <span className="badge" style={{ background: '#dcfce7', color: '#16a34a', fontWeight: 700, fontSize: '0.75rem' }}>
-                          🟢 SAFE ({c.creditUsedPercent}%)
+                          SAFE ({c.creditUsedPercent}%)
                         </span>
                       ) : (
                         <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Uncapped</span>
@@ -215,7 +215,7 @@ export default function CustomerDirectory() {
                           style={{ fontWeight: 700, fontSize: '0.75rem', padding: '5px 10px' }}
                           title="Set Credit Limit & Details"
                         >
-                          ⚙️ Credit
+                          Credit Settings
                         </button>
                         {c.phone && (
                           <button
@@ -270,7 +270,7 @@ export default function CustomerDirectory() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
-                ⚙️ Customer Credit Settings
+                Customer Credit Settings
               </h3>
               <button
                 onClick={() => setCreditModalOpen(false)}
@@ -287,7 +287,7 @@ export default function CustomerDirectory() {
             <form onSubmit={handleSaveCreditLimit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                  Maximum Credit Limit (₹ INR):
+                  Maximum Credit Limit (INR):
                 </label>
                 <input
                   type="number"
@@ -338,7 +338,7 @@ export default function CustomerDirectory() {
                   disabled={savingCredit}
                   style={{ flex: 1, fontWeight: 800, padding: '11px', background: '#0b5394', color: '#ffffff' }}
                 >
-                  {savingCredit ? 'Saving...' : '💾 Save Customer Settings'}
+                  {savingCredit ? 'Saving...' : 'Save Customer Settings'}
                 </button>
                 <button
                   type="button"

@@ -130,7 +130,7 @@ export function TopCustomersBarChart({ data = [] }) {
   return (
     <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px' }}>
       <h4 style={{ margin: '0 0 16px 0', fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>
-        🏆 Top Buyers Breakdown
+        Top Buyers Breakdown
       </h4>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {data.slice(0, 5).map((item, idx) => {
@@ -173,7 +173,7 @@ export function PaymentStatusDonut({ paid = 0, pending = 0 }) {
   return (
     <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px' }}>
       <h4 style={{ margin: '0 0 16px 0', fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>
-        💳 Collection Ratio
+        Collection Ratio
       </h4>
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         <div style={{ position: 'relative', width: '90px', height: '90px', flexShrink: 0 }}>

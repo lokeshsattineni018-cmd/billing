@@ -198,14 +198,14 @@ Thank you for your business!`;
                 title="Export sales vouchers in standard Tally Prime XML"
                 style={{ fontWeight: 700, border: '1.5px solid #0b5394', color: '#0b5394' }}
               >
-                💼 Tally XML
+                Tally XML
               </button>
               <button
                 className="btn btn-primary"
                 onClick={() => navigate('/reports')}
                 style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700 }}
               >
-                📊 Sales Reports
+                Sales Reports
               </button>
             </>
           )}
@@ -486,7 +486,7 @@ Thank you for your business!`;
                               onClick={() => setReminderBillId(bill._id)}
                               title="Send Payment Reminder (WhatsApp / SMS)"
                             >
-                              📢 Remind
+                              Send Reminder
                             </button>
                           )}
 
@@ -499,7 +499,7 @@ Thank you for your business!`;
                               onClick={() => navigate('/new-bill', { state: { cloneBill: bill } })}
                               title="Duplicate this invoice"
                             >
-                              📋 Copy
+                              Duplicate
                             </button>
                           )}
 

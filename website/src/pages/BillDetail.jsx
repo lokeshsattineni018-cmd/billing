@@ -312,7 +312,7 @@ Thank you for your business!`;
               onClick={() => setShowEditModal(true)}
               title="Edit customer, weights, or rates (same-day only)"
             >
-              ✏️ Edit Bill
+              Edit Bill
             </button>
           )}
 
@@ -324,7 +324,7 @@ Thank you for your business!`;
               onClick={() => setShowVoidModal(true)}
               title="Mark this bill as voided (keeps audit record)"
             >
-              ⛔ Void Bill
+              Void Bill
             </button>
           )}
 
@@ -337,7 +337,7 @@ Thank you for your business!`;
               onClick={() => setShowReminderModal(true)}
               title="Send formatted payment reminder via WhatsApp or SMS"
             >
-              📢 Send Reminder
+              Send Reminder
             </button>
           )}
 
@@ -349,7 +349,7 @@ Thank you for your business!`;
               onClick={() => navigate('/new-bill', { state: { cloneBill: bill } })}
               title="Duplicate this bill for a new invoice"
             >
-              📋 Duplicate Bill
+              Duplicate Bill
             </button>
           )}
 
