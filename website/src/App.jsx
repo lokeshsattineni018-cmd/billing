@@ -49,50 +49,54 @@ function Sidebar({ onInstall }) {
   return (
     <aside className="sidebar desktop-only-sidebar">
       {/* Brand Header */}
-      <div className="sidebar-brand" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '20px 16px 16px 16px' }}>
+      <div className="sidebar-brand" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '20px 18px 18px 18px' }}>
         <img
           src={logoImg}
           alt="VIJAYA DURGA AGENCIES Logo"
           style={{
-            width: '52px',
-            height: '52px',
-            borderRadius: '50%',
+            width: '44px',
+            height: '44px',
+            borderRadius: '10px',
             objectFit: 'cover',
             border: '2px solid #0b5394',
-            boxShadow: '0 4px 10px rgba(11, 83, 148, 0.15)',
-            marginBottom: '8px',
+            boxShadow: '0 4px 12px rgba(11, 83, 148, 0.2)',
           }}
         />
-        <h1 style={{ fontSize: '1rem', fontWeight: 900, color: '#0b5394', letterSpacing: '0.5px', lineHeight: '1.2' }}>
-          VIJAYA DURGA
-        </h1>
-        <p style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
-          AGENCIES • BILLING
-        </p>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <h1 style={{ fontSize: '0.96rem', fontWeight: 900, color: '#0b5394', letterSpacing: '-0.3px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            VIJAYA DURGA
+          </h1>
+          <p style={{ fontSize: '0.66rem', color: '#64748b', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.6px', fontWeight: 800 }}>
+            AGENCIES • BILLING
+          </p>
+        </div>
       </div>
 
-      {/* Language Switcher Button in Sidebar */}
-      <div style={{ padding: '8px 14px 4px 14px' }}>
+      {/* Modern Language Switcher Pill */}
+      <div style={{ padding: '10px 14px 4px 14px' }}>
         <button
           type="button"
           onClick={toggleLang}
           style={{
             width: '100%',
-            padding: '8px 10px',
-            fontSize: '0.82rem',
-            fontWeight: 700,
-            background: '#f1f5f9',
-            border: '1px solid #cbd5e1',
-            borderRadius: '6px',
+            padding: '7px 12px',
+            fontSize: '0.78rem',
+            fontWeight: 800,
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
+            justifyContent: 'space-between',
             color: '#0b5394',
+            transition: 'all 0.2s ease',
           }}
         >
-          🌐 {lang === 'en' ? 'తెలుగులోకి మార్చండి' : 'Switch to English'}
+          <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700 }}>Language</span>
+          <span style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '2px 8px', borderRadius: '6px', color: '#0b5394' }}>
+            {lang === 'en' ? 'తెలుగు' : 'English'}
+          </span>
         </button>
       </div>
 
@@ -115,25 +119,25 @@ function Sidebar({ onInstall }) {
         <button
           type="button"
           className="btn btn-secondary"
-          style={{ width: '100%', padding: '10px 12px', fontSize: '0.82rem', background: '#ffffff', border: '1.5px solid #0b5394', color: '#0b5394', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: '6px', fontWeight: 700 }}
+          style={{ width: '100%', padding: '9px 12px', fontSize: '0.8rem', background: '#ffffff', border: '1.5px solid #0b5394', color: '#0b5394', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: '8px', fontWeight: 800 }}
           onClick={onInstall}
         >
-          <DownloadIcon size={15} color="#0b5394" /> {t('installApp')}
+          <DownloadIcon size={14} color="#0b5394" /> {t('installApp')}
         </button>
       </div>
 
       <div className="sidebar-footer">
         <div className="sidebar-user">
-          <div className="user-avatar">
+          <div className="user-avatar" style={{ background: '#0b5394', color: '#ffffff', fontWeight: 900, borderRadius: '8px' }}>
             {user?.name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
           <div className="user-info">
-            <div className="user-name">{user?.name || 'User'}</div>
-            <div className="user-role">{user?.role || 'staff'}</div>
+            <div className="user-name" style={{ fontWeight: 800, fontSize: '0.84rem' }}>{user?.name || 'User'}</div>
+            <div className="user-role" style={{ fontSize: '0.7rem', fontWeight: 700, color: '#0b5394', textTransform: 'uppercase' }}>{user?.role || 'staff'}</div>
           </div>
         </div>
-        <button className="logout-btn" onClick={logout}>
-          <LogoutIcon size={16} /> {t('signOut')}
+        <button className="logout-btn" onClick={logout} style={{ borderRadius: '8px', fontWeight: 700 }}>
+          <LogoutIcon size={15} /> {t('signOut')}
         </button>
       </div>
     </aside>

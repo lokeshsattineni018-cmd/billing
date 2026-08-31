@@ -1,45 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Telugu:wght@700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Noto+Sans+Telugu:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  /* ── Modern High-End Clean Slate Palette ── */
+  /* ── Modern Luxury High-End Palette ── */
   --bg-primary: #f8fafc;
   --bg-secondary: #ffffff;
   --bg-card: #ffffff;
-  --bg-card-hover: #f1f5f9;
+  --bg-card-hover: #f8fafc;
   --bg-input: #f8fafc;
   --bg-sidebar: #ffffff;
 
-  --accent-primary: #0f172a;
-  --accent-secondary: #334155;
-  --accent-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  --accent-light: #f1f5f9;
+  --accent-primary: #0b5394;
+  --accent-secondary: #083b6b;
+  --accent-gradient: linear-gradient(135deg, #0b5394 0%, #2563eb 100%);
+  --accent-light: #eff6ff;
   
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
   
   --border-color: #e2e8f0;
-  --border-active: #0f172a;
+  --border-active: #0b5394;
   --border-hover: #cbd5e1;
 
-  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.03), 0 1px 2px -1px rgba(15, 23, 42, 0.02);
-  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.04), 0 2px 4px -2px rgba(15, 23, 42, 0.03);
-  --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.02);
-  --shadow-indigo: 0 2px 8px 0 rgba(15, 23, 42, 0.12);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.02);
+  --shadow-md: 0 4px 16px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -2px rgba(15, 23, 42, 0.03);
+  --shadow-lg: 0 12px 32px -4px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
 
   /* ── Typography ── */
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-heading: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  --font-body: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 
-  /* ── Borders ── */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
+  /* ── Borders & Radii ── */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
 
   /* ── Transitions ── */
-  --transition-fast: 140ms ease;
-  --transition-normal: 220ms ease;
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Reset & Base ── */
@@ -84,9 +83,9 @@ a:hover {
   min-height: 100vh;
 }
 
-/* ── Sidebar (Clean White & Slate) ── */
+/* ── Sidebar (Clean, Elevated & Refined) ── */
 .sidebar {
-  width: 250px;
+  width: 260px;
   background: #ffffff;
   display: flex;
   flex-direction: column;
@@ -96,49 +95,51 @@ a:hover {
   height: 100vh;
   z-index: 100;
   transition: transform var(--transition-normal);
-  border-right: 1px solid #e2e8f0;
-  box-shadow: 2px 0 12px rgba(15, 23, 42, 0.04);
+  border-right: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 2px 0 16px rgba(15, 23, 42, 0.03);
 }
 
 .sidebar-brand {
-  padding: 24px 22px;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 24px 20px 18px 20px;
+  border-bottom: 1px solid #f1f5f9;
   background: #ffffff;
 }
 
 .sidebar-brand h1 {
   font-family: var(--font-heading);
-  font-size: 1.25rem;
-  font-weight: 800;
+  font-size: 1.15rem;
+  font-weight: 900;
   color: #0b5394;
-  letter-spacing: 0.5px;
+  letter-spacing: -0.3px;
+  line-height: 1.25;
 }
 
 .sidebar-brand p {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   color: #64748b;
-  margin-top: 2px;
+  margin-top: 3px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 600;
+  letter-spacing: 0.8px;
+  font-weight: 700;
 }
 
 .sidebar-nav {
   flex: 1;
-  padding: 16px 12px;
+  padding: 16px 14px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
+  overflow-y: auto;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 14px;
-  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  border-radius: 10px;
   color: #475569;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
   transition: all var(--transition-fast);
   cursor: pointer;
@@ -146,18 +147,30 @@ a:hover {
   background: none;
   width: 100%;
   text-align: left;
+  position: relative;
 }
 
 .nav-link:hover {
-  background: #f1f5f9;
+  background: #f8fafc;
   color: #0b5394;
+  transform: translateX(2px);
 }
 
 .nav-link.active {
   background: #eff6ff;
   color: #0b5394;
-  font-weight: 700;
-  border-left: 3px solid #0b5394;
+  font-weight: 800;
+}
+
+.nav-link.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3.5px;
+  background: #0b5394;
+  border-radius: 0 4px 4px 0;
 }
 
 .sidebar-footer {
