@@ -8,6 +8,9 @@ import NewBill from './pages/NewBill';
 import BillHistory from './pages/BillHistory';
 import BillDetail from './pages/BillDetail';
 import CustomerLedger from './pages/CustomerLedger';
+import CustomerDirectory from './pages/CustomerDirectory';
+import Reports from './pages/Reports';
+import ActivityLog from './pages/ActivityLog';
 import Settings from './pages/Settings';
 import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon } from './components/Icons';
 import logoImg from './assets/logo.png';
@@ -33,7 +36,12 @@ function Sidebar({ onInstall }) {
     { path: '/new-bill', label: t('newInvoice'), icon: <PlusIcon size={18} /> },
     { path: '/bills', label: t('invoiceHistory'), icon: <InvoiceIcon size={18} /> },
     ...(isAdmin
-      ? [{ path: '/ledger', label: t('customerLedger'), icon: <TrendingUpIcon size={18} /> }]
+      ? [
+          { path: '/reports', label: '📊 Sales Reports', icon: <TrendingUpIcon size={18} /> },
+          { path: '/customers', label: '👥 Customers', icon: <TrendingUpIcon size={18} /> },
+          { path: '/ledger', label: t('customerLedger'), icon: <TrendingUpIcon size={18} /> },
+          { path: '/activity-log', label: '📜 Activity Log', icon: <SettingsIcon size={18} /> },
+        ]
       : []),
     { path: '/settings', label: t('settings'), icon: <SettingsIcon size={18} /> },
   ];
@@ -251,7 +259,10 @@ function AppLayout() {
           <Route path="/new-bill" element={<NewBill />} />
           <Route path="/bills" element={<BillHistory />} />
           <Route path="/bills/:id" element={<BillDetail />} />
+          {isAdmin && <Route path="/reports" element={<Reports />} />}
+          {isAdmin && <Route path="/customers" element={<CustomerDirectory />} />}
           {isAdmin && <Route path="/ledger" element={<CustomerLedger />} />}
+          {isAdmin && <Route path="/activity-log" element={<ActivityLog />} />}
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

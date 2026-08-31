@@ -4,6 +4,7 @@ import { billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDateTime, numberToWords, useToast, Toast } from '../utils/helpers';
 import { PrintIcon, DownloadIcon, WhatsAppIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
+import ReminderModal from '../components/ReminderModal';
 import ganeshaImg from '../assets/ganesha.jpg';
 import durgaImg from '../assets/durga.jpg';
 import ramDarbarImg from '../assets/ram_darbar.jpg';
@@ -17,6 +18,7 @@ export default function BillDetail() {
   const [bill, setBill] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState(false);
+  const [showReminderModal, setShowReminderModal] = useState(false);
 
   // Edit Modal State
   const [showEditModal, setShowEditModal] = useState(false);
@@ -30,6 +32,7 @@ export default function BillDetail() {
   const [voidReason, setVoidReason] = useState('');
   const [voiding, setVoiding] = useState(false);
 
+  const isAdmin = user?.role === 'admin';
   const canSeeSales = user?.role === 'owner' || user?.role === 'admin';
   const canUpdateStatus = user?.role === 'owner' || user?.role === 'admin';
 
@@ -325,14 +328,30 @@ Thank you for your business!`;
             </button>
           )}
 
-          <button
-            className="btn btn-secondary"
-            style={{ padding: '10px 14px' }}
-            onClick={() => navigate('/new-bill', { state: { cloneBill: bill } })}
-            title="Create a new bill pre-filled with this customer and items"
-          >
-            <PlusIcon size={16} /> Re-Bill
-          </button>
+          {/* Admin Only: WhatsApp & SMS Payment Reminder Modal */}
+          {isAdmin && !bill.isVoided && bill.paymentStatus !== 'Paid' && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ background: '#fef3c7', color: '#b45309', border: '1.5px solid #fde68a', fontWeight: 800, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
+              onClick={() => setShowReminderModal(true)}
+              title="Send formatted payment reminder via WhatsApp or SMS"
+            >
+              📢 Send Reminder
+            </button>
+          )}
+
+          {/* Admin Only: Duplicate Bill */}
+          {isAdmin && (
+            <button
+              className="btn btn-secondary"
+              style={{ padding: '10px 14px', fontWeight: 700 }}
+              onClick={() => navigate('/new-bill', { state: { cloneBill: bill } })}
+              title="Duplicate this bill for a new invoice"
+            >
+              📋 Duplicate Bill
+            </button>
+          )}
 
           <button className="btn btn-ghost btn-sm" onClick={() => navigate('/bills')}>
             <ArrowLeftIcon size={16} /> Back
@@ -946,6 +965,14 @@ Thank you for your business!`;
             </div>
           </div>
         </div>
+      )}
+
+      {/* Admin Payment Reminder Modal */}
+      {showReminderModal && (
+        <ReminderModal
+          billId={bill._id}
+          onClose={() => setShowReminderModal(false)}
+        />
       )}
     </div>
   );

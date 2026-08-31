@@ -5,12 +5,14 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
 import { TrendingUpIcon, CalendarIcon, FileCheckIcon, PlusIcon, WhatsAppIcon, ShareIcon, DownloadIcon } from '../components/Icons';
+import { RevenueTrendChart, TopCustomersBarChart, PaymentStatusDonut } from '../components/AnalyticsCharts';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useLanguage();
   const [data, setData] = useState(null);
+  const [analytics, setAnalytics] = useState(null);
   const [dailySummary, setDailySummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
@@ -22,7 +24,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadDashboard();
-  }, []);
+    if (isAdmin) {
+      loadAnalytics();
+    }
+  }, [isAdmin]);
 
   const loadDashboard = async () => {
     try {
@@ -32,6 +37,15 @@ export default function Dashboard() {
       console.error('Failed to load dashboard:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAnalytics = async () => {
+    try {
+      const res = await dashboardAPI.getAnalytics();
+      setAnalytics(res.data);
+    } catch (error) {
+      console.error('Failed to load analytics:', error);
     }
   };
 
@@ -147,6 +161,41 @@ export default function Dashboard() {
               <FileCheckIcon size={22} />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Admin Visual Analytics & Trends (Admin Exclusive) */}
+      {isAdmin && analytics && (
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+              📈 Business Revenue & Sales Trends
+            </h3>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => navigate('/reports')}
+              style={{ color: '#0b5394', fontWeight: 800 }}
+            >
+              Full Sales Report →
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+            <div style={{ gridColumn: 'span 2' }}>
+              <RevenueTrendChart
+                data={analytics.dailyTrends}
+                title="📅 7-Day Revenue Trend (₹)"
+              />
+            </div>
+            <PaymentStatusDonut
+              paid={data?.month?.totalSales ? data.month.totalSales - (data?.receivables?.totalPending || 0) : 0}
+              pending={data?.receivables?.totalPending || 0}
+            />
+          </div>
+
+          {analytics.topCustomers?.length > 0 && (
+            <TopCustomersBarChart data={analytics.topCustomers} />
+          )}
         </div>
       )}
 

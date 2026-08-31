@@ -289,10 +289,14 @@ export default function NewBill() {
       const response = await billsAPI.create(invoiceData);
       const invoice = response.data;
 
-      // Task 3: Clear draft upon successful creation
+      // Clear draft upon successful creation
       localStorage.removeItem(DRAFT_KEY);
 
-      showToast(`Invoice #${invoice.billNo} created successfully`);
+      if (invoice.creditWarning) {
+        alert(`⚠️ CREDIT LIMIT ALERT:\n${invoice.creditWarning}`);
+      } else {
+        showToast(`Invoice #${invoice.billNo} created successfully`);
+      }
 
       if (actionType === 'print') {
         navigate(`/bills/${invoice._id}?autoprint=true`);

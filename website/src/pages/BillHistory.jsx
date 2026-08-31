@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { formatCurrency, formatDate, useToast, Toast, exportBillsToCSV } from '../utils/helpers';
-import { SearchIcon, PrintIcon, DownloadIcon, WhatsAppIcon, DownloadIcon as ExportIcon } from '../components/Icons';
+import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
+import { SearchIcon, PrintIcon, DownloadIcon, WhatsAppIcon, DownloadIcon as ExportIcon, PlusIcon } from '../components/Icons';
+import ReminderModal from '../components/ReminderModal';
 
 export default function BillHistory() {
   const navigate = useNavigate();
@@ -19,7 +20,9 @@ export default function BillHistory() {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({});
   const [exporting, setExporting] = useState(false);
+  const [reminderBillId, setReminderBillId] = useState(null);
 
+  const isAdmin = user?.role === 'admin';
   const canSeeSales = user?.role === 'owner' || user?.role === 'admin';
   const canUpdateStatus = user?.role === 'owner' || user?.role === 'admin';
 
@@ -178,16 +181,35 @@ Thank you for your business!`;
           <p>View, print, download, share or export invoices for GST & CA filing</p>
         </div>
 
-        {canSeeSales && (
-          <button
-            className="btn btn-secondary"
-            onClick={handleExportCSV}
-            disabled={exporting || loading}
-            title="Export all filtered bills to CSV for GST / CA accounting"
-          >
-            <ExportIcon size={16} /> {exporting ? 'Exporting...' : 'Export Excel / CSV'}
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {isAdmin && (
+            <>
+              <button
+                className="btn btn-secondary"
+                onClick={() => window.open(billsAPI.exportCSVUrl({ search, dateFrom, dateTo, paymentStatus }), '_blank')}
+                title="Export all filtered bills to CSV for GST / CA accounting"
+                style={{ fontWeight: 700 }}
+              >
+                <ExportIcon size={16} /> Export Excel (CSV)
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => window.open(billsAPI.exportTallyUrl({ dateFrom, dateTo }), '_blank')}
+                title="Export sales vouchers in standard Tally Prime XML"
+                style={{ fontWeight: 700, border: '1.5px solid #0b5394', color: '#0b5394' }}
+              >
+                💼 Tally XML
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => navigate('/reports')}
+                style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700 }}
+              >
+                📊 Sales Reports
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Search & Filters */}
@@ -454,6 +476,33 @@ Thank you for your business!`;
                               <WhatsAppIcon size={14} color="#ffffff" /> Share
                             </button>
                           )}
+
+                          {/* Admin Only: WhatsApp & SMS Payment Reminder Modal */}
+                          {isAdmin && !bill.isVoided && bill.paymentStatus !== 'Paid' && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', fontWeight: 700 }}
+                              onClick={() => setReminderBillId(bill._id)}
+                              title="Send Payment Reminder (WhatsApp / SMS)"
+                            >
+                              📢 Remind
+                            </button>
+                          )}
+
+                          {/* Admin Only: Quick Clone / Duplicate Invoice */}
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              style={{ fontWeight: 600 }}
+                              onClick={() => navigate('/new-bill', { state: { cloneBill: bill } })}
+                              title="Duplicate this invoice"
+                            >
+                              📋 Copy
+                            </button>
+                          )}
+
                           <button
                             className="btn btn-secondary btn-sm"
                             onClick={(e) => handlePrint(e, bill._id)}
@@ -516,6 +565,14 @@ Thank you for your business!`;
           </div>
         )}
       </div>
+
+      {/* Admin Payment Reminder Modal */}
+      {reminderBillId && (
+        <ReminderModal
+          billId={reminderBillId}
+          onClose={() => setReminderBillId(null)}
+        />
+      )}
     </div>
   );
 }

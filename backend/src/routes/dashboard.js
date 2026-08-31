@@ -160,4 +160,128 @@ router.get('/daily-summary', protect, restrictTo('owner', 'admin'), async (req, 
   }
 });
 
+/**
+ * GET /api/dashboard/analytics
+ * Visual chart analytics: 7-day revenue, 6-month trends, customer breakdown (Admin only)
+ */
+router.get('/analytics', protect, restrictTo('admin'), async (req, res) => {
+  try {
+    const now = new Date();
+
+    // 1. Last 7 days trend
+    const sevenDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    const [dailyAgg, monthlyAgg, topCustomersAgg, paymentRatioAgg] = await Promise.all([
+      // 7-day daily aggregation
+      Bill.aggregate([
+        {
+          $match: {
+            date: { $gte: sevenDaysAgo },
+            isVoided: { $ne: true },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: '%Y-%m-%d', date: '$date' },
+            },
+            revenue: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+
+      // 6-month trend
+      Bill.aggregate([
+        {
+          $match: {
+            date: {
+              $gte: new Date(now.getFullYear(), now.getMonth() - 5, 1),
+            },
+            isVoided: { $ne: true },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: '%Y-%m', date: '$date' },
+            },
+            revenue: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+
+      // Top 5 customers
+      Bill.aggregate([
+        { $match: { isVoided: { $ne: true } } },
+        {
+          $group: {
+            _id: '$companyName',
+            total: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { total: -1 } },
+        { $limit: 5 },
+      ]),
+
+      // Payment status breakdown
+      Bill.aggregate([
+        { $match: { isVoided: { $ne: true } } },
+        {
+          $group: {
+            _id: '$paymentStatus',
+            total: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    // Format 7-day data with all 7 days guaranteed
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      const dayLabel = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' });
+      const found = dailyAgg.find((item) => item._id === key);
+      last7Days.push({
+        date: key,
+        label: dayLabel,
+        revenue: found ? found.revenue : 0,
+        count: found ? found.count : 0,
+      });
+    }
+
+    // Format 6-month data
+    const last6Months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const monthLabel = d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+      const found = monthlyAgg.find((item) => item._id === key);
+      last6Months.push({
+        month: key,
+        label: monthLabel,
+        revenue: found ? found.revenue : 0,
+        count: found ? found.count : 0,
+      });
+    }
+
+    res.json({
+      dailyTrends: last7Days,
+      monthlyTrends: last6Months,
+      topCustomers: topCustomersAgg.map((c) => ({ name: c._id, revenue: c.total, bills: c.count })),
+      paymentRatio: paymentRatioAgg,
+    });
+  } catch (error) {
+    console.error('Analytics Error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 module.exports = router;

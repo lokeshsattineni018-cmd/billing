@@ -50,14 +50,41 @@ export const billsAPI = {
   create: (data) => api.post('/bills', data),
   update: (id, data) => api.put(`/bills/${id}`, data),
   void: (id, reason) => api.patch(`/bills/${id}/void`, { reason }),
+  duplicate: (id) => api.post(`/bills/${id}/duplicate`),
+  getReminder: (id) => api.get(`/bills/${id}/reminder`),
   updatePaymentStatus: (id, paymentStatus) => api.patch(`/bills/${id}/payment-status`, { paymentStatus }),
   getPDF: (id) => `${API_BASE_URL}/bills/${id}/pdf?token=${localStorage.getItem('srsf_token')}`,
+  exportCSVUrl: (params) => {
+    const query = new URLSearchParams(params || {}).toString();
+    return `${API_BASE_URL}/bills/export/csv?${query}&token=${localStorage.getItem('srsf_token')}`;
+  },
+  exportTallyUrl: (params) => {
+    const query = new URLSearchParams(params || {}).toString();
+    return `${API_BASE_URL}/bills/export/tally?${query}&token=${localStorage.getItem('srsf_token')}`;
+  },
 };
 
-// Dashboard
+// Dashboard & Analytics
 export const dashboardAPI = {
   summary: () => api.get('/dashboard/summary'),
   getDailySummary: () => api.get('/dashboard/daily-summary'),
+  getAnalytics: () => api.get('/dashboard/analytics'),
+};
+
+// Admin Sales Reports
+export const reportsAPI = {
+  getSales: (params) => api.get('/reports/sales', { params }),
+};
+
+// Admin Customers Directory & Credit Limits
+export const customersAPI = {
+  list: (search) => api.get('/customers', { params: { search } }),
+  updateCreditLimit: (name, data) => api.put(`/customers/${encodeURIComponent(name)}/credit-limit`, data),
+};
+
+// Admin Activity Audit Logs
+export const activityLogsAPI = {
+  list: (params) => api.get('/activity-logs', { params }),
 };
 
 export default api;

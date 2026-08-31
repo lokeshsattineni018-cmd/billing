@@ -14,6 +14,9 @@ const itemsRoutes = require('./routes/items');
 const billsRoutes = require('./routes/bills');
 const dashboardRoutes = require('./routes/dashboard');
 const pdfRoutes = require('./routes/pdf');
+const reportsRoutes = require('./routes/reports');
+const customersRoutes = require('./routes/customers');
+const activityLogsRoutes = require('./routes/activityLogs');
 
 const app = express();
 
@@ -87,6 +90,9 @@ const routeMappings = [
   ['/bills', billsRoutes],
   ['/bills', pdfRoutes],
   ['/dashboard', dashboardRoutes],
+  ['/reports', reportsRoutes],
+  ['/customers', customersRoutes],
+  ['/activity-logs', activityLogsRoutes],
 ];
 
 routeMappings.forEach(([path, handler]) => {
