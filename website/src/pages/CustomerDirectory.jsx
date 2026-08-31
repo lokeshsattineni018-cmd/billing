@@ -12,15 +12,14 @@ export default function CustomerDirectory() {
   const [search, setSearch] = useState('');
   const { toast, showToast } = useToast();
 
-  // Credit Limit & Details Modal State
+  // Customer Contact Info Modal State
   const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [creditModalOpen, setCreditModalOpen] = useState(false);
-  const [newCreditLimit, setNewCreditLimit] = useState('');
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerGstin, setCustomerGstin] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [customerNotes, setCustomerNotes] = useState('');
-  const [savingCredit, setSavingCredit] = useState(false);
+  const [savingContact, setSavingContact] = useState(false);
 
   // Customer Ledger & Invoices Drawer State
   const [ledgerCustomer, setLedgerCustomer] = useState(null);
@@ -57,37 +56,36 @@ export default function CustomerDirectory() {
     loadCustomers(search);
   };
 
-  const handleOpenCreditModal = (c) => {
+  const handleOpenEditModal = (c) => {
     setSelectedCustomer(c);
-    setNewCreditLimit(c.creditLimit > 0 ? String(c.creditLimit) : '');
     setCustomerPhone(c.phone || '');
     setCustomerGstin(c.gstin || '');
     setCustomerAddress(c.address || '');
     setCustomerNotes(c.notes || '');
-    setCreditModalOpen(true);
+    setEditModalOpen(true);
   };
 
-  const handleSaveCreditLimit = async (e) => {
+  const handleSaveContact = async (e) => {
     e.preventDefault();
     if (!selectedCustomer) return;
 
-    setSavingCredit(true);
+    setSavingContact(true);
     try {
       await customersAPI.updateCreditLimit(selectedCustomer.name, {
-        creditLimit: parseFloat(newCreditLimit) || 0,
+        creditLimit: 0,
         phone: customerPhone,
         gstin: customerGstin,
         address: customerAddress,
         notes: customerNotes,
       });
-      showToast(`Customer settings updated for ${selectedCustomer.name}`);
-      setCreditModalOpen(false);
+      showToast(`Contact info updated for ${selectedCustomer.name}`);
+      setEditModalOpen(false);
       loadCustomers(search);
     } catch (err) {
-      console.error('Failed to update credit limit:', err);
-      showToast('Failed to update customer settings', 'error');
+      console.error('Failed to update contact info:', err);
+      showToast('Failed to update customer info', 'error');
     } finally {
-      setSavingCredit(false);
+      setSavingContact(false);
     }
   };
 
@@ -128,7 +126,6 @@ export default function CustomerDirectory() {
       showToast(res.data.message);
       setLumpSumAmount('');
       setLumpSumRef('');
-      // Reload customer bills & master list
       handleOpenLedger(ledgerCustomer);
       loadCustomers(search);
     } catch (err) {
@@ -161,7 +158,7 @@ export default function CustomerDirectory() {
             Customer Master & Payment Center
           </h2>
           <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0' }}>
-            Manage customer credit limits, record invoice payments & track receivables (Admin Exclusive)
+            Record invoice payments, track live balances & customer contact details
           </p>
         </div>
 
@@ -202,7 +199,7 @@ export default function CustomerDirectory() {
         )}
       </form>
 
-      {/* Customers Table / Cards */}
+      {/* Customers Table */}
       {loading ? (
         <div className="spinner" style={{ minHeight: '300px' }}></div>
       ) : customers.length === 0 ? (
@@ -217,11 +214,9 @@ export default function CustomerDirectory() {
                 <tr style={{ background: '#f8fafc' }}>
                   <th>Customer Name</th>
                   <th>Phone / GSTIN</th>
-                  <th className="text-right">Credit Limit</th>
-                  <th className="text-right">Outstanding</th>
+                  <th className="text-right">Outstanding Balance</th>
                   <th className="text-right">Lifetime Sales</th>
                   <th style={{ textAlign: 'center' }}>Total Bills</th>
-                  <th style={{ textAlign: 'center' }}>Credit Status</th>
                   <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
@@ -247,13 +242,6 @@ export default function CustomerDirectory() {
                       <div style={{ fontSize: '0.74rem', color: '#64748b' }}>{c.gstin || 'No GSTIN'}</div>
                     </td>
                     <td className="text-right">
-                      {c.creditLimit > 0 ? (
-                        <span style={{ fontWeight: 800, color: '#0f172a' }}>{formatCurrency(c.creditLimit)}</span>
-                      ) : (
-                        <span style={{ color: '#94a3b8', fontSize: '0.82rem' }}>No Limit</span>
-                      )}
-                    </td>
-                    <td className="text-right">
                       <span style={{ fontWeight: 900, fontSize: '0.95rem', color: c.outstandingBalance > 0 ? '#d97706' : '#16a34a' }}>
                         {formatCurrency(c.outstandingBalance)}
                       </span>
@@ -263,23 +251,6 @@ export default function CustomerDirectory() {
                     </td>
                     <td style={{ textAlign: 'center', fontWeight: 600 }}>
                       {c.totalBills}
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      {c.creditStatus === 'EXCEEDED' ? (
-                        <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800, fontSize: '0.75rem' }}>
-                          EXCEEDED ({c.creditUsedPercent}%)
-                        </span>
-                      ) : c.creditStatus === 'WARNING' ? (
-                        <span className="badge" style={{ background: '#fef3c7', color: '#d97706', fontWeight: 800, fontSize: '0.75rem' }}>
-                          NEAR LIMIT ({c.creditUsedPercent}%)
-                        </span>
-                      ) : c.creditLimit > 0 ? (
-                        <span className="badge" style={{ background: '#dcfce7', color: '#16a34a', fontWeight: 700, fontSize: '0.75rem' }}>
-                          SAFE ({c.creditUsedPercent}%)
-                        </span>
-                      ) : (
-                        <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Uncapped</span>
-                      )}
                     </td>
                     <td style={{ textAlign: 'center' }}>
                       <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -303,11 +274,11 @@ export default function CustomerDirectory() {
                         <button
                           type="button"
                           className="btn btn-secondary btn-sm"
-                          onClick={() => handleOpenCreditModal(c)}
+                          onClick={() => handleOpenEditModal(c)}
                           style={{ fontWeight: 700, fontSize: '0.75rem', padding: '6px 10px' }}
-                          title="Set Credit Limit & Details"
+                          title="Edit Phone & GSTIN"
                         >
-                          Settings
+                          Edit Contact
                         </button>
 
                         {c.phone && (
@@ -596,8 +567,8 @@ export default function CustomerDirectory() {
         </div>
       )}
 
-      {/* Credit Limit & Master Edit Modal */}
-      {creditModalOpen && selectedCustomer && (
+      {/* Edit Customer Contact Modal */}
+      {editModalOpen && selectedCustomer && (
         <div
           style={{
             position: 'fixed',
@@ -613,7 +584,7 @@ export default function CustomerDirectory() {
             padding: '16px',
             backdropFilter: 'blur(4px)',
           }}
-          onClick={() => setCreditModalOpen(false)}
+          onClick={() => setEditModalOpen(false)}
         >
           <div
             style={{
@@ -628,10 +599,10 @@ export default function CustomerDirectory() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
-                Customer Credit Settings
+                Customer Contact Details
               </h3>
               <button
-                onClick={() => setCreditModalOpen(false)}
+                onClick={() => setEditModalOpen(false)}
                 style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: '#94a3b8' }}
               >
                 ×
@@ -642,25 +613,7 @@ export default function CustomerDirectory() {
               {selectedCustomer.name}
             </p>
 
-            <form onSubmit={handleSaveCreditLimit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
-                  Maximum Credit Limit (INR):
-                </label>
-                <input
-                  type="number"
-                  className="form-input"
-                  placeholder="e.g. 200000 (0 for no limit)"
-                  value={newCreditLimit}
-                  onChange={(e) => setNewCreditLimit(e.target.value)}
-                  min="0"
-                  step="1000"
-                />
-                <span style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px', display: 'block' }}>
-                  Set to 0 if this customer has no credit restrictions.
-                </span>
-              </div>
-
+            <form onSubmit={handleSaveContact} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
                   Customer Mobile Phone:
@@ -693,15 +646,15 @@ export default function CustomerDirectory() {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  disabled={savingCredit}
+                  disabled={savingContact}
                   style={{ flex: 1, fontWeight: 800, padding: '11px', background: '#0b5394', color: '#ffffff' }}
                 >
-                  {savingCredit ? 'Saving...' : 'Save Customer Settings'}
+                  {savingContact ? 'Saving...' : 'Save Contact Details'}
                 </button>
                 <button
                   type="button"
                   className="btn btn-ghost"
-                  onClick={() => setCreditModalOpen(false)}
+                  onClick={() => setEditModalOpen(false)}
                   style={{ padding: '11px 16px', color: '#64748b' }}
                 >
                   Cancel

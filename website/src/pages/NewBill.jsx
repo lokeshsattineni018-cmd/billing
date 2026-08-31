@@ -292,11 +292,7 @@ export default function NewBill() {
       // Clear draft upon successful creation
       localStorage.removeItem(DRAFT_KEY);
 
-      if (invoice.creditWarning) {
-        alert(`CREDIT LIMIT ALERT:\n${invoice.creditWarning}`);
-      } else {
-        showToast(`Invoice #${invoice.billNo} created successfully`);
-      }
+      showToast(`Invoice #${invoice.billNo} created successfully`);
 
       if (actionType === 'print') {
         navigate(`/bills/${invoice._id}?autoprint=true`);
@@ -581,13 +577,13 @@ export default function NewBill() {
             <table className="table" style={{ margin: 0 }}>
               <thead>
                 <tr style={{ backgroundColor: '#f8fafc' }}>
-                  <th style={{ width: '45px', textAlign: 'center' }}>{t('sno')}</th>
-                  <th>{t('particulars')}</th>
-                  <th style={{ width: '90px', textAlign: 'center' }}>{t('hsn')}</th>
-                  <th style={{ width: '120px', textAlign: 'right' }}>{t('weightKg')} *</th>
-                  <th style={{ width: '120px', textAlign: 'right' }}>{t('price')} (₹) *</th>
-                  <th style={{ width: '130px', textAlign: 'right' }}>{t('amount')} (₹)</th>
-                  <th style={{ width: '45px', textAlign: 'center' }}></th>
+                  <th style={{ width: '45px', textAlign: 'center', verticalAlign: 'middle' }}>{t('sno')}</th>
+                  <th style={{ verticalAlign: 'middle' }}>{t('particulars')}</th>
+                  <th style={{ width: '90px', textAlign: 'center', verticalAlign: 'middle' }}>{t('hsn')}</th>
+                  <th style={{ width: '130px', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{t('weightKg')} *</th>
+                  <th style={{ width: '130px', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{t('price')} (₹) *</th>
+                  <th style={{ width: '140px', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{t('amount')} (₹)</th>
+                  <th style={{ width: '45px', textAlign: 'center', verticalAlign: 'middle' }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -674,7 +670,7 @@ export default function NewBill() {
           <div style={{ marginTop: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0b5394' }}>
-                🏛️ {t('taxDetails')}
+                {t('taxDetails')}
               </span>
             </div>
 
@@ -792,7 +788,7 @@ export default function NewBill() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <div>
                 <span style={{ fontSize: '0.86rem', color: '#475569', fontWeight: 700 }}>
-                  📄 {t('totalBeforeTax')}
+                  {t('totalBeforeTax')}
                 </span>
                 <span style={{ fontSize: '0.74rem', color: '#94a3b8', marginLeft: '6px' }}>
                   ({items.length} {t('itemsIncluded')})
@@ -805,8 +801,8 @@ export default function NewBill() {
 
             {/* 2. Tax Additions Row */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', fontSize: '0.82rem', color: '#64748b' }}>
-              <span>
-                🏛️ {t('totalTaxAmount')} <span style={{ fontSize: '0.74rem', color: '#0b5394' }}>(CGST + SGST + IGST)</span>
+              <span style={{ fontWeight: 600 }}>
+                {t('totalTaxAmount')}
               </span>
               <span style={{ fontWeight: 700, color: totalTax > 0 ? '#0b5394' : '#64748b' }}>
                 + {formatCurrency(totalTax)}
@@ -816,7 +812,7 @@ export default function NewBill() {
             <div style={{ borderTop: '1.5px dashed #cbd5e1', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontSize: '0.86rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#0b5394', fontWeight: 900 }}>
-                  💰 {t('grandTotalAfterTax')}
+                  {t('grandTotalAfterTax')}
                 </div>
                 <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '1px' }}>
                   Final invoice payable amount
