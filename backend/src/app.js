@@ -29,30 +29,14 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 
-// Strictly Configured CORS
-const allowedOrigins = [
-  'https://billing-snowy-three.vercel.app',
-  'http://localhost:5173',
-  'http://localhost:3000',
-  process.env.CLIENT_URL,
-].filter(Boolean);
-
+// CORS Configuration
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, curl, server-to-server)
-    if (!origin) return callback(null, true);
-    
-    // Check if origin matches allowed list or vercel preview domains
-    const isAllowed = allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin);
-    if (isAllowed) {
-      return callback(null, true);
-    }
-    return callback(new Error(`CORS blocked request from unauthorized origin: ${origin}`));
-  },
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
 }));
+app.options('*', cors());
 
 // Body parser with size limits to prevent body-overflow DoS
 app.use(express.json({ limit: '1mb' }));

@@ -173,11 +173,7 @@ export function numberToWords(num) {
 export async function shareInvoicePDFOnWhatsApp(bill, showToast) {
   if (!bill) return;
 
-  const backendBase =
-    typeof window !== 'undefined' && window.location.hostname === 'localhost'
-      ? 'http://localhost:5001/api'
-      : 'https://srsf-backend.onrender.com/api';
-  const pdfUrl = `${backendBase}/bills/${bill._id}/pdf`;
+  const pdfUrl = `${window.location.origin}/api/bills/${bill._id}/pdf`;
   const formattedDate = new Date(bill.date).toLocaleDateString('en-IN');
   const amountStr = formatCurrency(bill.grandTotal || bill.total);
   const rawPhone = bill.customerPhone ? bill.customerPhone.replace(/[^0-9]/g, '') : '';

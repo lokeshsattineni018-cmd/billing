@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vda-billing-v4';
+const CACHE_NAME = 'vda-billing-v5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -33,10 +33,17 @@ self.addEventListener('fetch', (event) => {
   // Ignore chrome-extension and non-http/https requests
   if (!url.protocol.startsWith('http')) return;
 
-  // 1. API requests — Network-first
+  // 1. API requests — Network-first, graceful fallback
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(event.request).catch(async () => {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+        return new Response(JSON.stringify({ message: 'Network offline / connection error' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      })
     );
     return;
   }
