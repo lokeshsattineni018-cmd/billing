@@ -174,29 +174,27 @@ export async function shareInvoicePDFOnWhatsApp(bill, showToast) {
   if (!bill) return;
 
   const origin = window.location.origin;
-  const viewInvoiceUrl = `${origin}/view/${bill._id}`;
   const pdfUrl = `${origin}/api/bills/${bill._id}/pdf`;
   const formattedDate = new Date(bill.date).toLocaleDateString('en-IN');
   const amountStr = formatCurrency(bill.grandTotal || bill.total);
   const rawPhone = bill.customerPhone ? bill.customerPhone.replace(/[^0-9]/g, '') : '';
   const cleanPhone = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
 
-  const caption = `VIJAYA DURGA AGENCIES
+  // Clean caption without raw URLs that cause giant website logo previews
+  const caption = `*VIJAYA DURGA AGENCIES*
 Tax Invoice #${bill.billNo} ${bill.isVoided ? '(VOIDED)' : ''}
 
 Customer: ${bill.companyName}
 Date: ${formattedDate}
 Total Amount: ${amountStr}
 
-View Official Invoice:
-${viewInvoiceUrl}
-
 Thank you for your business!`;
 
-  // On Mobile: Try Native Web Share API to attach the real PDF document file
+  if (showToast) showToast('Preparing Invoice PDF for WhatsApp...');
+
+  // Try Native Web Share API to attach the real PDF document file (Picture 2 style)
   if (navigator.share) {
     try {
-      if (showToast) showToast('Preparing Invoice PDF...');
       const response = await fetch(pdfUrl);
       if (response.ok) {
         const blob = await response.blob();
@@ -206,7 +204,7 @@ Thank you for your business!`;
         if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
           await navigator.share({
             files: [pdfFile],
-            title: `Tax Invoice #${bill.billNo} - VIJAYA DURGA AGENCIES`,
+            title: `Invoice #${bill.billNo} - VIJAYA DURGA AGENCIES`,
             text: caption,
           });
           if (showToast) showToast('Invoice PDF shared successfully!');
@@ -218,13 +216,31 @@ Thank you for your business!`;
     }
   }
 
-  // Instant Desktop & Web WhatsApp Launch (Zero Lag)
+  // Desktop / Web WhatsApp Fallback:
+  // 1. Download the exact PDF document
+  try {
+    const response = await fetch(pdfUrl);
+    const blob = await response.blob();
+    const fileBlobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = fileBlobUrl;
+    link.download = `VIJAYA_DURGA_INVOICE_${bill.billNo}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(fileBlobUrl);
+  } catch (e) {
+    console.error('Download error:', e);
+  }
+
+  if (showToast) showToast('PDF Invoice downloaded! Opening WhatsApp...');
+
+  // 2. Open WhatsApp chat with clean text summary
   const waUrl = cleanPhone
     ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(caption)}`
     : `https://api.whatsapp.com/send?text=${encodeURIComponent(caption)}`;
 
   window.open(waUrl, '_blank');
-  if (showToast) showToast('Opening WhatsApp...');
 }
 
 

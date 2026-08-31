@@ -268,208 +268,166 @@ export default function Dashboard() {
       {/* ========================================================================= */}
       {/* 2. HIGH-END BENTO KPI CARDS WITH SPARKLINES                               */}
       {/* ========================================================================= */}
+      {/* 2. ENTERPRISE KPI CARDS (Compact Mobile Bento Grid)                      */}
+      {/* ========================================================================= */}
       {isOwnerOrAdmin && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+        <div className="dashboard-stats-grid">
           {/* Today's Sales Card */}
-          <div
-            style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              padding: '20px 22px',
-              border: '1px solid rgba(226, 232, 240, 0.9)',
-              boxShadow: '0 4px 20px -4px rgba(15, 23, 42, 0.05)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-          >
+          <div className="stat-card-compact">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t('todaysSales')}
                 </span>
-                <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#0b5394', marginTop: '4px', letterSpacing: '-0.5px' }}>
+                <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#0b5394', marginTop: '4px', letterSpacing: '-0.5px' }}>
                   {formatCurrency(data?.today?.totalSales || 0)}
                 </div>
               </div>
               <div
+                className="stat-icon"
                 style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '12px',
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
                   background: '#eff6ff',
                   border: '1px solid #dbeafe',
                   color: '#0b5394',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  flexShrink: 0,
                 }}
               >
-                <TrendingUpIcon size={20} />
+                <TrendingUpIcon size={18} />
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
-              <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
-                {data?.today?.billCount || 0} {t('bills')} recorded today
+            <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+                {data?.today?.billCount || 0} {t('bills')}
               </span>
-              <span style={{ background: '#f0fdf4', color: '#16a34a', fontSize: '0.7rem', fontWeight: 800, padding: '2px 7px', borderRadius: '4px' }}>
+              <span style={{ background: '#f0fdf4', color: '#16a34a', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
                 Today
               </span>
             </div>
           </div>
 
           {/* This Month's Sales Card */}
-          <div
-            style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              padding: '20px 22px',
-              border: '1px solid rgba(226, 232, 240, 0.9)',
-              boxShadow: '0 4px 20px -4px rgba(15, 23, 42, 0.05)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-          >
+          <div className="stat-card-compact">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t('thisMonthSales')}
                 </span>
-                <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#10b981', marginTop: '4px', letterSpacing: '-0.5px' }}>
+                <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#10b981', marginTop: '4px', letterSpacing: '-0.5px' }}>
                   {formatCurrency(data?.month?.totalSales || 0)}
                 </div>
               </div>
               <div
+                className="stat-icon"
                 style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '12px',
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
                   background: '#f0fdf4',
                   border: '1px solid #dcfce7',
                   color: '#10b981',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  flexShrink: 0,
                 }}
               >
-                <CalendarIcon size={20} />
+                <CalendarIcon size={18} />
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
-              <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
-                {data?.month?.billCount || 0} {t('bills')} this month
+            <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+                {data?.month?.billCount || 0} {t('bills')}
               </span>
-              <span style={{ background: '#ecfdf5', color: '#059669', fontSize: '0.7rem', fontWeight: 800, padding: '2px 7px', borderRadius: '4px' }}>
+              <span style={{ background: '#ecfdf5', color: '#059669', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
                 MTD
               </span>
             </div>
           </div>
 
           {/* Outstanding Receivables Card */}
-          <div
-            style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              padding: '20px 22px',
-              border: '1px solid rgba(226, 232, 240, 0.9)',
-              boxShadow: '0 4px 20px -4px rgba(15, 23, 42, 0.05)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-          >
+          <div className="stat-card-compact">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t('outstandingReceivables')}
                 </span>
-                <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#d97706', marginTop: '4px', letterSpacing: '-0.5px' }}>
+                <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#d97706', marginTop: '4px', letterSpacing: '-0.5px' }}>
                   {formatCurrency(data?.receivables?.totalPending || 0)}
                 </div>
               </div>
               <div
+                className="stat-icon"
                 style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '12px',
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
                   background: '#fffbeb',
                   border: '1px solid #fef3c7',
                   color: '#d97706',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  flexShrink: 0,
                 }}
               >
-                <TrendingUpIcon size={20} />
+                <TrendingUpIcon size={18} />
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
-              <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
-                {data?.receivables?.pendingCount || 0} invoices unpaid
+            <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+                {data?.receivables?.pendingCount || 0} unpaid
               </span>
-              <span style={{ background: '#fef3c7', color: '#b45309', fontSize: '0.7rem', fontWeight: 800, padding: '2px 7px', borderRadius: '4px' }}>
+              <span style={{ background: '#fef3c7', color: '#b45309', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
                 Pending
               </span>
             </div>
           </div>
 
           {/* Total Lifetime Invoices Card */}
-          <div
-            style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              padding: '20px 22px',
-              border: '1px solid rgba(226, 232, 240, 0.9)',
-              boxShadow: '0 4px 20px -4px rgba(15, 23, 42, 0.05)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-          >
+          <div className="stat-card-compact">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t('totalLifetimeInvoices')}
                 </span>
-                <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#4338ca', marginTop: '4px', letterSpacing: '-0.5px' }}>
+                <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#4338ca', marginTop: '4px', letterSpacing: '-0.5px' }}>
                   {data?.totalBills || 0}
                 </div>
               </div>
               <div
+                className="stat-icon"
                 style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '12px',
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
                   background: '#f5f3ff',
                   border: '1px solid #ede9fe',
                   color: '#6366f1',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  flexShrink: 0,
                 }}
               >
-                <InvoiceIcon size={20} />
+                <InvoiceIcon size={18} />
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
-              <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
-                All generated bills
+            <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+                Lifetime
               </span>
-              <span style={{ background: '#ede9fe', color: '#5b21b6', fontSize: '0.7rem', fontWeight: 800, padding: '2px 7px', borderRadius: '4px' }}>
-                Total
+              <span style={{ background: '#ede9fe', color: '#6366f1', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
+                All Time
               </span>
             </div>
           </div>

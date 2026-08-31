@@ -1367,6 +1367,62 @@ a:hover {
   }
 }
 
+/* ── Compact Mobile Dashboard Bento Grid ── */
+.dashboard-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card-compact {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px 22px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  justifyContent: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .dashboard-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .stat-card-compact {
+    padding: 12px 14px !important;
+    border-radius: 12px !important;
+  }
+
+  .stat-card-compact .stat-label {
+    font-size: 0.66rem !important;
+  }
+
+  .stat-card-compact .stat-value {
+    font-size: 1.25rem !important;
+    margin-top: 2px !important;
+  }
+
+  .stat-card-compact .stat-icon {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+  }
+
+  .stat-card-compact .stat-footer {
+    margin-top: 8px !important;
+    padding-top: 6px !important;
+    font-size: 0.68rem !important;
+  }
+}
+
+
 
 
 
