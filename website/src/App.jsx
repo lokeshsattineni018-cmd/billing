@@ -41,9 +41,9 @@ function Sidebar({ onInstall }) {
           { path: '/customers', label: 'Customers Directory', icon: <TrendingUpIcon size={18} /> },
           { path: '/ledger', label: t('customerLedger'), icon: <TrendingUpIcon size={18} /> },
           { path: '/activity-log', label: 'Activity Log', icon: <SettingsIcon size={18} /> },
+          { path: '/settings', label: t('settings'), icon: <SettingsIcon size={18} /> },
         ]
       : []),
-    { path: '/settings', label: t('settings'), icon: <SettingsIcon size={18} /> },
   ];
 
   return (
@@ -263,7 +263,7 @@ function AppLayout() {
           {isAdmin && <Route path="/customers" element={<CustomerDirectory />} />}
           {isAdmin && <Route path="/ledger" element={<CustomerLedger />} />}
           {isAdmin && <Route path="/activity-log" element={<ActivityLog />} />}
-          <Route path="/settings" element={<Settings />} />
+          {isAdmin && <Route path="/settings" element={<Settings />} />}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

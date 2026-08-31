@@ -1,6 +1,7 @@
 const express = require('express');
 const Settings = require('../models/Settings');
 const { protect, restrictTo } = require('../middleware/auth');
+const { logActivity } = require('../utils/activityLogger');
 
 const router = express.Router();
 
@@ -34,9 +35,9 @@ router.get('/', protect, async (req, res) => {
 
 /**
  * PUT /api/settings
- * Update business settings (owner/admin only)
+ * Update business settings (Admin only)
  */
-router.put('/', protect, restrictTo('owner', 'admin'), async (req, res) => {
+router.put('/', protect, restrictTo('admin'), async (req, res) => {
   try {
     const { businessName, legalName, address, phone, gstin, bankName, accountNo, ifsc, branch } = req.body;
 
