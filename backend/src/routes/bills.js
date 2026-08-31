@@ -516,6 +516,22 @@ router.post('/:id/duplicate', protect, restrictTo('admin'), async (req, res) => 
 });
 
 /**
+ * GET /api/bills/public/:id
+ * Public endpoint for customers to view their invoice via WhatsApp link (No login required)
+ */
+router.get('/public/:id', async (req, res) => {
+  try {
+    const bill = await Bill.findById(req.params.id);
+    if (!bill) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+    res.json(bill);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
  * GET /api/bills/:id
  * Get a single bill by ID
  */

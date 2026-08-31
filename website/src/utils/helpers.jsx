@@ -174,8 +174,8 @@ export async function shareInvoicePDFOnWhatsApp(bill, showToast) {
   if (!bill) return;
 
   const origin = window.location.origin;
-  const viewInvoiceUrl = `${origin}/bills/${bill._id}`;
-  const pdfUrl = `${origin}/api/bills/${bill._id}/pdf?token=${localStorage.getItem('srsf_token')}`;
+  const viewInvoiceUrl = `${origin}/view/${bill._id}`;
+  const pdfUrl = `${origin}/api/bills/${bill._id}/pdf`;
   const formattedDate = new Date(bill.date).toLocaleDateString('en-IN');
   const amountStr = formatCurrency(bill.grandTotal || bill.total);
   const rawPhone = bill.customerPhone ? bill.customerPhone.replace(/[^0-9]/g, '') : '';
@@ -188,7 +188,7 @@ Customer: ${bill.companyName}
 Date: ${formattedDate}
 Total Amount: ${amountStr}
 
-View & Download Invoice:
+View Official Invoice:
 ${viewInvoiceUrl}
 
 Thank you for your business!`;

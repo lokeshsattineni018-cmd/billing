@@ -12,6 +12,7 @@ import CustomerDirectory from './pages/CustomerDirectory';
 import Reports from './pages/Reports';
 import ActivityLog from './pages/ActivityLog';
 import Settings from './pages/Settings';
+import PublicInvoice from './pages/PublicInvoice';
 import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon } from './components/Icons';
 import logoImg from './assets/logo.png';
 import './index.css';
@@ -354,6 +355,9 @@ export default function App() {
         <LanguageProvider>
           <Routes>
             <Route path="/login" element={<LoginWrapper />} />
+            {/* Public Invoice Routes (Zero Login for Customers) */}
+            <Route path="/view/:id" element={<PublicInvoice />} />
+            <Route path="/invoice/view/:id" element={<PublicInvoice />} />
             <Route
               path="/*"
               element={

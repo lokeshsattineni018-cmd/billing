@@ -551,10 +551,6 @@ export default function Dashboard() {
               />
             </div>
           </div>
-
-          {analytics.topCustomers?.length > 0 && (
-            <TopCustomersBarChart data={analytics.topCustomers} />
-          )}
         </div>
       )}
 
