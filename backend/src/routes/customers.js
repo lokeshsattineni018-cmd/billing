@@ -14,7 +14,7 @@ router.get('/', protect, restrictTo('admin'), async (req, res) => {
   try {
     const { search = '' } = req.query;
 
-    // Aggregate lifetime stats from Bills
+    // Aggregate lifetime stats from Bills (accounting for partial payments)
     const billStats = await Bill.aggregate([
       {
         $match: {
@@ -23,18 +23,28 @@ router.get('/', protect, restrictTo('admin'), async (req, res) => {
         },
       },
       {
+        $project: {
+          companyName: 1,
+          date: 1,
+          customerPhone: 1,
+          companyGstin: 1,
+          totalAmount: { $ifNull: ['$grandTotal', '$total'] },
+          paidAmount: {
+            $cond: [
+              { $eq: ['$paymentStatus', 'Paid'] },
+              { $ifNull: ['$grandTotal', '$total'] },
+              { $ifNull: ['$paidAmount', 0] },
+            ],
+          },
+        },
+      },
+      {
         $group: {
           _id: '$companyName',
-          totalInvoiced: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
-          totalPaid: {
-            $sum: {
-              $cond: [{ $eq: ['$paymentStatus', 'Paid'] }, { $ifNull: ['$grandTotal', '$total'] }, 0],
-            },
-          },
+          totalInvoiced: { $sum: '$totalAmount' },
+          totalPaid: { $sum: '$paidAmount' },
           outstandingBalance: {
-            $sum: {
-              $cond: [{ $ne: ['$paymentStatus', 'Paid'] }, { $ifNull: ['$grandTotal', '$total'] }, 0],
-            },
+            $sum: { $max: [0, { $subtract: ['$totalAmount', '$paidAmount'] }] },
           },
           totalBills: { $sum: 1 },
           lastBillDate: { $max: '$date' },
@@ -91,6 +101,121 @@ router.get('/', protect, restrictTo('admin'), async (req, res) => {
     res.json(merged);
   } catch (error) {
     console.error('Customers list error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * GET /api/customers/:name/bills
+ * Get all bills for a specific customer with payment breakdown
+ */
+router.get('/:name/bills', protect, async (req, res) => {
+  try {
+    const { name } = req.params;
+    const bills = await Bill.find({
+      companyName: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
+      isVoided: { $ne: true },
+    })
+      .sort({ date: -1, billNo: -1 })
+      .lean();
+
+    const formatted = bills.map((b) => {
+      const total = b.grandTotal || b.total || 0;
+      const paid = b.paymentStatus === 'Paid' ? total : (b.paidAmount || 0);
+      const balance = Math.max(0, total - paid);
+      return {
+        _id: b._id,
+        billNo: b.billNo,
+        date: b.date,
+        total,
+        paidAmount: paid,
+        balanceDue: balance,
+        paymentStatus: b.paymentStatus,
+        payments: b.payments || [],
+      };
+    });
+
+    res.json(formatted);
+  } catch (error) {
+    console.error('Customer bills error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * POST /api/customers/:name/record-payment
+ * Record a lump sum payment for a customer that settles oldest bills in FIFO order
+ */
+router.post('/:name/record-payment', protect, restrictTo('owner', 'admin'), async (req, res) => {
+  try {
+    const { name } = req.params;
+    const { amount, mode = 'Cash', reference = '', notes = '', date } = req.body;
+    let paymentRem = parseFloat(amount);
+
+    if (isNaN(paymentRem) || paymentRem <= 0) {
+      return res.status(400).json({ message: 'Payment amount must be a positive number.' });
+    }
+
+    // Find all unpaid or partially paid bills for this customer sorted by oldest date
+    const unpaidBills = await Bill.find({
+      companyName: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
+      isVoided: { $ne: true },
+      paymentStatus: { $ne: 'Paid' },
+    }).sort({ date: 1, billNo: 1 });
+
+    if (unpaidBills.length === 0) {
+      return res.status(400).json({ message: 'This customer has no pending or partially paid invoices.' });
+    }
+
+    let settledBills = [];
+    const paymentDate = date ? new Date(date) : new Date();
+
+    for (const bill of unpaidBills) {
+      if (paymentRem <= 0.001) break;
+
+      const billTotal = bill.grandTotal || bill.total || 0;
+      const existingPaid = bill.paidAmount || (bill.paymentStatus === 'Paid' ? billTotal : 0);
+      const balanceDue = Math.max(0, billTotal - existingPaid);
+
+      if (balanceDue <= 0) continue;
+
+      const allocatedAmt = Math.min(paymentRem, balanceDue);
+      const newPaid = Math.round((existingPaid + allocatedAmt) * 100) / 100;
+      const newStatus = newPaid >= billTotal - 0.01 ? 'Paid' : 'Partial';
+
+      bill.paidAmount = newPaid;
+      bill.paymentStatus = newStatus;
+
+      if (!bill.payments) bill.payments = [];
+      bill.payments.push({
+        amount: allocatedAmt,
+        date: paymentDate,
+        mode,
+        reference: reference || `Lump-sum Payment`,
+        notes,
+        recordedBy: req.user._id,
+      });
+
+      await bill.save();
+      settledBills.push({ billNo: bill.billNo, allocated: allocatedAmt, newStatus });
+
+      paymentRem -= allocatedAmt;
+    }
+
+    await logActivity(req, 'RECORD_PAYMENT', name, {
+      customer: name,
+      totalPaid: parseFloat(amount),
+      allocatedTo: settledBills,
+      mode,
+      reference,
+    });
+
+    res.json({
+      message: `Payment of ₹${parseFloat(amount).toLocaleString('en-IN')} applied across ${settledBills.length} invoice(s).`,
+      settledBills,
+    });
+  } catch (error) {
+    console.error('Customer lump sum payment error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

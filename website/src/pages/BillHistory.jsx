@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
 import { SearchIcon, PrintIcon, DownloadIcon, WhatsAppIcon, DownloadIcon as ExportIcon, PlusIcon } from '../components/Icons';
 import ReminderModal from '../components/ReminderModal';
+import PaymentModal from '../components/PaymentModal';
 
 export default function BillHistory() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export default function BillHistory() {
   const [pagination, setPagination] = useState({});
   const [exporting, setExporting] = useState(false);
   const [reminderBillId, setReminderBillId] = useState(null);
+  const [paymentBillId, setPaymentBillId] = useState(null);
 
   const isAdmin = user?.role === 'admin';
   const canSeeSales = user?.role === 'owner' || user?.role === 'admin';
@@ -476,6 +478,18 @@ Thank you for your business!`;
                               <WhatsAppIcon size={14} color="#ffffff" /> Share
                             </button>
                           )}
+                                             {/* Owner/Admin: Record Payment Modal */}
+                          {canUpdateStatus && !bill.isVoided && bill.paymentStatus !== 'Paid' && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', fontWeight: 800 }}
+                              onClick={() => setPaymentBillId(bill._id)}
+                              title="Record payment received for this invoice"
+                            >
+                              + Pay
+                            </button>
+                          )}
 
                           {/* Admin Only: WhatsApp & SMS Payment Reminder Modal */}
                           {isAdmin && !bill.isVoided && bill.paymentStatus !== 'Paid' && (
@@ -540,9 +554,9 @@ Thank you for your business!`;
                     const showEllipsis = idx > 0 && p - arr[idx - 1] > 1;
                     return (
                       <span key={p}>
-                        {showEllipsis && <span style={{ color: 'var(--text-muted)', padding: '0 4px' }}>...</span>}
+                        {showEllipsis && <span className="pagination-ellipsis">...</span>}
                         <button
-                          className={p === page ? 'active' : ''}
+                          className={page === p ? 'active' : ''}
                           onClick={() => setPage(p)}
                         >
                           {p}
@@ -571,6 +585,18 @@ Thank you for your business!`;
         <ReminderModal
           billId={reminderBillId}
           onClose={() => setReminderBillId(null)}
+        />
+      )}
+
+      {/* Record Payment Modal */}
+      {paymentBillId && (
+        <PaymentModal
+          billId={paymentBillId}
+          onClose={() => setPaymentBillId(null)}
+          onSuccess={(msg) => {
+            showToast(msg);
+            loadBills();
+          }}
         />
       )}
     </div>

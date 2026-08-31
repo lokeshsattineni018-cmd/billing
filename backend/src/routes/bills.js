@@ -878,11 +878,112 @@ router.patch('/:id/void', protect, restrictTo('owner', 'admin'), [
 });
 
 /**
+ * POST /api/bills/:id/payments
+ * Record a payment against an invoice (supports partial & full payments)
+ */
+router.post('/:id/payments', protect, restrictTo('owner', 'admin'), async (req, res) => {
+  try {
+    const { amount, mode = 'Cash', reference = '', notes = '', date } = req.body;
+    const paymentAmt = parseFloat(amount);
+
+    if (isNaN(paymentAmt) || paymentAmt <= 0) {
+      return res.status(400).json({ message: 'Payment amount must be a positive number.' });
+    }
+
+    const bill = await Bill.findById(req.params.id);
+    if (!bill) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+
+    if (bill.isVoided) {
+      return res.status(400).json({ message: 'Cannot record payment for a voided invoice.' });
+    }
+
+    const billTotal = bill.grandTotal || bill.total || 0;
+    const existingPaid = bill.paidAmount || (bill.paymentStatus === 'Paid' ? billTotal : 0);
+    const remainingBalance = Math.max(0, billTotal - existingPaid);
+
+    if (paymentAmt > remainingBalance + 0.01) {
+      return res.status(400).json({
+        message: `Payment amount (₹${paymentAmt}) cannot exceed remaining balance (₹${remainingBalance.toFixed(2)}).`,
+      });
+    }
+
+    const newPaidAmount = Math.min(billTotal, Math.round((existingPaid + paymentAmt) * 100) / 100);
+    const newStatus = newPaidAmount >= billTotal - 0.01 ? 'Paid' : 'Partial';
+
+    bill.paidAmount = newPaidAmount;
+    bill.paymentStatus = newStatus;
+
+    if (!bill.payments) bill.payments = [];
+    bill.payments.push({
+      amount: paymentAmt,
+      date: date ? new Date(date) : new Date(),
+      mode,
+      reference,
+      notes,
+      recordedBy: req.user._id,
+    });
+
+    await bill.save();
+
+    await logActivity(req, 'RECORD_PAYMENT', String(bill.billNo), {
+      customer: bill.companyName,
+      paymentAmount: paymentAmt,
+      mode,
+      reference,
+      newStatus,
+      paidAmount: newPaidAmount,
+      total: billTotal,
+    });
+
+    const populated = await Bill.findById(bill._id).populate('createdBy', 'name');
+
+    res.json({
+      message: `Payment of ₹${paymentAmt.toLocaleString('en-IN')} recorded successfully for Invoice #${bill.billNo}.`,
+      bill: populated,
+    });
+  } catch (error) {
+    console.error('Record Payment Error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * GET /api/bills/:id/payments
+ * Get payment history for an invoice
+ */
+router.get('/:id/payments', protect, async (req, res) => {
+  try {
+    const bill = await Bill.findById(req.params.id)
+      .populate('payments.recordedBy', 'name role')
+      .lean();
+
+    if (!bill) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+
+    res.json({
+      billNo: bill.billNo,
+      companyName: bill.companyName,
+      total: bill.grandTotal || bill.total || 0,
+      paidAmount: bill.paidAmount || (bill.paymentStatus === 'Paid' ? (bill.grandTotal || bill.total || 0) : 0),
+      balanceDue: Math.max(0, (bill.grandTotal || bill.total || 0) - (bill.paidAmount || (bill.paymentStatus === 'Paid' ? (bill.grandTotal || bill.total || 0) : 0))),
+      paymentStatus: bill.paymentStatus,
+      payments: bill.payments || [],
+    });
+  } catch (error) {
+    console.error('Get Payments Error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
  * PATCH /api/bills/:id/payment-status
  * Update payment status (Owner and Admin only)
  */
 router.patch('/:id/payment-status', protect, restrictTo('owner', 'admin'), [
-  body('paymentStatus').isIn(['Pending', 'Paid']).withMessage('Payment status must be Pending or Paid'),
+  body('paymentStatus').isIn(['Pending', 'Partial', 'Paid']).withMessage('Payment status must be Pending, Partial, or Paid'),
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -899,7 +1000,16 @@ router.patch('/:id/payment-status', protect, restrictTo('owner', 'admin'), [
       return res.status(400).json({ message: 'Cannot change payment status of a voided invoice.' });
     }
 
-    bill.paymentStatus = req.body.paymentStatus;
+    const newStatus = req.body.paymentStatus;
+    const billTotal = bill.grandTotal || bill.total || 0;
+
+    bill.paymentStatus = newStatus;
+    if (newStatus === 'Paid') {
+      bill.paidAmount = billTotal;
+    } else if (newStatus === 'Pending') {
+      bill.paidAmount = 0;
+    }
+
     await bill.save();
 
     await logActivity(req, 'UPDATE_PAYMENT_STATUS', String(bill.billNo), {

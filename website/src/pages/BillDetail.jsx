@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDateTime, numberToWords, useToast, Toast } from '../utils/helpers';
 import { PrintIcon, DownloadIcon, WhatsAppIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
 import ReminderModal from '../components/ReminderModal';
+import PaymentModal from '../components/PaymentModal';
 import ganeshaImg from '../assets/ganesha.jpg';
 import durgaImg from '../assets/durga.jpg';
 import ramDarbarImg from '../assets/ram_darbar.jpg';
@@ -19,6 +20,7 @@ export default function BillDetail() {
   const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Edit Modal State
   const [showEditModal, setShowEditModal] = useState(false);
@@ -316,6 +318,18 @@ Thank you for your business!`;
             </button>
           )}
 
+          {/* Record Payment Button (Owner & Admin) */}
+          {!bill.isVoided && canUpdateStatus && bill.paymentStatus !== 'Paid' && (
+            <button
+              className="btn btn-primary"
+              style={{ background: '#16a34a', color: '#ffffff', fontWeight: 800, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
+              onClick={() => setShowPaymentModal(true)}
+              title="Record partial or full payment received for this invoice"
+            >
+              + Record Payment
+            </button>
+          )}
+
           {/* Void Invoice Button */}
           {!bill.isVoided && canUpdateStatus && (
             <button
@@ -358,6 +372,79 @@ Thank you for your business!`;
           </button>
         </div>
       </div>
+
+      {/* Payment Settlement Card (if not voided) */}
+      {!bill.isVoided && (
+        <div
+          style={{
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            marginBottom: '20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '16px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+          }}
+        >
+          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                Invoice Total
+              </div>
+              <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
+                {formatCurrency(bill.grandTotal || bill.total)}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                Paid Amount
+              </div>
+              <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#16a34a' }}>
+                {formatCurrency(bill.paidAmount || (bill.paymentStatus === 'Paid' ? (bill.grandTotal || bill.total) : 0))}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#d97706', textTransform: 'uppercase' }}>
+                Balance Due
+              </div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#d97706' }}>
+                {formatCurrency(Math.max(0, (bill.grandTotal || bill.total) - (bill.paidAmount || (bill.paymentStatus === 'Paid' ? (bill.grandTotal || bill.total) : 0))))}
+              </div>
+            </div>
+
+            <div>
+              <span
+                className={`badge ${
+                  bill.paymentStatus === 'Paid'
+                    ? 'badge-green'
+                    : bill.paymentStatus === 'Partial'
+                    ? 'badge-blue'
+                    : 'badge-amber'
+                }`}
+                style={{ fontSize: '0.8rem', fontWeight: 800, padding: '4px 10px' }}
+              >
+                {bill.paymentStatus}
+              </span>
+            </div>
+          </div>
+
+          {canUpdateStatus && bill.paymentStatus !== 'Paid' && (
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => setShowPaymentModal(true)}
+              style={{ background: '#16a34a', color: '#ffffff', fontWeight: 800, padding: '8px 16px' }}
+            >
+              + Record Payment
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Void Notice Banner if bill is voided */}
       {bill.isVoided && (
@@ -965,6 +1052,18 @@ Thank you for your business!`;
             </div>
           </div>
         </div>
+      )}
+
+      {/* Record Payment Modal */}
+      {showPaymentModal && (
+        <PaymentModal
+          billId={bill._id}
+          onClose={() => setShowPaymentModal(false)}
+          onSuccess={(msg) => {
+            showToast(msg);
+            loadBill();
+          }}
+        />
       )}
 
       {/* Admin Payment Reminder Modal */}

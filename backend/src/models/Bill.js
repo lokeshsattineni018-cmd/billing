@@ -73,11 +73,26 @@ const billSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  paidAmount: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
   paymentStatus: {
     type: String,
-    enum: ['Pending', 'Paid'],
+    enum: ['Pending', 'Partial', 'Paid'],
     default: 'Pending',
   },
+  payments: [
+    {
+      amount: { type: Number, required: true },
+      date: { type: Date, default: Date.now },
+      mode: { type: String, enum: ['Cash', 'Bank Transfer', 'UPI', 'Cheque', 'Other'], default: 'Cash' },
+      reference: { type: String, default: '', trim: true },
+      notes: { type: String, default: '', trim: true },
+      recordedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    },
+  ],
   isVoided: {
     type: Boolean,
     default: false,

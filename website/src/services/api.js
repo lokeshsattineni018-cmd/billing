@@ -57,6 +57,8 @@ export const billsAPI = {
   duplicate: (id) => api.post(`/bills/${id}/duplicate`),
   getReminder: (id) => api.get(`/bills/${id}/reminder`),
   updatePaymentStatus: (id, paymentStatus) => api.patch(`/bills/${id}/payment-status`, { paymentStatus }),
+  recordPayment: (id, data) => api.post(`/bills/${id}/payments`, data),
+  getPayments: (id) => api.get(`/bills/${id}/payments`),
   getPDF: (id) => `${API_BASE_URL}/bills/${id}/pdf?token=${localStorage.getItem('srsf_token')}`,
   exportCSVUrl: (params) => {
     const query = new URLSearchParams(params || {}).toString();
@@ -80,9 +82,11 @@ export const reportsAPI = {
   getSales: (params) => api.get('/reports/sales', { params }),
 };
 
-// Admin Customers Directory & Credit Limits
+// Admin Customers Directory, Credit Limits & Customer Payments
 export const customersAPI = {
   list: (search) => api.get('/customers', { params: { search } }),
+  getBills: (name) => api.get(`/customers/${encodeURIComponent(name)}/bills`),
+  recordPayment: (name, data) => api.post(`/customers/${encodeURIComponent(name)}/record-payment`, data),
   updateCreditLimit: (name, data) => api.put(`/customers/${encodeURIComponent(name)}/credit-limit`, data),
 };
 
