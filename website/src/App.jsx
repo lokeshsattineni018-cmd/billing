@@ -38,8 +38,7 @@ function Sidebar({ onInstall }) {
     ...(isAdmin
       ? [
           { path: '/reports', label: 'Sales Reports', icon: <TrendingUpIcon size={18} /> },
-          { path: '/customers', label: 'Customers Directory', icon: <TrendingUpIcon size={18} /> },
-          { path: '/ledger', label: t('customerLedger'), icon: <TrendingUpIcon size={18} /> },
+          { path: '/customers', label: 'Customers', icon: <TrendingUpIcon size={18} /> },
           { path: '/activity-log', label: 'Activity Log', icon: <SettingsIcon size={18} /> },
           { path: '/settings', label: t('settings'), icon: <SettingsIcon size={18} /> },
         ]
@@ -265,7 +264,7 @@ function AppLayout() {
           <Route path="/bills/:id" element={<BillDetail />} />
           {isAdmin && <Route path="/reports" element={<Reports />} />}
           {isAdmin && <Route path="/customers" element={<CustomerDirectory />} />}
-          {isAdmin && <Route path="/ledger" element={<CustomerLedger />} />}
+          <Route path="/ledger" element={<Navigate to="/customers" replace />} />
           {isAdmin && <Route path="/activity-log" element={<ActivityLog />} />}
           {isAdmin && <Route path="/settings" element={<Settings />} />}
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -289,9 +288,9 @@ function AppLayout() {
           <span>{t('invoiceHistory')}</span>
         </NavLink>
         {isAdmin && (
-          <NavLink to="/ledger" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
+          <NavLink to="/customers" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
             <TrendingUpIcon size={20} />
-            <span>{t('customerLedger')}</span>
+            <span>Customers</span>
           </NavLink>
         )}
       </nav>

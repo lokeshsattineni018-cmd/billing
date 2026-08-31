@@ -214,8 +214,7 @@ export default function Dashboard() {
           >
             {[
               { label: 'Sales Reports →', path: '/reports' },
-              { label: 'Customer Directory →', path: '/customers' },
-              { label: 'Customer Ledger →', path: '/ledger' },
+              { label: 'Customers →', path: '/customers' },
               { label: 'Tally XML Export', action: () => window.open(billsAPI.exportTallyUrl(), '_blank') },
               { label: 'Activity Audit Log →', path: '/activity-log' },
             ].map((btn, i) => (
