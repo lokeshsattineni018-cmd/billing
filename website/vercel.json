@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://srsf-backend.onrender.com/api/:path*"
+    },
+    {
       "source": "/((?!assets|icons|favicon.svg|manifest.json|sw.js|logo.png|.*\\..*).*)",
       "destination": "/index.html"
     }

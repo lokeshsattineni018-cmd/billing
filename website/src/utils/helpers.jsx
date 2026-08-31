@@ -173,8 +173,11 @@ export function numberToWords(num) {
 export async function shareInvoicePDFOnWhatsApp(bill, showToast) {
   if (!bill) return;
 
-  const origin = window.location.origin;
-  const pdfUrl = `${origin}/api/bills/${bill._id}/pdf`;
+  const backendBase =
+    typeof window !== 'undefined' && window.location.hostname === 'localhost'
+      ? 'http://localhost:5001/api'
+      : 'https://srsf-backend.onrender.com/api';
+  const pdfUrl = `${backendBase}/bills/${bill._id}/pdf`;
   const formattedDate = new Date(bill.date).toLocaleDateString('en-IN');
   const amountStr = formatCurrency(bill.grandTotal || bill.total);
   const rawPhone = bill.customerPhone ? bill.customerPhone.replace(/[^0-9]/g, '') : '';
@@ -202,10 +205,10 @@ Thank you for your business!`;
         const pdfFile = new File([blob], fileName, { type: 'application/pdf' });
 
         if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+          // IMPORTANT: Share files ONLY (without text) so WhatsApp attaches the PDF Document (Picture 2)
           await navigator.share({
             files: [pdfFile],
             title: `Invoice #${bill.billNo} - VIJAYA DURGA AGENCIES`,
-            text: caption,
           });
           if (showToast) showToast('Invoice PDF shared successfully!');
           return;
