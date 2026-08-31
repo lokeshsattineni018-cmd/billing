@@ -3,9 +3,10 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDateTime, numberToWords, useToast, Toast, shareInvoicePDFOnWhatsApp } from '../utils/helpers';
-import { PrintIcon, DownloadIcon, WhatsAppIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
+import { PrintIcon, DownloadIcon, WhatsAppIcon, PlusIcon, ArrowLeftIcon, ShareIcon } from '../components/Icons';
 import ReminderModal from '../components/ReminderModal';
 import PaymentModal from '../components/PaymentModal';
+import ShareModal from '../components/ShareModal';
 import ganeshaImg from '../assets/ganesha.jpg';
 import durgaImg from '../assets/durga.jpg';
 import ramDarbarImg from '../assets/ram_darbar.jpg';
@@ -19,6 +20,7 @@ export default function BillDetail() {
   const [bill, setBill] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -278,18 +280,17 @@ export default function BillDetail() {
 
           {!bill.isVoided && (
             <button
-              className="btn btn-whatsapp"
-              style={{ fontWeight: 700, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
-              onClick={handleShareWhatsApp}
-              disabled={sharing}
+              className="btn btn-primary"
+              style={{ fontWeight: 800, padding: '10px 18px', background: '#0b5394', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '6px' }}
+              onClick={() => setShowShareModal(true)}
             >
-              <WhatsAppIcon size={18} color="#ffffff" /> WhatsApp
+              <ShareIcon size={18} color="#ffffff" /> Share Invoice
             </button>
           )}
 
           <button
             className="btn btn-secondary"
-            style={{ padding: '10px 14px' }}
+            style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
             onClick={handleDownloadPDF}
           >
             <DownloadIcon size={16} /> PDF
@@ -1042,6 +1043,15 @@ export default function BillDetail() {
             showToast(msg);
             loadBill();
           }}
+        />
+      )}
+
+      {/* Universal Multi-App Share Modal */}
+      {showShareModal && (
+        <ShareModal
+          bill={bill}
+          onClose={() => setShowShareModal(false)}
+          showToast={showToast}
         />
       )}
 
