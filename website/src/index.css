@@ -830,27 +830,27 @@ a:hover {
   cursor: not-allowed;
 }
 
-/* ── Logout Button ── */
+/* ── Logout Button (Turns Red on Hover) ── */
 .logout-btn {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #334155;
-  background: transparent;
-  color: #94a3b8;
-  font-size: 0.85rem;
-  font-weight: 500;
+  padding: 9px 12px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
-  border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 
 .logout-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
-  border-color: #475569;
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+  border-color: #fca5a5 !important;
 }
 
 /* ── Settings Preview ── */

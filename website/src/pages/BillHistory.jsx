@@ -458,18 +458,6 @@ export default function BillHistory() {
                               <WhatsAppIcon size={14} color="#ffffff" /> Share
                             </button>
                           )}
-                                             {/* Owner/Admin: Record Payment Modal */}
-                          {canUpdateStatus && !bill.isVoided && bill.paymentStatus !== 'Paid' && (
-                            <button
-                              type="button"
-                              className="btn btn-secondary btn-sm"
-                              style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', fontWeight: 800 }}
-                              onClick={() => setPaymentBillId(bill._id)}
-                              title="Record payment received for this invoice"
-                            >
-                              + Pay
-                            </button>
-                          )}
 
                           {/* Admin Only: WhatsApp & SMS Payment Reminder Modal */}
                           {isAdmin && !bill.isVoided && bill.paymentStatus !== 'Paid' && (
