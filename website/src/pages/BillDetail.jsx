@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { formatCurrency, formatDateTime, numberToWords, useToast, Toast } from '../utils/helpers';
+import { formatCurrency, formatDateTime, numberToWords, useToast, Toast, shareInvoicePDFOnWhatsApp } from '../utils/helpers';
 import { PrintIcon, DownloadIcon, WhatsAppIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
 import ReminderModal from '../components/ReminderModal';
 import PaymentModal from '../components/PaymentModal';
@@ -114,34 +114,16 @@ export default function BillDetail() {
     }
   };
 
-  const handleShareWhatsApp = () => {
+  const handleShareWhatsApp = async () => {
     if (!bill) return;
-
-    const pdfUrl = billsAPI.getPDF(id);
-    const formattedDate = new Date(bill.date).toLocaleDateString('en-IN');
-    const amountStr = formatCurrency(bill.grandTotal || bill.total);
-    const rawPhone = bill.customerPhone ? bill.customerPhone.replace(/[^0-9]/g, '') : '';
-    const cleanPhone = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
-
-    const message = `*VIJAYA DURGA AGENCIES*
-*Tax Invoice #${bill.billNo}* ${bill.isVoided ? '*(VOIDED / CANCELLED)*' : ''}
-
-Dear ${bill.companyName},
-Please find your invoice details below:
-📅 Date: ${formattedDate}
-💰 Total Amount: ${amountStr}
-
-📄 View & Download Invoice PDF:
-${pdfUrl}
-
-Thank you for your business!`;
-
-    const waUrl = cleanPhone
-      ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`
-      : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-
-    window.open(waUrl, '_blank');
-    showToast('Opening WhatsApp...');
+    setSharing(true);
+    try {
+      await shareInvoicePDFOnWhatsApp(bill, showToast);
+    } catch (err) {
+      console.error('WhatsApp share error:', err);
+    } finally {
+      setSharing(false);
+    }
   };
 
   const handleUpdatePaymentStatus = async (newStatus) => {

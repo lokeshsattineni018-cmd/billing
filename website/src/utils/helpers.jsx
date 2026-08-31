@@ -167,3 +167,75 @@ export function numberToWords(num) {
   return parts.join(' ') + ' Rupees Only';
 }
 
+/**
+ * Share Tax Invoice PDF directly as an attachment to WhatsApp
+ */
+export async function shareInvoicePDFOnWhatsApp(bill, showToast) {
+  if (!bill) return;
+
+  const pdfUrl = `${window.location.origin}/api/bills/${bill._id}/pdf?token=${localStorage.getItem('srsf_token')}`;
+  const formattedDate = new Date(bill.date).toLocaleDateString('en-IN');
+  const amountStr = formatCurrency(bill.grandTotal || bill.total);
+  const rawPhone = bill.customerPhone ? bill.customerPhone.replace(/[^0-9]/g, '') : '';
+  const cleanPhone = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
+
+  const caption = `VIJAYA DURGA AGENCIES
+Tax Invoice #${bill.billNo} ${bill.isVoided ? '(VOIDED)' : ''}
+
+Customer: ${bill.companyName}
+Date: ${formattedDate}
+Total Amount: ${amountStr}
+
+Thank you for your business!`;
+
+  if (showToast) showToast('Preparing Invoice PDF for WhatsApp...');
+
+  try {
+    const response = await fetch(pdfUrl);
+    if (!response.ok) throw new Error('PDF fetch failed');
+    const blob = await response.blob();
+    const fileName = `VIJAYA_DURGA_INVOICE_${bill.billNo}.pdf`;
+    const pdfFile = new File([blob], fileName, { type: 'application/pdf' });
+
+    // Try Native Web Share API with real PDF Attachment (Mobile Android/iOS/Mac)
+    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+      await navigator.share({
+        files: [pdfFile],
+        title: `Tax Invoice #${bill.billNo} - VIJAYA DURGA AGENCIES`,
+        text: caption,
+      });
+      if (showToast) showToast('Invoice PDF shared successfully!');
+      return;
+    }
+  } catch (err) {
+    console.warn('Native file share skipped/cancelled:', err);
+  }
+
+  // Fallback for Desktop browsers:
+  // 1. Download the PDF file to user's computer
+  try {
+    const response = await fetch(pdfUrl);
+    const blob = await response.blob();
+    const fileBlobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = fileBlobUrl;
+    link.download = `VIJAYA_DURGA_INVOICE_${bill.billNo}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(fileBlobUrl);
+  } catch (e) {
+    console.error('Download fallback error:', e);
+  }
+
+  if (showToast) showToast('Invoice PDF downloaded! Opening WhatsApp to attach and send.');
+
+  // 2. Open WhatsApp chat with clean text summary
+  const waUrl = cleanPhone
+    ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(caption)}`
+    : `https://api.whatsapp.com/send?text=${encodeURIComponent(caption)}`;
+
+  window.open(waUrl, '_blank');
+}
+
+

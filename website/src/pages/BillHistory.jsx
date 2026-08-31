@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
+import { formatCurrency, formatDate, useToast, Toast, shareInvoicePDFOnWhatsApp } from '../utils/helpers';
 import { SearchIcon, PrintIcon, DownloadIcon, WhatsAppIcon, DownloadIcon as ExportIcon, PlusIcon } from '../components/Icons';
 import ReminderModal from '../components/ReminderModal';
 import PaymentModal from '../components/PaymentModal';
@@ -120,33 +120,13 @@ export default function BillHistory() {
     }
   };
 
-  const handleShareWhatsApp = (e, bill) => {
+  const handleShareWhatsApp = async (e, bill) => {
     e.stopPropagation();
-    const pdfUrl = billsAPI.getPDF(bill._id);
-    const formattedDate = new Date(bill.date).toLocaleDateString('en-IN');
-    const amountStr = formatCurrency(bill.grandTotal || bill.total);
-    const rawPhone = bill.customerPhone ? bill.customerPhone.replace(/[^0-9]/g, '') : '';
-    const cleanPhone = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
-
-    const message = `*VIJAYA DURGA AGENCIES*
-*Tax Invoice #${bill.billNo}*
-
-Dear ${bill.companyName},
-Please find your invoice details below:
-📅 Date: ${formattedDate}
-💰 Total Amount: ${amountStr}
-
-📄 View & Download Invoice PDF:
-${pdfUrl}
-
-Thank you for your business!`;
-
-    const waUrl = cleanPhone
-      ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`
-      : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-
-    window.open(waUrl, '_blank');
-    showToast('Opening WhatsApp...');
+    try {
+      await shareInvoicePDFOnWhatsApp(bill, showToast);
+    } catch (err) {
+      console.error('WhatsApp share error:', err);
+    }
   };
 
   const handleTogglePaymentStatus = async (e, bill) => {
