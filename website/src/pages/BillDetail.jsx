@@ -21,6 +21,7 @@ export default function BillDetail() {
   const [sharing, setSharing] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   // Edit Modal State
   const [showEditModal, setShowEditModal] = useState(false);
@@ -127,16 +128,22 @@ export default function BillDetail() {
   };
 
   const handleUpdatePaymentStatus = async (newStatus) => {
-    if (bill.isVoided) {
+    if (!bill || bill.isVoided) {
       showToast('Cannot change status of a voided invoice', 'error');
       return;
     }
+    if (bill.paymentStatus === newStatus) return;
+
+    setUpdatingStatus(true);
     try {
       const response = await billsAPI.updatePaymentStatus(id, newStatus);
       setBill(response.data);
-      showToast(`Invoice #${bill.billNo} payment status updated to ${newStatus}`);
+      showToast(`Invoice #${bill.billNo} marked as ${newStatus}!`);
     } catch (error) {
-      showToast('Failed to update status', 'error');
+      console.error('Failed to update status:', error);
+      showToast(error.response?.data?.message || 'Failed to update status', 'error');
+    } finally {
+      setUpdatingStatus(false);
     }
   };
 
@@ -300,25 +307,13 @@ export default function BillDetail() {
             </button>
           )}
 
-          {/* Record Payment Button (Owner & Admin) */}
-          {!bill.isVoided && canUpdateStatus && bill.paymentStatus !== 'Paid' && (
-            <button
-              className="btn btn-primary"
-              style={{ background: '#16a34a', color: '#ffffff', fontWeight: 800, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
-              onClick={() => setShowPaymentModal(true)}
-              title="Record partial or full payment received for this invoice"
-            >
-              + Record Payment
-            </button>
-          )}
-
-          {/* Void Invoice Button */}
-          {!bill.isVoided && canUpdateStatus && (
+          {/* Admin Only: Void Invoice Button */}
+          {isAdmin && !bill.isVoided && (
             <button
               className="btn btn-secondary"
               style={{ padding: '10px 14px', color: '#ef4444', border: '1px solid #fecaca', background: '#fff5f5', fontWeight: 700 }}
               onClick={() => setShowVoidModal(true)}
-              title="Mark this bill as voided (keeps audit record)"
+              title="Mark this bill as voided (Admin exclusive)"
             >
               Void Bill
             </button>
@@ -539,17 +534,19 @@ export default function BillDetail() {
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 className={`btn btn-sm ${bill.paymentStatus === 'Paid' ? 'btn-primary' : 'btn-secondary'}`}
-                style={bill.paymentStatus === 'Paid' ? { background: '#16a34a' } : {}}
+                style={bill.paymentStatus === 'Paid' ? { background: '#16a34a', color: '#ffffff' } : {}}
                 onClick={() => handleUpdatePaymentStatus('Paid')}
+                disabled={updatingStatus || bill.paymentStatus === 'Paid'}
               >
-                Mark as Paid
+                {updatingStatus && bill.paymentStatus !== 'Paid' ? 'Updating...' : 'Mark as Paid'}
               </button>
               <button
                 className={`btn btn-sm ${bill.paymentStatus !== 'Paid' ? 'btn-primary' : 'btn-secondary'}`}
-                style={bill.paymentStatus !== 'Paid' ? { background: '#d97706' } : {}}
+                style={bill.paymentStatus !== 'Paid' ? { background: '#d97706', color: '#ffffff' } : {}}
                 onClick={() => handleUpdatePaymentStatus('Pending')}
+                disabled={updatingStatus || bill.paymentStatus === 'Pending'}
               >
-                Mark as Pending
+                {updatingStatus && bill.paymentStatus === 'Paid' ? 'Updating...' : 'Mark as Pending'}
               </button>
             </div>
           </div>

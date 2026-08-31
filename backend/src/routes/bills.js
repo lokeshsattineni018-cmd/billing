@@ -837,9 +837,9 @@ router.put('/:id', protect, [
 
 /**
  * PATCH /api/bills/:id/void
- * Void an invoice (Owner and Admin only)
+ * Void an invoice (Admin only)
  */
-router.patch('/:id/void', protect, restrictTo('owner', 'admin'), [
+router.patch('/:id/void', protect, restrictTo('admin'), [
   body('reason').optional().trim(),
 ], async (req, res) => {
   try {
