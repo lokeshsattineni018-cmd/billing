@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
+import { formatCurrency, formatDate, useToast, Toast, shareInvoicePDFOnWhatsApp } from '../utils/helpers';
 import { SearchIcon, PrintIcon, DownloadIcon, WhatsAppIcon, DownloadIcon as ExportIcon, PlusIcon, ShareIcon } from '../components/Icons';
 import ReminderModal from '../components/ReminderModal';
 import PaymentModal from '../components/PaymentModal';
-import ShareModal from '../components/ShareModal';
 
 export default function BillHistory() {
   const navigate = useNavigate();
@@ -122,9 +121,13 @@ export default function BillHistory() {
     }
   };
 
-  const handleShare = (e, bill) => {
+  const handleShareWhatsApp = async (e, bill) => {
     e.stopPropagation();
-    setShareBill(bill);
+    try {
+      await shareInvoicePDFOnWhatsApp(bill, showToast);
+    } catch (err) {
+      console.error('WhatsApp share error:', err);
+    }
   };
 
   const handleTogglePaymentStatus = async (e, bill) => {
@@ -359,11 +362,11 @@ export default function BillHistory() {
                     </button>
                     {!bill.isVoided && (
                       <button
-                        className="btn btn-primary btn-sm"
-                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 8px', fontSize: '0.85rem', fontWeight: 800, borderRadius: '6px', background: '#0b5394', color: '#ffffff' }}
-                        onClick={(e) => handleShare(e, bill)}
+                        className="btn btn-whatsapp btn-sm"
+                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 8px', fontSize: '0.85rem', fontWeight: 700, borderRadius: '6px' }}
+                        onClick={(e) => handleShareWhatsApp(e, bill)}
                       >
-                        <ShareIcon size={16} color="#ffffff" /> Share
+                        <WhatsAppIcon size={16} color="#ffffff" /> WhatsApp
                       </button>
                     )}
                     <button
@@ -449,12 +452,11 @@ export default function BillHistory() {
                         <div className="action-buttons" style={{ justifyContent: 'center' }}>
                           {!bill.isVoided && (
                             <button
-                              className="btn btn-primary btn-sm"
-                              style={{ background: '#0b5394', color: '#ffffff', fontWeight: 800 }}
-                              onClick={(e) => handleShare(e, bill)}
-                              title="Share Invoice (Apps / WhatsApp / Email)"
+                              className="btn btn-whatsapp btn-sm"
+                              onClick={(e) => handleShareWhatsApp(e, bill)}
+                              title="Share on WhatsApp"
                             >
-                              <ShareIcon size={14} color="#ffffff" /> Share
+                              <WhatsAppIcon size={14} color="#ffffff" /> Share
                             </button>
                           )}
 
@@ -564,15 +566,6 @@ export default function BillHistory() {
             showToast(msg);
             loadBills();
           }}
-        />
-      )}
-
-      {/* Universal Multi-App Share Modal */}
-      {shareBill && (
-        <ShareModal
-          bill={shareBill}
-          onClose={() => setShareBill(null)}
-          showToast={showToast}
         />
       )}
     </div>

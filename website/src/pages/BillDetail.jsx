@@ -280,11 +280,12 @@ export default function BillDetail() {
 
           {!bill.isVoided && (
             <button
-              className="btn btn-primary"
-              style={{ fontWeight: 800, padding: '10px 18px', background: '#0b5394', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '6px' }}
-              onClick={() => setShowShareModal(true)}
+              className="btn btn-whatsapp"
+              style={{ fontWeight: 700, padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px' }}
+              onClick={handleShareWhatsApp}
+              disabled={sharing}
             >
-              <ShareIcon size={18} color="#ffffff" /> Share Invoice
+              <WhatsAppIcon size={18} color="#ffffff" /> WhatsApp
             </button>
           )}
 
@@ -1043,15 +1044,6 @@ export default function BillDetail() {
             showToast(msg);
             loadBill();
           }}
-        />
-      )}
-
-      {/* Universal Multi-App Share Modal */}
-      {showShareModal && (
-        <ShareModal
-          bill={bill}
-          onClose={() => setShowShareModal(false)}
-          showToast={showToast}
         />
       )}
 
