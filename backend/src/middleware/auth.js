@@ -27,6 +27,11 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ message: 'Not authorized — user not found' });
     }
 
+    // Server-side Token Invalidation Check
+    if (decoded.tokenVersion !== undefined && decoded.tokenVersion !== user.tokenVersion) {
+      return res.status(401).json({ message: 'Session expired or logged out. Please log in again.' });
+    }
+
     req.user = user;
     next();
   } catch (error) {

@@ -593,6 +593,10 @@ router.get('/public/:token/pdf', async (req, res) => {
  */
 router.get('/:id', protect, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+
     const bill = await Bill.findById(req.params.id)
       .populate('createdBy', 'name')
       .populate('voidedBy', 'name');
@@ -827,6 +831,10 @@ router.put('/:id', protect, [
       return res.status(400).json({ message: errors.array()[0].msg, errors: errors.array() });
     }
 
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+
     const bill = await Bill.findById(req.params.id);
     if (!bill) {
       return res.status(404).json({ message: 'Invoice not found' });
@@ -915,6 +923,10 @@ router.patch('/:id/void', protect, restrictTo('admin'), [
   body('reason').optional().trim(),
 ], async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+
     const bill = await Bill.findById(req.params.id);
     if (!bill) {
       return res.status(404).json({ message: 'Invoice not found' });

@@ -7,8 +7,8 @@ const { authLimiter, getJwtSecret } = require('../middleware/security');
 
 const router = express.Router();
 
-// Generate JWT with secure secret
-const signToken = (id) => {
+// Generate JWT with secure secret and tokenVersion
+const signToken = (id, tokenVersion = 0) => {
   const secret = getJwtSecret();
   let expiresIn = '7d';
   if (typeof process.env.JWT_EXPIRES_IN === 'string') {
@@ -19,7 +19,7 @@ const signToken = (id) => {
   } else if (typeof process.env.JWT_EXPIRES_IN === 'number' && process.env.JWT_EXPIRES_IN > 0) {
     expiresIn = process.env.JWT_EXPIRES_IN;
   }
-  return jwt.sign({ id }, secret, { expiresIn });
+  return jwt.sign({ id, tokenVersion }, secret, { expiresIn });
 };
 
 /**
@@ -93,7 +93,7 @@ router.post('/login', authLimiter, [
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    const token = signToken(user._id);
+    const token = signToken(user._id, user.tokenVersion || 0);
 
     res.json({
       token,
@@ -106,6 +106,19 @@ router.post('/login', authLimiter, [
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * POST /api/auth/logout
+ * Invalidate all existing tokens server-side by incrementing user tokenVersion
+ */
+router.post('/logout', protect, async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user._id, { $inc: { tokenVersion: 1 } });
+    res.json({ message: 'Logged out successfully. All sessions invalidated.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Logout failed', error: error.message });
   }
 });
 
