@@ -70,7 +70,7 @@ Phone: ${settings?.phone || '9441429745'}`;
       ? `https://wa.me/${phone.length === 10 ? '91' + phone : phone}?text=${encodeURIComponent(message)}`
       : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
 
-    window.open(waUrl, '_blank');
+    window.location.href = waUrl;
   };
 
   if (!canSeeSales) {

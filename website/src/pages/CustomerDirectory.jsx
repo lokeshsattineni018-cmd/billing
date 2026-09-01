@@ -144,7 +144,7 @@ export default function CustomerDirectory() {
     }
     const msg = `Namaste ${customer.name}, regarding your business account with Vijaya Durga Agencies. Outstanding Balance: ${formatCurrency(customer.outstandingBalance)}.`;
     const url = `https://api.whatsapp.com/send?phone=91${phone}&text=${encodeURIComponent(msg)}`;
-    window.open(url, '_blank');
+    window.location.href = url;
   };
 
   return (

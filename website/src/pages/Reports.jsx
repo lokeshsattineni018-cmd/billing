@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { reportsAPI, billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
 import { TrendingUpIcon, WhatsAppIcon, DownloadIcon, FileCheckIcon } from '../components/Icons';
 
 export default function Reports() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { toast, showToast } = useToast();
 
@@ -49,10 +51,32 @@ export default function Reports() {
     loadReport();
   };
 
-  const handleShareWhatsApp = () => {
+  const handleShareWhatsApp = async () => {
     if (!report?.whatsappSummary) return;
-    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(report.whatsappSummary)}`;
-    window.open(url, '_blank');
+    const text = report.whatsappSummary;
+
+    // Use Native Web Share if supported (iOS/Android)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'VIJAYA DURGA AGENCIES - Financial Report',
+          text,
+        });
+        navigate('/');
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return; // User dismissed share sheet
+      }
+    }
+
+    // Direct WhatsApp Universal Link (No blank Safari popup tab)
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.location.href = url;
+    
+    // Redirect to Dashboard so returning brings the user directly to Dashboard
+    setTimeout(() => {
+      navigate('/');
+    }, 400);
   };
 
   const handleCopyWhatsApp = () => {

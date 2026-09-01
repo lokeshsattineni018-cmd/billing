@@ -70,7 +70,8 @@ export default function Dashboard() {
     const url = cleanPhone
       ? `https://api.whatsapp.com/send?phone=91${cleanPhone}&text=${encoded}`
       : `https://api.whatsapp.com/send?text=${encoded}`;
-    window.open(url, '_blank');
+    setShowDailyModal(false);
+    window.location.href = url;
   };
 
   const handleCopySummary = () => {

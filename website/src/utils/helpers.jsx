@@ -206,10 +206,11 @@ Thank you for your business!`;
       return;
     }
   } catch (err) {
+    if (err.name === 'AbortError') return;
     console.warn('Native file share skipped/cancelled:', err);
   }
 
-  // Fallback for Desktop browsers:
+  // Fallback for Desktop browsers / Direct WhatsApp:
   // 1. Download the PDF file to user's computer
   try {
     const response = await fetch(pdfUrl);
@@ -228,12 +229,12 @@ Thank you for your business!`;
 
   if (showToast) showToast('Invoice PDF downloaded! Opening WhatsApp to attach and send.');
 
-  // 2. Open WhatsApp chat with clean text summary
+  // 2. Open WhatsApp chat directly without creating blank Safari popup tab
   const waUrl = cleanPhone
     ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(caption)}`
     : `https://api.whatsapp.com/send?text=${encodeURIComponent(caption)}`;
 
-  window.open(waUrl, '_blank');
+  window.location.href = waUrl;
 }
 
 

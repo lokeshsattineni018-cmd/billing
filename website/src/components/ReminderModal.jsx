@@ -44,8 +44,8 @@ export default function ReminderModal({ billId, onClose }) {
     const url = phone
       ? `https://api.whatsapp.com/send?phone=91${phone}&text=${encoded}`
       : `https://api.whatsapp.com/send?text=${encoded}`;
-    window.open(url, '_blank');
     onClose();
+    window.location.href = url;
   };
 
   const handleSendSMS = () => {

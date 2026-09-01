@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DownloadIcon, WhatsAppIcon, ShareIcon } from './Icons';
 import { formatCurrency } from '../utils/helpers';
 
 export default function ShareModal({ bill, onClose, showToast }) {
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
@@ -33,9 +35,11 @@ export default function ShareModal({ bill, onClose, showToast }) {
         });
         if (showToast) showToast('Invoice shared successfully!');
         onClose();
+        navigate('/');
         return;
       }
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.warn('System share skipped or cancelled:', err);
     }
     // If not supported, download PDF
@@ -71,8 +75,12 @@ export default function ShareModal({ bill, onClose, showToast }) {
     const waUrl = cleanPhone
       ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(text)}`
       : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-    window.open(waUrl, '_blank');
     if (showToast) showToast('Opening WhatsApp...');
+    onClose();
+    window.location.href = waUrl;
+    setTimeout(() => {
+      navigate('/');
+    }, 400);
   };
 
   // 4. Email (Gmail / Mail App)
