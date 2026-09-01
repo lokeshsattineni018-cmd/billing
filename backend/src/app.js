@@ -20,6 +20,9 @@ const activityLogsRoutes = require('./routes/activityLogs');
 
 const app = express();
 
+// Trust reverse proxy headers (Vercel, Render, Cloudflare)
+app.set('trust proxy', 1);
+
 // High-speed gzip/deflate response compression
 app.use(compression());
 

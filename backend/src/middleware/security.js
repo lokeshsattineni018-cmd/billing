@@ -9,6 +9,7 @@ const authLimiter = rateLimit({
   max: 15,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false, default: true },
   message: {
     message: 'Too many login attempts from this IP. Please try again after 15 minutes.',
   },
@@ -23,6 +24,7 @@ const billCreateLimiter = rateLimit({
   max: 120,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false, default: true },
   message: {
     message: 'Too many invoices created in a short period. Please wait a moment.',
   },
@@ -37,6 +39,7 @@ const generalLimiter = rateLimit({
   max: 400,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false, default: true },
   message: {
     message: 'Too many requests. Please slow down.',
   },
