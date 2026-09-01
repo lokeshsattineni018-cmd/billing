@@ -99,4 +99,14 @@ export const activityLogsAPI = {
   list: (params) => api.get('/activity-logs', { params }),
 };
 
+// Admin User Management & Password Control
+export const usersAPI = {
+  list: () => api.get('/users'),
+  create: (data) => api.post('/users', data),
+  update: (id, data) => api.put(`/users/${id}`, data),
+  resetPassword: (id, newPassword) => api.patch(`/users/${id}/password`, { newPassword }),
+  delete: (id) => api.delete(`/users/${id}`),
+};
+
 export default api;
+

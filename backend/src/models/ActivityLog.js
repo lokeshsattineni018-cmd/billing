@@ -28,6 +28,10 @@ const activityLogSchema = new mongoose.Schema({
       'EXPORT_CSV',
       'EXPORT_TALLY',
       'SEND_REMINDER',
+      'CREATE_USER',
+      'DELETE_USER',
+      'UPDATE_USER',
+      'RESET_PASSWORD',
     ],
   },
   targetId: {
