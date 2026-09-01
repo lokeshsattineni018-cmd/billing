@@ -233,14 +233,16 @@ function AppLayout() {
             <DownloadIcon size={13} color="#0b5394" /> {t('installApp')}
           </button>
 
-          <button
-            className="btn btn-ghost btn-sm"
-            style={{ padding: '6px', color: '#64748b' }}
-            onClick={() => navigate('/settings')}
-            title={t('settings')}
-          >
-            <SettingsIcon size={17} />
-          </button>
+          {isAdmin && (
+            <button
+              className="btn btn-ghost btn-sm"
+              style={{ padding: '6px', color: '#64748b' }}
+              onClick={() => navigate('/settings')}
+              title={t('settings')}
+            >
+              <SettingsIcon size={17} />
+            </button>
+          )}
 
           <button
             className="btn btn-ghost btn-sm"

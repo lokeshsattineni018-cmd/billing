@@ -196,89 +196,81 @@ export default function BillHistory() {
       </div>
 
       {/* Search & Filters */}
-      <form
-        className="search-bar"
-        onSubmit={handleSearch}
-        style={{
-          background: '#ffffff',
-          border: '1px solid #e2e8f0',
-          borderRadius: '10px',
-          padding: '16px',
-          marginBottom: '20px',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: '12px',
-          alignItems: 'end',
-        }}
-      >
-        <div style={{ minWidth: '220px' }}>
-          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '4px' }}>
-            Search Customer / Invoice #
-          </label>
-          <input
-            type="text"
-            className="form-input"
-            placeholder="Search by name or number..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        
-        <div>
-          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '4px' }}>
-            From Date
-          </label>
-          <input
-            type="date"
-            className="form-input"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-          />
-        </div>
+      <form className="invoice-filter-card" onSubmit={handleSearch}>
+        <div className="invoice-filter-grid">
+          <div className="filter-group filter-search-group">
+            <label className="filter-label">Search Customer / Invoice #</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Search by name or number..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-        <div>
-          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '4px' }}>
-            To Date
-          </label>
-          <input
-            type="date"
-            className="form-input"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-          />
-        </div>
+          <div className="filter-group filter-date-from-group">
+            <label className="filter-label">From Date</label>
+            <input
+              type="date"
+              className="form-input"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+            />
+          </div>
 
-        <div>
-          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '4px' }}>
-            Payment Status
-          </label>
-          <select
-            className="form-select"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">All Statuses</option>
-            <option value="Paid">Paid Only</option>
-            <option value="Pending">Pending Only</option>
-          </select>
-        </div>
+          <div className="filter-group filter-date-to-group">
+            <label className="filter-label">To Date</label>
+            <input
+              type="date"
+              className="form-input"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+            />
+          </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button
-            type="submit"
-            className="btn btn-primary"
-            style={{ flex: 1, background: '#0b5394', color: '#ffffff', border: '1px solid #0b5394', fontWeight: 700, padding: '11px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-          >
-            <SearchIcon size={16} color="#ffffff" /> Search
-          </button>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            style={{ padding: '11px 14px', color: '#64748b' }}
-            onClick={clearFilters}
-          >
-            Clear
-          </button>
+          <div className="filter-group filter-status-group">
+            <label className="filter-label">Payment Status</label>
+            <select
+              className="form-select"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">All Statuses</option>
+              <option value="Paid">Paid Only</option>
+              <option value="Pending">Pending Only</option>
+            </select>
+          </div>
+
+          <div className="filter-actions-group">
+            <button
+              type="submit"
+              className="btn btn-primary"
+              style={{
+                background: '#0b5394',
+                color: '#ffffff',
+                border: '1px solid #0b5394',
+                fontWeight: 700,
+                padding: '0 16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                height: '42px',
+                borderRadius: '8px',
+              }}
+            >
+              <SearchIcon size={16} color="#ffffff" /> Search
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              style={{ padding: '0 14px', color: '#64748b', height: '42px', borderRadius: '8px' }}
+              onClick={clearFilters}
+            >
+              Clear
+            </button>
+          </div>
         </div>
       </form>
 
@@ -369,14 +361,6 @@ export default function BillHistory() {
                         <WhatsAppIcon size={16} color="#ffffff" /> WhatsApp
                       </button>
                     )}
-                    <button
-                      className="btn btn-secondary btn-sm"
-                      style={{ padding: '10px 14px', background: '#ffffff', border: '1px solid #cbd5e1', color: '#0b5394', borderRadius: '6px' }}
-                      onClick={(e) => handlePrint(e, bill._id)}
-                      title="Print Invoice"
-                    >
-                      <PrintIcon size={16} color="#0b5394" />
-                    </button>
                   </div>
                 </div>
               ))}

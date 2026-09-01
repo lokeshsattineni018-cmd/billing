@@ -270,7 +270,7 @@ export default function BillDetail() {
 
         <div className="action-buttons" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button
-            className="btn btn-secondary"
+            className="btn btn-secondary hide-on-phone"
             style={{ fontWeight: 800, padding: '10px 18px', background: '#ffffff', border: '1.5px solid #0b5394', color: '#0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}
             onClick={handlePrint}
             title="Direct Print (Ctrl + P)"
