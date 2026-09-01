@@ -1,4 +1,6 @@
 const express = require('express');
+const crypto = require('crypto');
+const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
 const Bill = require('../models/Bill');
 const Settings = require('../models/Settings');
@@ -7,6 +9,7 @@ const { getNextSequence } = require('../models/Counter');
 const { protect, restrictTo } = require('../middleware/auth');
 const { billCreateLimiter, escapeRegex } = require('../middleware/security');
 const { logActivity } = require('../utils/activityLogger');
+const { generateBillPDFBuffer } = require('../services/pdfService');
 
 const router = express.Router();
 
@@ -516,18 +519,71 @@ router.post('/:id/duplicate', protect, restrictTo('admin'), async (req, res) => 
 });
 
 /**
- * GET /api/bills/public/:id
- * Public endpoint for customers to view their invoice via WhatsApp link (No login required)
+ * Helper to locate bill securely by shareToken (or backward compatible ObjectId)
  */
-router.get('/public/:id', async (req, res) => {
+async function findBillByPublicToken(token) {
+  if (!token || typeof token !== 'string') return null;
+
+  // Strict check: Block any integer/sequential ID enumeration attempts (e.g., '1', '2', '3')
+  if (/^\d+$/.test(token)) {
+    return null;
+  }
+
+  // 1. Primary secure lookup: Match 128-bit cryptographic shareToken
+  let bill = await Bill.findOne({ shareToken: token });
+  if (bill) return bill;
+
+  // 2. Backward compatibility fallback for legacy bills saved before shareToken migration
+  if (mongoose.Types.ObjectId.isValid(token)) {
+    bill = await Bill.findById(token);
+    if (bill && !bill.shareToken) {
+      bill.shareToken = crypto.randomBytes(16).toString('hex');
+      await bill.save();
+    }
+  }
+
+  return bill;
+}
+
+/**
+ * GET /api/bills/public/:token
+ * Public endpoint for customers to view their invoice via unguessable share link
+ * Prevents IDOR/enumeration attacks by using 128-bit random tokens
+ */
+router.get('/public/:token', async (req, res) => {
   try {
-    const bill = await Bill.findById(req.params.id);
+    const bill = await findBillByPublicToken(req.params.token);
     if (!bill) {
-      return res.status(404).json({ message: 'Invoice not found' });
+      return res.status(404).json({ message: 'Invoice not found or invalid access token' });
     }
     res.json(bill);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * GET /api/bills/public/:token/pdf
+ * Public PDF streaming endpoint for customer viewing with valid share token
+ */
+router.get('/public/:token/pdf', async (req, res) => {
+  try {
+    const bill = await findBillByPublicToken(req.params.token);
+    if (!bill) {
+      return res.status(404).send('Invoice not found or invalid access token');
+    }
+
+    const pdfBuffer = await generateBillPDFBuffer(bill);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="Invoice-${bill.billNo}${bill.isVoided ? '-VOIDED' : ''}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Public PDF Route Error:', error);
+    if (!res.headersSent) {
+      res.status(500).send('PDF generation failed: ' + error.message);
+    }
   }
 });
 

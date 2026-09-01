@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 const itemSchema = new mongoose.Schema({
   sno: { type: Number, default: 1 },
@@ -15,6 +16,13 @@ const billSchema = new mongoose.Schema({
     type: Number,
     unique: true,
     required: true,
+  },
+  shareToken: {
+    type: String,
+    unique: true,
+    sparse: true,
+    index: true,
+    default: () => crypto.randomBytes(16).toString('hex'), // 128-bit unguessable random token
   },
   date: {
     type: Date,

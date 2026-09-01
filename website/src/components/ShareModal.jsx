@@ -9,8 +9,8 @@ export default function ShareModal({ bill, onClose, showToast }) {
   if (!bill) return null;
 
   const origin = window.location.origin;
-  const publicUrl = `${origin}/view/${bill._id}`;
-  const pdfUrl = `${origin}/api/bills/${bill._id}/pdf`;
+  const publicUrl = `${origin}/view/${bill.shareToken || bill._id}`;
+  const pdfUrl = `${origin}/api/bills/public/${bill.shareToken || bill._id}/pdf`;
   const formattedDate = new Date(bill.date).toLocaleDateString('en-IN');
   const amountStr = formatCurrency(bill.grandTotal || bill.total);
   const rawPhone = bill.customerPhone ? bill.customerPhone.replace(/[^0-9]/g, '') : '';

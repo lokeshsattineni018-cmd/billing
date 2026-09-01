@@ -29,7 +29,7 @@ export default function PublicInvoice() {
 
   const handleDownloadPDF = async () => {
     try {
-      const response = await fetch(`/api/bills/${id}/pdf`);
+      const response = await fetch(`/api/bills/public/${id}/pdf`);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -41,7 +41,7 @@ export default function PublicInvoice() {
       window.URL.revokeObjectURL(url);
     } catch (e) {
       console.error('PDF download error:', e);
-      window.open(`/api/bills/${id}/pdf`, '_blank');
+      window.open(`/api/bills/public/${id}/pdf`, '_blank');
     }
   };
 

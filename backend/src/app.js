@@ -32,14 +32,49 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 
-// CORS Configuration
-app.use(cors({
-  origin: true,
+// Strict Domain Whitelist for CORS
+const allowedOrigins = [
+  'https://billing-snowy-three.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:5001',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+];
+
+if (process.env.CLIENT_URL) {
+  const envUrl = process.env.CLIENT_URL.replace(/\/$/, '');
+  if (!allowedOrigins.includes(envUrl)) {
+    allowedOrigins.push(envUrl);
+  }
+}
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow non-browser requests (mobile apps, Postman, curl, server-to-server)
+    if (!origin) return callback(null, true);
+
+    // Exact whitelist match
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // Match Vercel preview deployment domains for this project
+    if (/^https:\/\/billing-[a-z0-9-]+-lokeshsattinenis-projects\.vercel\.app$/.test(origin) ||
+        /^https:\/\/billing-snowy-three.*\.vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for unauthorized origin: ${origin}`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-}));
-app.options('*', cors());
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Body parser with size limits to prevent body-overflow DoS
 app.use(express.json({ limit: '1mb' }));
