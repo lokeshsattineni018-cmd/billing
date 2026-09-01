@@ -41,6 +41,7 @@ export default function Settings() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createForm, setCreateForm] = useState({
     name: '',
+    username: '',
     email: '',
     role: 'staff',
     password: '',
@@ -116,8 +117,8 @@ export default function Settings() {
   // Create User Handler
   const handleCreateUser = async (e) => {
     e.preventDefault();
-    if (!createForm.name || !createForm.email || !createForm.password) {
-      showToast('Please fill in all required fields', 'error');
+    if (!createForm.name || !createForm.username || !createForm.password) {
+      showToast('Please fill in Name, Username, and Password', 'error');
       return;
     }
     if (createForm.password.length < 6) {
@@ -128,9 +129,9 @@ export default function Settings() {
     setCreatingUser(true);
     try {
       await usersAPI.create(createForm);
-      showToast(`User account "${createForm.email}" created successfully!`, 'success');
+      showToast(`User account "${createForm.username}" created successfully!`, 'success');
       setShowCreateModal(false);
-      setCreateForm({ name: '', email: '', role: 'staff', password: '' });
+      setCreateForm({ name: '', username: '', email: '', role: 'staff', password: '' });
       setShowCreatePassword(false);
       loadUsers();
     } catch (error) {
@@ -447,7 +448,8 @@ export default function Settings() {
                 <thead>
                   <tr>
                     <th>User / Employee</th>
-                    <th>Email / Username</th>
+                    <th>Username</th>
+                    <th>Email Address</th>
                     <th>Role</th>
                     <th>Created</th>
                     <th className="text-right">Actions</th>
@@ -455,7 +457,9 @@ export default function Settings() {
                 </thead>
                 <tbody>
                   {users.map((u) => {
-                    const isSelf = currentUser?.email?.toLowerCase() === u.email?.toLowerCase();
+                    const isSelf = currentUser?.email?.toLowerCase() === u.email?.toLowerCase() ||
+                      (currentUser?.username && currentUser?.username?.toLowerCase() === u.username?.toLowerCase());
+                    const displayUsername = u.username || u.email?.split('@')[0] || 'user';
                     return (
                       <tr key={u._id}>
                         <td>
@@ -490,9 +494,14 @@ export default function Settings() {
                           </div>
                         </td>
                         <td>
-                          <code style={{ fontSize: '0.86rem', color: '#334155', background: '#f1f5f9', padding: '3px 8px', borderRadius: '6px' }}>
-                            {u.email}
+                          <code style={{ fontSize: '0.86rem', color: '#0b5394', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                            @{displayUsername}
                           </code>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '0.84rem', color: '#475569' }}>
+                            {u.email && !u.email.endsWith('.local') ? u.email : <em style={{ color: '#94a3b8' }}>None</em>}
+                          </span>
                         </td>
                         <td>{getRoleBadge(u.role)}</td>
                         <td style={{ fontSize: '0.82rem', color: '#64748b' }}>
@@ -584,7 +593,7 @@ export default function Settings() {
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="e.g. Ramesh Kumar"
+                  placeholder="e.g. Lokesh"
                   value={createForm.name}
                   onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
                   required
@@ -592,14 +601,28 @@ export default function Settings() {
               </div>
 
               <div className="form-group" style={{ marginBottom: '14px' }}>
-                <label className="form-label" style={{ fontWeight: 700 }}>Email / Login Username *</label>
+                <label className="form-label" style={{ fontWeight: 700 }}>Username * (for login)</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. lokesh18"
+                  value={createForm.username}
+                  onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
+                  required
+                />
+                <small style={{ color: '#64748b', fontSize: '0.72rem', display: 'block', marginTop: '3px' }}>
+                  Can be any text (letters, numbers). No '@' required.
+                </small>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '14px' }}>
+                <label className="form-label" style={{ fontWeight: 700 }}>Email Address (Optional)</label>
                 <input
                   type="email"
                   className="form-input"
-                  placeholder="e.g. ramesh@vijayadurgagencies.com"
+                  placeholder="e.g. lokesh@gmail.com (optional)"
                   value={createForm.email}
                   onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                  required
                 />
               </div>
 

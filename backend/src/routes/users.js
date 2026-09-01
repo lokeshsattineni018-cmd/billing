@@ -36,8 +36,9 @@ router.get('/', async (req, res) => {
 router.post(
   '/',
   [
-    body('name').trim().notEmpty().withMessage('Name is required'),
-    body('email').trim().isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('name').trim().notEmpty().withMessage('Employee Name is required'),
+    body('username').trim().notEmpty().withMessage('Username is required').matches(/^[a-zA-Z0-9._-]+$/).withMessage('Username can only contain letters, numbers, dots, and hyphens'),
+    body('email').optional({ checkFalsy: true }).trim().isEmail().normalizeEmail().withMessage('Enter a valid email address or leave blank'),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
     body('role').isIn(['staff', 'admin', 'owner']).withMessage('Role must be staff, admin, or owner'),
   ],
@@ -48,17 +49,28 @@ router.post(
         return res.status(400).json({ message: errors.array()[0].msg, errors: errors.array() });
       }
 
-      const { name, email, password, role } = req.body;
+      const { name, username, email, password, role } = req.body;
+      const cleanUsername = username.trim().toLowerCase();
+      const cleanEmail = email ? email.trim().toLowerCase() : undefined;
 
-      // Check for existing email
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        return res.status(400).json({ message: `An account with email "${email}" already exists` });
+      // Check for existing username
+      const existingUsername = await User.findOne({ username: cleanUsername });
+      if (existingUsername) {
+        return res.status(400).json({ message: `Username "${cleanUsername}" is already taken. Please choose another username.` });
+      }
+
+      // Check for existing email if provided
+      if (cleanEmail) {
+        const existingEmail = await User.findOne({ email: cleanEmail });
+        if (existingEmail) {
+          return res.status(400).json({ message: `An account with email "${cleanEmail}" already exists` });
+        }
       }
 
       const newUser = await User.create({
-        name,
-        email,
+        name: name.trim(),
+        username: cleanUsername,
+        email: cleanEmail || `${cleanUsername}@vijayadurgagencies.local`,
         password,
         role: role || 'staff',
       });
@@ -72,7 +84,7 @@ router.post(
           action: 'CREATE_USER',
           targetId: newUser._id.toString(),
           targetType: 'USER',
-          details: { createdEmail: email, createdRole: role, createdName: name },
+          details: { createdUsername: cleanUsername, createdEmail: newUser.email, createdRole: role, createdName: name },
           ip: req.ip || '',
         });
       } catch (logErr) {
@@ -84,6 +96,7 @@ router.post(
         user: {
           _id: newUser._id,
           name: newUser.name,
+          username: newUser.username,
           email: newUser.email,
           role: newUser.role,
           createdAt: newUser.createdAt,

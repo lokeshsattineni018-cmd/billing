@@ -75,7 +75,7 @@ router.post('/seed', async (req, res) => {
  * Brute-force rate limited & sanitized
  */
 router.post('/login', authLimiter, [
-  body('email').trim().isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('email').trim().notEmpty().withMessage('Username or email is required'),
   body('password').notEmpty().withMessage('Password is required'),
 ], async (req, res) => {
   try {
@@ -85,10 +85,17 @@ router.post('/login', authLimiter, [
     }
 
     const { email, password } = req.body;
+    const identifier = (email || '').trim().toLowerCase();
 
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({
+      $or: [
+        { email: identifier },
+        { username: identifier }
+      ]
+    }).select('+password');
+
     if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({ message: 'Invalid username/email or password' });
     }
 
     const token = signToken(user._id, user.tokenVersion || 0);
@@ -98,6 +105,7 @@ router.post('/login', authLimiter, [
       user: {
         id: user._id,
         name: user.name,
+        username: user.username,
         email: user.email,
         role: user.role,
       },
