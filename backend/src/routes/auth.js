@@ -23,23 +23,21 @@ const signToken = (id, tokenVersion = 0) => {
 };
 
 /**
- * Helper to auto-seed default users on startup (only creates if missing)
+ * Helper to auto-seed default users only when the database is completely empty (0 users)
  */
 async function autoSeedUsers() {
+  const userCount = await User.countDocuments();
+  if (userCount > 0) return; // Do not recreate accounts once any users exist in MongoDB
+
   const defaultUsers = [
-    { name: 'Owner', email: 'owner@srsf.com', password: process.env.DEFAULT_OWNER_PASSWORD || 'owner123', role: 'owner' },
     { name: 'Admin', email: 'admin@srsf.com', password: process.env.DEFAULT_ADMIN_PASSWORD || 'admin123', role: 'admin' },
-    { name: 'Employee', email: 'employee@srsf.com', password: process.env.DEFAULT_STAFF_PASSWORD || 'emp123', role: 'staff' },
     { name: 'Proprietor', email: 'admin@vijayadurgagencies.com', password: process.env.DEFAULT_ADMIN_PASSWORD || 'admin123', role: 'owner' },
     { name: 'Staff', email: 'staff@vijayadurgagencies.com', password: process.env.DEFAULT_STAFF_PASSWORD || 'staff123', role: 'staff' },
   ];
 
   for (const u of defaultUsers) {
-    const exists = await User.findOne({ email: u.email });
-    if (!exists) {
-      await User.create(u);
-      console.log(`Default user initialized: ${u.email} (${u.role})`);
-    }
+    await User.create(u);
+    console.log(`Default user initialized: ${u.email} (${u.role})`);
   }
 }
 
