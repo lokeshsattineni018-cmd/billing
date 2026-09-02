@@ -1,5 +1,6 @@
 const express = require('express');
 const Bill = require('../models/Bill');
+const User = require('../models/User');
 const { protect, restrictTo } = require('../middleware/auth');
 
 const router = express.Router();

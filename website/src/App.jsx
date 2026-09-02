@@ -38,9 +38,9 @@ function Sidebar({ onInstall }) {
     { path: '/bills', label: t('invoiceHistory'), icon: <InvoiceIcon size={18} /> },
     ...(isAdmin
       ? [
-          { path: '/reports', label: 'Sales Reports', icon: <TrendingUpIcon size={18} /> },
-          { path: '/customers', label: 'Customers', icon: <TrendingUpIcon size={18} /> },
-          { path: '/activity-log', label: 'Activity Log', icon: <SettingsIcon size={18} /> },
+          { path: '/reports', label: t('salesReports'), icon: <TrendingUpIcon size={18} /> },
+          { path: '/customers', label: t('customers'), icon: <UserIcon size={18} /> },
+          { path: '/activity-log', label: t('activityLog'), icon: <SettingsIcon size={18} /> },
           { path: '/settings', label: t('settings'), icon: <SettingsIcon size={18} /> },
         ]
       : []),
@@ -58,8 +58,8 @@ function Sidebar({ onInstall }) {
             height: '44px',
             borderRadius: '10px',
             objectFit: 'cover',
-            border: '2px solid #0b5394',
-            boxShadow: '0 4px 12px rgba(11, 83, 148, 0.2)',
+            border: 'none',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
           }}
         />
         <div style={{ minWidth: 0, flex: 1 }}>
@@ -292,7 +292,7 @@ function AppLayout() {
         {isAdmin && (
           <NavLink to="/customers" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
             <TrendingUpIcon size={20} />
-            <span>Customers</span>
+            <span>{t('customers')}</span>
           </NavLink>
         )}
       </nav>

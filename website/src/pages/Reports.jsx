@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { reportsAPI, billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
 import { TrendingUpIcon, WhatsAppIcon, DownloadIcon, FileCheckIcon } from '../components/Icons';
 
 export default function Reports() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { toast, showToast } = useToast();
 
   const [range, setRange] = useState('this_month');
@@ -119,10 +121,10 @@ export default function Reports() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
         <div>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-            Sales & Financial Reports
+            {t('salesFinancialReports')}
           </h2>
           <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0' }}>
-            Comprehensive analytics, tax breakdown, and accounting exports (Admin Exclusive)
+            {t('reportsSubtitle')}
           </p>
         </div>
 
@@ -134,7 +136,7 @@ export default function Reports() {
             onClick={handleShareWhatsApp}
             style={{ fontWeight: 700, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            <WhatsAppIcon size={16} color="#ffffff" /> Share WhatsApp
+            <WhatsAppIcon size={16} color="#ffffff" /> {t('shareWhatsApp')}
           </button>
           <button
             type="button"
@@ -142,7 +144,7 @@ export default function Reports() {
             onClick={handleExportCSV}
             style={{ fontWeight: 700, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            <DownloadIcon size={16} /> Export Excel (CSV)
+            <DownloadIcon size={16} /> {t('exportExcel')}
           </button>
           <button
             type="button"
@@ -150,7 +152,7 @@ export default function Reports() {
             onClick={handleExportTally}
             style={{ fontWeight: 700, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #0b5394', color: '#0b5394' }}
           >
-            Tally XML
+            {t('tallyXml')}
           </button>
         </div>
       </div>
@@ -160,12 +162,12 @@ export default function Reports() {
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', marginBottom: range === 'custom' ? '12px' : '0' }}>
           <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b', marginRight: '4px' }}>Range:</span>
           {[
-            { id: 'today', label: 'Today' },
-            { id: 'yesterday', label: 'Yesterday' },
-            { id: 'this_week', label: 'This Week' },
-            { id: 'this_month', label: 'This Month' },
-            { id: 'last_month', label: 'Last Month' },
-            { id: 'custom', label: 'Custom Date' },
+            { id: 'today', label: t('today') },
+            { id: 'yesterday', label: t('yesterday') },
+            { id: 'this_week', label: t('thisWeek') },
+            { id: 'this_month', label: t('thisMonth') },
+            { id: 'last_month', label: t('lastMonth') },
+            { id: 'custom', label: t('customDate') },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -200,7 +202,7 @@ export default function Reports() {
               />
             </div>
             <button type="submit" className="btn btn-primary" style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, padding: '10px 16px' }}>
-              Apply Custom Range
+              Apply
             </button>
           </form>
         )}
@@ -213,7 +215,7 @@ export default function Reports() {
           {/* KPI Summary Tiles */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
             <div className="card" style={{ padding: '18px', borderLeft: '4px solid #0b5394' }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Gross Revenue</div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('grossRevenue')}</div>
               <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '4px' }}>
                 {formatCurrency(summary.totalRevenue)}
               </div>
@@ -221,7 +223,7 @@ export default function Reports() {
             </div>
 
             <div className="card" style={{ padding: '18px', borderLeft: '4px solid #16a34a' }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Collected (Paid)</div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('collectedPaid')}</div>
               <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '4px' }}>
                 {formatCurrency(summary.paidAmount)}
               </div>
@@ -229,7 +231,7 @@ export default function Reports() {
             </div>
 
             <div className="card" style={{ padding: '18px', borderLeft: '4px solid #d97706' }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Pending Receivables</div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('pendingReceivablesTitle')}</div>
               <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#d97706', marginTop: '4px' }}>
                 {formatCurrency(summary.pendingAmount)}
               </div>
@@ -237,7 +239,7 @@ export default function Reports() {
             </div>
 
             <div className="card" style={{ padding: '18px', borderLeft: '4px solid #8b5cf6' }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Avg Ticket Size</div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('avgTicketSize')}</div>
               <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#8b5cf6', marginTop: '4px' }}>
                 {formatCurrency(summary.avgTicketSize)}
               </div>
@@ -248,22 +250,22 @@ export default function Reports() {
           {/* Tax Breakdown Card */}
           {summary.totalTax > 0 && (
             <div className="card" style={{ padding: '18px', marginBottom: '24px' }}>
-              <h3 className="card-title" style={{ marginBottom: '12px' }}>GST Tax Collection Breakdown</h3>
+              <h3 className="card-title" style={{ marginBottom: '12px' }}>{t('taxCollectionBreakdown')}</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
                 <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>Taxable Value</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>{t('taxableValue')}</div>
                   <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>{formatCurrency(summary.totalTaxable)}</div>
                 </div>
                 <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>CGST Collected</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>{t('cgstCollected')}</div>
                   <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b5394' }}>{formatCurrency(summary.totalCGST)}</div>
                 </div>
                 <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>SGST Collected</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>{t('sgstCollected')}</div>
                   <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b5394' }}>{formatCurrency(summary.totalSGST)}</div>
                 </div>
                 <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>IGST Collected</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>{t('igstCollected')}</div>
                   <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b5394' }}>{formatCurrency(summary.totalIGST)}</div>
                 </div>
               </div>
@@ -275,29 +277,29 @@ export default function Reports() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
               <div>
                 <h3 className="card-title" style={{ margin: 0 }}>
-                  Invoices for Selected Period ({report.bills?.length || 0})
+                  {t('invoicesForSelectedPeriod')} ({report.bills?.length || 0})
                 </h3>
                 <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '4px 0 0 0' }}>
-                  Complete list of tax & commercial invoices generated during this period
+                  {t('invoicesListSubtitle')}
                 </p>
               </div>
             </div>
 
             {!report.bills || report.bills.length === 0 ? (
               <div className="empty-state" style={{ padding: '36px 20px', textAlign: 'center' }}>
-                <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>No invoices found in this date range.</p>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>{t('noInvoicesFound')}</p>
               </div>
             ) : (
               <div className="table-container">
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>Invoice #</th>
-                      <th>Date</th>
-                      <th>Customer / Buyer</th>
-                      <th>Item Particulars</th>
-                      <th className="text-right">Grand Total</th>
-                      <th className="text-center">Status</th>
+                      <th>{t('invoiceNo')}</th>
+                      <th>{t('date')}</th>
+                      <th>{t('companyName')}</th>
+                      <th>{t('goodsDescription')}</th>
+                      <th className="text-right">{t('grandTotal')}</th>
+                      <th className="text-center">{t('status')}</th>
                       <th className="text-right">Action</th>
                     </tr>
                   </thead>
@@ -343,7 +345,7 @@ export default function Reports() {
                               borderRadius: '12px',
                             }}
                           >
-                            {b.paymentStatus === 'Paid' ? 'PAID' : 'PENDING'}
+                            {b.paymentStatus === 'Paid' ? t('paid') : t('pending')}
                           </span>
                         </td>
                         <td className="text-right" onClick={(e) => e.stopPropagation()}>
@@ -360,7 +362,7 @@ export default function Reports() {
                             }}
                             onClick={() => navigate(`/bills/${b._id}`)}
                           >
-                            View →
+                            {t('viewInvoiceBtn')}
                           </button>
                         </td>
                       </tr>

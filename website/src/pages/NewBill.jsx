@@ -22,7 +22,7 @@ export default function NewBill() {
   const [items, setItems] = useState([
     {
       sno: 1,
-      particulars: 'Fresh Seafood / Prawns Supply',
+      particulars: '',
       hsn: '0306',
       quantity: '',
       rate: '',
@@ -196,7 +196,7 @@ export default function NewBill() {
       ...items,
       {
         sno: items.length + 1,
-        particulars: 'Fresh Seafood / Prawns Supply',
+        particulars: '',
         hsn: '0306',
         quantity: '',
         rate: '',
@@ -219,7 +219,7 @@ export default function NewBill() {
     setItems([
       {
         sno: 1,
-        particulars: 'Fresh Seafood / Prawns Supply',
+        particulars: '',
         hsn: '0306',
         quantity: '',
         rate: '',

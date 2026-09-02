@@ -43,8 +43,8 @@ export default function Login() {
               height: '90px',
               borderRadius: '50%',
               objectFit: 'cover',
-              boxShadow: '0 8px 24px rgba(11, 83, 148, 0.25)',
-              border: '3px solid #0b5394',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)',
+              border: 'none',
               marginBottom: '12px',
             }}
           />
