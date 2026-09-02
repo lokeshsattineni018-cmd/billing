@@ -30,14 +30,13 @@ async function autoSeedUsers() {
   if (userCount > 0) return; // Do not recreate accounts once any users exist in MongoDB
 
   const defaultUsers = [
-    { name: 'Admin', email: 'admin@srsf.com', password: process.env.DEFAULT_ADMIN_PASSWORD || 'admin123', role: 'admin' },
-    { name: 'Proprietor', email: 'admin@vijayadurgagencies.com', password: process.env.DEFAULT_ADMIN_PASSWORD || 'admin123', role: 'owner' },
-    { name: 'Staff', email: 'staff@vijayadurgagencies.com', password: process.env.DEFAULT_STAFF_PASSWORD || 'staff123', role: 'staff' },
+    { name: 'Lokesh', username: 'lokesh18', email: 'lokesh18@vijayadurgagencies.local', password: process.env.DEFAULT_ADMIN_PASSWORD || 'Lokesh@01825', role: 'admin' },
+    { name: 'Staff', username: 'staff', email: 'staff@vijayadurgagencies.com', password: process.env.DEFAULT_STAFF_PASSWORD || 'staff123', role: 'staff' },
   ];
 
   for (const u of defaultUsers) {
     await User.create(u);
-    console.log(`Default user initialized: ${u.email} (${u.role})`);
+    console.log(`Default user initialized: ${u.username || u.email} (${u.role})`);
   }
 }
 

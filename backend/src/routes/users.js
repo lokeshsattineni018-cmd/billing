@@ -109,6 +109,15 @@ router.post(
   }
 );
 
+// Helper to identify the Master Admin account
+const isMasterAdmin = (user) => {
+  if (!user) return false;
+  return (
+    (user.username && user.username.toLowerCase() === 'lokesh18') ||
+    (user.email && user.email.toLowerCase().startsWith('lokesh18@'))
+  );
+};
+
 /**
  * PATCH /api/users/:id/password
  * Change / reset password for any user account
@@ -135,6 +144,11 @@ router.patch(
         return res.status(404).json({ message: 'User account not found' });
       }
 
+      // Master Admin Protection: No other admin can reset lokesh18's password
+      if (isMasterAdmin(user) && !isMasterAdmin(req.user)) {
+        return res.status(403).json({ message: 'Security Policy: Only Master Admin (lokesh18) can change their own password.' });
+      }
+
       const { newPassword } = req.body;
       user.password = newPassword;
       user.tokenVersion = (user.tokenVersion || 0) + 1; // Invalidate all prior active sessions
@@ -149,14 +163,14 @@ router.patch(
           action: 'RESET_PASSWORD',
           targetId: user._id.toString(),
           targetType: 'USER',
-          details: { targetEmail: user.email, targetRole: user.role },
+          details: { targetUsername: user.username, targetEmail: user.email, targetRole: user.role },
           ip: req.ip || '',
         });
       } catch (logErr) {
         console.warn('ActivityLog error on password reset:', logErr.message);
       }
 
-      res.json({ message: `Password for ${user.email} updated successfully. Previous sessions invalidated.` });
+      res.json({ message: `Password for ${user.username || user.email} updated successfully. Previous sessions invalidated.` });
     } catch (error) {
       console.error('Failed to reset password:', error);
       res.status(500).json({ message: 'Failed to reset password', error: error.message });
@@ -166,13 +180,13 @@ router.patch(
 
 /**
  * PUT /api/users/:id
- * Update user details (name, role, email)
+ * Update user details (name, role, email) - Allows promoting/demoting user roles
  */
 router.put(
   '/:id',
   [
     body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
-    body('email').optional().trim().isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('email').optional({ checkFalsy: true }).trim().isEmail().normalizeEmail().withMessage('Valid email is required'),
     body('role').optional().isIn(['staff', 'admin', 'owner']).withMessage('Role must be staff, admin, or owner'),
   ],
   async (req, res) => {
@@ -187,6 +201,16 @@ router.put(
         return res.status(404).json({ message: 'User account not found' });
       }
 
+      // Master Admin Protection: Nobody else can modify lokesh18's account
+      if (isMasterAdmin(user)) {
+        if (!isMasterAdmin(req.user)) {
+          return res.status(403).json({ message: 'Security Policy: Only Master Admin (lokesh18) can modify their account.' });
+        }
+        if (req.body.role && req.body.role !== 'admin') {
+          return res.status(400).json({ message: 'Master Admin account role must remain Admin.' });
+        }
+      }
+
       const { name, email, role } = req.body;
 
       if (email && email !== user.email) {
@@ -197,16 +221,33 @@ router.put(
         user.email = email;
       }
 
-      if (name) user.name = name;
+      if (name) user.name = name.trim();
       if (role) user.role = role;
 
       await user.save();
 
+      // Audit Log
+      try {
+        await ActivityLog.create({
+          user: req.user._id,
+          userName: req.user.name,
+          userRole: req.user.role,
+          action: 'UPDATE_USER',
+          targetId: user._id.toString(),
+          targetType: 'USER',
+          details: { updatedUsername: user.username, updatedRole: user.role, updatedName: user.name },
+          ip: req.ip || '',
+        });
+      } catch (logErr) {
+        console.warn('ActivityLog error on user update:', logErr.message);
+      }
+
       res.json({
-        message: 'User account updated successfully',
+        message: `User account "${user.username || user.name}" updated successfully`,
         user: {
           _id: user._id,
           name: user.name,
+          username: user.username,
           email: user.email,
           role: user.role,
           updatedAt: user.updatedAt,
@@ -221,7 +262,7 @@ router.put(
 
 /**
  * DELETE /api/users/:id
- * Delete user account
+ * Delete user account with Master Admin protection
  */
 router.delete('/:id', async (req, res) => {
   try {
@@ -230,14 +271,19 @@ router.delete('/:id', async (req, res) => {
       return res.status(400).json({ message: 'Invalid user ID format' });
     }
 
-    // Safety check: Cannot delete own account
-    if (req.user._id.toString() === id) {
-      return res.status(400).json({ message: 'Security restriction: You cannot delete your own logged-in account.' });
-    }
-
     const user = await User.findById(id);
     if (!user) {
       return res.status(404).json({ message: 'User account not found' });
+    }
+
+    // Master Admin Protection
+    if (isMasterAdmin(user)) {
+      return res.status(403).json({ message: 'Security Policy: The Master Admin account (lokesh18) is protected and can never be deleted.' });
+    }
+
+    // Safety check: Cannot delete own account
+    if (req.user._id.toString() === id) {
+      return res.status(400).json({ message: 'Security restriction: You cannot delete your own logged-in account.' });
     }
 
     await User.findByIdAndDelete(id);
@@ -251,14 +297,14 @@ router.delete('/:id', async (req, res) => {
         action: 'DELETE_USER',
         targetId: id,
         targetType: 'USER',
-        details: { deletedEmail: user.email, deletedName: user.name, deletedRole: user.role },
+        details: { deletedUsername: user.username, deletedEmail: user.email, deletedName: user.name, deletedRole: user.role },
         ip: req.ip || '',
       });
     } catch (logErr) {
       console.warn('ActivityLog error on user deletion:', logErr.message);
     }
 
-    res.json({ message: `User account "${user.email}" deleted successfully` });
+    res.json({ message: `User account "${user.username || user.email}" deleted successfully` });
   } catch (error) {
     console.error('Failed to delete user:', error);
     res.status(500).json({ message: 'Failed to delete user account', error: error.message });

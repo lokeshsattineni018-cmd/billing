@@ -10,6 +10,8 @@ import {
   UserIcon,
   EyeIcon,
   EyeOffIcon,
+  EditIcon,
+  ShieldIcon,
 } from '../components/Icons';
 
 export default function Settings() {
@@ -49,12 +51,24 @@ export default function Settings() {
   const [showCreatePassword, setShowCreatePassword] = useState(false);
   const [creatingUser, setCreatingUser] = useState(false);
 
+  // Edit User / Role State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedUserForEdit, setSelectedUserForEdit] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    email: '',
+    role: 'staff',
+  });
+  const [updatingUser, setUpdatingUser] = useState(false);
+
+  // Password Reset State
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [selectedUserForPassword, setSelectedUserForPassword] = useState(null);
   const [newPassword, setNewPassword] = useState('');
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
 
+  // Delete State
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUserForDelete, setSelectedUserForDelete] = useState(null);
   const [deletingUser, setDeletingUser] = useState(false);
@@ -114,6 +128,15 @@ export default function Settings() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Helper to test if a user is the protected Master Admin
+  const isMasterAccount = (u) => {
+    if (!u) return false;
+    return (
+      (u.username && u.username.toLowerCase() === 'lokesh18') ||
+      (u.email && u.email.toLowerCase().startsWith('lokesh18@'))
+    );
+  };
+
   // Create User Handler
   const handleCreateUser = async (e) => {
     e.preventDefault();
@@ -129,7 +152,7 @@ export default function Settings() {
     setCreatingUser(true);
     try {
       await usersAPI.create(createForm);
-      showToast(`User account "${createForm.username}" created successfully!`, 'success');
+      showToast(`User account "@${createForm.username}" created successfully!`, 'success');
       setShowCreateModal(false);
       setCreateForm({ name: '', username: '', email: '', role: 'staff', password: '' });
       setShowCreatePassword(false);
@@ -138,6 +161,29 @@ export default function Settings() {
       showToast(error.response?.data?.message || 'Failed to create user account', 'error');
     } finally {
       setCreatingUser(false);
+    }
+  };
+
+  // Edit / Update User Role & Details Handler
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    if (!selectedUserForEdit) return;
+    if (!editForm.name) {
+      showToast('Employee name cannot be empty', 'error');
+      return;
+    }
+
+    setUpdatingUser(true);
+    try {
+      await usersAPI.update(selectedUserForEdit._id, editForm);
+      showToast(`Account for @${selectedUserForEdit.username || selectedUserForEdit.name} updated successfully!`, 'success');
+      setShowEditModal(false);
+      setSelectedUserForEdit(null);
+      loadUsers();
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to update user account', 'error');
+    } finally {
+      setUpdatingUser(false);
     }
   };
 
@@ -152,7 +198,7 @@ export default function Settings() {
     setResettingPassword(true);
     try {
       await usersAPI.resetPassword(selectedUserForPassword._id, newPassword);
-      showToast(`Password for ${selectedUserForPassword.email} updated successfully!`, 'success');
+      showToast(`Password for @${selectedUserForPassword.username || selectedUserForPassword.name} updated successfully!`, 'success');
       setShowPasswordModal(false);
       setSelectedUserForPassword(null);
       setNewPassword('');
@@ -170,7 +216,7 @@ export default function Settings() {
     setDeletingUser(true);
     try {
       await usersAPI.delete(selectedUserForDelete._id);
-      showToast(`User account "${selectedUserForDelete.email}" deleted successfully`, 'success');
+      showToast(`User account "@${selectedUserForDelete.username || selectedUserForDelete.email}" deleted successfully`, 'success');
       setShowDeleteModal(false);
       setSelectedUserForDelete(null);
       loadUsers();
@@ -181,15 +227,22 @@ export default function Settings() {
     }
   };
 
-  const getRoleBadge = (role) => {
-    if (role === 'admin') {
+  const getRoleBadge = (u) => {
+    if (isMasterAccount(u)) {
+      return (
+        <span style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', color: '#92400e', border: '1px solid #f59e0b', padding: '3px 10px', borderRadius: '20px', fontSize: '0.74rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px', boxShadow: '0 1px 3px rgba(245, 158, 11, 0.2)' }}>
+          👑 Master Admin
+        </span>
+      );
+    }
+    if (u.role === 'admin') {
       return (
         <span style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '3px 10px', borderRadius: '20px', fontSize: '0.74rem', fontWeight: 800 }}>
           Admin
         </span>
       );
     }
-    if (role === 'owner') {
+    if (u.role === 'owner') {
       return (
         <span style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', padding: '3px 10px', borderRadius: '20px', fontSize: '0.74rem', fontWeight: 800 }}>
           Owner / Proprietor
@@ -216,7 +269,7 @@ export default function Settings() {
             System Settings & User Control
           </h2>
           <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0' }}>
-            Configure trade invoice details and manage staff login accounts & passwords
+            Configure trade invoice details and manage staff login accounts, roles & passwords
           </p>
         </div>
 
@@ -408,7 +461,7 @@ export default function Settings() {
             <div>
               <h3 className="card-title" style={{ margin: 0 }}>Active User Accounts</h3>
               <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '4px 0 0 0' }}>
-                Create login accounts for staff, reset forgotten passwords, or remove departed employees
+                Create login accounts for staff, update roles, reset forgotten passwords, or remove departed employees
               </p>
             </div>
 
@@ -416,7 +469,7 @@ export default function Settings() {
               type="button"
               className="btn btn-primary"
               onClick={() => {
-                setCreateForm({ name: '', email: '', role: 'staff', password: '' });
+                setCreateForm({ name: '', username: '', email: '', role: 'staff', password: '' });
                 setShowCreatePassword(false);
                 setShowCreateModal(true);
               }}
@@ -459,6 +512,9 @@ export default function Settings() {
                   {users.map((u) => {
                     const isSelf = currentUser?.email?.toLowerCase() === u.email?.toLowerCase() ||
                       (currentUser?.username && currentUser?.username?.toLowerCase() === u.username?.toLowerCase());
+                    const isMaster = isMasterAccount(u);
+                    const canModifyUser = isSelf || !isMaster;
+
                     const displayUsername = u.username || u.email?.split('@')[0] || 'user';
                     return (
                       <tr key={u._id}>
@@ -469,14 +525,14 @@ export default function Settings() {
                                 width: '36px',
                                 height: '36px',
                                 borderRadius: '50%',
-                                background: u.role === 'admin' ? '#eff6ff' : u.role === 'owner' ? '#ecfdf5' : '#f8fafc',
-                                border: `1.5px solid ${u.role === 'admin' ? '#93c5fd' : u.role === 'owner' ? '#6ee7b7' : '#cbd5e1'}`,
+                                background: isMaster ? '#fef3c7' : u.role === 'admin' ? '#eff6ff' : u.role === 'owner' ? '#ecfdf5' : '#f8fafc',
+                                border: `1.5px solid ${isMaster ? '#f59e0b' : u.role === 'admin' ? '#93c5fd' : u.role === 'owner' ? '#6ee7b7' : '#cbd5e1'}`,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 fontWeight: 800,
                                 fontSize: '0.9rem',
-                                color: u.role === 'admin' ? '#1d4ed8' : u.role === 'owner' ? '#047857' : '#475569',
+                                color: isMaster ? '#92400e' : u.role === 'admin' ? '#1d4ed8' : u.role === 'owner' ? '#047857' : '#475569',
                               }}
                             >
                               {(u.name || 'U').charAt(0).toUpperCase()}
@@ -503,39 +559,72 @@ export default function Settings() {
                             {u.email && !u.email.endsWith('.local') ? u.email : <em style={{ color: '#94a3b8' }}>None</em>}
                           </span>
                         </td>
-                        <td>{getRoleBadge(u.role)}</td>
+                        <td>{getRoleBadge(u)}</td>
                         <td style={{ fontSize: '0.82rem', color: '#64748b' }}>
                           {formatDate(u.createdAt)}
                         </td>
                         <td className="text-right">
-                          <div style={{ display: 'inline-flex', gap: '6px' }}>
-                            {/* Change / Reset Password Button */}
-                            <button
-                              type="button"
-                              className="btn btn-secondary btn-sm"
-                              style={{
-                                padding: '6px 10px',
-                                fontSize: '0.78rem',
-                                fontWeight: 700,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                border: '1px solid #cbd5e1',
-                                color: '#0b5394',
-                              }}
-                              onClick={() => {
-                                setSelectedUserForPassword(u);
-                                setNewPassword('');
-                                setShowResetPassword(false);
-                                setShowPasswordModal(true);
-                              }}
-                              title="Change / Set New Password"
-                            >
-                              <KeyIcon size={14} color="#0b5394" /> Change Password
-                            </button>
+                          <div style={{ display: 'inline-flex', gap: '6px', flexWrap: 'nowrap' }}>
+                            {/* Edit Role & Details Button */}
+                            {(!isMaster || isSelf) && (
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                style={{
+                                  padding: '6px 10px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 700,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  border: '1px solid #cbd5e1',
+                                  color: '#0f172a',
+                                  background: '#ffffff',
+                                }}
+                                onClick={() => {
+                                  setSelectedUserForEdit(u);
+                                  setEditForm({
+                                    name: u.name || '',
+                                    email: u.email && !u.email.endsWith('.local') ? u.email : '',
+                                    role: u.role || 'staff',
+                                  });
+                                  setShowEditModal(true);
+                                }}
+                                title="Edit Role & Details"
+                              >
+                                <EditIcon size={14} color="#0b5394" /> Edit Role
+                              </button>
+                            )}
 
-                            {/* Delete User Button */}
-                            {!isSelf && (
+                            {/* Change / Reset Password Button */}
+                            {canModifyUser && (
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                style={{
+                                  padding: '6px 10px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 700,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  border: '1px solid #cbd5e1',
+                                  color: '#0b5394',
+                                }}
+                                onClick={() => {
+                                  setSelectedUserForPassword(u);
+                                  setNewPassword('');
+                                  setShowResetPassword(false);
+                                  setShowPasswordModal(true);
+                                }}
+                                title="Change / Set New Password"
+                              >
+                                <KeyIcon size={14} color="#0b5394" /> Change Password
+                              </button>
+                            )}
+
+                            {/* Delete User Button (Disabled for Master Admin & Self) */}
+                            {!isSelf && !isMaster && (
                               <button
                                 type="button"
                                 className="btn btn-secondary btn-sm"
@@ -593,7 +682,7 @@ export default function Settings() {
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="e.g. Lokesh"
+                  placeholder="e.g. Ramesh Kumar"
                   value={createForm.name}
                   onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
                   required
@@ -605,7 +694,7 @@ export default function Settings() {
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="e.g. lokesh18"
+                  placeholder="e.g. ramesh1"
                   value={createForm.username}
                   onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
                   required
@@ -620,7 +709,7 @@ export default function Settings() {
                 <input
                   type="email"
                   className="form-input"
-                  placeholder="e.g. lokesh@gmail.com (optional)"
+                  placeholder="e.g. ramesh@gmail.com (optional)"
                   value={createForm.email}
                   onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
                 />
@@ -698,7 +787,96 @@ export default function Settings() {
         </div>
       )}
 
-      {/* MODAL 2: CHANGE / RESET USER PASSWORD */}
+      {/* MODAL 2: EDIT USER ROLE & DETAILS */}
+      {showEditModal && selectedUserForEdit && (
+        <div className="modal-backdrop" onClick={() => setShowEditModal(false)}>
+          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ background: '#eff6ff', padding: '8px', borderRadius: '8px', color: '#0b5394' }}>
+                  <EditIcon size={18} />
+                </div>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
+                  Edit User Account & Role
+                </h3>
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowEditModal(false)}>✕</button>
+            </div>
+
+            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '16px' }}>
+              <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>
+                @{selectedUserForEdit.username || selectedUserForEdit.name}
+              </div>
+              <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                Current Role: {selectedUserForEdit.role?.toUpperCase()}
+              </div>
+            </div>
+
+            <form onSubmit={handleUpdateUser}>
+              <div className="form-group" style={{ marginBottom: '14px' }}>
+                <label className="form-label" style={{ fontWeight: 700 }}>Employee / Full Name *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '14px' }}>
+                <label className="form-label" style={{ fontWeight: 700 }}>Email Address (Optional)</label>
+                <input
+                  type="email"
+                  className="form-input"
+                  placeholder="e.g. employee@gmail.com"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '20px' }}>
+                <label className="form-label" style={{ fontWeight: 700 }}>Account Role *</label>
+                <select
+                  className="form-select"
+                  value={editForm.role}
+                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                  disabled={isMasterAccount(selectedUserForEdit)}
+                >
+                  <option value="staff">Staff (Daily Billing, History, WhatsApp Sharing)</option>
+                  <option value="owner">Owner (Full Billing + Reports & Customers)</option>
+                  <option value="admin">Admin (Full System Control & Settings)</option>
+                </select>
+                {isMasterAccount(selectedUserForEdit) && (
+                  <small style={{ color: '#d97706', fontSize: '0.72rem', display: 'block', marginTop: '4px' }}>
+                    👑 Master Admin role is locked and protected.
+                  </small>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowEditModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={updatingUser}
+                  style={{ background: '#0b5394', fontWeight: 700 }}
+                >
+                  {updatingUser ? 'Saving...' : 'Update Account'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: CHANGE / RESET USER PASSWORD */}
       {showPasswordModal && selectedUserForPassword && (
         <div className="modal-backdrop" onClick={() => setShowPasswordModal(false)}>
           <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
@@ -719,7 +897,7 @@ export default function Settings() {
                 {selectedUserForPassword.name}
               </div>
               <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                {selectedUserForPassword.email} • {selectedUserForPassword.role?.toUpperCase()}
+                @{selectedUserForPassword.username || selectedUserForPassword.email} • {selectedUserForPassword.role?.toUpperCase()}
               </div>
             </div>
 
@@ -784,7 +962,7 @@ export default function Settings() {
         </div>
       )}
 
-      {/* MODAL 3: DELETE USER CONFIRMATION */}
+      {/* MODAL 4: DELETE USER CONFIRMATION */}
       {showDeleteModal && selectedUserForDelete && (
         <div className="modal-backdrop" onClick={() => setShowDeleteModal(false)}>
           <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
@@ -798,7 +976,7 @@ export default function Settings() {
             </div>
 
             <p style={{ fontSize: '0.88rem', color: '#475569', lineHeight: '1.5', margin: '0 0 16px 0' }}>
-              Are you sure you want to permanently delete the account for <strong>{selectedUserForDelete.name}</strong> (<code>{selectedUserForDelete.email}</code>)?
+              Are you sure you want to permanently delete the account for <strong>{selectedUserForDelete.name}</strong> (<code>@{selectedUserForDelete.username || selectedUserForDelete.email}</code>)?
             </p>
             <p style={{ fontSize: '0.78rem', color: '#dc2626', background: '#fff5f5', border: '1px solid #fecaca', padding: '8px 12px', borderRadius: '6px', margin: '0 0 20px 0' }}>
               ⚠️ This user will immediately lose login access to the billing system.
