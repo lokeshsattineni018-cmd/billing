@@ -145,6 +145,7 @@ router.get('/sales', protect, restrictTo('admin'), async (req, res) => {
         paidCount: paidData.count,
         pendingAmount: pendingData.totalAmount,
         pendingCount: pendingData.count,
+      },
       bills: bills.map((b) => ({
         _id: b._id,
         billNumber: b.billNumber,
