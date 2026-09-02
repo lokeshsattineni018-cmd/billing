@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const connectDB = require('./config/db');
+require('./models'); // Register all Mongoose schemas immediately
 const { sanitizeMongoInput, generalLimiter } = require('./middleware/security');
 
 // Route imports

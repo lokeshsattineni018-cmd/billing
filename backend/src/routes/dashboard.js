@@ -163,9 +163,9 @@ router.get('/daily-summary', protect, restrictTo('owner', 'admin'), async (req, 
 
 /**
  * GET /api/dashboard/analytics
- * Visual chart analytics: 7-day revenue, 6-month trends, customer breakdown (Admin only)
+ * Visual chart analytics: 7-day revenue, 6-month trends, customer breakdown (Owner and Admin)
  */
-router.get('/analytics', protect, restrictTo('admin'), async (req, res) => {
+router.get('/analytics', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
     const now = new Date();
 
