@@ -13,7 +13,7 @@ import Reports from './pages/Reports';
 import ActivityLog from './pages/ActivityLog';
 import Settings from './pages/Settings';
 import PublicInvoice from './pages/PublicInvoice';
-import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon } from './components/Icons';
+import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon, UserIcon } from './components/Icons';
 import logoImg from './assets/logo.png';
 import './index.css';
 
