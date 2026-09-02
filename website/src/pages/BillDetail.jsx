@@ -36,6 +36,7 @@ export default function BillDetail() {
   const [showVoidModal, setShowVoidModal] = useState(false);
   const [voidReason, setVoidReason] = useState('');
   const [voiding, setVoiding] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const isAdmin = user?.role === 'admin';
   const canSeeSales = user?.role === 'owner' || user?.role === 'admin';
@@ -100,20 +101,28 @@ export default function BillDetail() {
   };
 
   const handleDownloadPDF = async () => {
+    if (downloadingPdf) return;
+    setDownloadingPdf(true);
+    showToast('Generating official PDF...', 'info');
     try {
       const pdfUrl = billsAPI.getPDF(id);
       const response = await fetch(pdfUrl);
+      if (!response.ok) throw new Error('PDF generation failed');
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Invoice-${bill.billNo}${bill.isVoided ? '-VOIDED' : ''}.pdf`;
+      link.download = `Invoice-${bill.formattedBillNo || bill.billNo}${bill.isVoided ? '-VOIDED' : ''}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+      showToast('PDF downloaded successfully!', 'success');
     } catch (error) {
+      console.error('PDF error:', error);
       showToast('Failed to download PDF', 'error');
+    } finally {
+      setDownloadingPdf(false);
     }
   };
 
@@ -291,10 +300,19 @@ export default function BillDetail() {
 
           <button
             className="btn btn-secondary"
-            style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            style={{ padding: '10px 16px', display: 'inline-flex', alignItems: 'center', gap: '6px', minWidth: '85px', justifyContent: 'center' }}
             onClick={handleDownloadPDF}
+            disabled={downloadingPdf}
           >
-            <DownloadIcon size={16} /> PDF
+            {downloadingPdf ? (
+              <>
+                <span className="btn-spinner" style={{ width: '13px', height: '13px' }}></span> PDF...
+              </>
+            ) : (
+              <>
+                <DownloadIcon size={16} /> PDF
+              </>
+            )}
           </button>
 
           {/* Edit Invoice Button (Same-day correction) */}

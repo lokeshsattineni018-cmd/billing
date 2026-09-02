@@ -8,28 +8,34 @@ export default function PublicInvoice() {
   const { id } = useParams();
   const [bill, setBill] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    loadInvoice();
+    loadPublicBill();
   }, [id]);
 
-  const loadInvoice = async () => {
-    setLoading(true);
+  const loadPublicBill = async () => {
     try {
-      const res = await axios.get(`/api/bills/public/${id}`);
-      setBill(res.data);
+      const response = await fetch(`/api/bills/public/${id}`);
+      if (!response.ok) {
+        throw new Error('Invoice not found or link has expired');
+      }
+      const data = await response.json();
+      setBill(data);
     } catch (err) {
-      console.error('Failed to load invoice:', err);
-      setError('Invoice not found or link has expired.');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDownloadPDF = async () => {
+    if (downloadingPdf) return;
+    setDownloadingPdf(true);
     try {
       const response = await fetch(`/api/bills/public/${id}/pdf`);
+      if (!response.ok) throw new Error('PDF download failed');
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -42,6 +48,8 @@ export default function PublicInvoice() {
     } catch (e) {
       console.error('PDF download error:', e);
       window.open(`/api/bills/public/${id}/pdf`, '_blank');
+    } finally {
+      setDownloadingPdf(false);
     }
   };
 
@@ -116,9 +124,18 @@ export default function PublicInvoice() {
           <button
             onClick={handleDownloadPDF}
             className="btn btn-primary"
-            style={{ background: '#0b5394', color: '#ffffff', fontWeight: 800, fontSize: '0.85rem', padding: '9px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            style={{ background: '#0b5394', color: '#ffffff', fontWeight: 800, fontSize: '0.85rem', padding: '9px 16px', display: 'flex', alignItems: 'center', gap: '6px', minWidth: '180px', justifyContent: 'center' }}
+            disabled={downloadingPdf}
           >
-            <DownloadIcon size={16} color="#ffffff" /> Download Official PDF
+            {downloadingPdf ? (
+              <>
+                <span className="btn-spinner" style={{ width: '14px', height: '14px' }}></span> Downloading PDF...
+              </>
+            ) : (
+              <>
+                <DownloadIcon size={16} color="#ffffff" /> Download Official PDF
+              </>
+            )}
           </button>
           <button
             onClick={() => window.print()}

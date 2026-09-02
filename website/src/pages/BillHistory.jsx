@@ -24,6 +24,7 @@ export default function BillHistory() {
   const [reminderBillId, setReminderBillId] = useState(null);
   const [paymentBillId, setPaymentBillId] = useState(null);
   const [shareBill, setShareBill] = useState(null);
+  const [downloadingPdfId, setDownloadingPdfId] = useState(null);
 
   const isAdmin = user?.role === 'admin';
   const canSeeSales = user?.role === 'owner' || user?.role === 'admin';
@@ -104,20 +105,28 @@ export default function BillHistory() {
 
   const handleDownloadPDF = async (e, id, billNo) => {
     e.stopPropagation();
+    if (downloadingPdfId) return;
+    setDownloadingPdfId(id);
+    showToast(`Generating PDF invoice...`, 'info');
     try {
       const pdfUrl = billsAPI.getPDF(id);
       const response = await fetch(pdfUrl);
+      if (!response.ok) throw new Error('PDF generation failed');
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Invoice-${billNo}.pdf`;
+      link.download = `Invoice-${billNo || id}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+      showToast(`PDF downloaded successfully!`, 'success');
     } catch (error) {
+      console.error('Download error:', error);
       showToast('Failed to download PDF', 'error');
+    } finally {
+      setDownloadingPdfId(null);
     }
   };
 
@@ -348,9 +357,18 @@ export default function BillHistory() {
                         borderRadius: '6px',
                         boxShadow: '0 1px 3px rgba(11, 83, 148, 0.08)'
                       }}
-                      onClick={(e) => handleDownloadPDF(e, bill._id, bill.billNo)}
+                      onClick={(e) => handleDownloadPDF(e, bill._id, bill.formattedBillNo || bill.billNumber || bill.billNo)}
+                      disabled={downloadingPdfId === bill._id}
                     >
-                      <DownloadIcon size={16} color="#0b5394" /> Download PDF
+                      {downloadingPdfId === bill._id ? (
+                        <>
+                          <span className="btn-spinner"></span> Downloading...
+                        </>
+                      ) : (
+                        <>
+                          <DownloadIcon size={16} color="#0b5394" /> Download PDF
+                        </>
+                      )}
                     </button>
                     {!bill.isVoided && (
                       <button
@@ -479,10 +497,20 @@ export default function BillHistory() {
                           </button>
                           <button
                             className="btn btn-secondary btn-sm"
-                            onClick={(e) => handleDownloadPDF(e, bill._id, bill.billNo)}
+                            onClick={(e) => handleDownloadPDF(e, bill._id, bill.formattedBillNo || bill.billNumber || bill.billNo)}
+                            disabled={downloadingPdfId === bill._id}
                             title="Download PDF"
+                            style={{ minWidth: '66px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                           >
-                            <DownloadIcon size={14} /> PDF
+                            {downloadingPdfId === bill._id ? (
+                              <>
+                                <span className="btn-spinner" style={{ width: '12px', height: '12px' }}></span> PDF...
+                              </>
+                            ) : (
+                              <>
+                                <DownloadIcon size={14} /> PDF
+                              </>
+                            )}
                           </button>
                         </div>
                       </td>
