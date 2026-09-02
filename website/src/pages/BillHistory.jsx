@@ -139,29 +139,7 @@ export default function BillHistory() {
     }
   };
 
-  const handleTogglePaymentStatus = async (e, bill) => {
-    e.stopPropagation();
-    if (!canUpdateStatus) return;
 
-    if (bill.isVoided) {
-      showToast('Cannot change status of a voided invoice', 'error');
-      return;
-    }
-
-    const newStatus = bill.paymentStatus === 'Paid' ? 'Pending' : 'Paid';
-    const confirmMsg = `Mark Invoice #${bill.billNo} (${bill.companyName}) as "${newStatus}"?`;
-    if (!window.confirm(confirmMsg)) {
-      return;
-    }
-
-    try {
-      await billsAPI.updatePaymentStatus(bill._id, newStatus);
-      showToast(`Invoice #${bill.billNo} marked as ${newStatus}`);
-      setBills(bills.map((b) => (b._id === bill._id ? { ...b, paymentStatus: newStatus } : b)));
-    } catch (error) {
-      showToast(error.response?.data?.message || 'Failed to update payment status', 'error');
-    }
-  };
 
   return (
     <div className="page-container fade-in">
@@ -306,8 +284,7 @@ export default function BillHistory() {
                     {!bill.isVoided && (
                       <span
                         className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}
-                        style={{ cursor: canUpdateStatus ? 'pointer' : 'default', padding: '4px 10px', fontSize: '0.82rem' }}
-                        onClick={(e) => handleTogglePaymentStatus(e, bill)}
+                        style={{ padding: '4px 10px', fontSize: '0.82rem' }}
                       >
                         {bill.paymentStatus || 'Pending'}
                       </span>
@@ -433,9 +410,6 @@ export default function BillHistory() {
                         ) : (
                           <span
                             className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}
-                            style={{ cursor: canUpdateStatus ? 'pointer' : 'default' }}
-                            onClick={(e) => handleTogglePaymentStatus(e, bill)}
-                            title={canUpdateStatus ? 'Click to toggle status' : ''}
                           >
                             {bill.paymentStatus || 'Pending'}
                           </span>
