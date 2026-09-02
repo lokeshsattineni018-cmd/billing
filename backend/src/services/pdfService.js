@@ -6,11 +6,13 @@ const logos = require('../assets/logosData');
 const ganeshaBase64 = (logos.ganeshaBase64 || logos.GANESHA_BASE64 || '').replace(/^data:image\/\w+;base64,/, '');
 const durgaBase64 = (logos.durgaBase64 || logos.DURGA_BASE64 || '').replace(/^data:image\/\w+;base64,/, '');
 const ramDarbarBase64 = (logos.ramDarbarBase64 || logos.RAM_DARBAR_BASE64 || '').replace(/^data:image\/\w+;base64,/, '');
+const teluguJaiShreeRamBase64 = (logos.JAI_SHREE_RAM_TELUGU_BASE64 || '').replace(/^data:image\/\w+;base64,/, '');
 
 // Pre-cached in-memory binary image buffers (zero encoding overhead per request)
 const ganeshaBuffer = Buffer.from(ganeshaBase64, 'base64');
 const durgaBuffer = Buffer.from(durgaBase64, 'base64');
 const ramDarbarBuffer = Buffer.from(ramDarbarBase64, 'base64');
+const teluguJaiShreeRamBuffer = Buffer.from(teluguJaiShreeRamBase64, 'base64');
 
 /**
  * Generate Traditional Indian Trade Invoice for VIJAYA DURGA AGENCIES
@@ -59,9 +61,17 @@ async function generateBillPDFBuffer(bill) {
       doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
       doc.text('TAX INVOICE / CASH / CREDIT', L + 8, y + 5.5, { align: 'left' });
 
-      // Top Center: Divine Invocation
-      doc.font('Helvetica-Bold').fontSize(9).fillColor(primaryBlue);
-      doc.text('|| JAI SHREE RAM ||', L, y + 5.5, { width: W, align: 'center' });
+      // Top Center: Divine Invocation (Telugu || జై శ్రీరామ్ ||)
+      if (teluguJaiShreeRamBuffer && teluguJaiShreeRamBuffer.length > 0) {
+        const teluguImgW = 68;
+        const teluguImgH = 14;
+        const teluguImgX = L + (W - teluguImgW) / 2;
+        const teluguImgY = y + (row1H - teluguImgH) / 2;
+        doc.image(teluguJaiShreeRamBuffer, teluguImgX, teluguImgY, { width: teluguImgW, height: teluguImgH });
+      } else {
+        doc.font('Helvetica-Bold').fontSize(9).fillColor(primaryBlue);
+        doc.text('|| JAI SHREE RAM ||', L, y + 5.5, { width: W, align: 'center' });
+      }
 
       // Top Right: Cell
       doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
