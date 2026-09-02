@@ -824,37 +824,29 @@ export default function NewBill() {
             </div>
           </div>
 
-          {/* Action Buttons — Full Width & Clean White / Light Styling */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {/* Action Buttons — Compact & Neatly Aligned */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginTop: '16px' }}>
             <button
               type="button"
-              className="btn btn-primary"
-              style={{
-                width: '100%',
-                padding: '14px',
-                fontSize: '1rem',
-                fontWeight: 800,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                borderRadius: '8px',
-                background: '#ffffff',
-                border: '2px solid #0b5394',
-                color: '#0b5394',
-                boxShadow: '0 2px 8px rgba(11, 83, 148, 0.08)'
-              }}
-              onClick={() => handleSave('print')}
-              disabled={saving}
-              title="Press Ctrl + Enter to Save and Print immediately"
+              className="btn btn-ghost"
+              style={{ padding: '8px 16px', fontSize: '0.84rem', color: '#64748b', fontWeight: 600 }}
+              onClick={() => navigate('/')}
             >
-              <PrintIcon size={20} color="#0b5394" /> {saving ? t('saving') : t('saveAndPrint')}
+              {t('cancel')}
             </button>
 
             <button
               type="button"
               className="btn btn-secondary"
-              style={{ width: '100%', padding: '12px', fontSize: '0.95rem', fontWeight: 600, borderRadius: '8px', background: '#ffffff', border: '1px solid #cbd5e1', color: '#334155' }}
+              style={{
+                padding: '9px 18px',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                borderRadius: '8px',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                color: '#334155',
+              }}
               onClick={() => handleSave('save')}
               disabled={saving}
             >
@@ -863,11 +855,25 @@ export default function NewBill() {
 
             <button
               type="button"
-              className="btn btn-ghost"
-              style={{ width: '100%', padding: '10px', fontSize: '0.9rem', color: '#64748b' }}
-              onClick={() => navigate('/')}
+              className="btn btn-primary"
+              style={{
+                padding: '9px 20px',
+                fontSize: '0.86rem',
+                fontWeight: 800,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderRadius: '8px',
+                background: '#0b5394',
+                color: '#ffffff',
+                border: 'none',
+                boxShadow: '0 2px 8px rgba(11, 83, 148, 0.25)',
+              }}
+              onClick={() => handleSave('print')}
+              disabled={saving}
+              title="Press Ctrl + Enter to Save and Print immediately"
             >
-              {t('cancel')}
+              <PrintIcon size={16} color="#ffffff" /> {saving ? t('saving') : t('saveAndPrint')}
             </button>
           </div>
         </div>
