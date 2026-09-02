@@ -145,9 +145,24 @@ router.get('/sales', protect, restrictTo('admin'), async (req, res) => {
         paidCount: paidData.count,
         pendingAmount: pendingData.totalAmount,
         pendingCount: pendingData.count,
-      },
-      topBuyers,
-      itemsBreakdown: itemsAgg,
+      bills: bills.map((b) => ({
+        _id: b._id,
+        billNumber: b.billNumber,
+        formattedBillNo: b.formattedBillNo || (b.financialYear ? `${b.financialYear}/${String(b.billNumber).padStart(4, '0')}` : String(b.billNumber)),
+        date: b.date,
+        companyName: b.companyName,
+        customerPhone: b.customerPhone,
+        grandTotal: b.grandTotal || b.total || 0,
+        taxableValue: b.taxableValue || b.total || 0,
+        cgstAmount: b.cgstAmount || 0,
+        sgstAmount: b.sgstAmount || 0,
+        igstAmount: b.igstAmount || 0,
+        paymentStatus: b.paymentStatus || 'Pending',
+        isVoided: b.isVoided || false,
+        itemSummary: (b.items && b.items.length > 0)
+          ? b.items.map((it) => `${it.particulars || ''} (${it.quantity || 0}kg)`).join(', ')
+          : `${b.particulars || 'Item'} (${b.quantity || 0}kg)`,
+      })),
       dateRange: { start, end, label: rangeLabel },
       whatsappSummary: waMessage,
     });

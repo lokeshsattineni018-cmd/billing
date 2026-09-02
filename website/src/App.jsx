@@ -118,11 +118,10 @@ function Sidebar({ onInstall }) {
       <div style={{ padding: '8px 14px' }}>
         <button
           type="button"
-          className="btn btn-secondary"
-          style={{ width: '100%', padding: '9px 12px', fontSize: '0.8rem', background: '#ffffff', border: '1.5px solid #0b5394', color: '#0b5394', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: '8px', fontWeight: 800 }}
+          className="btn-install-sidebar"
           onClick={onInstall}
         >
-          <DownloadIcon size={14} color="#0b5394" /> {t('installApp')}
+          <DownloadIcon size={14} color="currentColor" /> {t('installApp')}
         </button>
       </div>
 

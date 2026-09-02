@@ -19,6 +19,12 @@ const connectDB = async () => {
   try {
     cachedConnection = await mongoose.connect(uri, {
       bufferCommands: false,
+      maxPoolSize: 10,
+      minPoolSize: 1,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 10000,
+      family: 4, // Use IPv4, skip slow IPv6 DNS lookups on serverless
     });
     console.log(`MongoDB connected: ${cachedConnection.connection.host}`);
     return cachedConnection;

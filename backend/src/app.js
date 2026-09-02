@@ -93,11 +93,16 @@ app.use((req, res, next) => {
   next();
 });
 
+let isDbSeeded = false;
+
 // Middleware to ensure DB is connected for serverless invocations
 app.use(async (req, res, next) => {
   try {
     await connectDB();
-    autoSeedUsers().catch((e) => console.log('Seed note:', e.message));
+    if (!isDbSeeded) {
+      isDbSeeded = true;
+      autoSeedUsers().catch((e) => console.log('Seed note:', e.message));
+    }
     next();
   } catch (err) {
     console.error('Database connection error in middleware:', err);

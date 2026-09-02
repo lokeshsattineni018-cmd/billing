@@ -270,73 +270,105 @@ export default function Reports() {
             </div>
           )}
 
-          {/* Top Buyers & Item Breakdown Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-            {/* Top Buyers Table */}
-            <div className="card" style={{ padding: '18px' }}>
-              <h3 className="card-title" style={{ marginBottom: '14px' }}>Top Buyers for Selected Period</h3>
-              {report.topBuyers?.length === 0 ? (
-                <p style={{ color: '#64748b', fontSize: '0.85rem' }}>No buyers recorded in this date range.</p>
-              ) : (
-                <div className="table-container">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Customer</th>
-                        <th style={{ textAlign: 'center' }}>Bills</th>
-                        <th className="text-right">Total Revenue</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {report.topBuyers.map((tb, idx) => (
-                        <tr key={idx}>
-                          <td style={{ fontWeight: 700, color: '#0b5394' }}>
-                            {idx + 1}. {tb._id}
-                          </td>
-                          <td style={{ textAlign: 'center' }}>{tb.billCount}</td>
-                          <td className="text-right" style={{ fontWeight: 800 }}>
-                            {formatCurrency(tb.totalSales)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+          {/* Invoices List for Selected Period */}
+          <div className="card" style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
+              <div>
+                <h3 className="card-title" style={{ margin: 0 }}>
+                  Invoices for Selected Period ({report.bills?.length || 0})
+                </h3>
+                <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '4px 0 0 0' }}>
+                  Complete list of tax & commercial invoices generated during this period
+                </p>
+              </div>
             </div>
 
-            {/* Items Breakdown Table */}
-            <div className="card" style={{ padding: '18px' }}>
-              <h3 className="card-title" style={{ marginBottom: '14px' }}>Seafood Items Breakdown</h3>
-              {report.itemsBreakdown?.length === 0 ? (
-                <p style={{ color: '#64748b', fontSize: '0.85rem' }}>No items recorded in this date range.</p>
-              ) : (
-                <div className="table-container">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Item Particulars</th>
-                        <th style={{ textAlign: 'right' }}>Total Qty (KG)</th>
-                        <th className="text-right">Total Sales</th>
+            {!report.bills || report.bills.length === 0 ? (
+              <div className="empty-state" style={{ padding: '36px 20px', textAlign: 'center' }}>
+                <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>No invoices found in this date range.</p>
+              </div>
+            ) : (
+              <div className="table-container">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Invoice #</th>
+                      <th>Date</th>
+                      <th>Customer / Buyer</th>
+                      <th>Item Particulars</th>
+                      <th className="text-right">Grand Total</th>
+                      <th className="text-center">Status</th>
+                      <th className="text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.bills.map((b) => (
+                      <tr
+                        key={b._id}
+                        className="clickable-row"
+                        onClick={() => navigate(`/bills/${b._id}`)}
+                      >
+                        <td>
+                          <span style={{ fontWeight: 800, color: '#0b5394', fontSize: '0.88rem' }}>
+                            #{b.formattedBillNo || b.billNumber}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: '0.84rem', color: '#475569', whiteSpace: 'nowrap' }}>
+                          {formatDate(b.date)}
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 700, color: '#0f172a' }}>{b.companyName}</div>
+                          {b.customerPhone && (
+                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{b.customerPhone}</div>
+                          )}
+                        </td>
+                        <td style={{ fontSize: '0.84rem', color: '#334155', maxWidth: '240px' }}>
+                          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {b.itemSummary || '—'}
+                          </div>
+                        </td>
+                        <td className="text-right" style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.94rem' }}>
+                          {formatCurrency(b.grandTotal)}
+                        </td>
+                        <td className="text-center">
+                          <span
+                            className="badge"
+                            style={{
+                              background: b.paymentStatus === 'Paid' ? '#ecfdf5' : '#fffbeb',
+                              color: b.paymentStatus === 'Paid' ? '#047857' : '#b45309',
+                              border: `1px solid ${b.paymentStatus === 'Paid' ? '#a7f3d0' : '#fde68a'}`,
+                              fontWeight: 800,
+                              fontSize: '0.72rem',
+                              padding: '3px 8px',
+                              borderRadius: '12px',
+                            }}
+                          >
+                            {b.paymentStatus === 'Paid' ? 'PAID' : 'PENDING'}
+                          </span>
+                        </td>
+                        <td className="text-right" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            style={{
+                              padding: '5px 10px',
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              color: '#0b5394',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '6px',
+                            }}
+                            onClick={() => navigate(`/bills/${b._id}`)}
+                          >
+                            View →
+                          </button>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {report.itemsBreakdown.map((item, idx) => (
-                        <tr key={idx}>
-                          <td style={{ fontWeight: 600 }}>{item._id}</td>
-                          <td style={{ textAlign: 'right', fontWeight: 700 }}>
-                            {Number(item.totalQty || 0).toLocaleString('en-IN')} kg
-                          </td>
-                          <td className="text-right" style={{ fontWeight: 800, color: '#0b5394' }}>
-                            {formatCurrency(item.totalAmount)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       ) : null}

@@ -458,6 +458,35 @@ a:hover {
   box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
 }
 
+.btn-install-sidebar {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 0.8rem;
+  background: #ffffff;
+  border: 1.5px solid #0b5394;
+  color: #0b5394;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-install-sidebar:hover {
+  background: #0b5394 !important;
+  color: #ffffff !important;
+  border-color: #0b5394 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(11, 83, 148, 0.3);
+}
+
+.btn-install-sidebar:hover svg {
+  stroke: #ffffff !important;
+}
+
 .btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -595,22 +624,24 @@ a:hover {
   border-color: rgba(245, 158, 11, 0.2);
 }
 
-/* ── Login Page ── */
+/* ── Login Page (Clean White Aesthetic) ── */
 .login-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  background: #f1f5f9;
+  padding: 20px;
 }
 
 .login-card {
   background: #ffffff;
   border-radius: var(--radius-xl);
-  padding: 44px 40px;
+  padding: 40px 36px;
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
 
 .login-brand {

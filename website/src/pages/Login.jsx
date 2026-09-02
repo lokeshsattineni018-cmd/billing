@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { EyeIcon, EyeOffIcon } from '../components/Icons';
 import logoImg from '../assets/logo.png';
@@ -10,6 +10,11 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Pre-warm the serverless backend function and DB connection pool while user is on login screen
+    fetch('/api/health').catch(() => {});
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

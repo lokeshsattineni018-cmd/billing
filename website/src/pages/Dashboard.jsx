@@ -99,31 +99,17 @@ export default function Dashboard() {
       {isAdmin ? (
         <div
           style={{
-            background: 'linear-gradient(135deg, #091E3A 0%, #102A45 50%, #0B3B60 100%)',
-            borderRadius: '20px',
+            background: '#ffffff',
+            borderRadius: '16px',
             padding: '24px 28px',
-            color: '#ffffff',
+            color: '#0f172a',
             marginBottom: '24px',
-            boxShadow: '0 12px 30px -8px rgba(9, 30, 58, 0.4)',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
             position: 'relative',
             overflow: 'hidden',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
+            border: '1px solid #e2e8f0',
           }}
         >
-          {/* Subtle Ambient Radial Glow */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '-60px',
-              right: '-60px',
-              width: '260px',
-              height: '260px',
-              background: 'radial-gradient(circle, rgba(56, 189, 248, 0.18) 0%, rgba(56, 189, 248, 0) 70%)',
-              borderRadius: '50%',
-              pointerEvents: 'none',
-            }}
-          />
-
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
@@ -132,9 +118,9 @@ export default function Dashboard() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
-                    background: 'rgba(16, 185, 129, 0.15)',
-                    border: '1px solid rgba(16, 185, 129, 0.35)',
-                    color: '#6ee7b7',
+                    background: '#ecfdf5',
+                    border: '1px solid #a7f3d0',
+                    color: '#047857',
                     padding: '3px 10px',
                     borderRadius: '20px',
                     fontSize: '0.72rem',
@@ -143,18 +129,18 @@ export default function Dashboard() {
                     textTransform: 'uppercase',
                   }}
                 >
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px #10b981' }} />
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
                   SYSTEM ACTIVE
                 </span>
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>
+                <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
                   {currentDateStr}
                 </span>
               </div>
 
-              <h1 style={{ fontSize: '1.65rem', fontWeight: 900, margin: 0, letterSpacing: '-0.6px', color: '#ffffff' }}>
+              <h1 style={{ fontSize: '1.65rem', fontWeight: 900, margin: 0, letterSpacing: '-0.5px', color: '#0f172a' }}>
                 Executive Billing Center
               </h1>
-              <p style={{ margin: '3px 0 0 0', fontSize: '0.84rem', color: '#94a3b8', fontWeight: 500 }}>
+              <p style={{ margin: '3px 0 0 0', fontSize: '0.84rem', color: '#64748b', fontWeight: 500 }}>
                 VIJAYA DURGA AGENCIES • Real-time Financial Command
               </p>
             </div>
@@ -180,11 +166,12 @@ export default function Dashboard() {
               </button>
               <button
                 type="button"
+                className="btn btn-primary"
                 onClick={() => navigate('/new-bill')}
                 style={{
-                  background: '#ffffff',
-                  color: '#0b5394',
-                  fontWeight: 900,
+                  background: '#0b5394',
+                  color: '#ffffff',
+                  fontWeight: 800,
                   padding: '10px 20px',
                   fontSize: '0.85rem',
                   display: 'flex',
@@ -193,11 +180,11 @@ export default function Dashboard() {
                   borderRadius: '10px',
                   border: 'none',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
+                  boxShadow: '0 4px 14px rgba(11, 83, 148, 0.25)',
                   transition: 'all 0.2s ease',
                 }}
               >
-                <PlusIcon size={18} color="#0b5394" /> Create Invoice
+                <PlusIcon size={18} color="#ffffff" /> Create Invoice
               </button>
             </div>
           </div>
@@ -210,7 +197,7 @@ export default function Dashboard() {
               flexWrap: 'wrap',
               marginTop: '18px',
               paddingTop: '16px',
-              borderTop: '1px solid rgba(255,255,255,0.1)',
+              borderTop: '1px solid #f1f5f9',
             }}
           >
             {[
@@ -224,9 +211,9 @@ export default function Dashboard() {
                 type="button"
                 onClick={btn.action || (() => navigate(btn.path))}
                 style={{
-                  background: 'rgba(255,255,255,0.08)',
-                  border: '1px solid rgba(255,255,255,0.16)',
-                  color: '#e2e8f0',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  color: '#334155',
                   padding: '6px 14px',
                   borderRadius: '8px',
                   fontSize: '0.76rem',
@@ -235,12 +222,14 @@ export default function Dashboard() {
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.16)';
-                  e.currentTarget.style.color = '#ffffff';
+                  e.currentTarget.style.background = '#eff6ff';
+                  e.currentTarget.style.borderColor = '#bfdbfe';
+                  e.currentTarget.style.color = '#0b5394';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-                  e.currentTarget.style.color = '#e2e8f0';
+                  e.currentTarget.style.background = '#f8fafc';
+                  e.currentTarget.style.borderColor = '#e2e8f0';
+                  e.currentTarget.style.color = '#334155';
                 }}
               >
                 {btn.label}
