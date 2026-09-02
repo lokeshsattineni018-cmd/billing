@@ -1,0 +1,117 @@
+const nodemailer = require('nodemailer');
+
+/**
+ * Create reusable SMTP transporter (Gmail App Password)
+ */
+function createTransporter() {
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+}
+
+/**
+ * Send daily summary email with transaction data
+ */
+async function sendDailySummaryEmail({ recipientEmail, date, bills, summary }) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    throw new Error('SMTP credentials not configured. Set SMTP_USER and SMTP_PASS environment variables.');
+  }
+
+  const transporter = createTransporter();
+  const dateStr = new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  // Build CSV attachment
+  const csvHeaders = 'Invoice No,Date,Customer,Amount,Payment Status\n';
+  const csvRows = bills.map((b) =>
+    `${b.billNo},"${new Date(b.date).toLocaleDateString('en-IN')}","${b.companyName}",${b.grandTotal || b.total},${b.paymentStatus || 'Pending'}`
+  ).join('\n');
+  const csvContent = csvHeaders + csvRows;
+
+  // Build HTML email body
+  const html = `
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #0b5394, #1e40af); color: #fff; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
+        <h1 style="margin: 0; font-size: 20px;">📊 Daily Business Summary</h1>
+        <p style="margin: 4px 0 0; opacity: 0.9; font-size: 14px;">VIJAYA DURGA AGENCIES — ${dateStr}</p>
+      </div>
+
+      <div style="background: #ffffff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px;">
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+          <tr>
+            <td style="padding: 12px; background: #dcfce7; border-radius: 8px; text-align: center;">
+              <div style="font-size: 24px; font-weight: 900; color: #16a34a;">${summary.totalBills}</div>
+              <div style="font-size: 12px; color: #475569; font-weight: 700;">Total Bills</div>
+            </td>
+            <td style="width: 10px;"></td>
+            <td style="padding: 12px; background: #dbeafe; border-radius: 8px; text-align: center;">
+              <div style="font-size: 24px; font-weight: 900; color: #0b5394;">₹${Number(summary.totalRevenue).toLocaleString('en-IN')}</div>
+              <div style="font-size: 12px; color: #475569; font-weight: 700;">Revenue</div>
+            </td>
+            <td style="width: 10px;"></td>
+            <td style="padding: 12px; background: #fef3c7; border-radius: 8px; text-align: center;">
+              <div style="font-size: 24px; font-weight: 900; color: #d97706;">₹${Number(summary.pendingAmount).toLocaleString('en-IN')}</div>
+              <div style="font-size: 12px; color: #475569; font-weight: 700;">Pending</div>
+            </td>
+          </tr>
+        </table>
+
+        ${bills.length > 0 ? `
+        <h3 style="font-size: 14px; color: #0f172a; margin: 16px 0 8px;">Invoice Details</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <thead>
+            <tr style="background: #f8fafc;">
+              <th style="padding: 8px; text-align: left; border-bottom: 2px solid #e2e8f0;">#</th>
+              <th style="padding: 8px; text-align: left; border-bottom: 2px solid #e2e8f0;">Customer</th>
+              <th style="padding: 8px; text-align: right; border-bottom: 2px solid #e2e8f0;">Amount</th>
+              <th style="padding: 8px; text-align: center; border-bottom: 2px solid #e2e8f0;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${bills.map((b) => `
+            <tr>
+              <td style="padding: 6px 8px; border-bottom: 1px solid #f1f5f9;">${b.billNo}</td>
+              <td style="padding: 6px 8px; border-bottom: 1px solid #f1f5f9;">${b.companyName}</td>
+              <td style="padding: 6px 8px; text-align: right; border-bottom: 1px solid #f1f5f9;">₹${Number(b.grandTotal || b.total).toLocaleString('en-IN')}</td>
+              <td style="padding: 6px 8px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+                <span style="padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;
+                  background: ${b.paymentStatus === 'Paid' ? '#dcfce7' : '#fef3c7'};
+                  color: ${b.paymentStatus === 'Paid' ? '#16a34a' : '#d97706'};">
+                  ${b.paymentStatus || 'Pending'}
+                </span>
+              </td>
+            </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        ` : '<p style="color: #64748b;">No invoices were created on this date.</p>'}
+
+        <p style="margin-top: 20px; font-size: 11px; color: #94a3b8; text-align: center;">
+          Auto-generated by VIJAYA DURGA AGENCIES Billing System
+        </p>
+      </div>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: `"VIJAYA DURGA AGENCIES" <${process.env.SMTP_USER}>`,
+    to: recipientEmail,
+    subject: `📊 Daily Summary — ${dateStr} | ${summary.totalBills} bills, ₹${Number(summary.totalRevenue).toLocaleString('en-IN')}`,
+    html,
+    attachments: bills.length > 0 ? [{
+      filename: `VDA_Daily_Report_${dateStr.replace(/\s/g, '_')}.csv`,
+      content: csvContent,
+      contentType: 'text/csv',
+    }] : [],
+  };
+
+  const info = await transporter.sendMail(mailOptions);
+  return info;
+}
+
+module.exports = { sendDailySummaryEmail };

@@ -238,4 +238,60 @@ Thank you for your business!`;
 }
 
 
+/**
+ * Play a pleasant success "cha-ching" tone using Web Audio API (no external files)
+ * Also triggers haptic vibration on mobile devices
+ */
+export function playSuccessSound() {
+  try {
+    // Haptic vibration (mobile)
+    if (navigator.vibrate) navigator.vibrate(150);
+
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+
+    // Two-note ascending chime
+    [520, 780].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.15, now + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.35);
+      osc.start(now + i * 0.12);
+      osc.stop(now + i * 0.12 + 0.35);
+    });
+
+    setTimeout(() => ctx.close(), 600);
+  } catch (e) {
+    // Silently ignore — audio not critical
+  }
+}
+
+/**
+ * Play a short low-frequency error buzz
+ */
+export function playErrorSound() {
+  try {
+    if (navigator.vibrate) navigator.vibrate([80, 50, 80]);
+
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'square';
+    osc.frequency.value = 200;
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.25);
+
+    setTimeout(() => ctx.close(), 400);
+  } catch (e) {
+    // Silently ignore
+  }
+}
 

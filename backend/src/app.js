@@ -19,6 +19,7 @@ const reportsRoutes = require('./routes/reports');
 const customersRoutes = require('./routes/customers');
 const activityLogsRoutes = require('./routes/activityLogs');
 const usersRoutes = require('./routes/users');
+const backupRoutes = require('./routes/backup');
 
 const app = express();
 
@@ -123,6 +124,7 @@ const routeMappings = [
   ['/customers', customersRoutes],
   ['/activity-logs', activityLogsRoutes],
   ['/users', usersRoutes],
+  ['/backup', backupRoutes],
 ];
 
 routeMappings.forEach(([path, handler]) => {

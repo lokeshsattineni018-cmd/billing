@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { billsAPI, settingsAPI } from '../services/api';
-import { formatCurrency, useToast, Toast } from '../utils/helpers';
+import { formatCurrency, useToast, Toast, playSuccessSound, playErrorSound } from '../utils/helpers';
 import { useLanguage } from '../context/LanguageContext';
 import { PrintIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
+import { savePendingBill } from '../services/offlineQueue';
 
 const DRAFT_KEY = 'srsf_bill_draft';
 
@@ -292,6 +293,7 @@ export default function NewBill() {
       // Clear draft upon successful creation
       localStorage.removeItem(DRAFT_KEY);
 
+      playSuccessSound();
       showToast(`Invoice #${invoice.billNo} created successfully`);
 
       if (actionType === 'print') {
@@ -303,8 +305,17 @@ export default function NewBill() {
       // Task 3: Offline / Network failure draft retention
       const isNetworkError = !error.response || error.code === 'ERR_NETWORK';
       if (isNetworkError) {
-        showToast('Offline: Saved draft locally. You can resubmit once connection is restored.', 'error');
+        // Save to IndexedDB offline queue
+        try {
+          await savePendingBill(invoiceData);
+          playErrorSound();
+          showToast('📱 Saved offline! Will auto-sync when connected.', 'error');
+        } catch (offlineErr) {
+          playErrorSound();
+          showToast('Failed to save offline. Please try again.', 'error');
+        }
       } else {
+        playErrorSound();
         showToast(error.response?.data?.message || 'Failed to create invoice', 'error');
       }
     } finally {

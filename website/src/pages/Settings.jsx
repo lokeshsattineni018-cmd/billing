@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { settingsAPI, usersAPI } from '../services/api';
+import { settingsAPI, usersAPI, backupAPI } from '../services/api';
 import { useToast, Toast, formatDate } from '../utils/helpers';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -18,9 +18,9 @@ export default function Settings() {
   const { user: currentUser, logout } = useAuth();
   const { toast, showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('business'); // 'business' | 'users'
+  const [activeTab, setActiveTab] = useState('business'); // 'business' | 'users' | 'backup'
 
-  // Business Settings State
+  // Business & Backup Settings State
   const [form, setForm] = useState({
     businessName: '',
     legalName: '',
@@ -31,9 +31,12 @@ export default function Settings() {
     accountNo: '',
     ifsc: '',
     branch: '',
+    backupEmail: '',
+    backupEnabled: true,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sendingBackup, setSendingBackup] = useState(false);
 
   // Users State
   const [users, setUsers] = useState([]);
@@ -91,6 +94,8 @@ export default function Settings() {
         accountNo: response.data.accountNo || '',
         ifsc: response.data.ifsc || '',
         branch: response.data.branch || '',
+        backupEmail: response.data.backupEmail || '',
+        backupEnabled: response.data.backupEnabled !== undefined ? response.data.backupEnabled : true,
       });
     } catch (error) {
       console.error('Failed to load settings:', error);
@@ -121,6 +126,22 @@ export default function Settings() {
       showToast('Failed to save settings', 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSendTestBackup = async () => {
+    if (!form.backupEmail || !form.backupEmail.trim()) {
+      showToast('Please enter an email address for backups', 'error');
+      return;
+    }
+    setSendingBackup(true);
+    try {
+      const res = await backupAPI.sendNow({ email: form.backupEmail.trim() });
+      showToast(res.data.message || 'Daily summary emailed successfully!');
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to send backup email', 'error');
+    } finally {
+      setSendingBackup(false);
     }
   };
 
@@ -290,6 +311,14 @@ export default function Settings() {
             onClick={() => setActiveTab('users')}
           >
             👥 Staff Accounts ({users.length})
+          </button>
+          <button
+            type="button"
+            className={`btn btn-sm ${activeTab === 'backup' ? 'btn-primary' : 'btn-ghost'}`}
+            style={activeTab === 'backup' ? { background: '#0b5394', color: '#ffffff', fontWeight: 800, borderRadius: '8px' } : { color: '#64748b', fontWeight: 700 }}
+            onClick={() => setActiveTab('backup')}
+          >
+            📧 Daily Email Backup
           </button>
         </div>
       </div>
@@ -657,6 +686,100 @@ export default function Settings() {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* TAB 3: DAILY EMAIL BACKUP & REPORTS */}
+      {activeTab === 'backup' && (
+        <div className="settings-grid">
+          <div className="card">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                📧
+              </div>
+              <div>
+                <h3 className="card-title" style={{ margin: 0 }}>Daily Automated Business Reports</h3>
+                <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '2px 0 0 0' }}>
+                  Automatically receive a daily transaction summary + complete CSV spreadsheet in your inbox
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSave}>
+              <div className="form-group" style={{ marginBottom: '18px' }}>
+                <label className="form-label" style={{ fontWeight: 700 }}>Owner's Backup Email Address</label>
+                <input
+                  type="email"
+                  className="form-input form-input-lg"
+                  value={form.backupEmail}
+                  onChange={(e) => handleChange('backupEmail', e.target.value)}
+                  placeholder="e.g. yourname@gmail.com"
+                  style={{ fontSize: '0.95rem' }}
+                />
+                <span style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                  Daily summary emails (bills count, revenue, pending payments & CSV export) will be sent here.
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '22px', padding: '12px 14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <input
+                  type="checkbox"
+                  id="backupEnabled"
+                  checked={form.backupEnabled}
+                  onChange={(e) => handleChange('backupEnabled', e.target.checked)}
+                  style={{ width: '18px', height: '18px', accentColor: '#0b5394' }}
+                />
+                <label htmlFor="backupEnabled" style={{ fontSize: '0.88rem', fontWeight: 700, color: '#1e293b', cursor: 'pointer' }}>
+                  Enable Automated Daily Email Backup
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={saving}
+                  style={{ background: '#0b5394' }}
+                >
+                  {saving ? 'Saving...' : '💾 Save Backup Settings'}
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  disabled={sendingBackup || !form.backupEmail}
+                  onClick={handleSendTestBackup}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #0b5394', color: '#0b5394' }}
+                >
+                  {sendingBackup ? (
+                    <>
+                      <span className="btn-spinner"></span>
+                      Sending Test Email...
+                    </>
+                  ) : (
+                    '🚀 Send Test Backup Email Now'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Setup Guide Card */}
+          <div className="card" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              ℹ️ How Daily Backups Work
+            </h4>
+            <ul style={{ fontSize: '0.84rem', color: '#475569', paddingLeft: '20px', lineHeight: 1.6, margin: 0 }}>
+              <li><strong>Included:</strong> Total bills created today, total cash/credit revenue, pending payment balance, and an attached CA-ready CSV spreadsheet.</li>
+              <li><strong>Manual:</strong> Click <em>"Send Test Backup Email Now"</em> anytime to get an instant report for yesterday's or today's sales.</li>
+              <li><strong>Free Auto-Trigger (Vercel Free Plan):</strong> Set up a free daily cron on <a href="https://cron-job.org" target="_blank" rel="noreferrer" style={{ color: '#0b5394', fontWeight: 700 }}>cron-job.org</a> calling:
+                <div style={{ background: '#ffffff', padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontFamily: 'monospace', fontSize: '0.78rem', margin: '6px 0', wordBreak: 'break-all', color: '#0b5394' }}>
+                  {typeof window !== 'undefined' ? window.location.origin : 'https://billing-snowy-three.vercel.app'}/api/backup/daily-summary?secret=vijaya-durga-super-secret-key-2024
+                </div>
+                Schedule it for <strong>9:00 PM IST</strong> every day!
+              </li>
+            </ul>
+          </div>
         </div>
       )}
 

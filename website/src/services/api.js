@@ -108,5 +108,10 @@ export const usersAPI = {
   delete: (id) => api.delete(`/users/${id}`),
 };
 
+// Daily Backup API
+export const backupAPI = {
+  sendNow: (data) => api.post('/backup/send-now', data),
+};
+
 export default api;
 

@@ -37,6 +37,14 @@ const settingsSchema = new mongoose.Schema({
     type: String,
     default: 'Narasapur',
   },
+  backupEmail: {
+    type: String,
+    default: '',
+  },
+  backupEnabled: {
+    type: Boolean,
+    default: false,
+  },
 }, {
   timestamps: true,
 });
