@@ -1,9 +1,14 @@
-const nodemailer = require('nodemailer');
-
 /**
  * Create reusable SMTP transporter (Gmail App Password)
  */
 function createTransporter() {
+  let nodemailer;
+  try {
+    nodemailer = require('nodemailer');
+  } catch (err) {
+    throw new Error('Nodemailer package is not installed. Run npm install nodemailer.');
+  }
+
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '587', 10),
