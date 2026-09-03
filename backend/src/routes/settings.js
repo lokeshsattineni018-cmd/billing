@@ -27,7 +27,11 @@ router.get('/', protect, async (req, res) => {
     if (!settings) {
       settings = await Settings.create(DEFAULT_SETTINGS);
     }
-    res.json(settings);
+    // Never expose smtpPass to frontend
+    const data = settings.toObject();
+    data.smtpConfigured = !!(data.smtpPass && data.smtpPass.length > 0);
+    delete data.smtpPass;
+    res.json(data);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -58,12 +62,16 @@ router.put('/', protect, restrictTo('admin'), async (req, res) => {
     if (backupEmail !== undefined) settings.backupEmail = backupEmail;
     if (backupEnabled !== undefined) settings.backupEnabled = backupEnabled;
     if (smtpUser !== undefined) settings.smtpUser = smtpUser;
-    if (smtpPass !== undefined) settings.smtpPass = smtpPass;
+    if (smtpPass && smtpPass.trim().length > 0) settings.smtpPass = smtpPass.trim();
     if (smtpHost !== undefined) settings.smtpHost = smtpHost;
     if (smtpPort !== undefined) settings.smtpPort = smtpPort;
 
     await settings.save();
-    res.json(settings);
+    // Never expose smtpPass to frontend
+    const data = settings.toObject();
+    data.smtpConfigured = !!(data.smtpPass && data.smtpPass.length > 0);
+    delete data.smtpPass;
+    res.json(data);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

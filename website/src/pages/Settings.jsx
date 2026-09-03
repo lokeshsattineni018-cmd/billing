@@ -34,9 +34,9 @@ export default function Settings() {
     backupEmail: '',
     backupEnabled: true,
     smtpUser: '',
-    smtpPass: '',
+    smtpConfigured: false,
   });
-  const [showSmtpPass, setShowSmtpPass] = useState(false);
+  const [newSmtpPass, setNewSmtpPass] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sendingBackup, setSendingBackup] = useState(false);
@@ -100,8 +100,9 @@ export default function Settings() {
         backupEmail: response.data.backupEmail || '',
         backupEnabled: response.data.backupEnabled !== undefined ? response.data.backupEnabled : true,
         smtpUser: response.data.smtpUser || '',
-        smtpPass: response.data.smtpPass || '',
+        smtpConfigured: !!response.data.smtpConfigured,
       });
+      setNewSmtpPass('');
     } catch (error) {
       console.error('Failed to load settings:', error);
     } finally {
@@ -125,8 +126,16 @@ export default function Settings() {
     e.preventDefault();
     setSaving(true);
     try {
-      await settingsAPI.update(form);
+      const payload = { ...form };
+      delete payload.smtpConfigured;
+      // Only send smtpPass if user entered a new one
+      if (newSmtpPass && newSmtpPass.trim().length > 0) {
+        payload.smtpPass = newSmtpPass.trim();
+      }
+      await settingsAPI.update(payload);
+      setNewSmtpPass('');
       showToast('Settings saved successfully');
+      loadSettings();
     } catch (error) {
       showToast('Failed to save settings', 'error');
     } finally {
@@ -728,24 +737,38 @@ export default function Settings() {
                 </div>
 
                 <div className="form-group" style={{ marginBottom: '6px' }}>
-                  <label className="form-label" style={{ fontWeight: 700 }}>Gmail App Password (16 Letters)</label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type={showSmtpPass ? 'text' : 'password'}
-                      className="form-input"
-                      value={form.smtpPass}
-                      onChange={(e) => handleChange('smtpPass', e.target.value)}
-                      placeholder="e.g. abcd efgh ijkl mnop"
-                      style={{ paddingRight: '40px' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowSmtpPass(!showSmtpPass)}
-                      style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
-                    >
-                      {showSmtpPass ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
-                    </button>
-                  </div>
+                  <label className="form-label" style={{ fontWeight: 700 }}>Gmail App Password</label>
+                  {form.smtpConfigured && !newSmtpPass ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px' }}>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#16a34a' }}>✓ Password saved securely</span>
+                      <button
+                        type="button"
+                        onClick={() => setNewSmtpPass(' ')}
+                        style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.78rem', color: '#0b5394', fontWeight: 700, textDecoration: 'underline' }}
+                      >
+                        Change
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <input
+                        type="password"
+                        className="form-input"
+                        value={newSmtpPass.trim()}
+                        onChange={(e) => setNewSmtpPass(e.target.value)}
+                        placeholder={form.smtpConfigured ? 'Enter new password to update' : 'Enter 16-letter app password'}
+                      />
+                      {form.smtpConfigured && (
+                        <button
+                          type="button"
+                          onClick={() => setNewSmtpPass('')}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}
+                        >
+                          Cancel change
+                        </button>
+                      )}
+                    </>
+                  )}
                   <span style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
                     Generate from: <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer" style={{ color: '#0b5394', fontWeight: 700 }}>Google Account Security ➔ App Passwords</a>
                   </span>
