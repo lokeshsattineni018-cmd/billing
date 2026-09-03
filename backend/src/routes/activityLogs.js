@@ -8,7 +8,7 @@ const router = express.Router();
  * GET /api/activity-logs
  * Fetch system audit trail with filtering and pagination (Admin only)
  */
-router.get('/', protect, restrictTo('admin', 'owner'), async (req, res) => {
+router.get('/', protect, restrictTo('admin'), async (req, res) => {
   try {
     const { action, userRole, limit = 50, page = 1 } = req.query;
 

@@ -44,7 +44,7 @@ function getDateRange(range, customStart, customEnd) {
  * GET /api/reports/sales
  * Comprehensive sales analytics report (Admin only)
  */
-router.get('/sales', protect, restrictTo('admin', 'owner'), async (req, res) => {
+router.get('/sales', protect, restrictTo('admin'), async (req, res) => {
   try {
     const { range = 'this_month', startDate, endDate } = req.query;
     const { start, end } = getDateRange(range, startDate, endDate);

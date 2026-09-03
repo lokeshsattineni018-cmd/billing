@@ -34,13 +34,12 @@ function Sidebar({ onInstall }) {
   const { lang, toggleLang, t } = useLanguage();
 
   const isAdmin = user?.role === 'admin';
-  const isAdminOrOwner = user?.role === 'admin' || user?.role === 'owner';
 
   const navItems = [
     { path: '/', label: t('dashboard'), icon: <DashboardIcon size={18} /> },
     { path: '/new-bill', label: t('newInvoice'), icon: <PlusIcon size={18} /> },
     { path: '/bills', label: t('invoiceHistory'), icon: <InvoiceIcon size={18} /> },
-    ...(isAdminOrOwner
+    ...(isAdmin
       ? [
           { path: '/reports', label: t('salesReports'), icon: <TrendingUpIcon size={18} /> },
           { path: '/customers', label: t('customers'), icon: <UserIcon size={18} /> },
@@ -291,7 +290,7 @@ function AppLayout() {
             <DownloadIcon size={13} color="#0b5394" /> {t('installApp')}
           </button>
 
-          {isAdminOrOwner && (
+          {isAdmin && (
             <button
               className="btn btn-ghost btn-sm"
               style={{ padding: '6px', color: '#64748b' }}
@@ -323,11 +322,11 @@ function AppLayout() {
           <Route path="/new-bill" element={<NewBill />} />
           <Route path="/bills" element={<BillHistory />} />
           <Route path="/bills/:id" element={<BillDetail />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/customers" element={<CustomerDirectory />} />
+          {isAdmin && <Route path="/reports" element={<Reports />} />}
+          {isAdmin && <Route path="/customers" element={<CustomerDirectory />} />}
           <Route path="/ledger" element={<Navigate to="/customers" replace />} />
-          <Route path="/activity-log" element={<ActivityLog />} />
-          <Route path="/settings" element={<Settings />} />
+          {isAdmin && <Route path="/activity-log" element={<ActivityLog />} />}
+          {isAdmin && <Route path="/settings" element={<Settings />} />}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -348,7 +347,7 @@ function AppLayout() {
           <InvoiceIcon size={20} />
           <span>{t('invoiceHistory')}</span>
         </NavLink>
-        {isAdminOrOwner && (
+        {isAdmin && (
           <NavLink to="/customers" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
             <TrendingUpIcon size={20} />
             <span>{t('customers')}</span>
