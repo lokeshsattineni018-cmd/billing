@@ -34,8 +34,9 @@ export function AuthProvider({ children }) {
   };
 
   const logout = (skipConfirm = false) => {
-    if (!skipConfirm) {
-      const confirmed = window.confirm('Are you sure you want to sign out / log out?');
+    const isExplicitSkip = skipConfirm === true;
+    if (!isExplicitSkip) {
+      const confirmed = window.confirm('Are you sure you want to sign out? / మీరు లాగ్ అవుట్ అవ్వాలనుకుంటున్నారా?');
       if (!confirmed) return false;
     }
     localStorage.removeItem('srsf_token');

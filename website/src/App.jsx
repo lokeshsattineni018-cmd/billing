@@ -29,8 +29,8 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-function Sidebar({ onInstall }) {
-  const { user, logout } = useAuth();
+function Sidebar({ onInstall, onLogout }) {
+  const { user } = useAuth();
   const { lang, toggleLang, t } = useLanguage();
 
   const isAdmin = user?.role === 'admin';
@@ -138,7 +138,7 @@ function Sidebar({ onInstall }) {
             <div className="user-role" style={{ fontSize: '0.7rem', fontWeight: 700, color: '#0b5394', textTransform: 'uppercase' }}>{user?.role || 'staff'}</div>
           </div>
         </div>
-        <button className="logout-btn" onClick={logout} style={{ borderRadius: '8px', fontWeight: 700 }}>
+        <button className="logout-btn" onClick={onLogout} style={{ borderRadius: '8px', fontWeight: 700 }}>
           <LogoutIcon size={15} /> {t('signOut')}
         </button>
       </div>
@@ -149,6 +149,7 @@ function Sidebar({ onInstall }) {
 function AppLayout() {
   const [installPrompt, setInstallPrompt] = useState(window.deferredInstallPrompt || null);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { user, logout } = useAuth();
   const { lang, toggleLang, t } = useLanguage();
   const navigate = useNavigate();
@@ -304,7 +305,7 @@ function AppLayout() {
           <button
             className="btn btn-ghost btn-sm"
             style={{ padding: '6px', color: '#ef4444' }}
-            onClick={logout}
+            onClick={() => setShowLogoutModal(true)}
             title={t('signOut')}
           >
             <LogoutIcon size={17} color="#ef4444" />
@@ -313,7 +314,7 @@ function AppLayout() {
       </header>
 
       {/* Desktop Sidebar */}
-      <Sidebar onInstall={handleInstallApp} />
+      <Sidebar onInstall={handleInstallApp} onLogout={() => setShowLogoutModal(true)} />
 
       {/* Main Content Area */}
       <main className="main-content">
@@ -400,6 +401,48 @@ function AppLayout() {
             >
               Got it!
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Sign Out Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="modal-backdrop" onClick={() => setShowLogoutModal(false)}>
+          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '380px', textAlign: 'center', padding: '24px 20px' }}>
+            <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px auto' }}>
+              <LogoutIcon size={26} color="#dc2626" />
+            </div>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
+              {t('signOut')}?
+            </h3>
+            <p style={{ margin: '0 0 22px 0', fontSize: '0.88rem', color: '#64748b', lineHeight: 1.5 }}>
+              Are you sure you want to sign out of your account?
+              <br />
+              <span style={{ fontSize: '0.82rem', color: '#0b5394', fontWeight: 600 }}>
+                మీరు లాగ్ అవుట్ అవ్వాలనుకుంటున్నారా?
+              </span>
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '10px', fontWeight: 700 }}
+                onClick={() => setShowLogoutModal(false)}
+              >
+                {t('cancel') || 'Cancel'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                style={{ flex: 1, padding: '10px', background: '#dc2626', color: '#ffffff', fontWeight: 800, border: 'none', borderRadius: '8px' }}
+                onClick={() => {
+                  setShowLogoutModal(false);
+                  logout(true);
+                }}
+              >
+                {t('signOut')}
+              </button>
+            </div>
           </div>
         </div>
       )}
