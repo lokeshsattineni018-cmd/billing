@@ -33,7 +33,10 @@ export default function Settings() {
     branch: '',
     backupEmail: '',
     backupEnabled: true,
+    smtpUser: '',
+    smtpPass: '',
   });
+  const [showSmtpPass, setShowSmtpPass] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sendingBackup, setSendingBackup] = useState(false);
@@ -96,6 +99,8 @@ export default function Settings() {
         branch: response.data.branch || '',
         backupEmail: response.data.backupEmail || '',
         backupEnabled: response.data.backupEnabled !== undefined ? response.data.backupEnabled : true,
+        smtpUser: response.data.smtpUser || '',
+        smtpPass: response.data.smtpPass || '',
       });
     } catch (error) {
       console.error('Failed to load settings:', error);
@@ -706,32 +711,75 @@ export default function Settings() {
             </div>
 
             <form onSubmit={handleSave}>
-              <div className="form-group" style={{ marginBottom: '18px' }}>
-                <label className="form-label" style={{ fontWeight: 700 }}>Owner's Backup Email Address</label>
-                <input
-                  type="email"
-                  className="form-input form-input-lg"
-                  value={form.backupEmail}
-                  onChange={(e) => handleChange('backupEmail', e.target.value)}
-                  placeholder="e.g. yourname@gmail.com"
-                  style={{ fontSize: '0.95rem' }}
-                />
-                <span style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
-                  Daily summary emails (bills count, revenue, pending payments & CSV export) will be sent here.
-                </span>
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px', marginBottom: '18px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '0.92rem', fontWeight: 800, color: '#0b5394' }}>
+                  🔑 1. Gmail SMTP Sender Credentials
+                </h4>
+
+                <div className="form-group" style={{ marginBottom: '12px' }}>
+                  <label className="form-label" style={{ fontWeight: 700 }}>Sender Gmail Address</label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    value={form.smtpUser}
+                    onChange={(e) => handleChange('smtpUser', e.target.value)}
+                    placeholder="e.g. lokeshsattineni018@gmail.com"
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '6px' }}>
+                  <label className="form-label" style={{ fontWeight: 700 }}>Gmail App Password (16 Letters)</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showSmtpPass ? 'text' : 'password'}
+                      className="form-input"
+                      value={form.smtpPass}
+                      onChange={(e) => handleChange('smtpPass', e.target.value)}
+                      placeholder="e.g. abcd efgh ijkl mnop"
+                      style={{ paddingRight: '40px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSmtpPass(!showSmtpPass)}
+                      style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                    >
+                      {showSmtpPass ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+                    </button>
+                  </div>
+                  <span style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                    Generate from: <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer" style={{ color: '#0b5394', fontWeight: 700 }}>Google Account Security ➔ App Passwords</a>
+                  </span>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '22px', padding: '12px 14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <input
-                  type="checkbox"
-                  id="backupEnabled"
-                  checked={form.backupEnabled}
-                  onChange={(e) => handleChange('backupEnabled', e.target.checked)}
-                  style={{ width: '18px', height: '18px', accentColor: '#0b5394' }}
-                />
-                <label htmlFor="backupEnabled" style={{ fontSize: '0.88rem', fontWeight: 700, color: '#1e293b', cursor: 'pointer' }}>
-                  Enable Automated Daily Email Backup
-                </label>
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px', marginBottom: '18px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '0.92rem', fontWeight: 800, color: '#0f172a' }}>
+                  📬 2. Recipient & Schedule
+                </h4>
+
+                <div className="form-group" style={{ marginBottom: '12px' }}>
+                  <label className="form-label" style={{ fontWeight: 700 }}>Recipient Email Address (Where to receive backups)</label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    value={form.backupEmail}
+                    onChange={(e) => handleChange('backupEmail', e.target.value)}
+                    placeholder="e.g. yourname@gmail.com"
+                  />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input
+                    type="checkbox"
+                    id="backupEnabled"
+                    checked={form.backupEnabled}
+                    onChange={(e) => handleChange('backupEnabled', e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: '#0b5394' }}
+                  />
+                  <label htmlFor="backupEnabled" style={{ fontSize: '0.88rem', fontWeight: 700, color: '#1e293b', cursor: 'pointer' }}>
+                    Enable Automated Daily Email Backup
+                  </label>
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -741,7 +789,7 @@ export default function Settings() {
                   disabled={saving}
                   style={{ background: '#0b5394' }}
                 >
-                  {saving ? 'Saving...' : '💾 Save Backup Settings'}
+                  {saving ? 'Saving...' : '💾 Save SMTP & Backup Settings'}
                 </button>
 
                 <button

@@ -45,6 +45,22 @@ const settingsSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  smtpUser: {
+    type: String,
+    default: '',
+  },
+  smtpPass: {
+    type: String,
+    default: '',
+  },
+  smtpHost: {
+    type: String,
+    default: 'smtp.gmail.com',
+  },
+  smtpPort: {
+    type: Number,
+    default: 587,
+  },
 }, {
   timestamps: true,
 });

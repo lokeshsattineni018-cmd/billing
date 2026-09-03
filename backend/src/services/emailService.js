@@ -1,7 +1,7 @@
 /**
- * Create reusable SMTP transporter (Gmail App Password)
+ * Create reusable SMTP transporter (Gmail App Password or custom SMTP)
  */
-function createTransporter() {
+function createTransporter(settings = {}) {
   let nodemailer;
   try {
     nodemailer = require('nodemailer');
@@ -9,26 +9,34 @@ function createTransporter() {
     throw new Error('Nodemailer package is not installed. Run npm install nodemailer.');
   }
 
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587', 10),
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+  const user = settings.smtpUser || process.env.SMTP_USER;
+  const pass = settings.smtpPass || process.env.SMTP_PASS;
+  const host = settings.smtpHost || process.env.SMTP_HOST || 'smtp.gmail.com';
+  const port = parseInt(settings.smtpPort || process.env.SMTP_PORT || '587', 10);
+
+  if (!user || !pass) {
+    throw new Error('SMTP credentials not configured. Please enter your Sender Gmail and 16-character App Password in Settings -> Daily Email Backup.');
+  }
+
+  return {
+    transporter: nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: {
+        user,
+        pass,
+      },
+    }),
+    senderEmail: user,
+  };
 }
 
 /**
  * Send daily summary email with transaction data
  */
-async function sendDailySummaryEmail({ recipientEmail, date, bills, summary }) {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    throw new Error('SMTP credentials not configured. Set SMTP_USER and SMTP_PASS environment variables.');
-  }
-
-  const transporter = createTransporter();
+async function sendDailySummaryEmail({ recipientEmail, date, bills, summary, settings = {} }) {
+  const { transporter, senderEmail } = createTransporter(settings);
   const dateStr = new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
   // Build CSV attachment
@@ -104,7 +112,7 @@ async function sendDailySummaryEmail({ recipientEmail, date, bills, summary }) {
   `;
 
   const mailOptions = {
-    from: `"VIJAYA DURGA AGENCIES" <${process.env.SMTP_USER}>`,
+    from: `"VIJAYA DURGA AGENCIES" <${senderEmail}>`,
     to: recipientEmail,
     subject: `📊 Daily Summary — ${dateStr} | ${summary.totalBills} bills, ₹${Number(summary.totalRevenue).toLocaleString('en-IN')}`,
     html,

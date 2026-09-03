@@ -50,7 +50,7 @@ router.get('/daily-summary', async (req, res) => {
       pendingCount: pendingBills.length,
     };
 
-    await sendDailySummaryEmail({ recipientEmail: backupEmail, date: targetDate, bills, summary });
+    await sendDailySummaryEmail({ recipientEmail: backupEmail, date: targetDate, bills, summary, settings });
 
     res.json({
       message: `Daily summary emailed to ${backupEmail}`,
@@ -97,7 +97,7 @@ router.post('/send-now', protect, restrictTo('admin', 'owner'), async (req, res)
       pendingCount: pendingBills.length,
     };
 
-    await sendDailySummaryEmail({ recipientEmail: backupEmail, date: targetDate, bills, summary });
+    await sendDailySummaryEmail({ recipientEmail: backupEmail, date: targetDate, bills, summary, settings });
 
     // Save backup email to settings if not already set
     if (!settings?.backupEmail && backupEmail) {
