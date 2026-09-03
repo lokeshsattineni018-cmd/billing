@@ -16,6 +16,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <title>VIJAYA DURGA AGENCIES — Billing System</title>
+    <script>
+      // Defensive guard against noisy third-party browser extension errors (e.g. extension vitals / reportAllChanges)
+      window.addEventListener('error', function (e) {
+        if (e.message && (e.message.includes('startTime') || (e.filename && e.filename.includes('anonymous')))) {
+          e.stopImmediatePropagation();
+        }
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
