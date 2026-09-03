@@ -76,8 +76,8 @@ router.post('/send-now', protect, restrictTo('admin', 'owner'), async (req, res)
       return res.status(400).json({ message: 'No backup email provided.' });
     }
 
-    // Send for yesterday by default, or specified date
-    const targetDate = req.body.date ? new Date(req.body.date) : new Date(Date.now() - 86400000);
+    // Send for TODAY by default (manual trigger), or specified date
+    const targetDate = req.body.date ? new Date(req.body.date) : new Date();
     const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
     const endOfDay = new Date(startOfDay.getTime() + 86400000);
 
