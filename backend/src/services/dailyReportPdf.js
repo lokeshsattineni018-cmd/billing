@@ -1,12 +1,11 @@
 const PDFDocument = require('pdfkit');
 
-/** Format INR */
-function fmtINR(num) {
-  return Number(num || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function fmtINR(n) {
+  return Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 /**
- * Generate a professional daily sales report PDF buffer
+ * Generate a formal black & white daily sales report PDF
  */
 async function generateDailyReportPDF({ date, bills, summary }) {
   return new Promise((resolve, reject) => {
@@ -27,12 +26,11 @@ async function generateDailyReportPDF({ date, bills, summary }) {
 
       const doc = new PDFDocument({
         size: 'A4',
-        margin: 40,
+        margin: 50,
         bufferPages: true,
         info: {
           Title: `Daily Sales Report - ${shortDate}`,
           Author: 'VIJAYA DURGA AGENCIES',
-          Subject: `Business Report for ${shortDate}`,
         },
       });
 
@@ -41,222 +39,210 @@ async function generateDailyReportPDF({ date, bills, summary }) {
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', err => reject(err));
 
-      const L = 40;
-      const R = doc.page.width - 40;
+      const L = 50;
+      const R = doc.page.width - 50;
       const W = R - L;
-      const blue = '#0b5394';
-      const dark = '#1a1a1a';
-      const gray = '#666666';
-      const lightGray = '#999999';
+      const black = '#000000';
+      const darkGray = '#333333';
+      const midGray = '#666666';
 
-      let y = 40;
+      let y = 50;
 
-      // ═══ TOP BLUE BAR ═══
-      doc.rect(L, y, W, 4).fill(blue);
-      y += 12;
-
-      // ═══ COMPANY HEADER ═══
-      doc.font('Helvetica-Bold').fontSize(20).fillColor(blue);
+      // ═══ COMPANY NAME ═══
+      doc.font('Helvetica-Bold').fontSize(16).fillColor(black);
       doc.text('VIJAYA DURGA AGENCIES', L, y);
-      y += 24;
-
-      doc.font('Helvetica').fontSize(9).fillColor(gray);
-      doc.text('D.No. 2-41A, Near Ramalayam, KOTHOTA - 534 281, Mutyalapalli, West Godavari Dist., A.P.', L, y);
-      y += 13;
-      doc.text('Cell: 9441429745  |  GSTIN: 37KATPS1500Q1ZR  |  Fresh Seafood & Prawns Supply', L, y);
       y += 20;
 
-      // Thin line
-      doc.moveTo(L, y).lineTo(R, y).lineWidth(0.5).strokeColor('#cccccc').stroke();
+      doc.font('Helvetica').fontSize(8.5).fillColor(midGray);
+      doc.text('D.No. 2-41A, Near Ramalayam, KOTHOTA - 534 281, Mutyalapalli, West Godavari Dist., A.P.', L, y);
+      y += 11;
+      doc.text('Cell: 9441429745   |   GSTIN: 37KATPS1500Q1ZR', L, y);
       y += 16;
 
-      // ═══ REPORT TITLE ═══
-      doc.font('Helvetica-Bold').fontSize(13).fillColor(dark);
-      doc.text('DAILY SALES & COLLECTION REPORT', L, y);
+      // Double line
+      doc.moveTo(L, y).lineTo(R, y).lineWidth(1.5).strokeColor(black).stroke();
+      doc.moveTo(L, y + 3).lineTo(R, y + 3).lineWidth(0.5).strokeColor(black).stroke();
+      y += 14;
+
+      // ═══ TITLE ═══
+      doc.font('Helvetica-Bold').fontSize(12).fillColor(black);
+      doc.text('DAILY SALES & COLLECTION REPORT', L, y, { width: W, align: 'center' });
       y += 18;
 
-      doc.font('Helvetica').fontSize(10).fillColor(gray);
-      doc.text(longDate, L, y);
+      doc.font('Helvetica').fontSize(9.5).fillColor(darkGray);
+      doc.text(`Date: ${longDate}`, L, y);
+      doc.text(`Ref: ${shortDate}`, L, y, { width: W, align: 'right' });
+      y += 18;
 
-      // Report Date right-aligned
-      doc.font('Helvetica-Bold').fontSize(10).fillColor(dark);
-      doc.text(shortDate, L, y, { width: W, align: 'right' });
-      y += 24;
-
-      // Thick blue line
-      doc.moveTo(L, y).lineTo(R, y).lineWidth(1.5).strokeColor(blue).stroke();
-      y += 20;
+      // Thin line
+      doc.moveTo(L, y).lineTo(R, y).lineWidth(0.5).strokeColor('#999999').stroke();
+      y += 18;
 
       // ═══ SUMMARY TABLE ═══
-      doc.font('Helvetica-Bold').fontSize(9.5).fillColor(dark);
-      doc.text('FINANCIAL SUMMARY', L, y);
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(black);
+      doc.text('I. Financial Summary', L, y);
       y += 16;
 
-      const summaryData = [
-        ['Total Revenue (Gross Sales)', `₹${fmtINR(summary.totalRevenue)}`, `${summary.totalBills} invoice${summary.totalBills !== 1 ? 's' : ''}`],
-        ['Amount Collected (Paid)', `₹${fmtINR(paidAmt)}`, `${paidBills.length} paid`],
-        ['Outstanding Balance (Pending)', `₹${fmtINR(pendingAmt)}`, `${pendingBills.length} pending`],
+      const summaryRows = [
+        ['Gross Sales (Total Revenue)', `Rs. ${fmtINR(summary.totalRevenue)}`, `${summary.totalBills} bill${summary.totalBills !== 1 ? 's' : ''}`],
+        ['Amount Collected (Paid)', `Rs. ${fmtINR(paidAmt)}`, `${paidBills.length}`],
+        ['Outstanding Balance (Pending)', `Rs. ${fmtINR(pendingAmt)}`, `${pendingBills.length}`],
         ['Total Quantity Dispatched', `${Number(totalKg).toLocaleString('en-IN')} KG`, ''],
       ];
 
-      const colWidths = [W * 0.50, W * 0.30, W * 0.20];
+      const sColW = [W * 0.50, W * 0.30, W * 0.20];
 
-      // Header row
-      doc.rect(L, y, W, 22).fill('#f5f5f5');
-      doc.rect(L, y, W, 22).lineWidth(0.5).strokeColor('#dddddd').stroke();
-      doc.font('Helvetica-Bold').fontSize(8).fillColor(gray);
-      doc.text('DESCRIPTION', L + 10, y + 7);
-      doc.text('AMOUNT', L + colWidths[0] + 10, y + 7, { width: colWidths[1] - 20, align: 'right' });
-      doc.text('COUNT', L + colWidths[0] + colWidths[1] + 10, y + 7, { width: colWidths[2] - 20, align: 'center' });
-      y += 22;
+      // Header
+      const hH = 18;
+      doc.rect(L, y, W, hH).lineWidth(0.5).strokeColor(black).stroke();
+      doc.font('Helvetica-Bold').fontSize(7.5).fillColor(black);
+      doc.text('Particulars', L + 8, y + 5);
+      doc.text('Amount', L + sColW[0] + 8, y + 5, { width: sColW[1] - 16, align: 'right' });
+      doc.text('Count', L + sColW[0] + sColW[1] + 8, y + 5, { width: sColW[2] - 16, align: 'center' });
+      // Vertical lines
+      doc.moveTo(L + sColW[0], y).lineTo(L + sColW[0], y + hH).stroke();
+      doc.moveTo(L + sColW[0] + sColW[1], y).lineTo(L + sColW[0] + sColW[1], y + hH).stroke();
+      y += hH;
 
-      summaryData.forEach((row, idx) => {
-        const rowH = 24;
-        const bgColor = idx === 1 ? '#f0fdf4' : idx === 2 ? '#fffbeb' : '#ffffff';
-        doc.rect(L, y, W, rowH).fill(bgColor);
-        doc.rect(L, y, W, rowH).lineWidth(0.5).strokeColor('#e0e0e0').stroke();
+      summaryRows.forEach((row) => {
+        const rH = 20;
+        doc.rect(L, y, W, rH).lineWidth(0.5).strokeColor(black).stroke();
+        doc.moveTo(L + sColW[0], y).lineTo(L + sColW[0], y + rH).stroke();
+        doc.moveTo(L + sColW[0] + sColW[1], y).lineTo(L + sColW[0] + sColW[1], y + rH).stroke();
 
-        doc.font('Helvetica').fontSize(9.5).fillColor(dark);
-        doc.text(row[0], L + 10, y + 7);
+        doc.font('Helvetica').fontSize(9).fillColor(darkGray);
+        doc.text(row[0], L + 8, y + 6);
 
-        const amtColor = idx === 0 ? blue : idx === 1 ? '#16a34a' : idx === 2 ? '#d97706' : dark;
-        doc.font('Helvetica-Bold').fontSize(10.5).fillColor(amtColor);
-        doc.text(row[1], L + colWidths[0] + 10, y + 6, { width: colWidths[1] - 20, align: 'right' });
+        doc.font('Helvetica-Bold').fontSize(9.5).fillColor(black);
+        doc.text(row[1], L + sColW[0] + 8, y + 5.5, { width: sColW[1] - 16, align: 'right' });
 
         if (row[2]) {
-          const cntColor = idx === 1 ? '#16a34a' : idx === 2 ? '#d97706' : gray;
-          doc.font('Helvetica').fontSize(9).fillColor(cntColor);
-          doc.text(row[2], L + colWidths[0] + colWidths[1] + 10, y + 7, { width: colWidths[2] - 20, align: 'center' });
+          doc.font('Helvetica').fontSize(8.5).fillColor(midGray);
+          doc.text(row[2], L + sColW[0] + sColW[1] + 8, y + 6, { width: sColW[2] - 16, align: 'center' });
         }
-
-        y += rowH;
+        y += rH;
       });
 
-      y += 24;
+      y += 22;
 
       // ═══ INVOICE TABLE ═══
       if (bills.length > 0) {
-        // Check if we need a new page
         if (y > doc.page.height - 200) {
           doc.addPage();
-          y = 40;
+          y = 50;
         }
 
-        doc.font('Helvetica-Bold').fontSize(9.5).fillColor(dark);
-        doc.text('INVOICE-WISE BREAKUP', L, y);
+        doc.font('Helvetica-Bold').fontSize(10).fillColor(black);
+        doc.text('II. Invoice-wise Breakup', L, y);
         y += 16;
 
-        // Table columns: S.No, Inv#, Customer, Qty(KG), Amount, Status
-        const tCols = [35, 50, W - 35 - 50 - 70 - 110 - 65, 70, 110, 65];
-        const tHeaders = ['S.No', 'Inv #', 'Customer Name', 'Qty (KG)', 'Amount (₹)', 'Status'];
-        const headerH = 22;
+        const tCols = [32, 42, W - 32 - 42 - 65 - 100 - 55, 65, 100, 55];
+        const tHeaders = ['S.No', 'Inv #', 'Customer Name', 'Qty (KG)', 'Amount (Rs.)', 'Status'];
+        const thH = 18;
 
-        // Header
-        doc.rect(L, y, W, headerH).fill(blue);
-        doc.font('Helvetica-Bold').fontSize(7.5).fillColor('#ffffff');
-        let hx = L;
-        tHeaders.forEach((h, i) => {
-          const align = i >= 3 ? (i === 5 ? 'center' : 'right') : 'left';
-          doc.text(h, hx + 6, y + 7, { width: tCols[i] - 12, align });
-          hx += tCols[i];
-        });
-        y += headerH;
+        // Draw header
+        const drawHeader = () => {
+          doc.rect(L, y, W, thH).lineWidth(0.5).strokeColor(black).fillAndStroke('#f0f0f0', black);
+          doc.font('Helvetica-Bold').fontSize(7).fillColor(black);
+          let hx = L;
+          tHeaders.forEach((h, i) => {
+            const align = i >= 3 ? (i === 5 ? 'center' : 'right') : 'left';
+            doc.text(h, hx + 5, y + 5.5, { width: tCols[i] - 10, align });
+            // Vertical lines
+            if (i > 0) doc.moveTo(hx, y).lineTo(hx, y + thH).lineWidth(0.5).strokeColor(black).stroke();
+            hx += tCols[i];
+          });
+          y += thH;
+        };
 
-        // Data rows
+        drawHeader();
+
         bills.forEach((b, idx) => {
           const qty = b.items && b.items.length > 0
             ? b.items.reduce((s, it) => s + (it.quantity || 0), 0)
             : (b.quantity || 0);
           const status = b.paymentStatus || 'Pending';
-          const rowH = 20;
+          const rH = 18;
 
-          // New page check
-          if (y + rowH > doc.page.height - 80) {
+          if (y + rH > doc.page.height - 80) {
             doc.addPage();
-            y = 40;
-            // Re-draw header on new page
-            doc.rect(L, y, W, headerH).fill(blue);
-            doc.font('Helvetica-Bold').fontSize(7.5).fillColor('#ffffff');
-            let nhx = L;
-            tHeaders.forEach((h, i) => {
-              const align = i >= 3 ? (i === 5 ? 'center' : 'right') : 'left';
-              doc.text(h, nhx + 6, y + 7, { width: tCols[i] - 12, align });
-              nhx += tCols[i];
-            });
-            y += headerH;
+            y = 50;
+            drawHeader();
           }
 
-          const bg = idx % 2 === 0 ? '#ffffff' : '#fafafa';
-          doc.rect(L, y, W, rowH).fill(bg);
-          doc.rect(L, y, W, rowH).lineWidth(0.3).strokeColor('#e8e8e8').stroke();
-
+          doc.rect(L, y, W, rH).lineWidth(0.5).strokeColor(black).stroke();
           let rx = L;
+
           // S.No
-          doc.font('Helvetica').fontSize(9).fillColor(gray);
-          doc.text(`${idx + 1}`, rx + 6, y + 6, { width: tCols[0] - 12, align: 'left' });
+          doc.font('Helvetica').fontSize(8.5).fillColor(darkGray);
+          doc.text(`${idx + 1}`, rx + 5, y + 5, { width: tCols[0] - 10, align: 'center' });
           rx += tCols[0];
+          doc.moveTo(rx, y).lineTo(rx, y + rH).lineWidth(0.5).strokeColor(black).stroke();
 
           // Inv #
-          doc.font('Helvetica-Bold').fontSize(9).fillColor(blue);
-          doc.text(`${b.billNo}`, rx + 6, y + 6, { width: tCols[1] - 12, align: 'left' });
+          doc.font('Helvetica-Bold').fontSize(8.5).fillColor(black);
+          doc.text(`${b.billNo}`, rx + 5, y + 5, { width: tCols[1] - 10, align: 'center' });
           rx += tCols[1];
+          doc.moveTo(rx, y).lineTo(rx, y + rH).stroke();
 
           // Customer
-          doc.font('Helvetica').fontSize(9).fillColor(dark);
-          doc.text(b.companyName || '-', rx + 6, y + 6, { width: tCols[2] - 12, align: 'left' });
+          doc.font('Helvetica').fontSize(8.5).fillColor(darkGray);
+          doc.text(b.companyName || '-', rx + 5, y + 5, { width: tCols[2] - 10, align: 'left' });
           rx += tCols[2];
+          doc.moveTo(rx, y).lineTo(rx, y + rH).stroke();
 
           // Qty
-          doc.font('Helvetica').fontSize(9).fillColor(dark);
-          doc.text(Number(qty).toLocaleString('en-IN'), rx + 6, y + 6, { width: tCols[3] - 12, align: 'right' });
+          doc.font('Helvetica').fontSize(8.5).fillColor(black);
+          doc.text(Number(qty).toLocaleString('en-IN'), rx + 5, y + 5, { width: tCols[3] - 10, align: 'right' });
           rx += tCols[3];
+          doc.moveTo(rx, y).lineTo(rx, y + rH).stroke();
 
           // Amount
-          doc.font('Helvetica-Bold').fontSize(9.5).fillColor(dark);
-          doc.text(`₹${fmtINR(b.grandTotal || b.total)}`, rx + 6, y + 5.5, { width: tCols[4] - 12, align: 'right' });
+          doc.font('Helvetica-Bold').fontSize(8.5).fillColor(black);
+          doc.text(fmtINR(b.grandTotal || b.total), rx + 5, y + 5, { width: tCols[4] - 10, align: 'right' });
           rx += tCols[4];
+          doc.moveTo(rx, y).lineTo(rx, y + rH).stroke();
 
           // Status
-          const stColor = status === 'Paid' ? '#16a34a' : '#d97706';
-          doc.font('Helvetica-Bold').fontSize(8).fillColor(stColor);
-          doc.text(status, rx + 6, y + 6.5, { width: tCols[5] - 12, align: 'center' });
+          doc.font('Helvetica').fontSize(8).fillColor(darkGray);
+          doc.text(status, rx + 5, y + 5.5, { width: tCols[5] - 10, align: 'center' });
 
-          y += rowH;
+          y += rH;
         });
 
-        // Totals row
-        const totH = 22;
-        doc.rect(L, y, W, totH).fill('#f0f0f0');
-        doc.rect(L, y, W, totH).lineWidth(0.5).strokeColor('#cccccc').stroke();
+        // Totals
+        const totH = 20;
+        doc.rect(L, y, W, totH).lineWidth(0.5).strokeColor(black).fillAndStroke('#f0f0f0', black);
         let tx = L;
-        doc.font('Helvetica-Bold').fontSize(9).fillColor(dark);
-        doc.text('TOTAL', tx + 6, y + 7, { width: tCols[0] + tCols[1] + tCols[2] - 12, align: 'right' });
+        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(black);
+        doc.text('TOTAL', tx + 5, y + 6, { width: tCols[0] + tCols[1] + tCols[2] - 10, align: 'right' });
         tx += tCols[0] + tCols[1] + tCols[2];
+        doc.moveTo(tx, y).lineTo(tx, y + totH).stroke();
 
-        doc.font('Helvetica-Bold').fontSize(9).fillColor(dark);
-        doc.text(`${Number(totalKg).toLocaleString('en-IN')} KG`, tx + 6, y + 7, { width: tCols[3] - 12, align: 'right' });
+        doc.text(`${Number(totalKg).toLocaleString('en-IN')} KG`, tx + 5, y + 6, { width: tCols[3] - 10, align: 'right' });
         tx += tCols[3];
+        doc.moveTo(tx, y).lineTo(tx, y + totH).stroke();
 
-        doc.font('Helvetica-Bold').fontSize(10).fillColor(blue);
-        doc.text(`₹${fmtINR(summary.totalRevenue)}`, tx + 6, y + 6, { width: tCols[4] - 12, align: 'right' });
+        doc.font('Helvetica-Bold').fontSize(9).fillColor(black);
+        doc.text(`Rs. ${fmtINR(summary.totalRevenue)}`, tx + 5, y + 5.5, { width: tCols[4] - 10, align: 'right' });
         tx += tCols[4];
+        doc.moveTo(tx, y).lineTo(tx, y + totH).stroke();
 
-        doc.font('Helvetica').fontSize(8).fillColor(gray);
-        doc.text(`${summary.totalBills} bills`, tx + 6, y + 7, { width: tCols[5] - 12, align: 'center' });
+        doc.font('Helvetica').fontSize(7.5).fillColor(midGray);
+        doc.text(`${summary.totalBills} bills`, tx + 5, y + 6.5, { width: tCols[5] - 10, align: 'center' });
         y += totH;
       }
 
       // ═══ FOOTER ═══
-      y = doc.page.height - 60;
-      doc.moveTo(L, y).lineTo(R, y).lineWidth(1).strokeColor(blue).stroke();
-      y += 10;
-
-      doc.font('Helvetica').fontSize(7.5).fillColor(lightGray);
-      doc.text(`Report generated: ${generatedAt}`, L, y);
-      doc.text('Vijaya Durga Agencies Billing System', L, y, { width: W, align: 'right' });
+      y = doc.page.height - 65;
+      doc.moveTo(L, y).lineTo(R, y).lineWidth(0.5).strokeColor('#999999').stroke();
+      y += 8;
+      doc.font('Helvetica').fontSize(7.5).fillColor('#999999');
+      doc.text(`Generated: ${generatedAt}`, L, y);
+      doc.text('Vijaya Durga Agencies', L, y, { width: W, align: 'right' });
       y += 12;
-      doc.font('Helvetica').fontSize(6.5).fillColor('#bbbbbb');
-      doc.text('This is a system-generated report. For queries contact 9441429745.', L, y, { width: W, align: 'center' });
+      doc.fontSize(6.5).fillColor('#bbbbbb');
+      doc.text('This is a system-generated report.', L, y, { width: W, align: 'center' });
 
       doc.end();
     } catch (err) {
