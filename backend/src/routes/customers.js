@@ -10,7 +10,7 @@ const router = express.Router();
  * GET /api/customers
  * Get all customers with lifetime sales, unpaid balance, and credit limit status (Admin only)
  */
-router.get('/', protect, restrictTo('admin'), async (req, res) => {
+router.get('/', protect, restrictTo('admin', 'owner', 'staff'), async (req, res) => {
   try {
     const { search = '' } = req.query;
 
@@ -109,7 +109,7 @@ router.get('/', protect, restrictTo('admin'), async (req, res) => {
  * GET /api/customers/:name/bills
  * Get all bills for a specific customer with payment breakdown
  */
-router.get('/:name/bills', protect, async (req, res) => {
+router.get('/:name/bills', protect, restrictTo('admin', 'owner', 'staff'), async (req, res) => {
   try {
     const { name } = req.params;
     const bills = await Bill.find({
@@ -146,7 +146,7 @@ router.get('/:name/bills', protect, async (req, res) => {
  * POST /api/customers/:name/record-payment
  * Record a lump sum payment for a customer that settles oldest bills in FIFO order
  */
-router.post('/:name/record-payment', protect, restrictTo('owner', 'admin'), async (req, res) => {
+router.post('/:name/record-payment', protect, restrictTo('admin', 'owner'), async (req, res) => {
   try {
     const { name } = req.params;
     const { amount, mode = 'Cash', reference = '', notes = '', date } = req.body;
@@ -224,7 +224,7 @@ router.post('/:name/record-payment', protect, restrictTo('owner', 'admin'), asyn
  * PUT /api/customers/:name/credit-limit
  * Update credit limit for a customer (Admin only)
  */
-router.put('/:name/credit-limit', protect, restrictTo('admin'), async (req, res) => {
+router.put('/:name/credit-limit', protect, restrictTo('admin', 'owner'), async (req, res) => {
   try {
     const { name } = req.params;
     const { creditLimit, phone, gstin, address, notes } = req.body;
