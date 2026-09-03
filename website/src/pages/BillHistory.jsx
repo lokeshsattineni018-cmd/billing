@@ -229,7 +229,7 @@ export default function BillHistory() {
             </select>
           </div>
 
-          <div className="filter-actions-group">
+          <div className="filter-actions-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', height: '42px' }}>
             <button
               type="submit"
               className="btn btn-primary"
@@ -245,6 +245,7 @@ export default function BillHistory() {
                 gap: '6px',
                 height: '42px',
                 borderRadius: '8px',
+                whiteSpace: 'nowrap',
               }}
             >
               <SearchIcon size={16} color="#ffffff" /> Search
@@ -252,7 +253,7 @@ export default function BillHistory() {
             <button
               type="button"
               className="btn btn-ghost"
-              style={{ padding: '0 14px', color: '#64748b', height: '42px', borderRadius: '8px' }}
+              style={{ padding: '0 14px', color: '#64748b', height: '42px', borderRadius: '8px', whiteSpace: 'nowrap' }}
               onClick={clearFilters}
             >
               Clear

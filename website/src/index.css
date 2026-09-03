@@ -1484,7 +1484,14 @@ a:hover {
   display: grid;
   grid-template-columns: 2fr 1.1fr 1.1fr 1.3fr auto;
   gap: 12px;
-  align-items: end;
+  align-items: flex-end;
+}
+
+.invoice-filter-grid .filter-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
 }
 
 .invoice-filter-grid .filter-group {
