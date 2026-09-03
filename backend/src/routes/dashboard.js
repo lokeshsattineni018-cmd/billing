@@ -10,7 +10,7 @@ const router = express.Router();
  * Today's sales, this month's sales, total receivables, total invoices, and recent invoices
  * (Owner and Admin only)
  */
-router.get('/summary', protect, restrictTo('owner', 'admin'), async (req, res) => {
+router.get('/summary', protect, restrictTo('owner', 'admin', 'staff'), async (req, res) => {
   try {
     const now = new Date();
 
@@ -78,7 +78,7 @@ router.get('/summary', protect, restrictTo('owner', 'admin'), async (req, res) =
  * Detailed daily business summary with top buyer and WhatsApp-formatted message
  * (Owner and Admin only)
  */
-router.get('/daily-summary', protect, restrictTo('owner', 'admin'), async (req, res) => {
+router.get('/daily-summary', protect, restrictTo('owner', 'admin', 'staff'), async (req, res) => {
   try {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -165,7 +165,7 @@ router.get('/daily-summary', protect, restrictTo('owner', 'admin'), async (req, 
  * GET /api/dashboard/analytics
  * Visual chart analytics: 7-day revenue, 6-month trends, customer breakdown (Owner and Admin)
  */
-router.get('/analytics', protect, restrictTo('owner', 'admin'), async (req, res) => {
+router.get('/analytics', protect, restrictTo('owner', 'admin', 'staff'), async (req, res) => {
   try {
     const now = new Date();
 
