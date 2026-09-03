@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vda-billing-v6';
+const CACHE_NAME = 'vda-billing-v7';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -48,8 +48,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Navigation requests (HTML documents) — Always Network-First to guarantee fresh chunk hashes
-  if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html')) {
+  // 2. Navigation & SPA Page routes (e.g. /, /reports, /customers, /bills, etc.)
+  const isNavigation =
+    event.request.mode === 'navigate' ||
+    url.pathname === '/' ||
+    url.pathname.endsWith('.html') ||
+    (!url.pathname.includes('.') && !url.pathname.startsWith('/api/'));
+
+  if (isNavigation) {
     event.respondWith(
       fetch(event.request)
         .then((networkResponse) => {
@@ -59,22 +65,31 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         })
-        .catch(() => caches.match('/index.html'))
+        .catch(async () => {
+          const cached = await caches.match(event.request);
+          if (cached) return cached;
+          return (await caches.match('/index.html')) || (await caches.match('/'));
+        })
     );
     return;
   }
 
-  // 3. Static assets — Cache-first with network fallback
+  // 3. Static assets (.js, .css, images, fonts) — Cache-first with network fallback
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) return cachedResponse;
-      return fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-          const clone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        }
-        return networkResponse;
-      });
+      return fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          // Graceful fallback for missing assets
+          return new Response('', { status: 408, statusText: 'Request timed out or offline' });
+        });
     })
   );
 });
