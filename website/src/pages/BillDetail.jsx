@@ -373,6 +373,7 @@ export default function BillDetail() {
       {/* Payment Settlement Card (if not voided) */}
       {!bill.isVoided && (
         <div
+          className="no-print"
           style={{
             background: '#ffffff',
             border: '1px solid #e2e8f0',
@@ -445,7 +446,9 @@ export default function BillDetail() {
 
       {/* Void Notice Banner if bill is voided */}
       {bill.isVoided && (
-        <div style={{
+        <div
+          className="no-print"
+          style={{
           background: '#fef2f2',
           border: '1.5px solid #fca5a5',
           borderRadius: '8px',

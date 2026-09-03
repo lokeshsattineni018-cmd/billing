@@ -1384,7 +1384,8 @@ a:hover {
   header,
   nav,
   button,
-  .toast {
+  .toast,
+  .page-container > *:not(.official-invoice-frame) {
     display: none !important;
   }
 
