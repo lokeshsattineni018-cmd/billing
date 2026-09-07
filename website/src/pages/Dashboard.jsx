@@ -80,6 +80,22 @@ export default function Dashboard() {
     }
   };
 
+  const fallbackCopyText = (text) => {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('Daily summary copied to clipboard', 'success');
+    } catch {
+      showToast('Failed to copy to clipboard', 'error');
+    }
+  };
+
   const handleSendWhatsAppSummary = (targetPhone = '') => {
     const rawMsg = (dailySummary?.whatsappMessage || '').replace(/\*/g, '');
     if (!rawMsg) return;
@@ -88,15 +104,27 @@ export default function Dashboard() {
     const url = cleanPhone
       ? `https://api.whatsapp.com/send?phone=91${cleanPhone}&text=${encoded}`
       : `https://api.whatsapp.com/send?text=${encoded}`;
-    setShowDailyModal(false);
-    window.location.href = url;
+    setShowSummaryModal(false);
+    try {
+      const win = window.open(url, '_blank', 'noopener,noreferrer');
+      if (!win || win.closed || typeof win.closed === 'undefined') {
+        window.location.href = url;
+      }
+    } catch {
+      window.location.href = url;
+    }
   };
 
   const handleCopySummary = () => {
     const rawMsg = (dailySummary?.whatsappMessage || '').replace(/\*/g, '');
     if (!rawMsg) return;
-    navigator.clipboard.writeText(rawMsg);
-    showToast('Daily summary copied to clipboard', 'success');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(rawMsg)
+        .then(() => showToast('Daily summary copied to clipboard', 'success'))
+        .catch(() => fallbackCopyText(rawMsg));
+    } else {
+      fallbackCopyText(rawMsg);
+    }
   };
 
   const currentDateStr = new Date().toLocaleDateString('en-IN', {
