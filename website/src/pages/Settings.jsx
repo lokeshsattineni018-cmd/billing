@@ -17,6 +17,8 @@ import {
 export default function Settings() {
   const { user: currentUser, logout } = useAuth();
   const { toast, showToast } = useToast();
+  const isAdmin = currentUser?.role === 'admin';
+  const isOwnerOrAdmin = currentUser?.role === 'owner' || currentUser?.role === 'admin';
 
   const [activeTab, setActiveTab] = useState('business'); // 'business' | 'users' | 'backup'
 
@@ -89,10 +91,13 @@ export default function Settings() {
   useEffect(() => {
     loadSettings();
     loadUsers();
-    loadCounterStatus();
-  }, []);
+    if (isAdmin) {
+      loadCounterStatus();
+    }
+  }, [isAdmin]);
 
   const loadCounterStatus = async () => {
+    if (!isAdmin) return;
     try {
       const res = await settingsAPI.getCounterStatus();
       setCounterStatus(res.data);
