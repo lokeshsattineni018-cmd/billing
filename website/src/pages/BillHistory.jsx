@@ -26,72 +26,13 @@ export default function BillHistory() {
   const [shareBill, setShareBill] = useState(null);
   const [downloadingPdfId, setDownloadingPdfId] = useState(null);
 
-  // Bulk Payment States
-  const [selectedBillIds, setSelectedBillIds] = useState([]);
-  const [showBulkModal, setShowBulkModal] = useState(false);
-  const [bulkMode, setBulkMode] = useState('Cash');
-  const [bulkRef, setBulkRef] = useState('');
-  const [bulkNotes, setBulkNotes] = useState('');
-  const [submittingBulk, setSubmittingBulk] = useState(false);
-
   const isAdmin = user?.role === 'admin';
   const canSeeSales = user?.role === 'owner' || user?.role === 'admin';
   const canUpdateStatus = user?.role === 'owner' || user?.role === 'admin';
 
   useEffect(() => {
     loadBills();
-    setSelectedBillIds([]);
   }, [page, statusFilter]);
-
-  const toggleSelectBill = (id) => {
-    setSelectedBillIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
-
-  const eligibleBills = bills.filter((b) => !b.isVoided && b.paymentStatus !== 'Paid');
-  const isAllEligibleSelected =
-    eligibleBills.length > 0 && eligibleBills.every((b) => selectedBillIds.includes(b._id));
-
-  const toggleSelectAll = () => {
-    if (isAllEligibleSelected) {
-      setSelectedBillIds([]);
-    } else {
-      setSelectedBillIds(eligibleBills.map((b) => b._id));
-    }
-  };
-
-  const selectedTotal = bills
-    .filter((b) => selectedBillIds.includes(b._id))
-    .reduce((sum, b) => {
-      const g = b.grandTotal || b.total || 0;
-      const p = b.paidAmount || 0;
-      return sum + Math.max(0, g - p);
-    }, 0);
-
-  const handleBulkPaySubmit = async (e) => {
-    e.preventDefault();
-    if (selectedBillIds.length === 0) return;
-    setSubmittingBulk(true);
-    try {
-      const res = await billsAPI.bulkPay({
-        billIds: selectedBillIds,
-        paymentMode: bulkMode,
-        reference: bulkRef,
-        notes: bulkNotes,
-      });
-      showToast(res.data.message || 'Bulk payment recorded successfully!', 'success');
-      setShowBulkModal(false);
-      setSelectedBillIds([]);
-      setBulkRef('');
-      setBulkNotes('');
-      loadBills();
-    } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to record bulk payment', 'error');
-    } finally {
-      setSubmittingBulk(false);
-    }
-  };
 
   const loadBills = async (resetPage = false) => {
     setLoading(true);
@@ -333,14 +274,6 @@ export default function BillHistory() {
                 <div key={bill._id} className="mobile-bill-card" style={bill.isVoided ? { background: '#fef2f2', border: '1px dashed #fca5a5', opacity: 0.85 } : {}}>
                   <div className="mobile-bill-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {canUpdateStatus && !bill.isVoided && bill.paymentStatus !== 'Paid' && (
-                        <input
-                          type="checkbox"
-                          checked={selectedBillIds.includes(bill._id)}
-                          onChange={() => toggleSelectBill(bill._id)}
-                          style={{ cursor: 'pointer', transform: 'scale(1.2)', marginRight: '2px' }}
-                        />
-                      )}
                       <span className="badge badge-blue">#{bill.billNo}</span>
                       {bill.isVoided && (
                         <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800 }}>
@@ -434,17 +367,6 @@ export default function BillHistory() {
               <table className="table">
                 <thead>
                   <tr>
-                    {canUpdateStatus && (
-                      <th style={{ width: '38px', textAlign: 'center' }}>
-                        <input
-                          type="checkbox"
-                          checked={isAllEligibleSelected}
-                          onChange={toggleSelectAll}
-                          title="Select all pending invoices on this page"
-                          style={{ cursor: 'pointer', transform: 'scale(1.15)' }}
-                        />
-                      </th>
-                    )}
                     <th>Invoice Number</th>
                     <th>Company Name</th>
                     <th>Invoice Date</th>
@@ -457,20 +379,6 @@ export default function BillHistory() {
                 <tbody>
                   {bills.map((bill) => (
                     <tr key={bill._id} style={bill.isVoided ? { background: '#fef2f2', opacity: 0.85 } : {}}>
-                      {canUpdateStatus && (
-                        <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-                          {!bill.isVoided && bill.paymentStatus !== 'Paid' ? (
-                            <input
-                              type="checkbox"
-                              checked={selectedBillIds.includes(bill._id)}
-                              onChange={() => toggleSelectBill(bill._id)}
-                              style={{ cursor: 'pointer', transform: 'scale(1.15)' }}
-                            />
-                          ) : (
-                            <span style={{ color: '#cbd5e1' }}>—</span>
-                          )}
-                        </td>
-                      )}
                       <td>
                         <span className="badge badge-blue">#{bill.billNo}</span>
                         {bill.isVoided && (
@@ -646,145 +554,6 @@ export default function BillHistory() {
             loadBills();
           }}
         />
-      )}
-
-      {/* Floating Bulk Action Bar */}
-      {selectedBillIds.length > 0 && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: '#0f172a',
-            color: '#ffffff',
-            padding: '12px 24px',
-            borderRadius: '50px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
-            zIndex: 1000,
-            maxWidth: '90vw',
-          }}
-        >
-          <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>
-            ✓ {selectedBillIds.length} invoice(s) selected (Total: {formatCurrency(selectedTotal)})
-          </span>
-          {canUpdateStatus && (
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              style={{ background: '#10b981', border: 'none', fontWeight: 800, padding: '7px 16px', borderRadius: '20px' }}
-              onClick={() => setShowBulkModal(true)}
-            >
-              Mark as Paid
-            </button>
-          )}
-          <button
-            type="button"
-            style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '0.82rem', cursor: 'pointer', textDecoration: 'underline' }}
-            onClick={() => setSelectedBillIds([])}
-          >
-            Clear
-          </button>
-        </div>
-      )}
-
-      {/* Bulk Payment Confirmation Modal */}
-      {showBulkModal && (
-        <div className="modal-overlay" onClick={() => setShowBulkModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
-            <div className="modal-header">
-              <h3 className="modal-title">Bulk Payment Settlement</h3>
-              <button
-                type="button"
-                className="modal-close"
-                onClick={() => setShowBulkModal(false)}
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleBulkPaySubmit}>
-              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '14px' }}>
-                  <div style={{ fontSize: '0.82rem', color: '#166534', fontWeight: 700 }}>
-                    Confirm Settlement for {selectedBillIds.length} Invoices
-                  </div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#15803d', marginTop: '4px' }}>
-                    {formatCurrency(selectedTotal)}
-                  </div>
-                  <p style={{ fontSize: '0.78rem', color: '#166534', margin: '4px 0 0 0' }}>
-                    All selected invoices will be marked as fully Paid and payment entries recorded.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem', display: 'block', marginBottom: '4px' }}>
-                    Payment Mode
-                  </label>
-                  <select
-                    className="form-select"
-                    value={bulkMode}
-                    onChange={(e) => setBulkMode(e.target.value)}
-                  >
-                    <option value="Cash">Cash</option>
-                    <option value="Bank Transfer">Bank Transfer / NEFT / RTGS</option>
-                    <option value="UPI">UPI / GPay / PhonePe</option>
-                    <option value="Cheque">Cheque</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem', display: 'block', marginBottom: '4px' }}>
-                    Reference / Transaction ID (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. UTR / UPI Ref / Cheque No."
-                    value={bulkRef}
-                    onChange={(e) => setBulkRef(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem', display: 'block', marginBottom: '4px' }}>
-                    Notes (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. Cleared via bulk settlement"
-                    value={bulkNotes}
-                    onChange={(e) => setBulkNotes(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowBulkModal(false)}
-                  disabled={submittingBulk}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  style={{ background: '#10b981', border: 'none', fontWeight: 800 }}
-                  disabled={submittingBulk}
-                >
-                  {submittingBulk ? 'Processing...' : 'Confirm & Mark Paid'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
       )}
     </div>
   );

@@ -65,7 +65,6 @@ export const billsAPI = {
   updatePaymentStatus: (id, paymentStatus) => api.patch(`/bills/${id}/payment-status`, { paymentStatus }),
   recordPayment: (id, data) => api.post(`/bills/${id}/payments`, data),
   getPayments: (id) => api.get(`/bills/${id}/payments`),
-  bulkPay: (data) => api.patch('/bills/bulk-pay', data),
   getPDF: (id) => `${API_BASE_URL}/bills/${id}/pdf?token=${localStorage.getItem('srsf_token')}`,
   exportCSVUrl: (params) => {
     const query = new URLSearchParams(params || {}).toString();
