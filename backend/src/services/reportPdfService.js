@@ -5,18 +5,20 @@ function fmtINR(n) {
 }
 
 /**
- * Generate formal Financial & Sales Report PDF for any date range
+ * Generate an Official Government-Standard Financial & GST Sales Audit Statement PDF
+ * (Consolidated Outward Supply & Tax Ledger for any selected date range)
  */
 async function generatePeriodReportPDF({ bills = [], summary = {}, topBuyers = [], itemsAgg = [], dateRange = {}, settings = {} }) {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({
         size: 'A4',
-        margin: 40,
+        margin: 28,
         bufferPages: true,
         info: {
-          Title: `Financial Report - ${dateRange.label || 'Summary'}`,
-          Author: 'VIJAYA DURGA AGENCIES',
+          Title: `GST & Financial Audit Statement - ${dateRange.label || 'Summary'}`,
+          Author: settings.businessName || 'VIJAYA DURGA AGENCIES',
+          Subject: 'Statutory Financial & GST Outward Supplies Audit Statement',
         },
       });
 
@@ -25,246 +27,455 @@ async function generatePeriodReportPDF({ bills = [], summary = {}, topBuyers = [
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', (err) => reject(err));
 
-      const L = 40;
-      const R = doc.page.width - 40;
-      const W = R - L;
-      const black = '#000000';
-      const darkGray = '#333333';
-      const midGray = '#666666';
-      const lightGray = '#f5f5f5';
-      const borderGray = '#cccccc';
+      const L = 28;
+      const R = doc.page.width - 28;
+      const W = R - L; // 539.28 pt
 
-      let y = 40;
+      const black = '#000000';
+      const textMuted = '#374151';
+      const lightBg = '#f1f5f9';
+      const lineW = 0.65;
+
+      let y = 28;
 
       const startDateStr = dateRange.start ? new Date(dateRange.start).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
       const endDateStr = dateRange.end ? new Date(dateRange.end).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
       const periodStr = startDateStr === endDateStr ? startDateStr : `${startDateStr} to ${endDateStr}`;
-      const generatedAt = new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
-
-      // ═══ COMPANY HEADER ═══
-      doc.font('Helvetica-Bold').fontSize(16).fillColor(black);
-      doc.text(settings.businessName || 'VIJAYA DURGA AGENCIES', L, y);
-      y += 18;
-
-      doc.font('Helvetica').fontSize(8.5).fillColor(midGray);
-      doc.text(settings.address || 'D.No. 2-41A, SATTINENI SRINIVASA TATAJI, Near Ramalayam, KOTHOTA - 534 281, West Godavari Dist., A.P.', L, y);
-      y += 11;
-      doc.text(`Cell: ${settings.phone || '9441429745'}   |   GSTIN: ${settings.gstin || '37KATPS1500Q1ZR'}`, L, y);
-      y += 14;
-
-      // Double line
-      doc.moveTo(L, y).lineTo(R, y).lineWidth(1.5).strokeColor(black).stroke();
-      doc.moveTo(L, y + 2.5).lineTo(R, y + 2.5).lineWidth(0.5).strokeColor(black).stroke();
-      y += 12;
-
-      // ═══ REPORT TITLE & DATES ═══
-      doc.font('Helvetica-Bold').fontSize(13).fillColor(black);
-      doc.text('FINANCIAL & SALES SUMMARY REPORT', L, y, { width: W, align: 'center' });
-      y += 16;
-
-      doc.font('Helvetica').fontSize(9).fillColor(darkGray);
-      doc.text(`Report Period: ${periodStr} (${dateRange.label || 'PERIOD'})   |   Generated: ${generatedAt}`, L, y, { width: W, align: 'center' });
-      y += 18;
-
-      // ═══ SECTION I: FINANCIAL SUMMARY TABLE ═══
-      doc.font('Helvetica-Bold').fontSize(10).fillColor(black);
-      doc.text('I. FINANCIAL KEY PERFORMANCE INDICATORS', L, y);
-      y += 14;
-
-      const summaryBoxY = y;
-      doc.rect(L, summaryBoxY, W, 70).lineWidth(0.8).strokeColor(black).stroke();
-
-      // Row 1
-      const colW = W / 4;
-      doc.rect(L, summaryBoxY, W, 35).fillColor(lightGray).fill();
-      doc.moveTo(L, summaryBoxY + 35).lineTo(R, summaryBoxY + 35).lineWidth(0.5).strokeColor(borderGray).stroke();
-      [1, 2, 3].forEach((i) => {
-        doc.moveTo(L + colW * i, summaryBoxY).lineTo(L + colW * i, summaryBoxY + 70).lineWidth(0.5).strokeColor(borderGray).stroke();
+      const generatedAt = new Date().toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
       });
 
-      // Headers Row 1
-      doc.font('Helvetica').fontSize(7.5).fillColor(midGray);
-      doc.text('GROSS SALES REVENUE', L + 6, summaryBoxY + 5, { width: colW - 12 });
-      doc.text('COLLECTED (PAID)', L + colW + 6, summaryBoxY + 5, { width: colW - 12 });
-      doc.text('OUTSTANDING BALANCE', L + colW * 2 + 6, summaryBoxY + 5, { width: colW - 12 });
-      doc.text('TOTAL INVOICES', L + colW * 3 + 6, summaryBoxY + 5, { width: colW - 12 });
+      const validBills = bills.filter((b) => !b.isVoided);
+      const voidedBills = bills.filter((b) => b.isVoided);
 
-      // Values Row 1
-      doc.font('Helvetica-Bold').fontSize(11).fillColor(black);
-      doc.text(`Rs. ${fmtINR(summary.totalRevenue || 0)}`, L + 6, summaryBoxY + 18, { width: colW - 12 });
-      doc.text(`Rs. ${fmtINR(summary.paidAmount || 0)}`, L + colW + 6, summaryBoxY + 18, { width: colW - 12 });
-      doc.text(`Rs. ${fmtINR(summary.pendingAmount || 0)}`, L + colW * 2 + 6, summaryBoxY + 18, { width: colW - 12 });
-      doc.text(`${summary.totalBills || bills.length || 0}`, L + colW * 3 + 6, summaryBoxY + 18, { width: colW - 12 });
+      // ══════════════════════════════════════════════════════════════════════
+      // 1. STATUTORY DOCUMENT HEADER (GOVERNMENT AUDIT LEDGER FORMAT)
+      // ══════════════════════════════════════════════════════════════════════
+      const headerH = 72;
+      doc.rect(L, y, W, headerH).lineWidth(lineW).strokeColor(black).stroke();
 
-      // Row 2 Labels
-      doc.font('Helvetica').fontSize(7.5).fillColor(midGray);
-      doc.text('TAXABLE VALUE', L + 6, summaryBoxY + 40, { width: colW - 12 });
-      doc.text('TOTAL GST COLLECTED', L + colW + 6, summaryBoxY + 40, { width: colW - 12 });
-      doc.text('AVG TICKET SIZE', L + colW * 2 + 6, summaryBoxY + 40, { width: colW - 12 });
-      doc.text('STATUS RATIO', L + colW * 3 + 6, summaryBoxY + 40, { width: colW - 12 });
+      // Title Banner
+      const titleH = 24;
+      doc.rect(L, y, W, titleH).fillAndStroke(lightBg, black);
+      doc.font('Helvetica-Bold').fontSize(11.5).fillColor(black);
+      doc.text('CONSOLIDATED STATEMENT OF OUTWARD SUPPLIES & GST TURNOVER', L, y + 4.5, {
+        width: W,
+        align: 'center',
+        characterSpacing: 0.8,
+      });
 
-      // Values Row 2
+      doc.font('Helvetica-Oblique').fontSize(6.5).fillColor(textMuted);
+      doc.text('(Official Financial & Tax Audit Statement - Maintained under the Provisions of the Goods and Services Tax Act, 2017)', L, y + 16, {
+        width: W,
+        align: 'center',
+      });
+
+      // Business & Statement Metadata
+      const metaY = y + titleH + 4;
+      const halfW = W / 2;
+
       doc.font('Helvetica-Bold').fontSize(10).fillColor(black);
-      doc.text(`Rs. ${fmtINR(summary.totalTaxable || 0)}`, L + 6, summaryBoxY + 52, { width: colW - 12 });
-      doc.text(`Rs. ${fmtINR(summary.totalTax || 0)}`, L + colW + 6, summaryBoxY + 52, { width: colW - 12 });
-      doc.text(`Rs. ${fmtINR(summary.avgTicketSize || 0)}`, L + colW * 2 + 6, summaryBoxY + 52, { width: colW - 12 });
-      doc.text(`${summary.paidCount || 0} Paid / ${summary.pendingCount || 0} Unpaid`, L + colW * 3 + 6, summaryBoxY + 52, { width: colW - 12 });
+      doc.text(settings.businessName || 'VIJAYA DURGA AGENCIES', L + 6, metaY);
 
-      y = summaryBoxY + 84;
+      doc.font('Helvetica-Bold').fontSize(7.5).fillColor(textMuted);
+      doc.text(`Prop: ${settings.legalName || 'SATTINENI VENKATA DHANA LAXMI'}`, L + 6, metaY + 12);
 
-      // ═══ SECTION II: TOP BUYERS (if present) ═══
-      if (topBuyers && topBuyers.length > 0) {
-        doc.font('Helvetica-Bold').fontSize(10).fillColor(black);
-        doc.text('II. TOP CLIENTS BY REVENUE', L, y);
-        y += 12;
+      const gstin = settings.gstin || '37KATPS1500Q1ZR';
+      const pan = gstin.length >= 12 ? gstin.substring(2, 12) : 'KATPS1500Q';
+      doc.font('Helvetica').fontSize(7).fillColor(black);
+      doc.text(`GSTIN: ${gstin}   |   PAN: ${pan}   |   State: Andhra Pradesh (37)`, L + 6, metaY + 23);
 
-        const buyerCols = [
-          { label: '#', w: 25, align: 'left' },
-          { label: 'Client / Company Name', w: 230, align: 'left' },
-          { label: 'Phone', w: 85, align: 'left' },
-          { label: 'Bills', w: 45, align: 'center' },
-          { label: 'Total Revenue', w: 130, align: 'right' },
-        ];
+      // Right Side: Period details
+      doc.font('Helvetica-Bold').fontSize(7.5).fillColor(textMuted);
+      doc.text('STATEMENT PERIOD :', L + halfW, metaY);
+      doc.font('Helvetica-Bold').fontSize(8).fillColor(black);
+      doc.text(`${periodStr}`, L + halfW + 90, metaY, { width: halfW - 96 });
 
-        // Header
-        doc.rect(L, y, W, 16).fillColor(lightGray).fill();
-        doc.rect(L, y, W, 16).lineWidth(0.5).strokeColor(borderGray).stroke();
-        doc.font('Helvetica-Bold').fontSize(8).fillColor(black);
+      doc.font('Helvetica').fontSize(7).fillColor(textMuted);
+      doc.text('TOTAL INVOICES :', L + halfW, metaY + 12);
+      doc.font('Helvetica').fontSize(7.5).fillColor(black);
+      doc.text(`${validBills.length} Active ${voidedBills.length > 0 ? `(${voidedBills.length} Voided)` : ''}`, L + halfW + 90, metaY + 12);
 
-        let curX = L;
-        buyerCols.forEach((col) => {
-          doc.text(col.label, curX + 4, y + 4, { width: col.w - 8, align: col.align });
-          curX += col.w;
-        });
-        y += 16;
+      doc.font('Helvetica').fontSize(7).fillColor(textMuted);
+      doc.text('REPORT GENERATED :', L + halfW, metaY + 23);
+      doc.font('Helvetica').fontSize(7).fillColor(black);
+      doc.text(generatedAt, L + halfW + 90, metaY + 23);
 
-        topBuyers.slice(0, 5).forEach((tb, idx) => {
-          doc.font('Helvetica').fontSize(8).fillColor(darkGray);
-          doc.rect(L, y, W, 15).lineWidth(0.3).strokeColor(borderGray).stroke();
+      y += headerH;
 
-          curX = L;
-          doc.text(String(idx + 1), curX + 4, y + 4, { width: buyerCols[0].w - 8, align: buyerCols[0].align });
-          curX += buyerCols[0].w;
+      // ══════════════════════════════════════════════════════════════════════
+      // 2. FINANCIAL PERFORMANCE & GST LIABILITY MATRIX (8-QUADRANT GRID)
+      // ══════════════════════════════════════════════════════════════════════
+      const matrixH = 50;
+      doc.rect(L, y, W, matrixH).lineWidth(lineW).strokeColor(black).stroke();
 
-          doc.text(tb._id || 'Direct Buyer', curX + 4, y + 4, { width: buyerCols[1].w - 8, align: buyerCols[1].align });
-          curX += buyerCols[1].w;
+      const quadW = W / 4;
+      doc.moveTo(L + quadW, y).lineTo(L + quadW, y + matrixH).stroke();
+      doc.moveTo(L + quadW * 2, y).lineTo(L + quadW * 2, y + matrixH).stroke();
+      doc.moveTo(L + quadW * 3, y).lineTo(L + quadW * 3, y + matrixH).stroke();
+      doc.moveTo(L, y + 25).lineTo(R, y + 25).stroke();
 
-          doc.text(tb.phone || '—', curX + 4, y + 4, { width: buyerCols[2].w - 8, align: buyerCols[2].align });
-          curX += buyerCols[2].w;
+      const totalTax = (summary.totalTax || (summary.totalCGST || 0) + (summary.totalSGST || 0) + (summary.totalIGST || 0));
 
-          doc.text(String(tb.billCount || 1), curX + 4, y + 4, { width: buyerCols[3].w - 8, align: buyerCols[3].align });
-          curX += buyerCols[3].w;
+      const matrixData = [
+        { l: 'GROSS TURNOVER (SALES)', v: `Rs. ${fmtINR(summary.totalRevenue || 0)}`, bold: true },
+        { l: 'TAXABLE VALUE', v: `Rs. ${fmtINR(summary.totalTaxable || 0)}`, bold: false },
+        { l: 'TOTAL GST TAX LIABILITY', v: `Rs. ${fmtINR(totalTax)}`, bold: true },
+        { l: 'AVG TICKET SIZE', v: `Rs. ${fmtINR(summary.avgTicketSize || 0)}`, bold: false },
 
-          doc.font('Helvetica-Bold');
-          doc.text(`Rs. ${fmtINR(tb.totalSales || 0)}`, curX + 4, y + 4, { width: buyerCols[4].w - 8, align: buyerCols[4].align });
-
-          y += 15;
-        });
-
-        y += 16;
-      }
-
-      // Check if space left for invoices table, else page break
-      if (y > doc.page.height - 180) {
-        doc.addPage();
-        y = 40;
-      }
-
-      // ═══ SECTION III: INVOICES BREAKDOWN ═══
-      doc.font('Helvetica-Bold').fontSize(10).fillColor(black);
-      doc.text(`III. ITEMIZED INVOICE REGISTER (${bills.length} Invoices)`, L, y);
-      y += 12;
-
-      const invCols = [
-        { label: 'Inv #', w: 45, align: 'left' },
-        { label: 'Date', w: 65, align: 'left' },
-        { label: 'Buyer Name', w: 180, align: 'left' },
-        { label: 'Taxable', w: 75, align: 'right' },
-        { label: 'Grand Total', w: 85, align: 'right' },
-        { label: 'Status', w: 65, align: 'center' },
+        { l: 'REALIZED COLLECTIONS (PAID)', v: `Rs. ${fmtINR(summary.paidAmount || 0)}`, bold: true },
+        { l: 'OUTSTANDING RECEIVABLES', v: `Rs. ${fmtINR(summary.pendingAmount || 0)}`, bold: true },
+        { l: 'SETTLEMENT RATIO', v: `${summary.paidCount || 0} Paid / ${summary.pendingCount || 0} Due`, bold: false },
+        { l: 'TAX RATE (CGST / SGST)', v: `2.5% CGST + 2.5% SGST`, bold: false },
       ];
 
-      // Header row
-      const drawInvHeader = () => {
-        doc.rect(L, y, W, 16).fillColor(lightGray).fill();
-        doc.rect(L, y, W, 16).lineWidth(0.5).strokeColor(borderGray).stroke();
-        doc.font('Helvetica-Bold').fontSize(8).fillColor(black);
+      matrixData.forEach((c, i) => {
+        const colIdx = i % 4;
+        const rowIdx = Math.floor(i / 4);
+        const cX = L + quadW * colIdx;
+        const cY = y + rowIdx * 25;
 
+        doc.font('Helvetica-Bold').fontSize(6.5).fillColor(textMuted);
+        doc.text(c.l, cX + 6, cY + 4, { width: quadW - 12 });
+
+        doc.font(c.bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(9).fillColor(black);
+        doc.text(c.v, cX + 6, cY + 13, { width: quadW - 12 });
+      });
+
+      y += matrixH;
+
+      // ══════════════════════════════════════════════════════════════════════
+      // 3. GST CATEGORY BREAKDOWN (B2B REGISTERED VS B2C UNREGISTERED)
+      // ══════════════════════════════════════════════════════════════════════
+      const catH = 46;
+      doc.rect(L, y, W, catH).lineWidth(lineW).strokeColor(black).stroke();
+
+      const b2bBills = validBills.filter((b) => b.companyGstin && b.companyGstin.trim().length >= 10);
+      const b2cBills = validBills.filter((b) => !b.companyGstin || b.companyGstin.trim().length < 10);
+
+      const b2bTaxable = b2bBills.reduce((s, b) => s + (b.taxableValue || b.total || 0), 0);
+      const b2bTax = b2bBills.reduce((s, b) => s + (b.cgstAmount || 0) + (b.sgstAmount || 0) + (b.igstAmount || 0), 0);
+      const b2bTotal = b2bBills.reduce((s, b) => s + (b.grandTotal || b.total || 0), 0);
+
+      const b2cTaxable = b2cBills.reduce((s, b) => s + (b.taxableValue || b.total || 0), 0);
+      const b2cTax = b2cBills.reduce((s, b) => s + (b.cgstAmount || 0) + (b.sgstAmount || 0) + (b.igstAmount || 0), 0);
+      const b2cTotal = b2cBills.reduce((s, b) => s + (b.grandTotal || b.total || 0), 0);
+
+      const catColW = [160, 55, 105, 105, 114.28];
+      const catThH = 15;
+      doc.rect(L, y, W, catThH).fillAndStroke(lightBg, black);
+
+      doc.font('Helvetica-Bold').fontSize(6.5).fillColor(black);
+      let catX = L;
+      const catHeaders = ['SUPPLY CLASSIFICATION (GST RULES)', 'INVOICES', 'TAXABLE VALUE (Rs.)', 'GST COLLECTED (Rs.)', 'TOTAL VALUE (Rs.)'];
+      catHeaders.forEach((h, idx) => {
+        if (idx > 0) doc.moveTo(catX, y).lineTo(catX, y + catH).stroke();
+        doc.text(h, catX + 2, y + 4.5, { width: catColW[idx] - 4, align: idx >= 2 ? 'right' : (idx === 1 ? 'center' : 'left') });
+        catX += catColW[idx];
+      });
+
+      // B2B Row
+      let rY = y + catThH;
+      const rH = 15;
+      doc.moveTo(L, rY).lineTo(R, rY).stroke();
+      catX = L;
+      doc.font('Helvetica-Bold').fontSize(7).fillColor(black);
+      doc.text('Table 4: B2B Registered Persons', catX + 4, rY + 4, { width: catColW[0] - 8 });
+      catX += catColW[0];
+      doc.font('Helvetica').fontSize(7.5);
+      doc.text(String(b2bBills.length), catX + 2, rY + 4, { width: catColW[1] - 4, align: 'center' });
+      catX += catColW[1];
+      doc.text(fmtINR(b2bTaxable), catX + 2, rY + 4, { width: catColW[2] - 6, align: 'right' });
+      catX += catColW[2];
+      doc.text(fmtINR(b2bTax), catX + 2, rY + 4, { width: catColW[3] - 6, align: 'right' });
+      catX += catColW[3];
+      doc.font('Helvetica-Bold');
+      doc.text(fmtINR(b2bTotal), catX + 2, rY + 4, { width: catColW[4] - 6, align: 'right' });
+
+      // B2C Row
+      rY += rH;
+      doc.moveTo(L, rY).lineTo(R, rY).stroke();
+      catX = L;
+      doc.font('Helvetica-Bold').fontSize(7).fillColor(black);
+      doc.text('Table 7: B2C Unregistered / Consumers', catX + 4, rY + 4, { width: catColW[0] - 8 });
+      catX += catColW[0];
+      doc.font('Helvetica').fontSize(7.5);
+      doc.text(String(b2cBills.length), catX + 2, rY + 4, { width: catColW[1] - 4, align: 'center' });
+      catX += catColW[1];
+      doc.text(fmtINR(b2cTaxable), catX + 2, rY + 4, { width: catColW[2] - 6, align: 'right' });
+      catX += catColW[2];
+      doc.text(fmtINR(b2cTax), catX + 2, rY + 4, { width: catColW[3] - 6, align: 'right' });
+      catX += catColW[3];
+      doc.font('Helvetica-Bold');
+      doc.text(fmtINR(b2cTotal), catX + 2, rY + 4, { width: catColW[4] - 6, align: 'right' });
+
+      y += catH;
+
+      // ══════════════════════════════════════════════════════════════════════
+      // 4. TOP BUYERS LEDGER (IF PRESENT)
+      // ══════════════════════════════════════════════════════════════════════
+      if (topBuyers && topBuyers.length > 0) {
+        const topSecH = 15;
+        doc.rect(L, y, W, topSecH).fillAndStroke(lightBg, black);
+        doc.font('Helvetica-Bold').fontSize(7.5).fillColor(black);
+        doc.text('TOP BUYERS SUMMARY (BY TAXABLE TURNOVER)', L + 6, y + 4);
+        y += topSecH;
+
+        const bCols = [
+          { label: 'Sl.', w: 26, align: 'center' },
+          { label: 'Client / Buyer Name', w: 190, align: 'left' },
+          { label: 'Buyer GSTIN', w: 100, align: 'center' },
+          { label: 'Invoices', w: 45, align: 'center' },
+          { label: 'Total Turnover (Rs.)', w: 100, align: 'right' },
+          { label: 'Share', w: 78.28, align: 'right' },
+        ];
+
+        const bThH = 15;
+        doc.rect(L, y, W, bThH).fillAndStroke(lightBg, black);
+        let bX = L;
+        bCols.forEach((col, idx) => {
+          if (idx > 0) doc.moveTo(bX, y).lineTo(bX, y + bThH).stroke();
+          doc.font('Helvetica-Bold').fontSize(6.5).fillColor(black);
+          doc.text(col.label, bX + 2, y + 4.5, { width: col.w - 4, align: col.align });
+          bX += col.w;
+        });
+        y += bThH;
+
+        const grandTot = summary.totalRevenue || 1;
+        topBuyers.slice(0, 5).forEach((tb, idx) => {
+          const rowH = 15;
+          doc.rect(L, y, W, rowH).lineWidth(lineW).strokeColor(black).stroke();
+
+          const share = Math.round(((tb.totalSales || 0) / grandTot) * 100);
+          bX = L;
+
+          // Sl
+          doc.font('Helvetica').fontSize(7.5).fillColor(black);
+          doc.text(String(idx + 1), bX + 2, y + 4, { width: bCols[0].w - 4, align: 'center' });
+          bX += bCols[0].w;
+          doc.moveTo(bX, y).lineTo(bX, y + rowH).stroke();
+
+          // Name
+          doc.font('Helvetica-Bold').fontSize(7.5);
+          doc.text(tb._id || 'Direct Buyer', bX + 4, y + 4, { width: bCols[1].w - 8, align: 'left' });
+          bX += bCols[1].w;
+          doc.moveTo(bX, y).lineTo(bX, y + rowH).stroke();
+
+          // GSTIN
+          doc.font('Helvetica').fontSize(7).fillColor(textMuted);
+          doc.text(tb.gstin || 'URP', bX + 2, y + 4, { width: bCols[2].w - 4, align: 'center' });
+          bX += bCols[2].w;
+          doc.moveTo(bX, y).lineTo(bX, y + rowH).stroke();
+
+          // Invoices
+          doc.font('Helvetica').fontSize(7.5).fillColor(black);
+          doc.text(String(tb.billCount || 1), bX + 2, y + 4, { width: bCols[3].w - 4, align: 'center' });
+          bX += bCols[3].w;
+          doc.moveTo(bX, y).lineTo(bX, y + rowH).stroke();
+
+          // Total
+          doc.font('Helvetica-Bold');
+          doc.text(fmtINR(tb.totalSales || 0), bX + 2, y + 4, { width: bCols[4].w - 6, align: 'right' });
+          bX += bCols[4].w;
+          doc.moveTo(bX, y).lineTo(bX, y + rowH).stroke();
+
+          // Share
+          doc.font('Helvetica').fontSize(7);
+          doc.text(`${share}%`, bX + 2, y + 4, { width: bCols[5].w - 6, align: 'right' });
+
+          y += rowH;
+        });
+      }
+
+      // Check space for invoice register
+      if (y > doc.page.height - 180) {
+        doc.addPage();
+        y = 28;
+      }
+
+      // ══════════════════════════════════════════════════════════════════════
+      // 5. ITEMIZED INVOICE AUDIT REGISTER (SCHEDULE OF INVOICES)
+      // ══════════════════════════════════════════════════════════════════════
+      const invSecH = 15;
+      doc.rect(L, y, W, invSecH).fillAndStroke(lightBg, black);
+      doc.font('Helvetica-Bold').fontSize(7.5).fillColor(black);
+      doc.text(`ITEMIZED OUTWARD INVOICE REGISTER (${validBills.length} RECORDS)`, L + 6, y + 4);
+      y += invSecH;
+
+      const invCols = [
+        { label: 'Inv #', w: 68, align: 'center' },
+        { label: 'Date', w: 52, align: 'center' },
+        { label: 'Buyer / Consignee', w: 142, align: 'left' },
+        { label: 'Buyer GSTIN', w: 84, align: 'center' },
+        { label: 'Taxable (Rs.)', w: 62, align: 'right' },
+        { label: 'GST Tax (Rs.)', w: 56, align: 'right' },
+        { label: 'Total (Rs.)', w: 75.28, align: 'right' },
+      ];
+
+      const drawInvHeader = () => {
+        const thH = 15;
+        doc.rect(L, y, W, thH).fillAndStroke(lightBg, black);
         let hX = L;
-        invCols.forEach((col) => {
-          doc.text(col.label, hX + 4, y + 4, { width: col.w - 8, align: col.align });
+        invCols.forEach((col, idx) => {
+          if (idx > 0) doc.moveTo(hX, y).lineTo(hX, y + thH).stroke();
+          doc.font('Helvetica-Bold').fontSize(6.5).fillColor(black);
+          doc.text(col.label, hX + 2, y + 4, { width: col.w - 4, align: col.align });
           hX += col.w;
         });
-        y += 16;
+        y += thH;
       };
 
       drawInvHeader();
 
-      bills.forEach((b) => {
-        if (y > doc.page.height - 50) {
+      validBills.forEach((b) => {
+        const rowH = 15;
+        if (y + rowH > doc.page.height - 100) {
           doc.addPage();
-          y = 40;
+          y = 28;
           drawInvHeader();
         }
 
-        doc.rect(L, y, W, 15).lineWidth(0.3).strokeColor(borderGray).stroke();
-        doc.font('Helvetica').fontSize(8).fillColor(darkGray);
+        doc.rect(L, y, W, rowH).lineWidth(lineW).strokeColor(black).stroke();
 
-        let rowX = L;
-        // Inv No
-        const invNoStr = `#${b.formattedBillNo || b.billNumber || b.billNo}`;
-        doc.text(invNoStr, rowX + 4, y + 4, { width: invCols[0].w - 8, align: invCols[0].align });
-        rowX += invCols[0].w;
+        const invNo = b.formattedBillNo || b.billNo;
+        const dStr = b.date ? new Date(b.date).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—';
+        const taxable = b.taxableValue || b.total || 0;
+        const gst = (b.cgstAmount || 0) + (b.sgstAmount || 0) + (b.igstAmount || 0);
+        const gTot = b.grandTotal || b.total || 0;
+
+        let rX = L;
+        // Inv #
+        doc.font('Helvetica-Bold').fontSize(7.5).fillColor(black);
+        doc.text(`#${invNo}`, rX + 2, y + 4, { width: invCols[0].w - 4, align: 'center' });
+        rX += invCols[0].w;
+        doc.moveTo(rX, y).lineTo(rX, y + rowH).stroke();
 
         // Date
-        const dStr = b.date ? new Date(b.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : '—';
-        doc.text(dStr, rowX + 4, y + 4, { width: invCols[1].w - 8, align: invCols[1].align });
-        rowX += invCols[1].w;
+        doc.font('Helvetica').fontSize(7.5);
+        doc.text(dStr, rX + 2, y + 4, { width: invCols[1].w - 4, align: 'center' });
+        rX += invCols[1].w;
+        doc.moveTo(rX, y).lineTo(rX, y + rowH).stroke();
 
         // Buyer Name
-        const comp = (b.companyName || 'Cash Sale').substring(0, 32);
-        doc.text(comp, rowX + 4, y + 4, { width: invCols[2].w - 8, align: invCols[2].align });
-        rowX += invCols[2].w;
+        doc.text((b.companyName || 'Cash Sale').substring(0, 26), rX + 4, y + 4, { width: invCols[2].w - 8, align: 'left' });
+        rX += invCols[2].w;
+        doc.moveTo(rX, y).lineTo(rX, y + rowH).stroke();
+
+        // GSTIN
+        doc.font('Helvetica').fontSize(7).fillColor(textMuted);
+        doc.text(b.companyGstin || 'URP', rX + 2, y + 4, { width: invCols[3].w - 4, align: 'center' });
+        rX += invCols[3].w;
+        doc.moveTo(rX, y).lineTo(rX, y + rowH).stroke();
 
         // Taxable
-        const taxable = b.taxableValue || b.total || 0;
-        doc.text(fmtINR(taxable), rowX + 4, y + 4, { width: invCols[3].w - 8, align: invCols[3].align });
-        rowX += invCols[3].w;
+        doc.font('Helvetica').fontSize(7.5).fillColor(black);
+        doc.text(taxable.toFixed(2), rX + 2, y + 4, { width: invCols[4].w - 4, align: 'right' });
+        rX += invCols[4].w;
+        doc.moveTo(rX, y).lineTo(rX, y + rowH).stroke();
 
-        // Grand Total
-        const gTot = b.grandTotal || b.total || 0;
+        // GST
+        doc.text(gst.toFixed(2), rX + 2, y + 4, { width: invCols[5].w - 4, align: 'right' });
+        rX += invCols[5].w;
+        doc.moveTo(rX, y).lineTo(rX, y + rowH).stroke();
+
+        // Total
         doc.font('Helvetica-Bold');
-        doc.text(fmtINR(gTot), rowX + 4, y + 4, { width: invCols[4].w - 8, align: invCols[4].align });
-        doc.font('Helvetica');
-        rowX += invCols[4].w;
+        doc.text(gTot.toFixed(2), rX + 2, y + 4, { width: invCols[6].w - 4, align: 'right' });
 
-        // Status
-        const st = b.paymentStatus || 'Pending';
-        doc.text(st, rowX + 4, y + 4, { width: invCols[5].w - 8, align: invCols[5].align });
-
-        y += 15;
+        y += rowH;
       });
 
-      // Total Row
-      if (y > doc.page.height - 40) {
+      // Total Row for Itemized Invoices
+      const totH = 17;
+      if (y + totH > doc.page.height - 100) {
         doc.addPage();
-        y = 40;
+        y = 28;
       }
-      doc.rect(L, y, W, 18).fillColor(lightGray).fill();
-      doc.rect(L, y, W, 18).lineWidth(0.8).strokeColor(black).stroke();
-      doc.font('Helvetica-Bold').fontSize(8.5).fillColor(black);
-      doc.text('TOTAL REVENUE:', L + 10, y + 5);
-      doc.text(`Rs. ${fmtINR(summary.totalRevenue || 0)}`, L + 320, y + 5, { width: 150, align: 'right' });
+      const sumLabelW = invCols[0].w + invCols[1].w + invCols[2].w + invCols[3].w;
+      doc.rect(L, y, sumLabelW, totH).fillAndStroke(lightBg, black);
+      doc.font('Helvetica-Bold').fontSize(7.5).fillColor(black);
+      doc.text('TOTAL AUDIT TURNOVER :', L + 4, y + 4.5, { width: sumLabelW - 8, align: 'right' });
 
-      // Add page numbers on all buffered pages
+      let tX = L + sumLabelW;
+      doc.rect(tX, y, invCols[4].w, totH).fillAndStroke(lightBg, black);
+      doc.text(fmtINR(summary.totalTaxable || 0), tX + 2, y + 4.5, { width: invCols[4].w - 4, align: 'right' });
+      tX += invCols[4].w;
+
+      doc.rect(tX, y, invCols[5].w, totH).fillAndStroke(lightBg, black);
+      doc.text(fmtINR(totalTax), tX + 2, y + 4.5, { width: invCols[5].w - 4, align: 'right' });
+      tX += invCols[5].w;
+
+      doc.rect(tX, y, invCols[6].w, totH).fillAndStroke(lightBg, black);
+      doc.text(fmtINR(summary.totalRevenue || 0), tX + 2, y + 4.5, { width: invCols[6].w - 4, align: 'right' });
+
+      y += totH + 12;
+
+      // ══════════════════════════════════════════════════════════════════════
+      // 6. STATUTORY CERTIFICATION & ATTESTATION BLOCK
+      // ══════════════════════════════════════════════════════════════════════
+      const signBoxH = 68;
+      if (y + signBoxH > doc.page.height - 40) {
+        doc.addPage();
+        y = 28;
+      }
+
+      const signLeftW = Math.floor(W * 0.58);
+      const signRightW = W - signLeftW;
+
+      doc.rect(L, y, signLeftW, signBoxH).lineWidth(lineW).strokeColor(black).stroke();
+      doc.rect(L + signLeftW, y, signRightW, signBoxH).lineWidth(lineW).strokeColor(black).stroke();
+
+      // Left Box
+      doc.font('Helvetica-Bold').fontSize(7).fillColor(black);
+      doc.text('STATUTORY DECLARATION & AUDIT ENDORSEMENT:', L + 6, y + 5);
+
+      doc.font('Helvetica').fontSize(6.5).fillColor(textMuted);
+      doc.text(
+        'Certified that this consolidated statement reflects the true and accurate record of outward supplies, taxable turnover, tax collected, and receivables for the specified period as per the books of accounts maintained under the Goods and Services Tax Act, 2017.',
+        L + 6,
+        y + 15,
+        { width: signLeftW - 12, lineGap: 1.5 }
+      );
+
+      doc.font('Helvetica-Oblique').fontSize(6).fillColor('#64748b');
+      doc.text('Generated electronically from verified trade invoices.', L + 6, y + 53);
+
+      // Right Box: Signatures
+      const sX = L + signLeftW;
+      doc.font('Helvetica-Bold').fontSize(8).fillColor(black);
+      doc.text(`For ${settings.businessName || 'VIJAYA DURGA AGENCIES'}`, sX + 6, y + 6, {
+        width: signRightW - 12,
+        align: 'center',
+      });
+
+      doc.font('Helvetica-Oblique').fontSize(6).fillColor('#94a3b8');
+      doc.text('[ Signature / Official Seal ]', sX + 6, y + signBoxH - 26, {
+        width: signRightW - 12,
+        align: 'center',
+      });
+
+      doc.moveTo(sX + 24, y + signBoxH - 15).lineTo(sX + signRightW - 24, y + signBoxH - 15).strokeColor(black).stroke();
+
+      doc.font('Helvetica-Bold').fontSize(7.5).fillColor(black);
+      doc.text('PROPRIETOR / AUTHORISED SIGNATORY', sX + 6, y + signBoxH - 12, {
+        width: signRightW - 12,
+        align: 'center',
+      });
+
+      // Add Page Numbers on all buffered pages
       const pageCount = doc.bufferedPageRange().count;
       for (let i = 0; i < pageCount; i++) {
         doc.switchToPage(i);
-        doc.font('Helvetica').fontSize(7.5).fillColor(midGray);
+        doc.font('Helvetica').fontSize(6.5).fillColor('#64748b');
         doc.text(
-          `Page ${i + 1} of ${pageCount}   |   Vijaya Durga Agencies Billing System   |   Confidential`,
+          `Page ${i + 1} of ${pageCount}   |   Statutory Audit Statement of Outward Supplies   |   Vijaya Durga Agencies`,
           L,
-          doc.page.height - 25,
+          doc.page.height - 20,
           { width: W, align: 'center' }
         );
       }

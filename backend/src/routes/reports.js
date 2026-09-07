@@ -3,6 +3,7 @@ const Bill = require('../models/Bill');
 const Settings = require('../models/Settings');
 const { protect, restrictTo } = require('../middleware/auth');
 const { generatePeriodReportPDF } = require('../services/reportPdfService');
+const { generateGSTR1PDF } = require('../services/gstPdfService');
 
 const router = express.Router();
 
@@ -365,6 +366,41 @@ router.get('/pdf', protect, restrictTo('owner', 'admin'), async (req, res) => {
   } catch (error) {
     console.error('PDF report error:', error);
     res.status(500).json({ message: 'Failed to generate PDF report', error: error.message });
+  }
+});
+
+/**
+ * GET /api/reports/gst-pdf
+ * Download official Government GSTR-1 Outward Supplies Summary PDF statement
+ * (Owner and Admin)
+ */
+router.get('/gst-pdf', protect, restrictTo('owner', 'admin'), async (req, res) => {
+  try {
+    const { range = 'this_month', startDate, endDate } = req.query;
+    const { start, end } = getDateRange(range, startDate, endDate);
+
+    const matchQuery = {
+      date: { $gte: start, $lte: end },
+    };
+
+    const [bills, settingsDoc] = await Promise.all([
+      Bill.find(matchQuery).sort({ date: 1 }).lean(),
+      Settings.findOne().lean(),
+    ]);
+
+    const rangeLabel = range.replace('_', ' ').toUpperCase();
+    const pdfBuffer = await generateGSTR1PDF({
+      bills,
+      dateRange: { start, end, label: rangeLabel },
+      settings: settingsDoc || {},
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="gstr1_statement_${range}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('GSTR-1 PDF export error:', error);
+    res.status(500).json({ message: 'Failed to generate GSTR-1 PDF statement', error: error.message });
   }
 });
 

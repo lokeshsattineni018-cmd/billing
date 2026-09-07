@@ -91,6 +91,11 @@ export default function Reports() {
     window.open(reportsAPI.downloadPDFUrl(params), '_blank');
   };
 
+  const handleDownloadGSTPDF = () => {
+    const params = getReportParams();
+    window.open(reportsAPI.downloadGSTPDFUrl(params), '_blank');
+  };
+
   const handleExportGST = () => {
     const params = getReportParams();
     window.open(reportsAPI.exportGSTUrl(params), '_blank');
@@ -206,6 +211,15 @@ export default function Reports() {
             title="Download PDF Financial Report"
           >
             <DownloadIcon size={16} color="#ffffff" /> Download PDF
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleDownloadGSTPDF}
+            style={{ fontWeight: 800, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #0b5394', color: '#0b5394', background: '#f0f7ff' }}
+            title="Download Official Government GSTR-1 PDF Statement"
+          >
+            <FileCheckIcon size={16} /> GSTR-1 PDF
           </button>
           <button
             type="button"

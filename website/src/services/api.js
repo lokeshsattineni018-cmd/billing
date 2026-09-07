@@ -91,6 +91,10 @@ export const reportsAPI = {
     const query = new URLSearchParams(params || {}).toString();
     return `${API_BASE_URL}/reports/pdf?${query}&token=${localStorage.getItem('srsf_token')}`;
   },
+  downloadGSTPDFUrl: (params) => {
+    const query = new URLSearchParams(params || {}).toString();
+    return `${API_BASE_URL}/reports/gst-pdf?${query}&token=${localStorage.getItem('srsf_token')}`;
+  },
   exportGSTUrl: (params) => {
     const query = new URLSearchParams(params || {}).toString();
     return `${API_BASE_URL}/reports/gst-export?${query}&token=${localStorage.getItem('srsf_token')}`;
