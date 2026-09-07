@@ -21,7 +21,7 @@ export default function ReminderModal({ billId, onClose }) {
     try {
       const res = await billsAPI.getReminder(billId);
       setData(res.data);
-      setCustomMsg(res.data.whatsappMessage);
+      setCustomMsg((res.data.whatsappMessage || '').replace(/\*/g, ''));
     } catch (err) {
       console.error('Failed to load reminder:', err);
       showToast('Failed to load reminder message', 'error');
@@ -33,7 +33,8 @@ export default function ReminderModal({ billId, onClose }) {
   const handleModeChange = (mode) => {
     setMsgMode(mode);
     if (data) {
-      setCustomMsg(mode === 'whatsapp' ? data.whatsappMessage : data.smsMessage);
+      const msg = mode === 'whatsapp' ? data.whatsappMessage : data.smsMessage;
+      setCustomMsg((msg || '').replace(/\*/g, ''));
     }
   };
 

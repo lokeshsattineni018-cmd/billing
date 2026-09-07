@@ -71,7 +71,7 @@ export default function ShareModal({ bill, onClose, showToast }) {
 
   // 3. WhatsApp Direct Message
   const handleWhatsApp = () => {
-    const text = `*VIJAYA DURGA AGENCIES*\nTax Invoice #${bill.billNo} ${bill.isVoided ? '(VOIDED)' : ''}\n\nCustomer: ${bill.companyName}\nDate: ${formattedDate}\nTotal Amount: ${amountStr}\n\nView Official Invoice:\n${publicUrl}\n\nThank you for your business!`;
+    const text = `VIJAYA DURGA AGENCIES\nTax Invoice #${bill.billNo} ${bill.isVoided ? '(VOIDED)' : ''}\n\nCustomer: ${bill.companyName}\nDate: ${formattedDate}\nTotal Amount: ${amountStr}\n\nView Official Invoice:\n${publicUrl}\n\nThank you for your business!`;
     const waUrl = cleanPhone
       ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(text)}`
       : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;

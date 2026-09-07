@@ -175,22 +175,22 @@ router.get('/daily-summary', protect, restrictTo('owner', 'admin', 'staff'), asy
     const fmt = (n) => 'Rs. ' + Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
 
     // Build WhatsApp message
-    let msg = `🏢 *VIJAYA DURGA AGENCIES*\n📊 *Daily Business Summary*\n📅 ${dateStr}\n`;
+    let msg = `🏢 VIJAYA DURGA AGENCIES\n📊 Daily Business Summary\n📅 ${dateStr}\n`;
     msg += `━━━━━━━━━━━━━━━━━━━\n`;
-    msg += `💰 *Today's Sales:* ${fmt(todaySales)}\n`;
-    msg += `🧾 *Bills Created:* ${todayCount}\n`;
+    msg += `💰 Today's Sales: ${fmt(todaySales)}\n`;
+    msg += `🧾 Bills Created: ${todayCount}\n`;
     if (topToday) {
-      msg += `👤 *Top Buyer Today:* ${topToday._id} (${fmt(topToday.totalAmount)})\n`;
+      msg += `👤 Top Buyer Today: ${topToday._id} (${fmt(topToday.totalAmount)})\n`;
     }
     msg += `━━━━━━━━━━━━━━━━━━━\n`;
-    msg += `📆 *${monthName} Total:* ${fmt(month.totalSales)} (${month.billCount} bills)\n`;
+    msg += `📆 ${monthName} Total: ${fmt(month.totalSales)} (${month.billCount} bills)\n`;
     if (topMonth) {
-      msg += `🏆 *Top Buyer (Month):* ${topMonth._id} (${fmt(topMonth.totalAmount)})\n`;
+      msg += `🏆 Top Buyer (Month): ${topMonth._id} (${fmt(topMonth.totalAmount)})\n`;
     }
     msg += `━━━━━━━━━━━━━━━━━━━\n`;
-    msg += `⚠️ *Outstanding Receivables:* ${fmt(receivables.totalPending)} (${receivables.pendingCount} bills)\n`;
+    msg += `⚠️ Outstanding Receivables: ${fmt(receivables.totalPending)} (${receivables.pendingCount} bills)\n`;
     msg += `━━━━━━━━━━━━━━━━━━━\n`;
-    msg += `\n_Sent from Vijaya Durga Agencies Billing App_`;
+    msg += `\nSent from Vijaya Durga Agencies Billing App`;
 
     res.json({
       today: { totalSales: todaySales, billCount: todayCount },

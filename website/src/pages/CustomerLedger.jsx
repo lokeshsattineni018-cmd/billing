@@ -45,16 +45,16 @@ export default function CustomerLedger() {
     const acc = settings?.accountNo || '4805135000002964';
     const ifsc = settings?.ifsc || 'KVBL0004815';
 
-    const message = `*PAYMENT REMINDER — VIJAYA DURGA AGENCIES*
+    const message = `PAYMENT REMINDER — VIJAYA DURGA AGENCIES
 
 Dear ${customer.companyName},
 
 This is a gentle reminder regarding your outstanding balance with VIJAYA DURGA AGENCIES.
 
-💰 *Total Pending Balance*: ${pendingAmount}
-📄 *Pending Invoices*: ${customer.unpaidBillsCount} bill(s)
+💰 Total Pending Balance: ${pendingAmount}
+📄 Pending Invoices: ${customer.unpaidBillsCount} bill(s)
 
-🏦 *Bank Account Details for Payment*:
+🏦 Bank Account Details for Payment:
 • Bank: ${bank}
 • Account No: ${acc}
 • IFSC Code: ${ifsc}
@@ -63,7 +63,7 @@ This is a gentle reminder regarding your outstanding balance with VIJAYA DURGA A
 Kindly process the payment at your earliest convenience. If already paid, please ignore this message.
 
 Thank you!
-*VIJAYA DURGA AGENCIES*
+VIJAYA DURGA AGENCIES
 Phone: ${settings?.phone || '9441429745'}`;
 
     const waUrl = phone

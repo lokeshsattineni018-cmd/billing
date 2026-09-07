@@ -81,9 +81,10 @@ export default function Dashboard() {
   };
 
   const handleSendWhatsAppSummary = (targetPhone = '') => {
-    if (!dailySummary?.whatsappMessage) return;
+    const rawMsg = (dailySummary?.whatsappMessage || '').replace(/\*/g, '');
+    if (!rawMsg) return;
     const cleanPhone = (targetPhone || '').replace(/\D/g, '');
-    const encoded = encodeURIComponent(dailySummary.whatsappMessage);
+    const encoded = encodeURIComponent(rawMsg);
     const url = cleanPhone
       ? `https://api.whatsapp.com/send?phone=91${cleanPhone}&text=${encoded}`
       : `https://api.whatsapp.com/send?text=${encoded}`;
@@ -92,8 +93,9 @@ export default function Dashboard() {
   };
 
   const handleCopySummary = () => {
-    if (!dailySummary?.whatsappMessage) return;
-    navigator.clipboard.writeText(dailySummary.whatsappMessage);
+    const rawMsg = (dailySummary?.whatsappMessage || '').replace(/\*/g, '');
+    if (!rawMsg) return;
+    navigator.clipboard.writeText(rawMsg);
     showToast('Daily summary copied to clipboard', 'success');
   };
 
@@ -833,7 +835,7 @@ export default function Dashboard() {
                       overflowY: 'auto',
                     }}
                   >
-                    {dailySummary.whatsappMessage}
+                    {(dailySummary.whatsappMessage || '').replace(/\*/g, '')}
                   </pre>
                 </div>
 

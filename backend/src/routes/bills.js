@@ -421,25 +421,25 @@ router.get('/:id/reminder', protect, restrictTo('admin'), async (req, res) => {
     const cleanPhone = (bill.customerPhone || '').replace(/\D/g, '').slice(-10);
 
     // Formatted WhatsApp Reminder Message
-    let waMsg = `*VIJAYA DURGA AGENCIES*\n`;
-    waMsg += `*Payment Reminder / చెల్లింపు రిమైండర్*\n`;
+    let waMsg = `VIJAYA DURGA AGENCIES\n`;
+    waMsg += `Payment Reminder / చెల్లింపు రిమైండర్\n`;
     waMsg += `━━━━━━━━━━━━━━━━━━━\n`;
-    waMsg += `Dear *${bill.companyName}*,\n`;
+    waMsg += `Dear ${bill.companyName},\n`;
     waMsg += `This is a reminder regarding your pending seafood invoice:\n\n`;
-    waMsg += `*Invoice No:* #${bill.billNo}\n`;
-    waMsg += `*Invoice Date:* ${billDate}\n`;
-    waMsg += `*Pending Amount:* Rs. ${amount}\n`;
+    waMsg += `Invoice No: #${bill.billNo}\n`;
+    waMsg += `Invoice Date: ${billDate}\n`;
+    waMsg += `Pending Amount: Rs. ${amount}\n`;
     waMsg += `━━━━━━━━━━━━━━━━━━━\n`;
-    waMsg += `*Bank Account Details for Payment:*\n`;
-    waMsg += `• *Bank:* ${settings.bankName || 'KARUR VYSYA BANK'}\n`;
-    waMsg += `• *Account Name:* ${settings.legalName || 'SATTINENI VENKATA DHANA LAXMI'}\n`;
-    waMsg += `• *A/c Number:* ${settings.accountNo || '4805135000002964'}\n`;
-    waMsg += `• *IFSC Code:* ${settings.ifscCode || 'KVBL0004815'}\n`;
-    waMsg += `• *Branch:* ${settings.branch || 'Narasapur'}\n`;
+    waMsg += `Bank Account Details for Payment:\n`;
+    waMsg += `• Bank: ${settings.bankName || 'KARUR VYSYA BANK'}\n`;
+    waMsg += `• Account Name: ${settings.legalName || 'SATTINENI VENKATA DHANA LAXMI'}\n`;
+    waMsg += `• A/c Number: ${settings.accountNo || '4805135000002964'}\n`;
+    waMsg += `• IFSC Code: ${settings.ifscCode || 'KVBL0004815'}\n`;
+    waMsg += `• Branch: ${settings.branch || 'Narasapur'}\n`;
     waMsg += `━━━━━━━━━━━━━━━━━━━\n`;
     waMsg += `Kindly clear the payment at your earliest convenience.\n`;
     waMsg += `Thank you for your continuous business.\n`;
-    waMsg += `_Vijaya Durga Agencies • Ph: ${settings.phone || '9441429745'}_`;
+    waMsg += `Vijaya Durga Agencies • Ph: ${settings.phone || '9441429745'}`;
 
     // Formatted Compact SMS Message
     const smsMsg = `VIJAYA DURGA AGENCIES: Dear ${bill.companyName}, gentle reminder for pending Invoice #${bill.billNo} dated ${billDate} for Rs. ${amount}. Bank: KVB A/c 4805135000002964, IFSC: KVBL0004815. Please clear payment. Ph: 9441429745`;
