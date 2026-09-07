@@ -22,7 +22,38 @@ router.get('/summary', protect, restrictTo('owner', 'admin', 'staff'), async (re
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-    const [todayStats, monthStats, receivablesStats, recentBills, totalBills] = await Promise.all([
+    const { period = 'today', startDate, endDate } = req.query;
+
+    // Helper for date range calculation
+    let filterStart, filterEnd, periodLabel;
+    if (period === 'today') {
+      filterStart = startOfDay;
+      filterEnd = endOfDay;
+      periodLabel = "Today's Sales";
+    } else if (period === 'this_week') {
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+      filterStart = new Date(now.getFullYear(), now.getMonth(), diff);
+      filterStart.setHours(0, 0, 0, 0);
+      filterEnd = endOfDay;
+      periodLabel = "This Week's Sales";
+    } else if (period === 'this_month') {
+      filterStart = startOfMonth;
+      filterEnd = endOfMonth;
+      periodLabel = "This Month's Sales";
+    } else if (period === 'custom' && startDate && endDate) {
+      filterStart = new Date(startDate);
+      filterStart.setHours(0, 0, 0, 0);
+      filterEnd = new Date(endDate);
+      filterEnd.setHours(23, 59, 59, 999);
+      periodLabel = 'Custom Period Sales';
+    } else {
+      filterStart = startOfDay;
+      filterEnd = endOfDay;
+      periodLabel = "Today's Sales";
+    }
+
+    const [todayStats, monthStats, filterStats, receivablesStats, recentBills, totalBills] = await Promise.all([
       // Today's aggregation (excluding voided bills)
       Bill.aggregate([
         { $match: { date: { $gte: startOfDay, $lt: endOfDay }, isVoided: { $ne: true } } },
@@ -31,6 +62,11 @@ router.get('/summary', protect, restrictTo('owner', 'admin', 'staff'), async (re
       // This month's aggregation (excluding voided bills)
       Bill.aggregate([
         { $match: { date: { $gte: startOfMonth, $lt: endOfMonth }, isVoided: { $ne: true } } },
+        { $group: { _id: null, totalSales: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
+      ]),
+      // Filtered period aggregation (excluding voided bills)
+      Bill.aggregate([
+        { $match: { date: { $gte: filterStart, $lte: filterEnd }, isVoided: { $ne: true } } },
         { $group: { _id: null, totalSales: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
       ]),
       // Total Outstanding Receivables (excluding voided bills)
@@ -50,9 +86,18 @@ router.get('/summary', protect, restrictTo('owner', 'admin', 'staff'), async (re
 
     const today = todayStats[0] || { totalSales: 0, billCount: 0 };
     const month = monthStats[0] || { totalSales: 0, billCount: 0 };
+    const filtered = filterStats[0] || { totalSales: 0, billCount: 0 };
     const receivables = receivablesStats[0] || { totalPending: 0, pendingCount: 0 };
 
     res.json({
+      selectedPeriod: {
+        period,
+        label: periodLabel,
+        totalSales: filtered.totalSales,
+        billCount: filtered.billCount,
+        startDate: filterStart,
+        endDate: filterEnd,
+      },
       today: {
         totalSales: today.totalSales,
         billCount: today.billCount,

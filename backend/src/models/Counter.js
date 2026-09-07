@@ -26,4 +26,16 @@ async function getNextSequence(name) {
   return counter.seq;
 }
 
-module.exports = { Counter, getNextSequence };
+/**
+ * Reset / set sequence number directly for a counter
+ */
+async function resetSequence(name, newSeq = 0) {
+  const counter = await Counter.findOneAndUpdate(
+    { _id: name },
+    { $set: { seq: newSeq } },
+    { new: true, upsert: true }
+  );
+  return counter.seq;
+}
+
+module.exports = { Counter, getNextSequence, resetSequence };

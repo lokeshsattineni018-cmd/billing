@@ -261,4 +261,123 @@ router.put('/:name/credit-limit', protect, restrictTo('admin'), async (req, res)
   }
 });
 
+/**
+ * GET /api/customers/export/csv
+ * Export full customer directory with lifetime metrics to CSV (Owner and Admin only)
+ */
+router.get('/export/csv', protect, restrictTo('owner', 'admin'), async (req, res) => {
+  try {
+    const billStats = await Bill.aggregate([
+      {
+        $match: {
+          companyName: { $exists: true, $ne: null, $nin: ['', 'null', 'undefined'] },
+          isVoided: { $ne: true },
+        },
+      },
+      {
+        $project: {
+          companyName: 1,
+          date: 1,
+          customerPhone: 1,
+          companyGstin: 1,
+          totalAmount: { $ifNull: ['$grandTotal', '$total'] },
+          paidAmount: {
+            $cond: [
+              { $eq: ['$paymentStatus', 'Paid'] },
+              { $ifNull: ['$grandTotal', '$total'] },
+              { $ifNull: ['$paidAmount', 0] },
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: '$companyName',
+          totalInvoiced: { $sum: '$totalAmount' },
+          totalPaid: { $sum: '$paidAmount' },
+          outstandingBalance: {
+            $sum: { $max: [0, { $subtract: ['$totalAmount', '$paidAmount'] }] },
+          },
+          totalBills: { $sum: 1 },
+          lastBillDate: { $max: '$date' },
+          lastPhone: { $last: '$customerPhone' },
+          lastGstin: { $last: '$companyGstin' },
+        },
+      },
+    ]);
+
+    const customDocs = await Customer.find().lean();
+    const customMap = new Map(customDocs.map((c) => [c.name.toLowerCase().trim(), c]));
+
+    const merged = billStats.map((stat) => {
+      const key = stat._id.toLowerCase().trim();
+      const custom = customMap.get(key) || {};
+      const creditLimit = custom.creditLimit || 0;
+      const outstanding = stat.outstandingBalance || 0;
+
+      let creditStatus = 'NORMAL';
+      if (creditLimit > 0) {
+        if (outstanding > creditLimit) creditStatus = 'EXCEEDED';
+        else if (outstanding >= creditLimit * 0.8) creditStatus = 'WARNING';
+      }
+
+      return {
+        name: stat._id,
+        phone: custom.phone || stat.lastPhone || '',
+        gstin: custom.gstin || stat.lastGstin || '',
+        address: custom.address || '',
+        notes: custom.notes || '',
+        creditLimit,
+        creditStatus,
+        totalInvoiced: stat.totalInvoiced,
+        totalPaid: stat.totalPaid,
+        outstandingBalance: stat.outstandingBalance,
+        totalBills: stat.totalBills,
+      };
+    });
+
+    merged.sort((a, b) => b.outstandingBalance - a.outstandingBalance || b.totalInvoiced - a.totalInvoiced);
+
+    const escape = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+    const headers = [
+      'Customer / Client Name',
+      'Phone Number',
+      'GSTIN',
+      'Address',
+      'Total Invoiced (₹)',
+      'Total Paid (₹)',
+      'Outstanding Balance (₹)',
+      'Total Invoices',
+      'Credit Limit (₹)',
+      'Credit Status',
+      'Notes',
+    ];
+
+    const rows = [headers.map(escape).join(',')];
+    merged.forEach((c) => {
+      rows.push([
+        c.name,
+        c.phone,
+        c.gstin,
+        c.address,
+        c.totalInvoiced.toFixed(2),
+        c.totalPaid.toFixed(2),
+        c.outstandingBalance.toFixed(2),
+        c.totalBills,
+        c.creditLimit.toFixed(2),
+        c.creditStatus,
+        c.notes,
+      ].map(escape).join(','));
+    });
+
+    const csvContent = '\ufeff' + rows.join('\r\n');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="customers_master_directory.csv"');
+    res.send(csvContent);
+  } catch (error) {
+    console.error('Customer CSV export error:', error);
+    res.status(500).json({ message: 'Failed to export customers', error: error.message });
+  }
+});
+
 module.exports = router;

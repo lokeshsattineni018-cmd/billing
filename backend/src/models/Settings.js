@@ -61,6 +61,10 @@ const settingsSchema = new mongoose.Schema({
     type: Number,
     default: 587,
   },
+  invoicePrefix: {
+    type: String,
+    default: 'VDA/',
+  },
 }, {
   timestamps: true,
 });

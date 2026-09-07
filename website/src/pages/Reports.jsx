@@ -12,15 +12,26 @@ export default function Reports() {
   const { t } = useLanguage();
   const { toast, showToast } = useToast();
 
+  const [activeTab, setActiveTab] = useState('sales'); // 'sales' | 'outstanding'
   const [range, setRange] = useState('this_month');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Outstanding tab state
+  const [outstandingData, setOutstandingData] = useState(null);
+  const [loadingOutstanding, setLoadingOutstanding] = useState(false);
+  const [outstandingSearch, setOutstandingSearch] = useState('');
+  const [outstandingSort, setOutstandingSort] = useState('balance_desc');
+
   useEffect(() => {
-    loadReport();
-  }, [range]);
+    if (activeTab === 'sales') {
+      loadReport();
+    } else if (activeTab === 'outstanding') {
+      loadOutstanding();
+    }
+  }, [range, activeTab]);
 
   const loadReport = async () => {
     setLoading(true);
@@ -44,6 +55,19 @@ export default function Reports() {
     }
   };
 
+  const loadOutstanding = async () => {
+    setLoadingOutstanding(true);
+    try {
+      const res = await reportsAPI.getOutstanding();
+      setOutstandingData(res.data);
+    } catch (err) {
+      console.error('Failed to load outstanding balances:', err);
+      showToast('Failed to load outstanding balances', 'error');
+    } finally {
+      setLoadingOutstanding(false);
+    }
+  };
+
   const handleApplyCustomDate = (e) => {
     e.preventDefault();
     if (!customStart || !customEnd) {
@@ -53,11 +77,29 @@ export default function Reports() {
     loadReport();
   };
 
+  const getReportParams = () => {
+    const params = { range };
+    if (range === 'custom' && customStart && customEnd) {
+      params.startDate = customStart;
+      params.endDate = customEnd;
+    }
+    return params;
+  };
+
+  const handleDownloadPDF = () => {
+    const params = getReportParams();
+    window.open(reportsAPI.downloadPDFUrl(params), '_blank');
+  };
+
+  const handleExportGST = () => {
+    const params = getReportParams();
+    window.open(reportsAPI.exportGSTUrl(params), '_blank');
+  };
+
   const handleShareWhatsApp = async () => {
     if (!report?.whatsappSummary) return;
     const text = report.whatsappSummary;
 
-    // Use Native Web Share if supported (iOS/Android)
     if (navigator.share) {
       try {
         await navigator.share({
@@ -67,24 +109,31 @@ export default function Reports() {
         navigate('/');
         return;
       } catch (err) {
-        if (err.name === 'AbortError') return; // User dismissed share sheet
+        if (err.name === 'AbortError') return;
       }
     }
 
-    // Direct WhatsApp Universal Link (No blank Safari popup tab)
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.location.href = url;
-    
-    // Redirect to Dashboard so returning brings the user directly to Dashboard
     setTimeout(() => {
       navigate('/');
     }, 400);
   };
 
-  const handleCopyWhatsApp = () => {
-    if (!report?.whatsappSummary) return;
-    navigator.clipboard.writeText(report.whatsappSummary);
-    showToast('Report summary copied to clipboard!', 'success');
+  const handleSendWhatsAppReminder = (customer) => {
+    if (!customer?.reminderMessage) return;
+    const cleanPhone = (customer.customerPhone || '').replace(/\D/g, '').slice(-10);
+    const encoded = encodeURIComponent(customer.reminderMessage);
+    const url = cleanPhone
+      ? `https://api.whatsapp.com/send?phone=91${cleanPhone}&text=${encoded}`
+      : `https://api.whatsapp.com/send?text=${encoded}`;
+    window.open(url, '_blank');
+  };
+
+  const handleCopyReminder = (customer) => {
+    if (!customer?.reminderMessage) return;
+    navigator.clipboard.writeText(customer.reminderMessage);
+    showToast(`Payment reminder copied for ${customer.companyName}!`, 'success');
   };
 
   const handleExportCSV = () => {
@@ -113,12 +162,31 @@ export default function Reports() {
 
   const summary = report?.summary || {};
 
+  // Filtered & sorted outstanding customers
+  const filteredOutstanding = (outstandingData?.customers || [])
+    .filter((c) => {
+      if (!outstandingSearch) return true;
+      const q = outstandingSearch.toLowerCase();
+      return (
+        (c.companyName || '').toLowerCase().includes(q) ||
+        (c.customerPhone || '').includes(q) ||
+        (c.companyGstin || '').toLowerCase().includes(q)
+      );
+    })
+    .sort((a, b) => {
+      if (outstandingSort === 'balance_desc') return b.outstandingBalance - a.outstandingBalance;
+      if (outstandingSort === 'balance_asc') return a.outstandingBalance - b.outstandingBalance;
+      if (outstandingSort === 'name_asc') return (a.companyName || '').localeCompare(b.companyName || '');
+      if (outstandingSort === 'bills_desc') return b.unpaidBillsCount - a.unpaidBillsCount;
+      return 0;
+    });
+
   return (
     <div className="page-container fade-in">
       <Toast toast={toast} />
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
         <div>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
             {t('salesFinancialReports')}
@@ -128,8 +196,26 @@ export default function Reports() {
           </p>
         </div>
 
-        {/* Export Toolbar */}
+        {/* Global Export Toolbar */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleDownloadPDF}
+            style={{ fontWeight: 800, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px', background: '#0b5394' }}
+            title="Download PDF Financial Report"
+          >
+            <DownloadIcon size={16} color="#ffffff" /> Download PDF
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleExportGST}
+            style={{ fontWeight: 800, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #10b981', color: '#047857', background: '#ecfdf5' }}
+            title="Export GSTR-1 Format (B2B, B2C, HSN)"
+          >
+            <FileCheckIcon size={16} /> GSTR-1 CSV
+          </button>
           <button
             type="button"
             className="btn btn-whatsapp"
@@ -157,223 +243,452 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* Date Range Selector Card */}
-      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', marginBottom: range === 'custom' ? '12px' : '0' }}>
-          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b', marginRight: '4px' }}>Range:</span>
-          {[
-            { id: 'today', label: t('today') },
-            { id: 'yesterday', label: t('yesterday') },
-            { id: 'this_week', label: t('thisWeek') },
-            { id: 'this_month', label: t('thisMonth') },
-            { id: 'last_month', label: t('lastMonth') },
-            { id: 'custom', label: t('customDate') },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              className={`btn btn-sm ${range === tab.id ? 'btn-primary' : 'btn-secondary'}`}
-              style={range === tab.id ? { background: '#0b5394', color: '#ffffff' } : {}}
-              onClick={() => setRange(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {range === 'custom' && (
-          <form onSubmit={handleApplyCustomDate} style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', flexWrap: 'wrap', marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed #e2e8f0' }}>
-            <div>
-              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '3px' }}>Start Date</label>
-              <input
-                type="date"
-                className="form-input"
-                value={customStart}
-                onChange={(e) => setCustomStart(e.target.value)}
-              />
-            </div>
-            <div>
-              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '3px' }}>End Date</label>
-              <input
-                type="date"
-                className="form-input"
-                value={customEnd}
-                onChange={(e) => setCustomEnd(e.target.value)}
-              />
-            </div>
-            <button type="submit" className="btn btn-primary" style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, padding: '10px 16px' }}>
-              Apply
-            </button>
-          </form>
-        )}
+      {/* Main View Tabs */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', borderBottom: '2px solid #e2e8f0', paddingBottom: '2px' }}>
+        <button
+          type="button"
+          onClick={() => setActiveTab('sales')}
+          style={{
+            background: 'none',
+            border: 'none',
+            borderBottom: activeTab === 'sales' ? '3px solid #0b5394' : '3px solid transparent',
+            padding: '8px 16px',
+            fontSize: '0.92rem',
+            fontWeight: 800,
+            color: activeTab === 'sales' ? '#0b5394' : '#64748b',
+            cursor: 'pointer',
+            marginBottom: '-2px',
+          }}
+        >
+          📊 Sales Analytics
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('outstanding')}
+          style={{
+            background: 'none',
+            border: 'none',
+            borderBottom: activeTab === 'outstanding' ? '3px solid #d97706' : '3px solid transparent',
+            padding: '8px 16px',
+            fontSize: '0.92rem',
+            fontWeight: 800,
+            color: activeTab === 'outstanding' ? '#d97706' : '#64748b',
+            cursor: 'pointer',
+            marginBottom: '-2px',
+          }}
+        >
+          ⚠️ Customer Outstanding Balances
+        </button>
       </div>
 
-      {loading ? (
-        <div className="spinner" style={{ minHeight: '300px' }}></div>
-      ) : report ? (
-        <div>
-          {/* KPI Summary Tiles */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-            <div className="card" style={{ padding: '18px', borderLeft: '4px solid #0b5394' }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('grossRevenue')}</div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '4px' }}>
-                {formatCurrency(summary.totalRevenue)}
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{summary.totalBills} Invoices total</div>
+      {activeTab === 'sales' ? (
+        <>
+          {/* Date Range Selector Card */}
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', marginBottom: range === 'custom' ? '12px' : '0' }}>
+              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b', marginRight: '4px' }}>Range:</span>
+              {[
+                { id: 'today', label: t('today') },
+                { id: 'yesterday', label: t('yesterday') },
+                { id: 'this_week', label: t('thisWeek') },
+                { id: 'this_month', label: t('thisMonth') },
+                { id: 'last_month', label: t('lastMonth') },
+                { id: 'custom', label: t('customDate') },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  className={`btn btn-sm ${range === tab.id ? 'btn-primary' : 'btn-secondary'}`}
+                  style={range === tab.id ? { background: '#0b5394', color: '#ffffff' } : {}}
+                  onClick={() => setRange(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <div className="card" style={{ padding: '18px', borderLeft: '4px solid #16a34a' }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('collectedPaid')}</div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '4px' }}>
-                {formatCurrency(summary.paidAmount)}
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{summary.paidCount} bills cleared</div>
-            </div>
-
-            <div className="card" style={{ padding: '18px', borderLeft: '4px solid #d97706' }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('pendingReceivablesTitle')}</div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#d97706', marginTop: '4px' }}>
-                {formatCurrency(summary.pendingAmount)}
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{summary.pendingCount} bills unpaid</div>
-            </div>
-
-            <div className="card" style={{ padding: '18px', borderLeft: '4px solid #8b5cf6' }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('avgTicketSize')}</div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#8b5cf6', marginTop: '4px' }}>
-                {formatCurrency(summary.avgTicketSize)}
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>Per bill average</div>
-            </div>
-          </div>
-
-          {/* Tax Breakdown Card */}
-          {summary.totalTax > 0 && (
-            <div className="card" style={{ padding: '18px', marginBottom: '24px' }}>
-              <h3 className="card-title" style={{ marginBottom: '12px' }}>{t('taxCollectionBreakdown')}</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
-                <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>{t('taxableValue')}</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>{formatCurrency(summary.totalTaxable)}</div>
+            {range === 'custom' && (
+              <form onSubmit={handleApplyCustomDate} style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', flexWrap: 'wrap', marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed #e2e8f0' }}>
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '3px' }}>Start Date</label>
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={customStart}
+                    onChange={(e) => setCustomStart(e.target.value)}
+                  />
                 </div>
-                <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>{t('cgstCollected')}</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b5394' }}>{formatCurrency(summary.totalCGST)}</div>
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '3px' }}>End Date</label>
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={customEnd}
+                    onChange={(e) => setCustomEnd(e.target.value)}
+                  />
                 </div>
-                <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>{t('sgstCollected')}</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b5394' }}>{formatCurrency(summary.totalSGST)}</div>
-                </div>
-                <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>{t('igstCollected')}</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b5394' }}>{formatCurrency(summary.totalIGST)}</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Invoices List for Selected Period */}
-          <div className="card" style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
-              <div>
-                <h3 className="card-title" style={{ margin: 0 }}>
-                  {t('invoicesForSelectedPeriod')} ({report.bills?.length || 0})
-                </h3>
-                <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '4px 0 0 0' }}>
-                  {t('invoicesListSubtitle')}
-                </p>
-              </div>
-            </div>
-
-            {!report.bills || report.bills.length === 0 ? (
-              <div className="empty-state" style={{ padding: '36px 20px', textAlign: 'center' }}>
-                <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>{t('noInvoicesFound')}</p>
-              </div>
-            ) : (
-              <div className="table-container">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>{t('invoiceNo')}</th>
-                      <th>{t('date')}</th>
-                      <th>{t('companyName')}</th>
-                      <th>{t('goodsDescription')}</th>
-                      <th className="text-right">{t('grandTotal')}</th>
-                      <th className="text-center">{t('status')}</th>
-                      <th className="text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {report.bills.map((b) => (
-                      <tr
-                        key={b._id}
-                        className="clickable-row"
-                        onClick={() => navigate(`/bills/${b._id}`)}
-                      >
-                        <td>
-                          <span style={{ fontWeight: 800, color: '#0b5394', fontSize: '0.88rem' }}>
-                            #{b.formattedBillNo || b.billNumber}
-                          </span>
-                        </td>
-                        <td style={{ fontSize: '0.84rem', color: '#475569', whiteSpace: 'nowrap' }}>
-                          {formatDate(b.date)}
-                        </td>
-                        <td>
-                          <div style={{ fontWeight: 700, color: '#0f172a' }}>{b.companyName}</div>
-                          {b.customerPhone && (
-                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{b.customerPhone}</div>
-                          )}
-                        </td>
-                        <td style={{ fontSize: '0.84rem', color: '#334155', maxWidth: '240px' }}>
-                          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {b.itemSummary || '—'}
-                          </div>
-                        </td>
-                        <td className="text-right" style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.94rem' }}>
-                          {formatCurrency(b.grandTotal)}
-                        </td>
-                        <td className="text-center">
-                          <span
-                            className="badge"
-                            style={{
-                              background: b.paymentStatus === 'Paid' ? '#ecfdf5' : '#fffbeb',
-                              color: b.paymentStatus === 'Paid' ? '#047857' : '#b45309',
-                              border: `1px solid ${b.paymentStatus === 'Paid' ? '#a7f3d0' : '#fde68a'}`,
-                              fontWeight: 800,
-                              fontSize: '0.72rem',
-                              padding: '3px 8px',
-                              borderRadius: '12px',
-                            }}
-                          >
-                            {b.paymentStatus === 'Paid' ? t('paid') : t('pending')}
-                          </span>
-                        </td>
-                        <td className="text-right" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            style={{
-                              padding: '5px 10px',
-                              fontSize: '0.78rem',
-                              fontWeight: 700,
-                              color: '#0b5394',
-                              border: '1px solid #cbd5e1',
-                              borderRadius: '6px',
-                            }}
-                            onClick={() => navigate(`/bills/${b._id}`)}
-                          >
-                            {t('viewInvoiceBtn')}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                <button type="submit" className="btn btn-primary" style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, padding: '10px 16px' }}>
+                  Apply
+                </button>
+              </form>
             )}
           </div>
+
+          {loading ? (
+            <div className="spinner" style={{ minHeight: '300px' }}></div>
+          ) : report ? (
+            <div>
+              {/* KPI Summary Tiles */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                <div className="card" style={{ padding: '18px', borderLeft: '4px solid #0b5394' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('grossRevenue')}</div>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '4px' }}>
+                    {formatCurrency(summary.totalRevenue)}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{summary.totalBills} Invoices total</div>
+                </div>
+
+                <div className="card" style={{ padding: '18px', borderLeft: '4px solid #16a34a' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('collectedPaid')}</div>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '4px' }}>
+                    {formatCurrency(summary.paidAmount)}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{summary.paidCount} bills cleared</div>
+                </div>
+
+                <div className="card" style={{ padding: '18px', borderLeft: '4px solid #d97706' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('pendingReceivablesTitle')}</div>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#d97706', marginTop: '4px' }}>
+                    {formatCurrency(summary.pendingAmount)}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{summary.pendingCount} bills unpaid</div>
+                </div>
+
+                <div className="card" style={{ padding: '18px', borderLeft: '4px solid #8b5cf6' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('avgTicketSize')}</div>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#8b5cf6', marginTop: '4px' }}>
+                    {formatCurrency(summary.avgTicketSize)}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>Per bill average</div>
+                </div>
+              </div>
+
+              {/* Tax Breakdown Card */}
+              {summary.totalTax > 0 && (
+                <div className="card" style={{ padding: '18px', marginBottom: '24px' }}>
+                  <h3 className="card-title" style={{ marginBottom: '12px' }}>{t('taxCollectionBreakdown')}</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+                    <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>{t('taxableValue')}</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>{formatCurrency(summary.totalTaxable)}</div>
+                    </div>
+                    <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>{t('cgstCollected')}</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b5394' }}>{formatCurrency(summary.totalCGST)}</div>
+                    </div>
+                    <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>{t('sgstCollected')}</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b5394' }}>{formatCurrency(summary.totalSGST)}</div>
+                    </div>
+                    <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>{t('igstCollected')}</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b5394' }}>{formatCurrency(summary.totalIGST)}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Invoices List for Selected Period */}
+              <div className="card" style={{ padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
+                  <div>
+                    <h3 className="card-title" style={{ margin: 0 }}>
+                      {t('invoicesForSelectedPeriod')} ({report.bills?.length || 0})
+                    </h3>
+                    <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '4px 0 0 0' }}>
+                      {t('invoicesListSubtitle')}
+                    </p>
+                  </div>
+                </div>
+
+                {!report.bills || report.bills.length === 0 ? (
+                  <div className="empty-state" style={{ padding: '36px 20px', textAlign: 'center' }}>
+                    <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>{t('noInvoicesFound')}</p>
+                  </div>
+                ) : (
+                  <div className="table-container">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>{t('invoiceNo')}</th>
+                          <th>{t('date')}</th>
+                          <th>{t('companyName')}</th>
+                          <th>{t('goodsDescription')}</th>
+                          <th className="text-right">{t('grandTotal')}</th>
+                          <th className="text-center">{t('status')}</th>
+                          <th className="text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {report.bills.map((b) => (
+                          <tr
+                            key={b._id}
+                            className="clickable-row"
+                            onClick={() => navigate(`/bills/${b._id}`)}
+                          >
+                            <td>
+                              <span style={{ fontWeight: 800, color: '#0b5394', fontSize: '0.88rem' }}>
+                                #{b.formattedBillNo || b.billNumber}
+                              </span>
+                            </td>
+                            <td style={{ fontSize: '0.84rem', color: '#475569', whiteSpace: 'nowrap' }}>
+                              {formatDate(b.date)}
+                            </td>
+                            <td>
+                              <div style={{ fontWeight: 700, color: '#0f172a' }}>{b.companyName}</div>
+                              {b.customerPhone && (
+                                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{b.customerPhone}</div>
+                              )}
+                            </td>
+                            <td style={{ fontSize: '0.84rem', color: '#334155', maxWidth: '240px' }}>
+                              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {b.itemSummary || '—'}
+                              </div>
+                            </td>
+                            <td className="text-right" style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.94rem' }}>
+                              {formatCurrency(b.grandTotal)}
+                            </td>
+                            <td className="text-center">
+                              <span
+                                className="badge"
+                                style={{
+                                  background: b.paymentStatus === 'Paid' ? '#ecfdf5' : '#fffbeb',
+                                  color: b.paymentStatus === 'Paid' ? '#047857' : '#b45309',
+                                  border: `1px solid ${b.paymentStatus === 'Paid' ? '#a7f3d0' : '#fde68a'}`,
+                                  fontWeight: 800,
+                                  fontSize: '0.72rem',
+                                  padding: '3px 8px',
+                                  borderRadius: '12px',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {b.paymentStatus === 'Paid' ? t('paid') : t('pending')}
+                              </span>
+                            </td>
+                            <td className="text-right" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                style={{
+                                  padding: '5px 10px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 700,
+                                  color: '#0b5394',
+                                  border: '1px solid #cbd5e1',
+                                  borderRadius: '6px',
+                                }}
+                                onClick={() => navigate(`/bills/${b._id}`)}
+                              >
+                                {t('viewInvoiceBtn')}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : null}
+        </>
+      ) : (
+        /* CUSTOMER OUTSTANDING TAB (Feature 2 & 8) */
+        <div>
+          {loadingOutstanding ? (
+            <div className="spinner" style={{ minHeight: '300px' }}></div>
+          ) : outstandingData ? (
+            <div>
+              {/* Outstanding Summary Cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                <div className="card" style={{ padding: '18px', borderLeft: '4px solid #d97706' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                    Total Pending Receivables
+                  </div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#d97706', marginTop: '4px' }}>
+                    {formatCurrency(outstandingData.summary?.totalOutstanding || 0)}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                    Across all pending invoices
+                  </div>
+                </div>
+
+                <div className="card" style={{ padding: '18px', borderLeft: '4px solid #ef4444' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                    Clients With Pending Dues
+                  </div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#ef4444', marginTop: '4px' }}>
+                    {outstandingData.summary?.totalCustomersWithDues || 0}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                    Active debtor accounts
+                  </div>
+                </div>
+
+                <div className="card" style={{ padding: '18px', borderLeft: '4px solid #6366f1' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                    Unpaid Invoices Count
+                  </div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#6366f1', marginTop: '4px' }}>
+                    {outstandingData.summary?.totalUnpaidBills || 0}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                    Pending or partial status
+                  </div>
+                </div>
+              </div>
+
+              {/* Outstanding Filter Bar */}
+              <div className="card" style={{ padding: '16px', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                  <div style={{ flex: '1', minWidth: '220px', maxWidth: '400px' }}>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Search debtor by client name or phone..."
+                      value={outstandingSearch}
+                      onChange={(e) => setOutstandingSearch(e.target.value)}
+                      style={{ width: '100%', fontSize: '0.85rem' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 700 }}>Sort:</span>
+                    <select
+                      className="form-input"
+                      value={outstandingSort}
+                      onChange={(e) => setOutstandingSort(e.target.value)}
+                      style={{ fontSize: '0.82rem', padding: '6px 12px' }}
+                    >
+                      <option value="balance_desc">Highest Outstanding First</option>
+                      <option value="balance_asc">Lowest Outstanding First</option>
+                      <option value="bills_desc">Most Unpaid Invoices</option>
+                      <option value="name_asc">Client Name (A-Z)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Outstanding Customers Table */}
+              <div className="card" style={{ padding: '20px' }}>
+                <h3 className="card-title" style={{ marginBottom: '16px' }}>
+                  Pending Debtor Register ({filteredOutstanding.length})
+                </h3>
+
+                {filteredOutstanding.length === 0 ? (
+                  <div className="empty-state" style={{ padding: '36px 20px', textAlign: 'center' }}>
+                    <p style={{ color: '#16a34a', fontWeight: 700, fontSize: '0.95rem', margin: 0 }}>
+                      ✓ No outstanding receivables found! All client accounts are fully paid.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="table-container">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Client Name</th>
+                          <th>Contact Phone</th>
+                          <th className="text-right">Total Invoiced</th>
+                          <th className="text-right">Outstanding Balance</th>
+                          <th className="text-center">Unpaid Bills</th>
+                          <th>Last Invoice Date</th>
+                          <th className="text-right">Reminders & Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredOutstanding.map((c) => (
+                          <tr key={c.companyName}>
+                            <td>
+                              <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.92rem' }}>
+                                {c.companyName}
+                              </div>
+                              {c.companyGstin && (
+                                <div style={{ fontSize: '0.72rem', color: '#64748b', fontFamily: 'monospace' }}>
+                                  GST: {c.companyGstin}
+                                </div>
+                              )}
+                            </td>
+                            <td>
+                              <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
+                                {c.customerPhone || '—'}
+                              </span>
+                            </td>
+                            <td className="text-right" style={{ fontSize: '0.88rem', color: '#475569' }}>
+                              {formatCurrency(c.totalInvoiced)}
+                            </td>
+                            <td className="text-right">
+                              <span style={{ fontWeight: 900, color: '#b45309', fontSize: '1rem' }}>
+                                {formatCurrency(c.outstandingBalance)}
+                              </span>
+                            </td>
+                            <td className="text-center">
+                              <span
+                                style={{
+                                  background: '#fef3c7',
+                                  color: '#b45309',
+                                  padding: '3px 8px',
+                                  borderRadius: '12px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 800,
+                                }}
+                              >
+                                {c.unpaidBillsCount} unpaid
+                              </span>
+                            </td>
+                            <td style={{ fontSize: '0.82rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                              {c.lastBillDate ? formatDate(c.lastBillDate) : '—'}
+                            </td>
+                            <td className="text-right">
+                              <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                                <button
+                                  type="button"
+                                  className="btn btn-whatsapp btn-sm"
+                                  onClick={() => handleSendWhatsAppReminder(c)}
+                                  style={{ padding: '5px 10px', fontSize: '0.76rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}
+                                  title="Send WhatsApp Payment Reminder"
+                                >
+                                  <WhatsAppIcon size={14} color="#ffffff" /> Reminder
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-secondary btn-sm"
+                                  onClick={() => handleCopyReminder(c)}
+                                  style={{ padding: '5px 10px', fontSize: '0.76rem', fontWeight: 700 }}
+                                  title="Copy Reminder Text to Clipboard"
+                                >
+                                  Copy
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-secondary btn-sm"
+                                  onClick={() => navigate(`/bills?search=${encodeURIComponent(c.companyName)}`)}
+                                  style={{ padding: '5px 10px', fontSize: '0.76rem', fontWeight: 700, color: '#0b5394' }}
+                                >
+                                  Bills
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : null}
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

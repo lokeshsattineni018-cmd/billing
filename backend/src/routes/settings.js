@@ -37,13 +37,15 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
+const { Counter, resetSequence } = require('../models/Counter');
+
 /**
  * PUT /api/settings
  * Update business settings (Admin only)
  */
 router.put('/', protect, restrictTo('admin'), async (req, res) => {
   try {
-    const { businessName, legalName, address, phone, gstin, bankName, accountNo, ifsc, branch, backupEmail, backupEnabled, smtpUser, smtpPass, smtpHost, smtpPort } = req.body;
+    const { businessName, legalName, address, phone, gstin, bankName, accountNo, ifsc, branch, backupEmail, backupEnabled, smtpUser, smtpPass, smtpHost, smtpPort, invoicePrefix } = req.body;
 
     let settings = await Settings.findOne();
     if (!settings) {
@@ -65,6 +67,7 @@ router.put('/', protect, restrictTo('admin'), async (req, res) => {
     if (smtpPass && smtpPass.trim().length > 0) settings.smtpPass = smtpPass.trim();
     if (smtpHost !== undefined) settings.smtpHost = smtpHost;
     if (smtpPort !== undefined) settings.smtpPort = smtpPort;
+    if (invoicePrefix !== undefined) settings.invoicePrefix = invoicePrefix.trim();
 
     await settings.save();
     // Never expose smtpPass to frontend
@@ -74,6 +77,59 @@ router.put('/', protect, restrictTo('admin'), async (req, res) => {
     res.json(data);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * GET /api/settings/counter-status
+ * Get current invoice counter status (Admin only)
+ */
+router.get('/counter-status', protect, restrictTo('admin'), async (req, res) => {
+  try {
+    const counter = await Counter.findOne({ _id: 'billNo' });
+    const currentNumber = counter ? counter.seq : 0;
+    res.json({
+      currentNumber,
+      nextNumber: currentNumber + 1,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * POST /api/settings/reset-counter
+ * Reset or set the next invoice sequence number (Admin only)
+ */
+router.post('/reset-counter', protect, restrictTo('admin'), async (req, res) => {
+  try {
+    const { nextNumber } = req.body;
+    const targetNum = parseInt(nextNumber, 10);
+
+    if (isNaN(targetNum) || targetNum < 1) {
+      return res.status(400).json({ message: 'Next invoice number must be an integer greater than or equal to 1.' });
+    }
+
+    const counter = await Counter.findOne({ _id: 'billNo' });
+    const previous = counter ? counter.seq : 0;
+
+    // Setting seq to (targetNum - 1) means next call to getNextSequence() will produce targetNum
+    const newSeq = targetNum - 1;
+    await resetSequence('billNo', newSeq);
+
+    await logActivity(req, 'RESET_COUNTER', 'billNo', {
+      previousNextNo: previous + 1,
+      newNextNo: targetNum,
+    });
+
+    res.json({
+      message: `Invoice sequence updated successfully. Next invoice will be #${targetNum}.`,
+      currentNumber: newSeq,
+      nextNumber: targetNum,
+    });
+  } catch (error) {
+    console.error('Reset counter error:', error);
+    res.status(500).json({ message: 'Failed to reset invoice counter', error: error.message });
   }
 });
 

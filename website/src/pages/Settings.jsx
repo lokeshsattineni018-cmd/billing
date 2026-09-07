@@ -35,11 +35,18 @@ export default function Settings() {
     backupEnabled: true,
     smtpUser: '',
     smtpConfigured: false,
+    invoicePrefix: 'VDA/',
   });
   const [newSmtpPass, setNewSmtpPass] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sendingBackup, setSendingBackup] = useState(false);
+
+  // Counter Reset State
+  const [counterStatus, setCounterStatus] = useState({ currentNumber: 0, nextNumber: 1 });
+  const [newNextNumber, setNewNextNumber] = useState('');
+  const [resettingCounter, setResettingCounter] = useState(false);
+  const [showResetCounterModal, setShowResetCounterModal] = useState(false);
 
   // Users State
   const [users, setUsers] = useState([]);
@@ -82,7 +89,18 @@ export default function Settings() {
   useEffect(() => {
     loadSettings();
     loadUsers();
+    loadCounterStatus();
   }, []);
+
+  const loadCounterStatus = async () => {
+    try {
+      const res = await settingsAPI.getCounterStatus();
+      setCounterStatus(res.data);
+      setNewNextNumber(String(res.data.nextNumber || 1));
+    } catch (err) {
+      console.error('Failed to load counter status:', err);
+    }
+  };
 
   const loadSettings = async () => {
     try {
@@ -101,12 +119,33 @@ export default function Settings() {
         backupEnabled: response.data.backupEnabled !== undefined ? response.data.backupEnabled : true,
         smtpUser: response.data.smtpUser || '',
         smtpConfigured: !!response.data.smtpConfigured,
+        invoicePrefix: response.data.invoicePrefix || 'VDA/',
       });
       setNewSmtpPass('');
     } catch (error) {
       console.error('Failed to load settings:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResetCounter = async (e) => {
+    e.preventDefault();
+    const num = parseInt(newNextNumber, 10);
+    if (isNaN(num) || num < 1) {
+      showToast('Please enter a valid invoice number (1 or greater)', 'error');
+      return;
+    }
+    setResettingCounter(true);
+    try {
+      const res = await settingsAPI.resetCounter({ nextNumber: num });
+      showToast(res.data.message || 'Invoice counter updated!', 'success');
+      setShowResetCounterModal(false);
+      loadCounterStatus();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to update counter', 'error');
+    } finally {
+      setResettingCounter(false);
     }
   };
 
@@ -449,6 +488,47 @@ export default function Settings() {
                   />
                 </div>
               </div>
+
+              <h3 className="card-title" style={{ margin: '22px 0 14px 0', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+                Invoice Numbering & Prefix
+              </h3>
+
+              <div className="form-group">
+                <label className="form-label">Invoice Number Prefix</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={form.invoicePrefix || ''}
+                  onChange={(e) => handleChange('invoicePrefix', e.target.value)}
+                  placeholder="e.g. VDA/ or VDA/26-27/"
+                />
+                <span style={{ fontSize: '0.74rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                  Prefix shown on invoice headings & downloads (e.g. {form.invoicePrefix || 'VDA/'}101)
+                </span>
+              </div>
+
+              {isAdmin && (
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                    <div>
+                      <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0f172a' }}>
+                        Sequence Counter Control
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '3px' }}>
+                        Last generated: <strong>#{counterStatus.currentNumber}</strong> | Next will be: <strong style={{ color: '#0b5394' }}>#{counterStatus.nextNumber}</strong>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setShowResetCounterModal(true)}
+                      style={{ fontWeight: 700, border: '1px solid #cbd5e1', padding: '6px 12px' }}
+                    >
+                      Reset / Set Counter
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <button
                 type="submit"
@@ -1194,6 +1274,76 @@ export default function Settings() {
                 {deletingUser ? 'Deleting...' : 'Yes, Delete Account'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 5: RESET INVOICE COUNTER */}
+      {showResetCounterModal && (
+        <div className="modal-backdrop" onClick={() => setShowResetCounterModal(false)}>
+          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
+                Reset Invoice Sequence Number
+              </h3>
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => setShowResetCounterModal(false)}
+                style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleResetCounter}>
+              <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '8px', padding: '12px', marginBottom: '14px' }}>
+                <div style={{ fontSize: '0.82rem', color: '#b45309', fontWeight: 700 }}>
+                  ⚠️ Sequence Counter Override
+                </div>
+                <p style={{ fontSize: '0.76rem', color: '#92400e', margin: '4px 0 0 0', lineHeight: '1.4' }}>
+                  Setting this will force the next generated invoice to have this exact number. Existing invoices will not be modified or renumbered.
+                </p>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem', display: 'block', marginBottom: '4px' }}>
+                  Next Invoice Number
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  className="form-input"
+                  value={newNextNumber}
+                  onChange={(e) => setNewNextNumber(e.target.value)}
+                  placeholder="e.g. 101"
+                  required
+                  style={{ fontSize: '1rem', fontWeight: 700 }}
+                />
+                <span style={{ fontSize: '0.74rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                  The next invoice will be #{newNextNumber || '...'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowResetCounterModal(false)}
+                  disabled={resettingCounter}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ background: '#0b5394', fontWeight: 700 }}
+                  disabled={resettingCounter}
+                >
+                  {resettingCounter ? 'Updating...' : 'Set Next Number'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -47,6 +47,8 @@ export const authAPI = {
 export const settingsAPI = {
   get: () => api.get('/settings'),
   update: (data) => api.put('/settings', data),
+  getCounterStatus: () => api.get('/settings/counter-status'),
+  resetCounter: (data) => api.post('/settings/reset-counter', data),
 };
 
 // Bills / Invoices
@@ -63,6 +65,7 @@ export const billsAPI = {
   updatePaymentStatus: (id, paymentStatus) => api.patch(`/bills/${id}/payment-status`, { paymentStatus }),
   recordPayment: (id, data) => api.post(`/bills/${id}/payments`, data),
   getPayments: (id) => api.get(`/bills/${id}/payments`),
+  bulkPay: (data) => api.patch('/bills/bulk-pay', data),
   getPDF: (id) => `${API_BASE_URL}/bills/${id}/pdf?token=${localStorage.getItem('srsf_token')}`,
   exportCSVUrl: (params) => {
     const query = new URLSearchParams(params || {}).toString();
@@ -76,7 +79,7 @@ export const billsAPI = {
 
 // Dashboard & Analytics
 export const dashboardAPI = {
-  summary: () => api.get('/dashboard/summary'),
+  summary: (params) => api.get('/dashboard/summary', { params }),
   getDailySummary: () => api.get('/dashboard/daily-summary'),
   getAnalytics: () => api.get('/dashboard/analytics'),
 };
@@ -84,6 +87,15 @@ export const dashboardAPI = {
 // Admin Sales Reports
 export const reportsAPI = {
   getSales: (params) => api.get('/reports/sales', { params }),
+  getOutstanding: () => api.get('/reports/outstanding'),
+  downloadPDFUrl: (params) => {
+    const query = new URLSearchParams(params || {}).toString();
+    return `${API_BASE_URL}/reports/pdf?${query}&token=${localStorage.getItem('srsf_token')}`;
+  },
+  exportGSTUrl: (params) => {
+    const query = new URLSearchParams(params || {}).toString();
+    return `${API_BASE_URL}/reports/gst-export?${query}&token=${localStorage.getItem('srsf_token')}`;
+  },
 };
 
 // Admin Customers Directory, Credit Limits & Customer Payments
@@ -92,6 +104,7 @@ export const customersAPI = {
   getBills: (name) => api.get(`/customers/${encodeURIComponent(name)}/bills`),
   recordPayment: (name, data) => api.post(`/customers/${encodeURIComponent(name)}/record-payment`, data),
   updateCreditLimit: (name, data) => api.put(`/customers/${encodeURIComponent(name)}/credit-limit`, data),
+  exportCSVUrl: () => `${API_BASE_URL}/customers/export/csv?token=${localStorage.getItem('srsf_token')}`,
 };
 
 // Admin Activity Audit Logs

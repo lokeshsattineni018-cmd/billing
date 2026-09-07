@@ -17,6 +17,10 @@ const billSchema = new mongoose.Schema({
     unique: true,
     required: true,
   },
+  formattedBillNo: {
+    type: String,
+    default: '',
+  },
   shareToken: {
     type: String,
     unique: true,

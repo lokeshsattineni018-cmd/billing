@@ -12,6 +12,9 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [data, setData] = useState(null);
+  const [filterPeriod, setFilterPeriod] = useState('today'); // 'today' | 'this_week' | 'this_month' | 'custom'
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
   const [analytics, setAnalytics] = useState(null);
   const [trendView, setTrendView] = useState('daily'); // 'daily' | 'monthly'
   const [dailySummary, setDailySummary] = useState(null);
@@ -24,21 +27,35 @@ export default function Dashboard() {
   const isOwnerOrAdmin = user?.role === 'owner' || user?.role === 'admin';
 
   useEffect(() => {
-    loadDashboard();
+    loadDashboard(filterPeriod);
     if (isAdmin) {
       loadAnalytics();
     }
-  }, [isAdmin]);
+  }, [isAdmin, filterPeriod]);
 
-  const loadDashboard = async () => {
+  const loadDashboard = async (period = filterPeriod, start = customStart, end = customEnd) => {
     try {
-      const response = await dashboardAPI.summary();
+      const params = { period };
+      if (period === 'custom' && start && end) {
+        params.startDate = start;
+        params.endDate = end;
+      }
+      const response = await dashboardAPI.summary(params);
       setData(response.data);
     } catch (error) {
       console.error('Failed to load dashboard:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleApplyCustomFilter = (e) => {
+    e.preventDefault();
+    if (!customStart || !customEnd) {
+      showToast('Please select both start and end dates', 'error');
+      return;
+    }
+    loadDashboard('custom', customStart, customEnd);
   };
 
   const loadAnalytics = async () => {
@@ -260,47 +277,135 @@ export default function Dashboard() {
       {/* ========================================================================= */}
       {/* 2. ENTERPRISE KPI CARDS (Compact Mobile Bento Grid)                      */}
       {/* ========================================================================= */}
+      {/* ========================================================================= */}
+      {/* 2. ENTERPRISE KPI CARDS WITH DYNAMIC DATE FILTER                         */}
+      {/* ========================================================================= */}
       {isOwnerOrAdmin && (
-        <div className="dashboard-stats-grid">
-          {/* Today's Sales Card */}
-          <div className="stat-card-compact">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  {t('todaysSales')}
-                </span>
-                <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#0b5394', marginTop: '4px', letterSpacing: '-0.5px' }}>
-                  {formatCurrency(data?.today?.totalSales || 0)}
-                </div>
-              </div>
-              <div
-                className="stat-icon"
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  background: '#eff6ff',
-                  border: '1px solid #dbeafe',
-                  color: '#0b5394',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <TrendingUpIcon size={18} />
-              </div>
+        <>
+          {/* Dashboard Date Filter Toolbar */}
+          <div
+            style={{
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '12px',
+              padding: '12px 16px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Period:
+              </span>
+              {[
+                { id: 'today', label: 'Today' },
+                { id: 'this_week', label: 'This Week' },
+                { id: 'this_month', label: 'This Month' },
+                { id: 'custom', label: 'Custom Range' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setFilterPeriod(tab.id)}
+                  style={{
+                    background: filterPeriod === tab.id ? '#0b5394' : '#f8fafc',
+                    color: filterPeriod === tab.id ? '#ffffff' : '#334155',
+                    border: `1px solid ${filterPeriod === tab.id ? '#0b5394' : '#e2e8f0'}`,
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    fontSize: '0.76rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
-              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-                {data?.today?.billCount || 0} {t('bills')}
-              </span>
-              <span style={{ background: '#f0fdf4', color: '#16a34a', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
-                Today
-              </span>
-            </div>
+            {filterPeriod === 'custom' && (
+              <form
+                onSubmit={handleApplyCustomFilter}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}
+              >
+                <input
+                  type="date"
+                  className="form-input"
+                  value={customStart}
+                  onChange={(e) => setCustomStart(e.target.value)}
+                  style={{ padding: '5px 10px', fontSize: '0.78rem', height: '32px' }}
+                />
+                <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>to</span>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={customEnd}
+                  onChange={(e) => setCustomEnd(e.target.value)}
+                  style={{ padding: '5px 10px', fontSize: '0.78rem', height: '32px' }}
+                />
+                <button
+                  type="submit"
+                  className="btn btn-primary btn-sm"
+                  style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, padding: '5px 12px', height: '32px' }}
+                >
+                  Filter
+                </button>
+              </form>
+            )}
           </div>
+
+          <div className="dashboard-stats-grid">
+            {/* Filtered Period Sales Card */}
+            <div className="stat-card-compact">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    {filterPeriod === 'today'
+                      ? t('todaysSales')
+                      : filterPeriod === 'this_week'
+                      ? "This Week's Sales"
+                      : filterPeriod === 'this_month'
+                      ? "This Month's Sales"
+                      : "Period Sales"}
+                  </span>
+                  <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#0b5394', marginTop: '4px', letterSpacing: '-0.5px' }}>
+                    {formatCurrency(data?.selectedPeriod?.totalSales ?? data?.today?.totalSales ?? 0)}
+                  </div>
+                </div>
+                <div
+                  className="stat-icon"
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '10px',
+                    background: '#eff6ff',
+                    border: '1px solid #dbeafe',
+                    color: '#0b5394',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <TrendingUpIcon size={18} />
+                </div>
+              </div>
+
+              <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+                  {data?.selectedPeriod?.billCount ?? data?.today?.billCount ?? 0} {t('bills')}
+                </span>
+                <span style={{ background: '#f0fdf4', color: '#16a34a', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
+                  {filterPeriod === 'today' ? 'Today' : filterPeriod === 'this_week' ? 'Week' : filterPeriod === 'this_month' ? 'MTD' : 'Custom'}
+                </span>
+              </div>
+            </div>
 
           {/* This Month's Sales Card */}
           <div className="stat-card-compact">
@@ -422,6 +527,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+        </>
       )}
 
       {/* ========================================================================= */}

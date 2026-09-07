@@ -475,9 +475,13 @@ router.post('/:id/duplicate', protect, restrictTo('admin'), async (req, res) => 
     }
 
     const billNo = await getNextSequence('billNo');
+    const settingsDoc = await Settings.findOne().lean();
+    const prefix = settingsDoc?.invoicePrefix || 'VDA/';
+    const formattedBillNo = `${prefix}${String(billNo).padStart(4, '0')}`;
 
     const duplicate = await Bill.create({
       billNo,
+      formattedBillNo,
       date: new Date(),
       companyName: sourceBill.companyName,
       companyGstin: sourceBill.companyGstin,
@@ -746,9 +750,13 @@ router.post('/', protect, billCreateLimiter, [
     }
 
     const billNo = await getNextSequence('billNo');
+    const settingsDoc = await Settings.findOne().lean();
+    const prefix = settingsDoc?.invoicePrefix || 'VDA/';
+    const formattedBillNo = `${prefix}${String(billNo).padStart(4, '0')}`;
 
     const bill = await Bill.create({
       billNo,
+      formattedBillNo,
       date: date ? new Date(date) : new Date(),
       companyName: companyName.trim(),
       companyGstin: gstin,
@@ -1104,6 +1112,71 @@ router.patch('/:id/payment-status', protect, restrictTo('owner', 'admin'), [
     res.json(bill);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * PATCH /api/bills/bulk-pay
+ * Mark multiple selected invoices as Paid at once (Owner and Admin only)
+ */
+router.patch('/bulk-pay', protect, restrictTo('owner', 'admin'), async (req, res) => {
+  try {
+    const { billIds, paymentMode = 'Cash', reference = '', notes = '', date } = req.body;
+
+    if (!billIds || !Array.isArray(billIds) || billIds.length === 0) {
+      return res.status(400).json({ message: 'Please select at least one invoice to record payment.' });
+    }
+
+    const bills = await Bill.find({
+      _id: { $in: billIds },
+      isVoided: { $ne: true },
+      paymentStatus: { $ne: 'Paid' },
+    });
+
+    if (bills.length === 0) {
+      return res.status(400).json({ message: 'No eligible unpaid invoices found among the selected items.' });
+    }
+
+    let totalCollected = 0;
+    const paymentDate = date ? new Date(date) : new Date();
+
+    for (const bill of bills) {
+      const billTotal = bill.grandTotal || bill.total || 0;
+      const alreadyPaid = bill.paidAmount || 0;
+      const due = Math.max(0, billTotal - alreadyPaid);
+
+      bill.paymentStatus = 'Paid';
+      bill.paidAmount = billTotal;
+
+      bill.payments.push({
+        amount: due > 0 ? due : billTotal,
+        date: paymentDate,
+        mode: ['Cash', 'Bank Transfer', 'UPI', 'Cheque', 'Other'].includes(paymentMode) ? paymentMode : 'Cash',
+        reference: reference ? reference.trim() : 'Bulk Settlement',
+        notes: notes ? notes.trim() : 'Bulk payment recorded from invoice list',
+        recordedBy: req.user._id,
+      });
+
+      totalCollected += due;
+      await bill.save();
+    }
+
+    await logActivity(req, 'BULK_PAYMENT', `${bills.length} Invoices`, {
+      invoiceCount: bills.length,
+      totalAmount: totalCollected,
+      paymentMode,
+      reference,
+    });
+
+    res.json({
+      success: true,
+      updatedCount: bills.length,
+      totalAmount: totalCollected,
+      message: `Successfully marked ${bills.length} invoice(s) as Paid (Total: ₹${totalCollected.toLocaleString('en-IN')}).`,
+    });
+  } catch (error) {
+    console.error('Bulk payment error:', error);
+    res.status(500).json({ message: 'Failed to record bulk payment', error: error.message });
   }
 });
 

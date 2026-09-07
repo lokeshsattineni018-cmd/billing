@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { customersAPI } from '../services/api';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
-import { SearchIcon, PlusIcon, WhatsAppIcon } from '../components/Icons';
+import { SearchIcon, PlusIcon, WhatsAppIcon, DownloadIcon } from '../components/Icons';
 import PaymentModal from '../components/PaymentModal';
 
 export default function CustomerDirectory() {
@@ -162,14 +162,25 @@ export default function CustomerDirectory() {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => navigate('/new-bill')}
-          style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
-        >
-          <PlusIcon size={16} color="#ffffff" /> Create Invoice
-        </button>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => window.open(customersAPI.exportCSVUrl(), '_blank')}
+            style={{ fontWeight: 700, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            title="Export complete customer directory as CSV"
+          >
+            <DownloadIcon size={16} /> Export Customers CSV
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => navigate('/new-bill')}
+            style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <PlusIcon size={16} color="#ffffff" /> Create Invoice
+          </button>
+        </div>
       </div>
 
       {/* Search Bar */}
