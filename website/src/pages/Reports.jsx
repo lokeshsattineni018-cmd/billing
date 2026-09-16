@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
 import { TrendingUpIcon, TrendingDownIcon, ArrowUpIcon, ArrowDownIcon, WhatsAppIcon, DownloadIcon, FileCheckIcon } from '../components/Icons';
-import AnimatedCounter from '../components/AnimatedCounter';
 
 
 export default function Reports() {
@@ -414,7 +413,7 @@ export default function Reports() {
                         <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
                           <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', display: 'block' }}>This Month</span>
                           <span style={{ fontSize: '1.02rem', fontWeight: 900, color: '#0b5394' }}>
-                            <AnimatedCounter value={report.monthOverMonth.thisMonth.totalRevenue} isCurrency />
+                            {formatCurrency(report.monthOverMonth.thisMonth.totalRevenue)}
                           </span>
                         </div>
                         <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
@@ -454,7 +453,7 @@ export default function Reports() {
                         <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
                           <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', display: 'block' }}>This Month</span>
                           <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0b5394' }}>
-                            <AnimatedCounter value={report.monthOverMonth.thisMonth.totalBills} /> bills
+                            {report.monthOverMonth.thisMonth.totalBills} bills
                           </span>
                         </div>
                         <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
@@ -494,7 +493,7 @@ export default function Reports() {
                         <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
                           <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', display: 'block' }}>This Month</span>
                           <span style={{ fontSize: '1.02rem', fontWeight: 900, color: '#16a34a' }}>
-                            <AnimatedCounter value={report.monthOverMonth.thisMonth.paidAmount} isCurrency />
+                            {formatCurrency(report.monthOverMonth.thisMonth.paidAmount)}
                           </span>
                         </div>
                         <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
@@ -530,7 +529,7 @@ export default function Reports() {
                         <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
                           <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', display: 'block' }}>This Month</span>
                           <span style={{ fontSize: '1.02rem', fontWeight: 900, color: '#8b5cf6' }}>
-                            <AnimatedCounter value={report.monthOverMonth.thisMonth.avgTicketSize} isCurrency />
+                            {formatCurrency(report.monthOverMonth.thisMonth.avgTicketSize)}
                           </span>
                         </div>
                         <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
@@ -550,37 +549,37 @@ export default function Reports() {
                 <div className="card" style={{ padding: '18px', borderLeft: '4px solid #0b5394' }}>
                   <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('grossRevenue')}</div>
                   <div className="stat-value" style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '4px' }}>
-                    <AnimatedCounter value={summary.totalRevenue} isCurrency />
+                    {formatCurrency(summary.totalRevenue)}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
-                    <AnimatedCounter value={summary.totalBills} /> Invoices total
+                    {summary.totalBills} Invoices total
                   </div>
                 </div>
 
                 <div className="card" style={{ padding: '18px', borderLeft: '4px solid #16a34a' }}>
                   <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('collectedPaid')}</div>
                   <div className="stat-value" style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '4px' }}>
-                    <AnimatedCounter value={summary.paidAmount} isCurrency />
+                    {formatCurrency(summary.paidAmount)}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
-                    <AnimatedCounter value={summary.paidCount} /> bills cleared
+                    {summary.paidCount} bills cleared
                   </div>
                 </div>
 
                 <div className="card" style={{ padding: '18px', borderLeft: '4px solid #d97706' }}>
                   <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('pendingReceivablesTitle')}</div>
                   <div className="stat-value" style={{ fontSize: '1.6rem', fontWeight: 900, color: '#d97706', marginTop: '4px' }}>
-                    <AnimatedCounter value={summary.pendingAmount} isCurrency />
+                    {formatCurrency(summary.pendingAmount)}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
-                    <AnimatedCounter value={summary.pendingCount} /> bills unpaid
+                    {summary.pendingCount} bills unpaid
                   </div>
                 </div>
 
                 <div className="card" style={{ padding: '18px', borderLeft: '4px solid #8b5cf6' }}>
                   <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('avgTicketSize')}</div>
                   <div className="stat-value" style={{ fontSize: '1.6rem', fontWeight: 900, color: '#8b5cf6', marginTop: '4px' }}>
-                    <AnimatedCounter value={summary.avgTicketSize} isCurrency />
+                    {formatCurrency(summary.avgTicketSize)}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>Per bill average</div>
                 </div>

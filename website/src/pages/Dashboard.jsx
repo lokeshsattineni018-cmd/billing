@@ -6,7 +6,6 @@ import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
 import { TrendingUpIcon, CalendarIcon, PlusIcon, WhatsAppIcon, InvoiceIcon, RefreshIcon } from '../components/Icons';
 import { RevenueTrendChart, TopCustomersBarChart, PaymentStatusDonut } from '../components/AnalyticsCharts';
-import AnimatedCounter from '../components/AnimatedCounter';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -514,10 +513,7 @@ export default function Dashboard() {
                       : "Period Sales"}
                   </span>
                   <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#0b5394', marginTop: '4px', letterSpacing: '-0.5px' }}>
-                    <AnimatedCounter
-                      value={data?.selectedPeriod?.totalSales ?? data?.today?.totalSales ?? 0}
-                      isCurrency
-                    />
+                    {formatCurrency(data?.selectedPeriod?.totalSales ?? data?.today?.totalSales ?? 0)}
                   </div>
                 </div>
                 <div
@@ -541,7 +537,7 @@ export default function Dashboard() {
 
               <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
                 <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-                  <AnimatedCounter value={data?.selectedPeriod?.billCount ?? data?.today?.billCount ?? 0} /> {t('bills')}
+                  {data?.selectedPeriod?.billCount ?? data?.today?.billCount ?? 0} {t('bills')}
                 </span>
                 <span style={{ background: '#f0fdf4', color: '#16a34a', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
                   {filterPeriod === 'today' ? 'Today' : filterPeriod === 'this_week' ? 'Week' : filterPeriod === 'this_month' ? 'MTD' : 'Custom'}
@@ -557,10 +553,7 @@ export default function Dashboard() {
                   {t('thisMonthSales')}
                 </span>
                 <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#10b981', marginTop: '4px', letterSpacing: '-0.5px' }}>
-                  <AnimatedCounter
-                    value={data?.month?.totalSales || 0}
-                    isCurrency
-                  />
+                  {formatCurrency(data?.month?.totalSales || 0)}
                 </div>
               </div>
               <div
@@ -584,7 +577,7 @@ export default function Dashboard() {
 
             <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
               <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-                <AnimatedCounter value={data?.month?.billCount || 0} /> {t('bills')}
+                {data?.month?.billCount || 0} {t('bills')}
               </span>
               <span style={{ background: '#ecfdf5', color: '#059669', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
                 MTD
@@ -600,10 +593,7 @@ export default function Dashboard() {
                   {t('outstandingReceivables')}
                 </span>
                 <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#d97706', marginTop: '4px', letterSpacing: '-0.5px' }}>
-                  <AnimatedCounter
-                    value={data?.receivables?.totalPending || 0}
-                    isCurrency
-                  />
+                  {formatCurrency(data?.receivables?.totalPending || 0)}
                 </div>
               </div>
               <div
@@ -627,7 +617,7 @@ export default function Dashboard() {
 
             <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
               <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-                <AnimatedCounter value={data?.receivables?.pendingCount || 0} /> unpaid
+                {data?.receivables?.pendingCount || 0} unpaid
               </span>
               <span style={{ background: '#fef3c7', color: '#b45309', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
                 Pending
@@ -643,11 +633,10 @@ export default function Dashboard() {
                   {t('totalLifetimeInvoices')}
                 </span>
                 <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#4338ca', marginTop: '4px', letterSpacing: '-0.5px' }}>
-                  <AnimatedCounter
-                    value={data?.totalBills || 0}
-                  />
+                  {data?.totalBills || 0}
                 </div>
               </div>
+
               <div
                 className="stat-icon"
                 style={{
