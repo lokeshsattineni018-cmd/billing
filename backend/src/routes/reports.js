@@ -4,6 +4,7 @@ const Settings = require('../models/Settings');
 const { protect, restrictTo } = require('../middleware/auth');
 const { generatePeriodReportPDF } = require('../services/reportPdfService');
 const { generateGSTR1PDF } = require('../services/gstPdfService');
+const { handleServerError } = require('../utils/errorTracker');
 
 const router = express.Router();
 
@@ -175,7 +176,7 @@ router.get('/sales', protect, restrictTo('owner', 'admin', 'staff'), async (req,
     });
   } catch (error) {
     console.error('Sales report error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -273,7 +274,7 @@ router.get('/outstanding', protect, restrictTo('owner', 'admin', 'staff'), async
     });
   } catch (error) {
     console.error('Outstanding report error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -365,7 +366,7 @@ router.get('/pdf', protect, restrictTo('owner', 'admin'), async (req, res) => {
     res.send(pdfBuffer);
   } catch (error) {
     console.error('PDF report error:', error);
-    res.status(500).json({ message: 'Failed to generate PDF report', error: error.message });
+    return handleServerError(res, error, 'Failed to generate PDF report', req);
   }
 });
 
@@ -400,7 +401,7 @@ router.get('/gst-pdf', protect, restrictTo('owner', 'admin'), async (req, res) =
     res.send(pdfBuffer);
   } catch (error) {
     console.error('GSTR-1 PDF export error:', error);
-    res.status(500).json({ message: 'Failed to generate GSTR-1 PDF statement', error: error.message });
+    return handleServerError(res, error, 'Failed to generate GSTR-1 PDF statement', req);
   }
 });
 
@@ -589,7 +590,7 @@ router.get('/gst-export', protect, restrictTo('owner', 'admin'), async (req, res
     res.send(csvContent);
   } catch (error) {
     console.error('GST export error:', error);
-    res.status(500).json({ message: 'Failed to generate GST export', error: error.message });
+    return handleServerError(res, error, 'Failed to generate GST export', req);
   }
 });
 

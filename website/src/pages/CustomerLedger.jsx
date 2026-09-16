@@ -31,7 +31,7 @@ export default function CustomerLedger() {
       setLedgerData(ledgerRes.data);
       setSettings(settingsRes.data);
     } catch (error) {
-      console.error('Failed to load customer ledger:', error);
+      if (import.meta.env.DEV) { console.error('Failed to load customer ledger:', error); }
       showToast('Failed to load customer ledger', 'error');
     } finally {
       setLoading(false);

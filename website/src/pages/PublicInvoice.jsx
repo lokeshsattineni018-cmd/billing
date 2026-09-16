@@ -46,7 +46,7 @@ export default function PublicInvoice() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      console.error('PDF download error:', e);
+      if (import.meta.env.DEV) { console.error('PDF download error:', e); }
       window.open(`/api/bills/public/${id}/pdf`, '_blank');
     } finally {
       setDownloadingPdf(false);

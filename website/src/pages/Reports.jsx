@@ -48,7 +48,7 @@ export default function Reports() {
       const res = await reportsAPI.getSales(params);
       setReport(res.data);
     } catch (err) {
-      console.error('Failed to load sales report:', err);
+      if (import.meta.env.DEV) { console.error('Failed to load sales report:', err); }
       showToast('Failed to load sales report', 'error');
     } finally {
       setLoading(false);
@@ -61,7 +61,7 @@ export default function Reports() {
       const res = await reportsAPI.getOutstanding();
       setOutstandingData(res.data);
     } catch (err) {
-      console.error('Failed to load outstanding balances:', err);
+      if (import.meta.env.DEV) { console.error('Failed to load outstanding balances:', err); }
       showToast('Failed to load outstanding balances', 'error');
     } finally {
       setLoadingOutstanding(false);

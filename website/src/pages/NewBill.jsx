@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { billsAPI, settingsAPI } from '../services/api';
@@ -99,7 +100,7 @@ export default function NewBill() {
         }
       }
     } catch (e) {
-      console.warn('Could not read draft from localStorage', e);
+      if (import.meta.env.DEV) { console.warn('Could not read draft from localStorage', e); }
     }
   }, [location.state]);
 
@@ -123,7 +124,7 @@ export default function NewBill() {
         try {
           localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
         } catch (e) {
-          console.warn('Failed to auto-save draft to localStorage', e);
+          if (import.meta.env.DEV) { console.warn('Failed to auto-save draft to localStorage', e); }
         }
       }
     }, 400);
@@ -150,7 +151,7 @@ export default function NewBill() {
         showToast('Business GSTIN not set. Please update in Settings.', 'error');
       }
     } catch (error) {
-      console.error('Failed to load settings:', error);
+      if (import.meta.env.DEV) { console.error('Failed to load settings:', error); }
     }
   };
 
@@ -161,7 +162,7 @@ export default function NewBill() {
         setCustomersList(response.data.customers);
       }
     } catch (error) {
-      console.error('Failed to load customer list:', error);
+      if (import.meta.env.DEV) { console.error('Failed to load customer list:', error); }
     }
   };
 

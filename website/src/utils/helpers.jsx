@@ -207,7 +207,7 @@ Thank you for your business!`;
     }
   } catch (err) {
     if (err.name === 'AbortError') return;
-    console.warn('Native file share skipped/cancelled:', err);
+    if (import.meta.env.DEV) { console.warn('Native file share skipped/cancelled:', err); }
   }
 
   // Fallback for Desktop browsers / Direct WhatsApp:
@@ -224,7 +224,7 @@ Thank you for your business!`;
     document.body.removeChild(link);
     window.URL.revokeObjectURL(fileBlobUrl);
   } catch (e) {
-    console.error('Download fallback error:', e);
+    if (import.meta.env.DEV) { console.error('Download fallback error:', e); }
   }
 
   if (showToast) showToast('Invoice PDF downloaded! Opening WhatsApp to attach and send.');

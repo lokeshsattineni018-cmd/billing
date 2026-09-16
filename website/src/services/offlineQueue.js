@@ -103,7 +103,7 @@ export async function syncPendingBills(billsAPI) {
       await removePendingBill(offlineId);
       synced++;
     } catch (err) {
-      console.error('Failed to sync offline bill:', err);
+      if (import.meta.env.DEV) { console.error('Failed to sync offline bill:', err); }
       failed++;
     }
   }

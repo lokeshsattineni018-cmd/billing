@@ -9,7 +9,10 @@ const { getNextSequence } = require('../models/Counter');
 const { protect, restrictTo } = require('../middleware/auth');
 const { billCreateLimiter, escapeRegex } = require('../middleware/security');
 const { logActivity } = require('../utils/activityLogger');
+const structuredLogger = require('../utils/structuredLogger');
 const { generateBillPDFBuffer } = require('../services/pdfService');
+const { calculateVerifiedBillTotals } = require('../utils/billingCalculations');
+const { handleServerError, captureException } = require('../utils/errorTracker');
 
 const router = express.Router();
 
@@ -71,7 +74,7 @@ router.get('/ledger', protect, restrictTo('owner', 'admin'), async (req, res) =>
     });
   } catch (error) {
     console.error('Ledger error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -148,7 +151,7 @@ router.get('/', protect, async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -177,7 +180,7 @@ router.get('/customers/list', protect, async (req, res) => {
     ]);
     res.json({ customers });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return handleServerError(res, error, 'Failed to fetch customer list', req);
   }
 });
 
@@ -185,7 +188,7 @@ router.get('/customers/list', protect, async (req, res) => {
  * GET /api/bills/export/csv
  * Export filtered bills to Excel-compatible CSV format (Admin only)
  */
-router.get('/export/csv', protect, restrictTo('admin'), async (req, res) => {
+router.get('/export/csv', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
     const { search, dateFrom, dateTo, paymentStatus, isVoided } = req.query;
     const filter = {};
@@ -279,7 +282,7 @@ router.get('/export/csv', protect, restrictTo('admin'), async (req, res) => {
     res.status(200).send(csvContent);
   } catch (error) {
     console.error('CSV Export Error:', error);
-    res.status(500).json({ message: 'Failed to export CSV', error: error.message });
+    return handleServerError(res, error, 'Failed to export CSV', req);
   }
 });
 
@@ -287,7 +290,7 @@ router.get('/export/csv', protect, restrictTo('admin'), async (req, res) => {
  * GET /api/bills/export/tally
  * Export bills in standard Tally Prime / Tally.ERP 9 XML format (Admin only)
  */
-router.get('/export/tally', protect, restrictTo('admin'), async (req, res) => {
+router.get('/export/tally', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
     const { dateFrom, dateTo } = req.query;
     const filter = { isVoided: { $ne: true } };
@@ -400,7 +403,7 @@ router.get('/export/tally', protect, restrictTo('admin'), async (req, res) => {
     res.status(200).send(xml);
   } catch (error) {
     console.error('Tally Export Error:', error);
-    res.status(500).json({ message: 'Failed to export Tally XML', error: error.message });
+    return handleServerError(res, error, 'Failed to export Tally XML', req);
   }
 });
 
@@ -408,7 +411,7 @@ router.get('/export/tally', protect, restrictTo('admin'), async (req, res) => {
  * GET /api/bills/:id/reminder
  * Build formatted WhatsApp & SMS payment reminder messages (Admin only)
  */
-router.get('/:id/reminder', protect, restrictTo('admin'), async (req, res) => {
+router.get('/:id/reminder', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
     const bill = await Bill.findById(req.params.id);
     if (!bill) {
@@ -459,7 +462,7 @@ router.get('/:id/reminder', protect, restrictTo('admin'), async (req, res) => {
     });
   } catch (error) {
     console.error('Reminder Error:', error);
-    res.status(500).json({ message: 'Failed to generate reminder', error: error.message });
+    return handleServerError(res, error, 'Failed to generate reminder', req);
   }
 });
 
@@ -467,7 +470,7 @@ router.get('/:id/reminder', protect, restrictTo('admin'), async (req, res) => {
  * POST /api/bills/:id/duplicate
  * Clone/Duplicate an invoice (Admin only)
  */
-router.post('/:id/duplicate', protect, restrictTo('admin'), async (req, res) => {
+router.post('/:id/duplicate', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
     const sourceBill = await Bill.findById(req.params.id);
     if (!sourceBill) {
@@ -518,7 +521,7 @@ router.post('/:id/duplicate', protect, restrictTo('admin'), async (req, res) => 
     });
   } catch (error) {
     console.error('Duplicate Bill Error:', error);
-    res.status(500).json({ message: 'Failed to duplicate bill', error: error.message });
+    return handleServerError(res, error, 'Failed to duplicate bill', req);
   }
 });
 
@@ -562,7 +565,7 @@ router.get('/public/:token', async (req, res) => {
     }
     res.json(bill);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -585,8 +588,10 @@ router.get('/public/:token/pdf', async (req, res) => {
     res.send(pdfBuffer);
   } catch (error) {
     console.error('Public PDF Route Error:', error);
+    captureException(error, { url: req.originalUrl, token: req.params.token }, req);
     if (!res.headersSent) {
-      res.status(500).send('PDF generation failed: ' + error.message);
+      const isDev = process.env.NODE_ENV === 'development';
+      res.status(500).send(isDev ? `PDF generation failed: ${error.message}` : 'PDF generation failed. Please try again later.');
     }
   }
 });
@@ -609,48 +614,9 @@ router.get('/:id', protect, async (req, res) => {
     }
     res.json(bill);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
-
-/**
- * Helper to calculate verified totals server-side
- */
-function calculateVerifiedBillTotals(items, cgstAmount = 0, sgstAmount = 0, igstAmount = 0) {
-  const processedItems = items.map((it, idx) => {
-    const q = parseFloat(it.quantity) || 0;
-    const r = parseFloat(it.rate) || 0;
-    if (q <= 0 || r <= 0) {
-      throw new Error(`Item #${idx + 1} (${it.particulars || 'Item'}) must have quantity > 0 and rate > 0`);
-    }
-    const itemAmt = Math.round(q * r * 100) / 100;
-    return {
-      sno: idx + 1,
-      particulars: it.particulars?.trim() || 'Fresh Seafood / Prawns Supply',
-      hsn: it.hsn?.trim() || '0306',
-      quantity: q,
-      rate: r,
-      taxRate: it.taxRate || '',
-      amount: itemAmt,
-    };
-  });
-
-  const subtotal = Math.round(processedItems.reduce((sum, item) => sum + item.amount, 0) * 100) / 100;
-  const numCgst = Math.round((parseFloat(cgstAmount) || 0) * 100) / 100;
-  const numSgst = Math.round((parseFloat(sgstAmount) || 0) * 100) / 100;
-  const numIgst = Math.round((parseFloat(igstAmount) || 0) * 100) / 100;
-
-  const grandTotal = Math.round((subtotal + numCgst + numSgst + numIgst) * 100) / 100;
-
-  return {
-    processedItems,
-    subtotal,
-    cgstAmount: numCgst,
-    sgstAmount: numSgst,
-    igstAmount: numIgst,
-    grandTotal,
-  };
-}
 
 /**
  * POST /api/bills
@@ -813,6 +779,7 @@ router.post('/', protect, billCreateLimiter, [
       amount: bill.grandTotal || bill.total,
       billNo: bill.billNo,
     });
+    structuredLogger.logBillOperation('CREATE', bill, req);
 
     const populatedBill = await Bill.findById(bill._id).populate('createdBy', 'name');
     res.status(201).json({
@@ -821,7 +788,7 @@ router.post('/', protect, billCreateLimiter, [
     });
   } catch (error) {
     console.error('Create Bill Error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -914,12 +881,13 @@ router.put('/:id', protect, [
       customer: bill.companyName,
       amount: bill.grandTotal || bill.total,
     });
+    structuredLogger.logBillOperation('EDIT', bill, req);
 
     const updated = await Bill.findById(bill._id).populate('createdBy', 'name');
     res.json(updated);
   } catch (error) {
     console.error('Update Bill Error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -927,7 +895,7 @@ router.put('/:id', protect, [
  * PATCH /api/bills/:id/void
  * Void an invoice (Admin only)
  */
-router.patch('/:id/void', protect, restrictTo('admin'), [
+router.patch('/:id/void', protect, restrictTo('owner', 'admin'), [
   body('reason').optional().trim(),
 ], async (req, res) => {
   try {
@@ -954,6 +922,7 @@ router.patch('/:id/void', protect, restrictTo('admin'), [
       customer: bill.companyName,
       reason: bill.voidReason,
     });
+    structuredLogger.logBillOperation('VOID', bill, req, { reason: bill.voidReason });
 
     const updated = await Bill.findById(bill._id)
       .populate('createdBy', 'name')
@@ -965,7 +934,7 @@ router.patch('/:id/void', protect, restrictTo('admin'), [
     });
   } catch (error) {
     console.error('Void Bill Error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -1037,7 +1006,7 @@ router.post('/:id/payments', protect, restrictTo('owner', 'admin'), async (req, 
     });
   } catch (error) {
     console.error('Record Payment Error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -1066,7 +1035,7 @@ router.get('/:id/payments', protect, async (req, res) => {
     });
   } catch (error) {
     console.error('Get Payments Error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -1111,7 +1080,7 @@ router.patch('/:id/payment-status', protect, restrictTo('owner', 'admin'), [
 
     res.json(bill);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 

@@ -23,7 +23,7 @@ export default function ReminderModal({ billId, onClose }) {
       setData(res.data);
       setCustomMsg((res.data.whatsappMessage || '').replace(/\*/g, ''));
     } catch (err) {
-      console.error('Failed to load reminder:', err);
+      if (import.meta.env.DEV) { console.error('Failed to load reminder:', err); }
       showToast('Failed to load reminder message', 'error');
     } finally {
       setLoading(false);

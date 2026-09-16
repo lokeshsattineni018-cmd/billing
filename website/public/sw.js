@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vda-billing-v7';
+const CACHE_NAME = 'vda-billing-v8';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -7,12 +7,14 @@ const STATIC_ASSETS = [
   '/icons/icon-512.png',
 ];
 
+// ─── Install: pre-cache shell assets ───
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)).then(() => self.skipWaiting())
   );
 });
 
+// ─── Activate: purge old caches ───
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -25,15 +27,57 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// ─── Fetch: tiered caching strategy ───
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
 
-  // Ignore chrome-extension and non-http/https requests
+  // Ignore non-http requests (chrome-extension, etc.)
   if (!url.protocol.startsWith('http')) return;
 
-  // 1. API requests — Network-first, graceful fallback
+  // ── Strategy 1: Hashed static assets (JS/CSS) — Cache-first (immutable) ──
+  if (url.pathname.startsWith('/assets/')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return networkResponse;
+        }).catch(() => {
+          return new Response('', { status: 408, statusText: 'Offline' });
+        });
+      })
+    );
+    return;
+  }
+
+  // ── Strategy 2: Dashboard API — Stale-While-Revalidate (instant repeat loads) ──
+  if (url.pathname.startsWith('/api/dashboard/')) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(event.request);
+        const fetchPromise = fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        }).catch(() => null);
+
+        // Return cached immediately, update in background
+        return cached || fetchPromise || new Response(JSON.stringify({ message: 'Offline' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      })
+    );
+    return;
+  }
+
+  // ── Strategy 3: Other API requests — Network-first with graceful fallback ──
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(event.request).catch(async () => {
@@ -48,7 +92,26 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Navigation & SPA Page routes (e.g. /, /reports, /customers, /bills, etc.)
+  // ── Strategy 4: Images — Cache-first with network fallback ──
+  if (/\.(png|jpg|jpeg|gif|svg|webp|ico)(\?|$)/i.test(url.pathname)) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return networkResponse;
+        }).catch(() => {
+          return new Response('', { status: 408, statusText: 'Offline' });
+        });
+      })
+    );
+    return;
+  }
+
+  // ── Strategy 5: Navigation & SPA routes — Network-first with offline shell ──
   const isNavigation =
     event.request.mode === 'navigate' ||
     url.pathname === '/' ||
@@ -74,7 +137,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3. Static assets (.js, .css, images, fonts) — Cache-first with network fallback
+  // ── Strategy 6: Other static assets (fonts, etc.) — Cache-first ──
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) return cachedResponse;
@@ -87,7 +150,6 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch(() => {
-          // Graceful fallback for missing assets
           return new Response('', { status: 408, statusText: 'Request timed out or offline' });
         });
     })

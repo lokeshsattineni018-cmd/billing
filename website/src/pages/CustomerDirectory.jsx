@@ -44,7 +44,7 @@ export default function CustomerDirectory() {
       const res = await customersAPI.list(searchQuery);
       setCustomers(res.data || []);
     } catch (err) {
-      console.error('Failed to load customers:', err);
+      if (import.meta.env.DEV) { console.error('Failed to load customers:', err); }
       showToast('Failed to load customer records', 'error');
     } finally {
       setLoading(false);
@@ -82,7 +82,7 @@ export default function CustomerDirectory() {
       setEditModalOpen(false);
       loadCustomers(search);
     } catch (err) {
-      console.error('Failed to update contact info:', err);
+      if (import.meta.env.DEV) { console.error('Failed to update contact info:', err); }
       showToast('Failed to update customer info', 'error');
     } finally {
       setSavingContact(false);
@@ -98,7 +98,7 @@ export default function CustomerDirectory() {
       const res = await customersAPI.getBills(c.name);
       setCustomerBills(res.data || []);
     } catch (err) {
-      console.error('Failed to load customer bills:', err);
+      if (import.meta.env.DEV) { console.error('Failed to load customer bills:', err); }
       showToast('Failed to load customer invoices', 'error');
     } finally {
       setLoadingBills(false);
@@ -129,7 +129,7 @@ export default function CustomerDirectory() {
       handleOpenLedger(ledgerCustomer);
       loadCustomers(search);
     } catch (err) {
-      console.error('Failed to record lump sum payment:', err);
+      if (import.meta.env.DEV) { console.error('Failed to record lump sum payment:', err); }
       showToast(err.response?.data?.message || 'Failed to record payment', 'error');
     } finally {
       setRecordingLumpSum(false);

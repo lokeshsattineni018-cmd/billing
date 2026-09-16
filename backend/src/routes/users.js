@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const ActivityLog = require('../models/ActivityLog');
 const { protect, restrictTo } = require('../middleware/auth');
+const { handleServerError } = require('../utils/errorTracker');
 
 const router = express.Router();
 
@@ -25,7 +26,7 @@ router.get('/', async (req, res) => {
     res.json(users);
   } catch (error) {
     console.error('Failed to list users:', error);
-    res.status(500).json({ message: 'Failed to fetch user accounts', error: error.message });
+    return handleServerError(res, error, 'Failed to fetch user accounts', req);
   }
 });
 
@@ -104,7 +105,7 @@ router.post(
       });
     } catch (error) {
       console.error('Failed to create user:', error);
-      res.status(500).json({ message: 'Failed to create user account', error: error.message });
+      return handleServerError(res, error, 'Failed to create user account', req);
     }
   }
 );
@@ -173,7 +174,7 @@ router.patch(
       res.json({ message: `Password for ${user.username || user.email} updated successfully. Previous sessions invalidated.` });
     } catch (error) {
       console.error('Failed to reset password:', error);
-      res.status(500).json({ message: 'Failed to reset password', error: error.message });
+      return handleServerError(res, error, 'Failed to reset password', req);
     }
   }
 );
@@ -255,7 +256,7 @@ router.put(
       });
     } catch (error) {
       console.error('Failed to update user:', error);
-      res.status(500).json({ message: 'Failed to update user', error: error.message });
+      return handleServerError(res, error, 'Failed to update user', req);
     }
   }
 );
@@ -307,7 +308,7 @@ router.delete('/:id', async (req, res) => {
     res.json({ message: `User account "${user.username || user.email}" deleted successfully` });
   } catch (error) {
     console.error('Failed to delete user:', error);
-    res.status(500).json({ message: 'Failed to delete user account', error: error.message });
+    return handleServerError(res, error, 'Failed to delete user account', req);
   }
 });
 

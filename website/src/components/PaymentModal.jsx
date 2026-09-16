@@ -27,7 +27,7 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
       setBillData(res.data);
       setAmount(res.data.balanceDue > 0 ? String(res.data.balanceDue) : '');
     } catch (err) {
-      console.error('Failed to load bill payments:', err);
+      if (import.meta.env.DEV) { console.error('Failed to load bill payments:', err); }
       setError('Failed to load invoice payment details.');
     } finally {
       setLoading(false);
@@ -69,7 +69,7 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
       }
       onClose();
     } catch (err) {
-      console.error('Record payment error:', err);
+      if (import.meta.env.DEV) { console.error('Record payment error:', err); }
       setError(err.response?.data?.message || 'Failed to record payment. Please try again.');
     } finally {
       setSubmitting(false);

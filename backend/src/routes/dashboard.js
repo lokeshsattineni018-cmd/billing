@@ -2,6 +2,7 @@ const express = require('express');
 const Bill = require('../models/Bill');
 const User = require('../models/User');
 const { protect, restrictTo } = require('../middleware/auth');
+const { handleServerError } = require('../utils/errorTracker');
 
 const router = express.Router();
 
@@ -89,6 +90,8 @@ router.get('/summary', protect, restrictTo('owner', 'admin', 'staff'), async (re
     const filtered = filterStats[0] || { totalSales: 0, billCount: 0 };
     const receivables = receivablesStats[0] || { totalPending: 0, pendingCount: 0 };
 
+    // Cache dashboard summary for 60 seconds (reduces DB queries on back-navigation)
+    res.set('Cache-Control', 'private, max-age=60');
     res.json({
       selectedPeriod: {
         period,
@@ -114,7 +117,7 @@ router.get('/summary', protect, restrictTo('owner', 'admin', 'staff'), async (re
       totalBills,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -192,6 +195,7 @@ router.get('/daily-summary', protect, restrictTo('owner', 'admin', 'staff'), asy
     msg += `━━━━━━━━━━━━━━━━━━━\n`;
     msg += `\nSent from Vijaya Durga Agencies Billing App`;
 
+    res.set('Cache-Control', 'private, max-age=60');
     res.json({
       today: { totalSales: todaySales, billCount: todayCount },
       month: { totalSales: month.totalSales, billCount: month.billCount },
@@ -202,7 +206,7 @@ router.get('/daily-summary', protect, restrictTo('owner', 'admin', 'staff'), asy
       date: dateStr,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -318,6 +322,8 @@ router.get('/analytics', protect, restrictTo('owner', 'admin', 'staff'), async (
       });
     }
 
+    // Analytics data changes slowly — cache for 5 minutes
+    res.set('Cache-Control', 'private, max-age=300');
     res.json({
       dailyTrends: last7Days,
       monthlyTrends: last6Months,
@@ -326,7 +332,7 @@ router.get('/analytics', protect, restrictTo('owner', 'admin', 'staff'), async (
     });
   } catch (error) {
     console.error('Analytics Error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 

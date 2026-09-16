@@ -78,7 +78,7 @@ export default function BillDetail() {
         }, 350);
       }
     } catch (error) {
-      console.error('Failed to load invoice:', error);
+      if (import.meta.env.DEV) { console.error('Failed to load invoice:', error); }
     } finally {
       setLoading(false);
     }
@@ -119,7 +119,7 @@ export default function BillDetail() {
       window.URL.revokeObjectURL(url);
       showToast('PDF downloaded successfully!', 'success');
     } catch (error) {
-      console.error('PDF error:', error);
+      if (import.meta.env.DEV) { console.error('PDF error:', error); }
       showToast('Failed to download PDF', 'error');
     } finally {
       setDownloadingPdf(false);
@@ -132,7 +132,7 @@ export default function BillDetail() {
     try {
       await shareInvoicePDFOnWhatsApp(bill, showToast);
     } catch (err) {
-      console.error('WhatsApp share error:', err);
+      if (import.meta.env.DEV) { console.error('WhatsApp share error:', err); }
     } finally {
       setSharing(false);
     }
@@ -151,7 +151,7 @@ export default function BillDetail() {
       setBill(response.data);
       showToast(`Invoice #${bill.billNo} marked as ${newStatus}!`);
     } catch (error) {
-      console.error('Failed to update status:', error);
+      if (import.meta.env.DEV) { console.error('Failed to update status:', error); }
       showToast(error.response?.data?.message || 'Failed to update status', 'error');
     } finally {
       setUpdatingStatus(false);

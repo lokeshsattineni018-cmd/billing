@@ -3,6 +3,7 @@ const Bill = require('../models/Bill');
 const Settings = require('../models/Settings');
 const { protect, restrictTo } = require('../middleware/auth');
 const { sendDailySummaryEmail } = require('../services/emailService');
+const { handleServerError } = require('../utils/errorTracker');
 
 const router = express.Router();
 
@@ -13,13 +14,35 @@ const router = express.Router();
  */
 router.get('/daily-summary', async (req, res) => {
   try {
-    // Support cron secret key for unauthenticated cron triggers
-    const cronSecret = req.query.secret || req.headers['x-cron-secret'];
-    const isAuthorizedCron = cronSecret && cronSecret === process.env.CRON_SECRET;
+    // Enforce header-only secret key (X-Cron-Secret) to prevent URL query string logging
+    const cronSecret = req.headers['x-cron-secret'];
+    const isAuthorizedCron = Boolean(process.env.CRON_SECRET && cronSecret === process.env.CRON_SECRET);
 
     if (!isAuthorizedCron) {
-      // Fall back to JWT auth
-      return res.status(401).json({ message: 'Unauthorized. Provide ?secret=<CRON_SECRET> or JWT token.' });
+      // Fall back to JWT Bearer token auth for admin/owner
+      let isJwtAuthed = false;
+      try {
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          const token = authHeader.split(' ')[1];
+          const { getJwtSecret } = require('../middleware/security');
+          const jwt = require('jsonwebtoken');
+          const User = require('../models/User');
+          const decoded = jwt.verify(token, getJwtSecret());
+          const user = await User.findById(decoded.id);
+          if (user && ['owner', 'admin'].includes(user.role) && decoded.tokenVersion === user.tokenVersion) {
+            isJwtAuthed = true;
+          }
+        }
+      } catch (authErr) {
+        // Fall through to 401
+      }
+
+      if (!isJwtAuthed) {
+        return res.status(401).json({
+          message: 'Unauthorized. Provide valid X-Cron-Secret header or Admin Bearer token. Query parameter secrets are rejected for security.',
+        });
+      }
     }
 
     const settings = await Settings.findOne().lean();
@@ -59,7 +82,7 @@ router.get('/daily-summary', async (req, res) => {
     });
   } catch (error) {
     console.error('Daily backup error:', error);
-    res.status(500).json({ message: 'Failed to send daily summary', error: error.message });
+    return handleServerError(res, error, 'Failed to send daily summary', req);
   }
 });
 
@@ -111,7 +134,7 @@ router.post('/send-now', protect, restrictTo('admin', 'owner'), async (req, res)
     });
   } catch (error) {
     console.error('Manual backup error:', error);
-    res.status(500).json({ message: 'Failed to send summary email', error: error.message });
+    return handleServerError(res, error, 'Failed to send summary email', req);
   }
 });
 

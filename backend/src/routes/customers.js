@@ -3,6 +3,7 @@ const Customer = require('../models/Customer');
 const Bill = require('../models/Bill');
 const { protect, restrictTo } = require('../middleware/auth');
 const { logActivity } = require('../utils/activityLogger');
+const { handleServerError } = require('../utils/errorTracker');
 
 const router = express.Router();
 
@@ -101,7 +102,7 @@ router.get('/', protect, restrictTo('admin'), async (req, res) => {
     res.json(merged);
   } catch (error) {
     console.error('Customers list error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -138,7 +139,7 @@ router.get('/:name/bills', protect, restrictTo('admin'), async (req, res) => {
     res.json(formatted);
   } catch (error) {
     console.error('Customer bills error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -216,7 +217,7 @@ router.post('/:name/record-payment', protect, restrictTo('admin'), async (req, r
     });
   } catch (error) {
     console.error('Customer lump sum payment error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -257,7 +258,7 @@ router.put('/:name/credit-limit', protect, restrictTo('admin'), async (req, res)
     });
   } catch (error) {
     console.error('Update credit limit error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -376,7 +377,7 @@ router.get('/export/csv', protect, restrictTo('owner', 'admin'), async (req, res
     res.send(csvContent);
   } catch (error) {
     console.error('Customer CSV export error:', error);
-    res.status(500).json({ message: 'Failed to export customers', error: error.message });
+    return handleServerError(res, error, 'Failed to export customers', req);
   }
 });
 

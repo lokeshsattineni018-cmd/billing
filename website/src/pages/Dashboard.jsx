@@ -43,7 +43,7 @@ export default function Dashboard() {
       const response = await dashboardAPI.summary(params);
       setData(response.data);
     } catch (error) {
-      console.error('Failed to load dashboard:', error);
+      if (import.meta.env.DEV) { console.error('Failed to load dashboard:', error); }
     } finally {
       setLoading(false);
     }
@@ -63,7 +63,7 @@ export default function Dashboard() {
       const res = await dashboardAPI.getAnalytics();
       setAnalytics(res.data);
     } catch (error) {
-      console.error('Failed to load analytics:', error);
+      if (import.meta.env.DEV) { console.error('Failed to load analytics:', error); }
     }
   };
 

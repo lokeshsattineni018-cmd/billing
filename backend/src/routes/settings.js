@@ -2,6 +2,7 @@ const express = require('express');
 const Settings = require('../models/Settings');
 const { protect, restrictTo } = require('../middleware/auth');
 const { logActivity } = require('../utils/activityLogger');
+const { handleServerError } = require('../utils/errorTracker');
 
 const router = express.Router();
 
@@ -33,7 +34,7 @@ router.get('/', protect, async (req, res) => {
     delete data.smtpPass;
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -76,7 +77,7 @@ router.put('/', protect, restrictTo('admin'), async (req, res) => {
     delete data.smtpPass;
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -93,7 +94,7 @@ router.get('/counter-status', protect, restrictTo('admin'), async (req, res) => 
       nextNumber: currentNumber + 1,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -129,7 +130,7 @@ router.post('/reset-counter', protect, restrictTo('admin'), async (req, res) => 
     });
   } catch (error) {
     console.error('Reset counter error:', error);
-    res.status(500).json({ message: 'Failed to reset invoice counter', error: error.message });
+    return handleServerError(res, error, 'Failed to reset invoice counter', req);
   }
 });
 

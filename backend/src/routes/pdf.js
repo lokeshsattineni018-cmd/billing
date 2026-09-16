@@ -4,6 +4,7 @@ const Bill = require('../models/Bill');
 const User = require('../models/User');
 const { generateBillPDFBuffer } = require('../services/pdfService');
 const { getJwtSecret, generalLimiter } = require('../middleware/security');
+const { captureException } = require('../utils/errorTracker');
 
 const router = express.Router();
 
@@ -49,8 +50,10 @@ router.get('/:id/pdf', generalLimiter, async (req, res) => {
     res.send(pdfBuffer);
   } catch (error) {
     console.error('PDF Route Error:', error);
+    captureException(error, { url: req.originalUrl, billId: req.params.id }, req);
     if (!res.headersSent) {
-      res.status(500).send('PDF generation failed: ' + error.message);
+      const isDev = process.env.NODE_ENV === 'development';
+      res.status(500).send(isDev ? `PDF generation failed: ${error.message}` : 'PDF generation failed. Please try again later.');
     }
   }
 });

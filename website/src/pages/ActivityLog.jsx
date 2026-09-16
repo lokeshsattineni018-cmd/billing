@@ -74,7 +74,7 @@ export default function ActivityLog() {
       setTotalPages(res.data.totalPages || 1);
       setTotalLogs(res.data.total || 0);
     } catch (err) {
-      console.error('Failed to load activity logs:', err);
+      if (import.meta.env.DEV) { console.error('Failed to load activity logs:', err); }
       showToast('Failed to load activity logs', 'error');
     } finally {
       setLoading(false);

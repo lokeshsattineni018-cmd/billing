@@ -4,8 +4,7 @@ import './index.css'
 import App from './App.jsx'
 
 // Auto-reload window if a new deployment removed an old chunk hash
-window.addEventListener('vite:preloadError', (event) => {
-  console.warn('New deployment chunk detected, refreshing application...');
+window.addEventListener('vite:preloadError', () => {
   window.location.reload();
 });
 

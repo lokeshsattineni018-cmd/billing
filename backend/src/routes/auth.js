@@ -4,6 +4,7 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 const { authLimiter, getJwtSecret } = require('../middleware/security');
+const { handleServerError } = require('../utils/errorTracker');
 
 const router = express.Router();
 
@@ -65,7 +66,7 @@ router.post('/seed', async (req, res) => {
     await autoSeedUsers();
     res.json({ message: 'Default accounts initialized successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Seeding error', error: error.message });
+    return handleServerError(res, error, 'Seeding error', req);
   }
 });
 
@@ -110,7 +111,7 @@ router.post('/login', authLimiter, [
       },
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -123,7 +124,7 @@ router.post('/logout', protect, async (req, res) => {
     await User.findByIdAndUpdate(req.user._id, { $inc: { tokenVersion: 1 } });
     res.json({ message: 'Logged out successfully. All sessions invalidated.' });
   } catch (error) {
-    res.status(500).json({ message: 'Logout failed', error: error.message });
+    return handleServerError(res, error, 'Logout failed', req);
   }
 });
 

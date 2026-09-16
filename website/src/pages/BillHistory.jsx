@@ -50,7 +50,7 @@ export default function BillHistory() {
       setBills(response.data.bills);
       setPagination(response.data.pagination);
     } catch (error) {
-      console.error('Failed to load invoices:', error);
+      if (import.meta.env.DEV) { console.error('Failed to load invoices:', error); }
     } finally {
       setLoading(false);
     }
@@ -123,7 +123,7 @@ export default function BillHistory() {
       window.URL.revokeObjectURL(url);
       showToast(`PDF downloaded successfully!`, 'success');
     } catch (error) {
-      console.error('Download error:', error);
+      if (import.meta.env.DEV) { console.error('Download error:', error); }
       showToast('Failed to download PDF', 'error');
     } finally {
       setDownloadingPdfId(null);
@@ -135,7 +135,7 @@ export default function BillHistory() {
     try {
       await shareInvoicePDFOnWhatsApp(bill, showToast);
     } catch (err) {
-      console.error('WhatsApp share error:', err);
+      if (import.meta.env.DEV) { console.error('WhatsApp share error:', err); }
     }
   };
 

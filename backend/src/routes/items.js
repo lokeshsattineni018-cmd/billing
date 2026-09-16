@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const Item = require('../models/Item');
 const { protect, restrictTo } = require('../middleware/auth');
+const { handleServerError } = require('../utils/errorTracker');
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.get('/', protect, async (req, res) => {
     const items = await Item.find({ isActive: true }).sort({ name: 1 });
     res.json(items);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -39,7 +40,7 @@ router.post('/', protect, restrictTo('owner', 'admin'), [
 
     res.status(201).json(item);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -68,7 +69,7 @@ router.put('/:id', protect, restrictTo('owner', 'admin'), [
     await item.save();
     res.json(item);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 
@@ -87,7 +88,7 @@ router.delete('/:id', protect, restrictTo('owner', 'admin'), async (req, res) =>
     await item.save();
     res.json({ message: 'Item deleted' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 

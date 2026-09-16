@@ -1,6 +1,7 @@
 const express = require('express');
 const ActivityLog = require('../models/ActivityLog');
 const { protect, restrictTo } = require('../middleware/auth');
+const { handleServerError } = require('../utils/errorTracker');
 
 const router = express.Router();
 
@@ -37,7 +38,7 @@ router.get('/', protect, restrictTo('admin'), async (req, res) => {
     });
   } catch (error) {
     console.error('Activity logs error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleServerError(res, error, 'Server error', req);
   }
 });
 

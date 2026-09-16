@@ -103,7 +103,7 @@ export default function Settings() {
       setCounterStatus(res.data);
       setNewNextNumber(String(res.data.nextNumber || 1));
     } catch (err) {
-      console.error('Failed to load counter status:', err);
+      if (import.meta.env.DEV) { console.error('Failed to load counter status:', err); }
     }
   };
 
@@ -128,7 +128,7 @@ export default function Settings() {
       });
       setNewSmtpPass('');
     } catch (error) {
-      console.error('Failed to load settings:', error);
+      if (import.meta.env.DEV) { console.error('Failed to load settings:', error); }
     } finally {
       setLoading(false);
     }
@@ -160,7 +160,7 @@ export default function Settings() {
       const response = await usersAPI.list();
       setUsers(response.data);
     } catch (error) {
-      console.error('Failed to load users:', error);
+      if (import.meta.env.DEV) { console.error('Failed to load users:', error); }
     } finally {
       setLoadingUsers(false);
     }

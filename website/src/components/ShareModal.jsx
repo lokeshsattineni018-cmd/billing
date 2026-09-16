@@ -40,7 +40,7 @@ export default function ShareModal({ bill, onClose, showToast }) {
       }
     } catch (err) {
       if (err.name === 'AbortError') return;
-      console.warn('System share skipped or cancelled:', err);
+      if (import.meta.env.DEV) { console.warn('System share skipped or cancelled:', err); }
     }
     // If not supported, download PDF
     handleDownloadPDF();
@@ -62,7 +62,7 @@ export default function ShareModal({ bill, onClose, showToast }) {
       window.URL.revokeObjectURL(fileBlobUrl);
       if (showToast) showToast('Invoice PDF downloaded!');
     } catch (err) {
-      console.error('Download error:', err);
+      if (import.meta.env.DEV) { console.error('Download error:', err); }
       window.open(pdfUrl, '_blank');
     } finally {
       setDownloading(false);
