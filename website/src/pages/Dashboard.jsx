@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dashboardAPI, billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
-import { TrendingUpIcon, CalendarIcon, PlusIcon, WhatsAppIcon, InvoiceIcon } from '../components/Icons';
+import { TrendingUpIcon, CalendarIcon, PlusIcon, WhatsAppIcon, InvoiceIcon, RefreshIcon } from '../components/Icons';
 import { RevenueTrendChart, TopCustomersBarChart, PaymentStatusDonut } from '../components/AnalyticsCharts';
+import AnimatedCounter from '../components/AnimatedCounter';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -19,6 +20,9 @@ export default function Dashboard() {
   const [trendView, setTrendView] = useState('daily'); // 'daily' | 'monthly'
   const [dailySummary, setDailySummary] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [countdown, setCountdown] = useState(30);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const { toast, showToast } = useToast();
@@ -27,13 +31,38 @@ export default function Dashboard() {
   const isOwnerOrAdmin = user?.role === 'owner' || user?.role === 'admin';
 
   useEffect(() => {
-    loadDashboard(filterPeriod);
+    loadDashboard(filterPeriod, customStart, customEnd, false);
     if (isAdmin) {
       loadAnalytics();
     }
   }, [isAdmin, filterPeriod]);
 
-  const loadDashboard = async (period = filterPeriod, start = customStart, end = customEnd) => {
+  // Live Auto-Refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        setRefreshing(true);
+        loadDashboard(filterPeriod, customStart, customEnd, true);
+        if (isAdmin) {
+          loadAnalytics();
+        }
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [filterPeriod, customStart, customEnd, isAdmin]);
+
+  // Countdown timer ticker every 1 second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => (prev <= 1 ? 30 : prev - 1));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const loadDashboard = async (period = filterPeriod, start = customStart, end = customEnd, isSilent = false) => {
+    if (!isSilent) setLoading(true);
     try {
       const params = { period };
       if (period === 'custom' && start && end) {
@@ -42,12 +71,25 @@ export default function Dashboard() {
       }
       const response = await dashboardAPI.summary(params);
       setData(response.data);
+      setLastUpdated(new Date());
+      setCountdown(30);
     } catch (error) {
       if (import.meta.env.DEV) { console.error('Failed to load dashboard:', error); }
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
+      setRefreshing(false);
     }
   };
+
+  const handleManualRefresh = () => {
+    setRefreshing(true);
+    setCountdown(30);
+    loadDashboard(filterPeriod, customStart, customEnd, true);
+    if (isAdmin) {
+      loadAnalytics();
+    }
+  };
+
 
   const handleApplyCustomFilter = (e) => {
     e.preventDefault();
@@ -159,7 +201,7 @@ export default function Dashboard() {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
                 <span
                   style={{
                     display: 'inline-flex',
@@ -176,8 +218,8 @@ export default function Dashboard() {
                     textTransform: 'uppercase',
                   }}
                 >
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
-                  SYSTEM ACTIVE
+                  <span className="live-pulse-dot" />
+                  LIVE • {countdown}s
                 </span>
                 <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
                   {currentDateStr}
@@ -193,7 +235,31 @@ export default function Dashboard() {
             </div>
 
             {/* Quick Action Buttons */}
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={handleManualRefresh}
+                disabled={refreshing}
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '10px',
+                  padding: '10px 14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  color: '#0b5394',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  transition: 'all 0.15s ease',
+                }}
+                title={`Auto-refreshes every 30 seconds. Last synced at ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}. Click to refresh now.`}
+              >
+                <RefreshIcon size={16} color="#0b5394" spinning={refreshing} />
+                <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+              </button>
               <button
                 type="button"
                 className="btn btn-whatsapp"
@@ -359,35 +425,78 @@ export default function Dashboard() {
               ))}
             </div>
 
-            {filterPeriod === 'custom' && (
-              <form
-                onSubmit={handleApplyCustomFilter}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  padding: '5px 10px',
+                  borderRadius: '20px',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  color: '#475569',
+                }}
               >
-                <input
-                  type="date"
-                  className="form-input"
-                  value={customStart}
-                  onChange={(e) => setCustomStart(e.target.value)}
-                  style={{ padding: '5px 10px', fontSize: '0.78rem', height: '32px' }}
-                />
-                <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>to</span>
-                <input
-                  type="date"
-                  className="form-input"
-                  value={customEnd}
-                  onChange={(e) => setCustomEnd(e.target.value)}
-                  style={{ padding: '5px 10px', fontSize: '0.78rem', height: '32px' }}
-                />
-                <button
-                  type="submit"
-                  className="btn btn-primary btn-sm"
-                  style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, padding: '5px 12px', height: '32px' }}
+                <span className="live-pulse-dot" />
+                <span>Auto-refresh: {countdown}s</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleManualRefresh}
+                disabled={refreshing}
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  padding: '5px 9px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  color: '#0b5394',
+                  transition: 'all 0.15s ease',
+                }}
+                title="Sync now"
+              >
+                <RefreshIcon size={13} color="#0b5394" spinning={refreshing} />
+                <span>Sync</span>
+              </button>
+
+              {filterPeriod === 'custom' && (
+                <form
+                  onSubmit={handleApplyCustomFilter}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}
                 >
-                  Filter
-                </button>
-              </form>
-            )}
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={customStart}
+                    onChange={(e) => setCustomStart(e.target.value)}
+                    style={{ padding: '5px 10px', fontSize: '0.78rem', height: '32px' }}
+                  />
+                  <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>to</span>
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={customEnd}
+                    onChange={(e) => setCustomEnd(e.target.value)}
+                    style={{ padding: '5px 10px', fontSize: '0.78rem', height: '32px' }}
+                  />
+                  <button
+                    type="submit"
+                    className="btn btn-primary btn-sm"
+                    style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, padding: '5px 12px', height: '32px' }}
+                  >
+                    Filter
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
 
           <div className="dashboard-stats-grid">
@@ -405,7 +514,10 @@ export default function Dashboard() {
                       : "Period Sales"}
                   </span>
                   <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#0b5394', marginTop: '4px', letterSpacing: '-0.5px' }}>
-                    {formatCurrency(data?.selectedPeriod?.totalSales ?? data?.today?.totalSales ?? 0)}
+                    <AnimatedCounter
+                      value={data?.selectedPeriod?.totalSales ?? data?.today?.totalSales ?? 0}
+                      isCurrency
+                    />
                   </div>
                 </div>
                 <div
@@ -429,7 +541,7 @@ export default function Dashboard() {
 
               <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
                 <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-                  {data?.selectedPeriod?.billCount ?? data?.today?.billCount ?? 0} {t('bills')}
+                  <AnimatedCounter value={data?.selectedPeriod?.billCount ?? data?.today?.billCount ?? 0} /> {t('bills')}
                 </span>
                 <span style={{ background: '#f0fdf4', color: '#16a34a', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
                   {filterPeriod === 'today' ? 'Today' : filterPeriod === 'this_week' ? 'Week' : filterPeriod === 'this_month' ? 'MTD' : 'Custom'}
@@ -445,7 +557,10 @@ export default function Dashboard() {
                   {t('thisMonthSales')}
                 </span>
                 <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#10b981', marginTop: '4px', letterSpacing: '-0.5px' }}>
-                  {formatCurrency(data?.month?.totalSales || 0)}
+                  <AnimatedCounter
+                    value={data?.month?.totalSales || 0}
+                    isCurrency
+                  />
                 </div>
               </div>
               <div
@@ -469,7 +584,7 @@ export default function Dashboard() {
 
             <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
               <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-                {data?.month?.billCount || 0} {t('bills')}
+                <AnimatedCounter value={data?.month?.billCount || 0} /> {t('bills')}
               </span>
               <span style={{ background: '#ecfdf5', color: '#059669', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
                 MTD
@@ -485,7 +600,10 @@ export default function Dashboard() {
                   {t('outstandingReceivables')}
                 </span>
                 <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#d97706', marginTop: '4px', letterSpacing: '-0.5px' }}>
-                  {formatCurrency(data?.receivables?.totalPending || 0)}
+                  <AnimatedCounter
+                    value={data?.receivables?.totalPending || 0}
+                    isCurrency
+                  />
                 </div>
               </div>
               <div
@@ -509,7 +627,7 @@ export default function Dashboard() {
 
             <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
               <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-                {data?.receivables?.pendingCount || 0} unpaid
+                <AnimatedCounter value={data?.receivables?.pendingCount || 0} /> unpaid
               </span>
               <span style={{ background: '#fef3c7', color: '#b45309', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
                 Pending
@@ -525,7 +643,9 @@ export default function Dashboard() {
                   {t('totalLifetimeInvoices')}
                 </span>
                 <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#4338ca', marginTop: '4px', letterSpacing: '-0.5px' }}>
-                  {data?.totalBills || 0}
+                  <AnimatedCounter
+                    value={data?.totalBills || 0}
+                  />
                 </div>
               </div>
               <div
@@ -546,6 +666,7 @@ export default function Dashboard() {
                 <InvoiceIcon size={18} />
               </div>
             </div>
+
 
             <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
               <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>

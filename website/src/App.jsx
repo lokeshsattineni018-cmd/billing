@@ -1,8 +1,18 @@
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom';
-import { useState, useEffect, lazy, Suspense, useTransition } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import NewBill from './pages/NewBill';
+import BillHistory from './pages/BillHistory';
+import BillDetail from './pages/BillDetail';
+import PublicInvoice from './pages/PublicInvoice';
+import CustomerLedger from './pages/CustomerLedger';
+import CustomerDirectory from './pages/CustomerDirectory';
+import Reports from './pages/Reports';
+import ActivityLog from './pages/ActivityLog';
+import Settings from './pages/Settings';
 import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon, UserIcon } from './components/Icons';
 import logoImg from './assets/logo.png';
 import { registerAutoSync, getPendingCount, syncPendingBills } from './services/offlineQueue';
@@ -10,39 +20,12 @@ import { billsAPI } from './services/api';
 import { playSuccessSound } from './utils/helpers';
 import './index.css';
 
-// ─── Core pages: preloaded after first render for instant navigation ───
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const NewBill = lazy(() => import('./pages/NewBill'));
-const BillHistory = lazy(() => import('./pages/BillHistory'));
-const BillDetail = lazy(() => import('./pages/BillDetail'));
-const PublicInvoice = lazy(() => import('./pages/PublicInvoice'));
-
-// ─── Admin-only pages: lazy-loaded on demand (less frequently used) ───
-const CustomerLedger = lazy(() => import('./pages/CustomerLedger'));
-const CustomerDirectory = lazy(() => import('./pages/CustomerDirectory'));
-const Reports = lazy(() => import('./pages/Reports'));
-const ActivityLog = lazy(() => import('./pages/ActivityLog'));
-const Settings = lazy(() => import('./pages/Settings'));
-
-// Preload core chunks in background after first render (eliminates spinner flash)
-function preloadCoreChunks() {
-  import('./pages/Dashboard');
-  import('./pages/NewBill');
-  import('./pages/BillHistory');
-  import('./pages/BillDetail');
-}
-
-// Smooth transparent fallback — keeps old page visible while chunk loads
-// (no spinner flash, just a brief hold that's invisible to the user)
-function PageLoader() {
-  return <div style={{ minHeight: '60vh' }} />;
-}
-
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
   if (loading) return <div className="spinner" style={{ minHeight: '100vh' }}></div>;
   if (!user) return <Navigate to="/login" replace />;
+
 
   return children;
 }
@@ -175,13 +158,6 @@ function AppLayout() {
   const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
-    // Preload core page chunks in background so navigation feels instant
-    if (typeof requestIdleCallback === 'function') {
-      requestIdleCallback(() => preloadCoreChunks());
-    } else {
-      setTimeout(() => preloadCoreChunks(), 200);
-    }
-
     if (window.deferredInstallPrompt) {
       setInstallPrompt(window.deferredInstallPrompt);
     }
@@ -343,20 +319,18 @@ function AppLayout() {
 
       {/* Main Content Area */}
       <main className="main-content">
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/new-bill" element={<NewBill />} />
-            <Route path="/bills" element={<BillHistory />} />
-            <Route path="/bills/:id" element={<BillDetail />} />
-            {isAdmin && <Route path="/reports" element={<Reports />} />}
-            {isAdmin && <Route path="/customers" element={<CustomerDirectory />} />}
-            <Route path="/ledger" element={<Navigate to="/customers" replace />} />
-            {isAdmin && <Route path="/activity-log" element={<ActivityLog />} />}
-            {isAdmin && <Route path="/settings" element={<Settings />} />}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/new-bill" element={<NewBill />} />
+          <Route path="/bills" element={<BillHistory />} />
+          <Route path="/bills/:id" element={<BillDetail />} />
+          {isAdmin && <Route path="/reports" element={<Reports />} />}
+          {isAdmin && <Route path="/customers" element={<CustomerDirectory />} />}
+          <Route path="/ledger" element={<Navigate to="/customers" replace />} />
+          {isAdmin && <Route path="/activity-log" element={<ActivityLog />} />}
+          {isAdmin && <Route path="/settings" element={<Settings />} />}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
 
       {/* Clean Mobile Bottom Navigation Bar */}
@@ -482,22 +456,20 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <LanguageProvider>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/login" element={<LoginWrapper />} />
-              {/* Public Invoice Routes (Zero Login for Customers) */}
-              <Route path="/view/:id" element={<PublicInvoice />} />
-              <Route path="/invoice/view/:id" element={<PublicInvoice />} />
-              <Route
-                path="/*"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout />
-                  </ProtectedRoute>
-                }
-              />
-            </Routes>
-          </Suspense>
+          <Routes>
+            <Route path="/login" element={<LoginWrapper />} />
+            {/* Public Invoice Routes (Zero Login for Customers) */}
+            <Route path="/view/:id" element={<PublicInvoice />} />
+            <Route path="/invoice/view/:id" element={<PublicInvoice />} />
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
         </LanguageProvider>
       </AuthProvider>
     </BrowserRouter>

@@ -59,7 +59,13 @@ router.get('/sales', protect, restrictTo('owner', 'admin', 'staff'), async (req,
       isVoided: { $ne: true },
     };
 
-    const [bills, topBuyers, itemsAgg, statusAgg] = await Promise.all([
+    const now = new Date();
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [bills, topBuyers, itemsAgg, statusAgg, thisMonthAgg, lastMonthAgg] = await Promise.all([
       Bill.find(matchQuery).sort({ date: -1 }).lean(),
       Bill.aggregate([
         { $match: matchQuery },
@@ -97,6 +103,56 @@ router.get('/sales', protect, restrictTo('owner', 'admin', 'staff'), async (req,
           },
         },
       ]),
+      Bill.aggregate([
+        {
+          $match: {
+            date: { $gte: thisMonthStart, $lt: thisMonthEnd },
+            isVoided: { $ne: true },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
+            totalBills: { $sum: 1 },
+            paidAmount: {
+              $sum: {
+                $cond: [{ $eq: ['$paymentStatus', 'Paid'] }, { $ifNull: ['$grandTotal', '$total'] }, 0],
+              },
+            },
+            pendingAmount: {
+              $sum: {
+                $cond: [{ $ne: ['$paymentStatus', 'Paid'] }, { $ifNull: ['$grandTotal', '$total'] }, 0],
+              },
+            },
+          },
+        },
+      ]),
+      Bill.aggregate([
+        {
+          $match: {
+            date: { $gte: lastMonthStart, $lt: lastMonthEnd },
+            isVoided: { $ne: true },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
+            totalBills: { $sum: 1 },
+            paidAmount: {
+              $sum: {
+                $cond: [{ $eq: ['$paymentStatus', 'Paid'] }, { $ifNull: ['$grandTotal', '$total'] }, 0],
+              },
+            },
+            pendingAmount: {
+              $sum: {
+                $cond: [{ $ne: ['$paymentStatus', 'Paid'] }, { $ifNull: ['$grandTotal', '$total'] }, 0],
+              },
+            },
+          },
+        },
+      ]),
     ]);
 
     const totalRevenue = bills.reduce((acc, b) => acc + (b.grandTotal || b.total || 0), 0);
@@ -110,6 +166,45 @@ router.get('/sales', protect, restrictTo('owner', 'admin', 'staff'), async (req,
     const pendingData = statusAgg.find((s) => s._id !== 'Paid') || { totalAmount: 0, count: 0 };
 
     const avgTicketSize = bills.length > 0 ? Math.round(totalRevenue / bills.length) : 0;
+
+    // Calculate Month-over-Month Comparisons
+    const thisMonthData = thisMonthAgg[0] || { totalRevenue: 0, totalBills: 0, paidAmount: 0, pendingAmount: 0 };
+    const lastMonthData = lastMonthAgg[0] || { totalRevenue: 0, totalBills: 0, paidAmount: 0, pendingAmount: 0 };
+
+    const calcPct = (curr, prev) => {
+      if (prev > 0) return Number((((curr - prev) / prev) * 100).toFixed(1));
+      return curr > 0 ? 100 : 0;
+    };
+
+    const thisMonthName = thisMonthStart.toLocaleString('en-IN', { month: 'short', year: 'numeric' });
+    const lastMonthName = lastMonthStart.toLocaleString('en-IN', { month: 'short', year: 'numeric' });
+
+    const monthOverMonth = {
+      thisMonth: {
+        name: thisMonthName,
+        totalRevenue: thisMonthData.totalRevenue,
+        totalBills: thisMonthData.totalBills,
+        paidAmount: thisMonthData.paidAmount,
+        pendingAmount: thisMonthData.pendingAmount,
+        avgTicketSize: thisMonthData.totalBills > 0 ? Math.round(thisMonthData.totalRevenue / thisMonthData.totalBills) : 0,
+      },
+      lastMonth: {
+        name: lastMonthName,
+        totalRevenue: lastMonthData.totalRevenue,
+        totalBills: lastMonthData.totalBills,
+        paidAmount: lastMonthData.paidAmount,
+        pendingAmount: lastMonthData.pendingAmount,
+        avgTicketSize: lastMonthData.totalBills > 0 ? Math.round(lastMonthData.totalRevenue / lastMonthData.totalBills) : 0,
+      },
+      diff: {
+        revenue: thisMonthData.totalRevenue - lastMonthData.totalRevenue,
+        revenuePct: calcPct(thisMonthData.totalRevenue, lastMonthData.totalRevenue),
+        bills: thisMonthData.totalBills - lastMonthData.totalBills,
+        billsPct: calcPct(thisMonthData.totalBills, lastMonthData.totalBills),
+        paid: thisMonthData.paidAmount - lastMonthData.paidAmount,
+        paidPct: calcPct(thisMonthData.paidAmount, lastMonthData.paidAmount),
+      },
+    };
 
     // Build WhatsApp summary text
     const fmt = (n) => 'Rs. ' + Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
@@ -151,6 +246,7 @@ router.get('/sales', protect, restrictTo('owner', 'admin', 'staff'), async (req,
         pendingAmount: pendingData.totalAmount,
         pendingCount: pendingData.count,
       },
+      monthOverMonth,
       bills: bills.map((b) => ({
         _id: b._id,
         billNumber: b.billNo,

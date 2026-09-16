@@ -4,7 +4,9 @@ import { reportsAPI, billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
-import { TrendingUpIcon, WhatsAppIcon, DownloadIcon, FileCheckIcon } from '../components/Icons';
+import { TrendingUpIcon, TrendingDownIcon, ArrowUpIcon, ArrowDownIcon, WhatsAppIcon, DownloadIcon, FileCheckIcon } from '../components/Icons';
+import AnimatedCounter from '../components/AnimatedCounter';
+
 
 export default function Reports() {
   const navigate = useNavigate();
@@ -207,11 +209,12 @@ export default function Reports() {
             type="button"
             className="btn btn-primary"
             onClick={handleDownloadPDF}
-            style={{ fontWeight: 800, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px', background: '#0b5394' }}
-            title="Download PDF Financial Report"
+            style={{ fontWeight: 800, padding: '9px 15px', display: 'flex', alignItems: 'center', gap: '6px', background: '#0b5394', boxShadow: '0 2px 8px rgba(11, 83, 148, 0.25)' }}
+            title="Download Official Branded PDF Financial Audit Statement for your CA / Auditor"
           >
-            <DownloadIcon size={16} color="#ffffff" /> Download PDF
+            <DownloadIcon size={16} color="#ffffff" /> 📄 Export CA Audit PDF
           </button>
+
           <button
             type="button"
             className="btn btn-secondary"
@@ -352,40 +355,237 @@ export default function Reports() {
             <div className="spinner" style={{ minHeight: '300px' }}></div>
           ) : report ? (
             <div>
-              {/* KPI Summary Tiles */}
+              {/* ========================================================================= */}
+              {/* MONTH-OVER-MONTH COMPARISON ENGINE (THIS MONTH VS LAST MONTH)             */}
+              {/* ========================================================================= */}
+              {report.monthOverMonth && (
+                <div
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '14px',
+                    padding: '20px',
+                    marginBottom: '24px',
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+                          Month-over-Month Performance
+                        </h3>
+                        <span style={{ background: '#eff6ff', color: '#0b5394', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
+                          MoM Velocity
+                        </span>
+                      </div>
+                      <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                        Side-by-side growth: <strong>{report.monthOverMonth.thisMonth.name}</strong> vs <strong>{report.monthOverMonth.lastMonth.name}</strong>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '14px' }}>
+                    {/* 1. Revenue MoM Card */}
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+                          Gross Turnover
+                        </span>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            fontSize: '0.75rem',
+                            fontWeight: 800,
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            background: report.monthOverMonth.diff.revenue >= 0 ? '#ecfdf5' : '#fef2f2',
+                            color: report.monthOverMonth.diff.revenue >= 0 ? '#047857' : '#b91c1c',
+                          }}
+                        >
+                          {report.monthOverMonth.diff.revenue >= 0 ? <ArrowUpIcon size={12} color="#047857" /> : <ArrowDownIcon size={12} color="#b91c1c" />}
+                          {report.monthOverMonth.diff.revenue >= 0 ? '+' : ''}{report.monthOverMonth.diff.revenuePct}%
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', display: 'block' }}>This Month</span>
+                          <span style={{ fontSize: '1.02rem', fontWeight: 900, color: '#0b5394' }}>
+                            <AnimatedCounter value={report.monthOverMonth.thisMonth.totalRevenue} isCurrency />
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block' }}>Last Month</span>
+                          <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#64748b' }}>
+                            {formatCurrency(report.monthOverMonth.lastMonth.totalRevenue)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. Invoices Volume MoM Card */}
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+                          Invoice Volume
+                        </span>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            fontSize: '0.75rem',
+                            fontWeight: 800,
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            background: report.monthOverMonth.diff.bills >= 0 ? '#ecfdf5' : '#fef2f2',
+                            color: report.monthOverMonth.diff.bills >= 0 ? '#047857' : '#b91c1c',
+                          }}
+                        >
+                          {report.monthOverMonth.diff.bills >= 0 ? <ArrowUpIcon size={12} color="#047857" /> : <ArrowDownIcon size={12} color="#b91c1c" />}
+                          {report.monthOverMonth.diff.bills >= 0 ? '+' : ''}{report.monthOverMonth.diff.bills} bills ({report.monthOverMonth.diff.billsPct}%)
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', display: 'block' }}>This Month</span>
+                          <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0b5394' }}>
+                            <AnimatedCounter value={report.monthOverMonth.thisMonth.totalBills} /> bills
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block' }}>Last Month</span>
+                          <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#64748b' }}>
+                            {report.monthOverMonth.lastMonth.totalBills} bills
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3. Collections Cleared MoM Card */}
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+                          Collections Cleared
+                        </span>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            fontSize: '0.75rem',
+                            fontWeight: 800,
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            background: report.monthOverMonth.diff.paid >= 0 ? '#ecfdf5' : '#fef2f2',
+                            color: report.monthOverMonth.diff.paid >= 0 ? '#047857' : '#b91c1c',
+                          }}
+                        >
+                          {report.monthOverMonth.diff.paid >= 0 ? <ArrowUpIcon size={12} color="#047857" /> : <ArrowDownIcon size={12} color="#b91c1c" />}
+                          {report.monthOverMonth.diff.paid >= 0 ? '+' : ''}{report.monthOverMonth.diff.paidPct}%
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', display: 'block' }}>This Month</span>
+                          <span style={{ fontSize: '1.02rem', fontWeight: 900, color: '#16a34a' }}>
+                            <AnimatedCounter value={report.monthOverMonth.thisMonth.paidAmount} isCurrency />
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block' }}>Last Month</span>
+                          <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#64748b' }}>
+                            {formatCurrency(report.monthOverMonth.lastMonth.paidAmount)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 4. Average Ticket Size MoM Card */}
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+                          Avg Order Value
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            background: '#f1f5f9',
+                            color: '#475569',
+                          }}
+                        >
+                          Ticket Size
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', display: 'block' }}>This Month</span>
+                          <span style={{ fontSize: '1.02rem', fontWeight: 900, color: '#8b5cf6' }}>
+                            <AnimatedCounter value={report.monthOverMonth.thisMonth.avgTicketSize} isCurrency />
+                          </span>
+                        </div>
+                        <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block' }}>Last Month</span>
+                          <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#64748b' }}>
+                            {formatCurrency(report.monthOverMonth.lastMonth.avgTicketSize)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* KPI Summary Tiles for Selected Period */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
                 <div className="card" style={{ padding: '18px', borderLeft: '4px solid #0b5394' }}>
                   <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('grossRevenue')}</div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '4px' }}>
-                    {formatCurrency(summary.totalRevenue)}
+                  <div className="stat-value" style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '4px' }}>
+                    <AnimatedCounter value={summary.totalRevenue} isCurrency />
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{summary.totalBills} Invoices total</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                    <AnimatedCounter value={summary.totalBills} /> Invoices total
+                  </div>
                 </div>
 
                 <div className="card" style={{ padding: '18px', borderLeft: '4px solid #16a34a' }}>
                   <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('collectedPaid')}</div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '4px' }}>
-                    {formatCurrency(summary.paidAmount)}
+                  <div className="stat-value" style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '4px' }}>
+                    <AnimatedCounter value={summary.paidAmount} isCurrency />
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{summary.paidCount} bills cleared</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                    <AnimatedCounter value={summary.paidCount} /> bills cleared
+                  </div>
                 </div>
 
                 <div className="card" style={{ padding: '18px', borderLeft: '4px solid #d97706' }}>
                   <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('pendingReceivablesTitle')}</div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#d97706', marginTop: '4px' }}>
-                    {formatCurrency(summary.pendingAmount)}
+                  <div className="stat-value" style={{ fontSize: '1.6rem', fontWeight: 900, color: '#d97706', marginTop: '4px' }}>
+                    <AnimatedCounter value={summary.pendingAmount} isCurrency />
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{summary.pendingCount} bills unpaid</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                    <AnimatedCounter value={summary.pendingCount} /> bills unpaid
+                  </div>
                 </div>
 
                 <div className="card" style={{ padding: '18px', borderLeft: '4px solid #8b5cf6' }}>
                   <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('avgTicketSize')}</div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#8b5cf6', marginTop: '4px' }}>
-                    {formatCurrency(summary.avgTicketSize)}
+                  <div className="stat-value" style={{ fontSize: '1.6rem', fontWeight: 900, color: '#8b5cf6', marginTop: '4px' }}>
+                    <AnimatedCounter value={summary.avgTicketSize} isCurrency />
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>Per bill average</div>
                 </div>
               </div>
+
 
               {/* Tax Breakdown Card */}
               {summary.totalTax > 0 && (

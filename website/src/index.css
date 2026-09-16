@@ -939,12 +939,12 @@ a:hover {
 
 /* ── Animations ── */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateY(-12px); }
+  from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -964,8 +964,10 @@ a:hover {
 }
 
 .fade-in {
-  animation: fadeIn 220ms ease;
+  animation: fadeIn 120ms ease-out;
+  will-change: opacity;
 }
+
 
 /* ── Grids with Desktop Defaults ── */
 .new-bill-header-grid {
@@ -1581,6 +1583,32 @@ a:hover {
     height: 42px !important;
   }
 }
+
+/* Live Auto-Refresh Badge & Pulse */
+@keyframes livePulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+  display: inline-block;
+  animation: livePulse 2s infinite ease-in-out;
+}
+
 
 
 
