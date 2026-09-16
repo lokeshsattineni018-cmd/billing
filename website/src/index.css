@@ -248,6 +248,16 @@ a:hover {
   background: var(--bg-primary);
 }
 
+/* Smooth page transition for lazy-loaded routes */
+.main-content > * {
+  animation: pageIn 0.15s ease-out;
+}
+
+@keyframes pageIn {
+  from { opacity: 0.6; transform: translateY(4px); }
+  to   { opacity: 1;   transform: translateY(0); }
+}
+
 .page-container {
   padding: 36px 40px;
   max-width: 1180px;

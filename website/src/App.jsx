@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom';
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense, useTransition } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import Login from './pages/Login';
@@ -10,32 +10,32 @@ import { billsAPI } from './services/api';
 import { playSuccessSound } from './utils/helpers';
 import './index.css';
 
-// ─── Lazy-loaded page chunks (code splitting) ───
+// ─── Core pages: preloaded after first render for instant navigation ───
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const NewBill = lazy(() => import('./pages/NewBill'));
 const BillHistory = lazy(() => import('./pages/BillHistory'));
 const BillDetail = lazy(() => import('./pages/BillDetail'));
+const PublicInvoice = lazy(() => import('./pages/PublicInvoice'));
+
+// ─── Admin-only pages: lazy-loaded on demand (less frequently used) ───
 const CustomerLedger = lazy(() => import('./pages/CustomerLedger'));
 const CustomerDirectory = lazy(() => import('./pages/CustomerDirectory'));
 const Reports = lazy(() => import('./pages/Reports'));
 const ActivityLog = lazy(() => import('./pages/ActivityLog'));
 const Settings = lazy(() => import('./pages/Settings'));
-const PublicInvoice = lazy(() => import('./pages/PublicInvoice'));
 
-// Minimal inline loading spinner (no extra file/network request)
+// Preload core chunks in background after first render (eliminates spinner flash)
+function preloadCoreChunks() {
+  import('./pages/Dashboard');
+  import('./pages/NewBill');
+  import('./pages/BillHistory');
+  import('./pages/BillDetail');
+}
+
+// Smooth transparent fallback — keeps old page visible while chunk loads
+// (no spinner flash, just a brief hold that's invisible to the user)
 function PageLoader() {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      minHeight: '60vh', width: '100%',
-    }}>
-      <div style={{
-        width: '36px', height: '36px', border: '3px solid #e2e8f0',
-        borderTopColor: '#0b5394', borderRadius: '50%',
-        animation: 'spin 0.7s linear infinite',
-      }} />
-    </div>
-  );
+  return <div style={{ minHeight: '60vh' }} />;
 }
 
 function ProtectedRoute({ children }) {
@@ -175,6 +175,13 @@ function AppLayout() {
   const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
+    // Preload core page chunks in background so navigation feels instant
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(() => preloadCoreChunks());
+    } else {
+      setTimeout(() => preloadCoreChunks(), 200);
+    }
+
     if (window.deferredInstallPrompt) {
       setInstallPrompt(window.deferredInstallPrompt);
     }
