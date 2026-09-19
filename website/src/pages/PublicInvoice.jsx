@@ -242,7 +242,7 @@ export default function PublicInvoice() {
             <tr style={{ fontSize: '0.72rem' }}>
               <th style={{ width: '65px' }}>COUNT</th>
               <th style={{ width: '75px' }}>QTY (kg)</th>
-              <th style={{ width: '70px' }}>RATE (₹)</th>
+              <th style={{ width: '70px' }}>RATE</th>
             </tr>
           </thead>
           <tbody>
@@ -281,13 +281,13 @@ export default function PublicInvoice() {
                   <td>&nbsp;</td>
                   <td>&nbsp;</td>
                   <td className="col-amount" style={{ textAlign: 'right', fontWeight: 800, color: '#000000' }}>
-                    {Number(prawnSubtotal.toFixed(2))}
+                    {prawnSubtotal.toFixed(2)}
                   </td>
                 </tr>
                 <tr className="item-data-row">
                   <td className="col-sno text-center">&nbsp;</td>
                   <td className="text-center font-bold">Ice</td>
-                  <td className="text-right">{Number(iceItem.quantity || 0).toFixed(2)} kg</td>
+                  <td className="text-center">{iceItem.quantity}</td>
                   <td className="text-right">{Number(iceItem.rate || 0).toFixed(2)}</td>
                   <td className="text-center font-bold">{iceItem.taxRate || '0'}</td>
                   <td className="col-amount text-right font-bold">{Number(iceItem.amount || (iceItem.quantity * iceItem.rate) || 0).toFixed(2)}</td>

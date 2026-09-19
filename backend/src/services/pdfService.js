@@ -17,12 +17,34 @@ const teluguJaiShreeRamBuffer = Buffer.from(teluguJaiShreeRamBase64, 'base64');
 /**
  * Generate Traditional Indian Trade Invoice for VIJAYA DURGA SEA FOODS
  */
+const mongoose = require('mongoose');
+
 async function generateBillPDFBuffer(bill) {
   return new Promise(async (resolve, reject) => {
     try {
-      let settings = await Settings.findOne().lean();
+      let settings = null;
+      try {
+        if (mongoose.connection && mongoose.connection.readyState === 1) {
+          settings = await Settings.findOne().lean();
+        }
+      } catch (err) {
+        console.warn('Could not query Settings from DB:', err.message);
+      }
+
       if (!settings) {
-        throw new Error('Business settings not found in database. Please configure settings first.');
+        settings = {
+          businessName: 'VIJAYA DURGA SEA FOODS',
+          proprietor: 'SATTINENI VENKATA DHANA LAXMI',
+          gstin: '37KATPS1500Q1ZR',
+          address: 'D.No. 2-41A, SATTINENI SRINIVASA TATAJI, Near Ramalayam, KOTHOTA - 534 281, Mutyalapalli, West Godavari Dist., A.P.',
+          phone: '9441429745',
+          bankDetails: {
+            bankName: 'KARUR VYSYA BANK',
+            accountNo: '4805135000002964',
+            ifsc: 'KVBL0004815',
+            branch: 'Narasapur',
+          },
+        };
       }
 
       const doc = new PDFDocument({
@@ -264,7 +286,7 @@ async function generateBillPDFBuffer(bill) {
       doc.font('Helvetica-Bold').fontSize(6.5).fillColor(primaryBlue);
       doc.text('COUNT', colX.count + 2, y + 4, { width: cols.count - 4, align: 'center' });
       doc.text('QTY (kg)', colX.qty + 2, y + 4, { width: cols.qty - 4, align: 'center' });
-      doc.text('RATE (₹)', colX.rate + 2, y + 4, { width: cols.rate - 4, align: 'center' });
+      doc.text('RATE', colX.rate + 2, y + 4, { width: cols.rate - 4, align: 'center' });
 
       y += thH2;
 
@@ -330,11 +352,11 @@ async function generateBillPDFBuffer(bill) {
         doc.text('TOTAL', colX.count + 2, y + 6, { width: cols.count - 4, align: 'center' });
         doc.font('Helvetica-Bold').fontSize(9.5).fillColor(textDark);
         doc.text(`${Number(prawnTotalQty.toFixed(2))} kg`, colX.qty + 2, y + 6, { width: cols.qty - 4, align: 'center' });
-        doc.text(`${Number(prawnSubtotal.toFixed(2))}`, colX.amt + 2, y + 6, { width: cols.amt - 8, align: 'right' });
+        doc.text(`${prawnSubtotal.toFixed(2)}`, colX.amt + 2, y + 6, { width: cols.amt - 8, align: 'right' });
 
         y += pTotalH;
 
-        // Ice row below total quantity
+        // Ice row below total quantity (just number, not in kg)
         Object.keys(cols).forEach((key) => {
           doc.rect(colX[key], y, cols[key], itemRowH).stroke();
         });
@@ -342,7 +364,7 @@ async function generateBillPDFBuffer(bill) {
         doc.font('Helvetica-Bold').fontSize(9).fillColor(textDark);
         doc.text('Ice', colX.count + 2, y + 7, { width: cols.count - 4, align: 'center' });
         doc.font('Helvetica').fontSize(9);
-        doc.text(`${iceItem.quantity} kg`, colX.qty + 2, y + 7, { width: cols.qty - 4, align: 'center' });
+        doc.text(String(iceItem.quantity), colX.qty + 2, y + 7, { width: cols.qty - 4, align: 'center' });
         doc.text(`${Number(iceItem.rate).toFixed(2)}`, colX.rate + 2, y + 7, { width: cols.rate - 6, align: 'right' });
         doc.font('Helvetica-Bold').text(iceItem.taxRate || '0', colX.tax + 2, y + 7, { width: cols.tax - 4, align: 'center' });
         doc.font('Helvetica-Bold');

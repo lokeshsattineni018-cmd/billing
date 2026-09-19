@@ -784,7 +784,7 @@ export default function BillDetail() {
               <tr style={{ background: '#f8fafc', color: '#0b5394', fontWeight: 'bold', textAlign: 'center', fontSize: '0.72rem', borderBottom: '1.5px solid #0b5394' }}>
                 <th style={{ borderRight: '1.5px solid #0b5394', padding: '3px 4px', width: '65px' }}>COUNT</th>
                 <th style={{ borderRight: '1.5px solid #0b5394', padding: '3px 4px', width: '75px' }}>QTY (kg)</th>
-                <th style={{ borderRight: '1.5px solid #0b5394', padding: '3px 4px', width: '70px' }}>RATE (₹)</th>
+                <th style={{ borderRight: '1.5px solid #0b5394', padding: '3px 4px', width: '70px' }}>RATE</th>
               </tr>
             </thead>
             <tbody>
@@ -825,13 +825,13 @@ export default function BillDetail() {
                     <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
                     <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
                     <td style={{ textAlign: 'right', paddingRight: '8px', fontWeight: 800, color: '#000000' }}>
-                      {Number(prawnSubtotal.toFixed(2))}
+                      {prawnSubtotal.toFixed(2)}
                     </td>
                   </tr>
                   <tr style={{ height: '24px', borderBottom: '1px solid #c8d9e8' }}>
                     <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}></td>
                     <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>Ice</td>
-                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center' }}>{Number(iceItem.quantity).toFixed(2)} kg</td>
+                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center' }}>{iceItem.quantity}</td>
                     <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', paddingRight: '6px' }}>{Number(iceItem.rate).toFixed(2)}</td>
                     <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>{iceItem.taxRate || '0'}</td>
                     <td style={{ textAlign: 'right', paddingRight: '8px', fontWeight: 'bold' }}>

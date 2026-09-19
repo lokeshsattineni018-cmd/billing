@@ -801,7 +801,7 @@ export default function NewBill() {
             >
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e293b' }}>
-                  Ice Qty (kg / bags)
+                  Ice Qty (Count / Blocks)
                 </label>
                 <input
                   type="number"
@@ -994,7 +994,7 @@ export default function NewBill() {
                   {t('totalBeforeTax')}
                 </span>
                 <span style={{ fontSize: '0.74rem', color: '#64748b', marginLeft: '6px' }}>
-                  ({items.length} prawn {items.length === 1 ? 'item' : 'items'} • Prawn Qty: {totalWeight} kg{hasIce ? ` • Ice: ${iceQuantityNum} kg` : ''})
+                  ({items.length} prawn {items.length === 1 ? 'item' : 'items'} • Prawn Qty: {totalWeight} kg{hasIce ? ` • Ice: ${iceQuantityNum}` : ''})
                 </span>
               </div>
               <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e293b' }}>
