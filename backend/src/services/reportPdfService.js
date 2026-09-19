@@ -17,7 +17,7 @@ async function generatePeriodReportPDF({ bills = [], summary = {}, topBuyers = [
         bufferPages: true,
         info: {
           Title: `GST & Financial Audit Statement - ${dateRange.label || 'Summary'}`,
-          Author: settings.businessName || 'VIJAYA DURGA AGENCIES',
+          Author: settings.businessName || 'VIJAYA DURGA SEA FOODS',
           Subject: 'Statutory Financial & GST Outward Supplies Audit Statement',
         },
       });
@@ -80,7 +80,7 @@ async function generatePeriodReportPDF({ bills = [], summary = {}, topBuyers = [
       const halfW = W / 2;
 
       doc.font('Helvetica-Bold').fontSize(10).fillColor(black);
-      doc.text(settings.businessName || 'VIJAYA DURGA AGENCIES', L + 6, metaY);
+      doc.text(settings.businessName || 'VIJAYA DURGA SEA FOODS', L + 6, metaY);
 
       doc.font('Helvetica-Bold').fontSize(7.5).fillColor(textMuted);
       doc.text(`Prop: ${settings.legalName || 'SATTINENI VENKATA DHANA LAXMI'}`, L + 6, metaY + 12);
@@ -448,7 +448,7 @@ async function generatePeriodReportPDF({ bills = [], summary = {}, topBuyers = [
       // Right Box: Signatures
       const sX = L + signLeftW;
       doc.font('Helvetica-Bold').fontSize(8).fillColor(black);
-      doc.text(`For ${settings.businessName || 'VIJAYA DURGA AGENCIES'}`, sX + 6, y + 6, {
+      doc.text(`For ${settings.businessName || 'VIJAYA DURGA SEA FOODS'}`, sX + 6, y + 6, {
         width: signRightW - 12,
         align: 'center',
       });
@@ -473,7 +473,7 @@ async function generatePeriodReportPDF({ bills = [], summary = {}, topBuyers = [
         doc.switchToPage(i);
         doc.font('Helvetica').fontSize(6.5).fillColor('#64748b');
         doc.text(
-          `Page ${i + 1} of ${pageCount}   |   Statutory Audit Statement of Outward Supplies   |   Vijaya Durga Agencies`,
+          `Page ${i + 1} of ${pageCount}   |   Statutory Audit Statement of Outward Supplies   |   Vijaya Durga Sea Foods`,
           L,
           doc.page.height - 20,
           { width: W, align: 'center' }

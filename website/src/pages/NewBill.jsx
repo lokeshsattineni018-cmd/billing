@@ -20,15 +20,17 @@ export default function NewBill() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [companyGstin, setCompanyGstin] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('Pending');
+  const [vehicleNo, setVehicleNo] = useState('');
 
   const [items, setItems] = useState([
     {
       sno: 1,
-      particulars: '',
+      count: '',
+      particulars: 'HEAD-ON',
       hsn: '0306',
       quantity: '',
       rate: '',
-      taxRate: '',
+      taxRate: '5%',
       amount: 0,
     },
   ]);
@@ -55,6 +57,7 @@ export default function NewBill() {
       const clone = location.state.cloneBill;
       setCompanyName(clone.companyName || '');
       setCustomerPhone(clone.customerPhone ? clone.customerPhone.replace(/\D/g, '').slice(0, 10) : '');
+      if (clone.vehicleNo) setVehicleNo(clone.vehicleNo);
       if (clone.companyGstin) setCompanyGstin(clone.companyGstin);
       if (clone.cgstRate) setCgstRate(clone.cgstRate);
       if (clone.cgstAmount) setCgstAmount(String(clone.cgstAmount));
@@ -88,6 +91,7 @@ export default function NewBill() {
         if (draft && (draft.companyName || (draft.items && draft.items.some((i) => i.quantity || i.rate)))) {
           if (draft.companyName) setCompanyName(draft.companyName);
           if (draft.customerPhone) setCustomerPhone(draft.customerPhone);
+          if (draft.vehicleNo) setVehicleNo(draft.vehicleNo);
           if (draft.date) setDate(draft.date);
           if (draft.paymentStatus) setPaymentStatus(draft.paymentStatus);
           if (draft.cgstRate) setCgstRate(draft.cgstRate);
@@ -112,6 +116,7 @@ export default function NewBill() {
           date,
           companyName,
           customerPhone,
+          vehicleNo,
           paymentStatus,
           items,
           cgstRate,
@@ -262,17 +267,19 @@ export default function NewBill() {
         date,
         companyName: companyName.trim(),
         customerPhone: customerPhone.trim(),
+        vehicleNo: vehicleNo.trim(),
         companyGstin: companyGstin.trim(),
         items: items.map((it, idx) => ({
           sno: idx + 1,
-          particulars: it.particulars || 'Fresh Seafood / Prawns Supply',
+          count: it.count ? String(it.count).trim() : '',
+          particulars: it.particulars || 'HEAD-ON',
           hsn: it.hsn || '0306',
           quantity: parseFloat(it.quantity) || 0,
           rate: parseFloat(it.rate) || 0,
-          taxRate: it.taxRate || '',
+          taxRate: it.taxRate || '5%',
           amount: parseFloat(it.amount) || 0,
         })),
-        particulars: items[0]?.particulars || 'Fresh Seafood / Prawns Supply',
+        particulars: items[0]?.particulars || 'HEAD-ON',
         hsn: items[0]?.hsn || '0306',
         quantity: parseFloat(items[0]?.quantity) || 0,
         rate: parseFloat(items[0]?.rate) || 0,
@@ -466,7 +473,7 @@ export default function NewBill() {
             </div>
 
             {/* Task 7: Formatted Numeric-Only Phone Number */}
-            <div className="form-group" style={{ marginBottom: 0 }}>
+            <div className="form-group" style={{ marginBottom: '8px' }}>
               <label className="form-label" style={{ fontWeight: 700 }}>
                 {t('customerPhone')} {customerPhone && <span style={{ fontSize: '0.72rem', color: customerPhone.length === 10 ? '#059669' : '#d97706' }}>({customerPhone.length}/10 digits)</span>}
               </label>
@@ -477,6 +484,18 @@ export default function NewBill() {
                 value={customerPhone}
                 onChange={handlePhoneChange}
                 maxLength={10}
+              />
+            </div>
+
+            {/* Vehicle Number */}
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontWeight: 700 }}>Vehicle Number</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="e.g. AP37TF 2633"
+                value={vehicleNo}
+                onChange={(e) => setVehicleNo(e.target.value.toUpperCase())}
               />
             </div>
           </div>
@@ -533,15 +552,29 @@ export default function NewBill() {
                   )}
                 </div>
 
-                <div className="form-group" style={{ marginBottom: '8px' }}>
-                  <label className="form-label" style={{ fontSize: '0.76rem' }}>{t('goodsDescription')}</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={item.particulars}
-                    onChange={(e) => handleItemChange(index, 'particulars', e.target.value)}
-                    placeholder="Fresh Seafood / Prawns Supply"
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '8px', marginBottom: '8px' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.76rem' }}>Count</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={item.count || ''}
+                      onChange={(e) => handleItemChange(index, 'count', e.target.value)}
+                      placeholder="e.g. 100"
+                      style={{ fontWeight: 700 }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.76rem' }}>HEAD-ON / HEAD-LESS</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={item.particulars}
+                      onChange={(e) => handleItemChange(index, 'particulars', e.target.value)}
+                      placeholder="HEAD-ON or HEAD-LESS"
+                      style={{ fontWeight: 700 }}
+                    />
+                  </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
@@ -574,11 +607,25 @@ export default function NewBill() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', border: '1px solid #e2e8f0', padding: '10px 12px', borderRadius: '6px', marginTop: '6px' }}>
-                  <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 600 }}>{t('itemAmount')}:</span>
-                  <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0b5394' }}>
-                    {formatCurrency(item.amount || 0)}
-                  </span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>Rate of Tax</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={item.taxRate || ''}
+                      onChange={(e) => handleItemChange(index, 'taxRate', e.target.value)}
+                      placeholder="5%"
+                    />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', border: '1px solid #e2e8f0', padding: '10px 12px', borderRadius: '6px', width: '100%' }}>
+                      <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 600 }}>{t('itemAmount')}:</span>
+                      <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0b5394' }}>
+                        {formatCurrency(item.amount || 0)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -590,11 +637,13 @@ export default function NewBill() {
               <thead>
                 <tr style={{ backgroundColor: '#f8fafc' }}>
                   <th style={{ width: '45px', textAlign: 'center', verticalAlign: 'middle' }}>{t('sno')}</th>
-                  <th style={{ verticalAlign: 'middle' }}>{t('particulars')}</th>
+                  <th style={{ width: '70px', textAlign: 'center', verticalAlign: 'middle' }}>Count</th>
+                  <th style={{ verticalAlign: 'middle' }}>HEAD-ON / HEAD-LESS</th>
                   <th style={{ width: '90px', textAlign: 'center', verticalAlign: 'middle' }}>{t('hsn')}</th>
-                  <th style={{ width: '130px', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{t('weightKg')} *</th>
-                  <th style={{ width: '130px', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{t('price')} (₹) *</th>
-                  <th style={{ width: '140px', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{t('amount')} (₹)</th>
+                  <th style={{ width: '120px', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{t('weightKg')} *</th>
+                  <th style={{ width: '120px', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{t('price')} (₹) *</th>
+                  <th style={{ width: '80px', textAlign: 'center', verticalAlign: 'middle' }}>Tax Rate</th>
+                  <th style={{ width: '130px', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{t('amount')} (₹)</th>
                   <th style={{ width: '45px', textAlign: 'center', verticalAlign: 'middle' }}></th>
                 </tr>
               </thead>
@@ -608,10 +657,20 @@ export default function NewBill() {
                       <input
                         type="text"
                         className="form-input"
-                        style={{ padding: '6px 10px', fontSize: '0.9rem' }}
+                        style={{ padding: '6px 8px', textAlign: 'center', fontSize: '0.9rem', fontWeight: 700 }}
+                        value={item.count || ''}
+                        onChange={(e) => handleItemChange(index, 'count', e.target.value)}
+                        placeholder="100"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        className="form-input"
+                        style={{ padding: '6px 10px', fontSize: '0.9rem', fontWeight: 700 }}
                         value={item.particulars}
                         onChange={(e) => handleItemChange(index, 'particulars', e.target.value)}
-                        placeholder="Description of goods"
+                        placeholder="HEAD-ON or HEAD-LESS"
                       />
                     </td>
                     <td>
@@ -654,6 +713,16 @@ export default function NewBill() {
                         }}
                         placeholder="0.00"
                         title={index === items.length - 1 ? 'Press Tab to automatically add a new row' : ''}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        className="form-input"
+                        style={{ padding: '6px 8px', textAlign: 'center', fontSize: '0.9rem' }}
+                        value={item.taxRate || ''}
+                        onChange={(e) => handleItemChange(index, 'taxRate', e.target.value)}
+                        placeholder="5%"
                       />
                     </td>
                     <td style={{ textAlign: 'right', fontWeight: 700, fontSize: '0.95rem', color: '#0f172a' }}>

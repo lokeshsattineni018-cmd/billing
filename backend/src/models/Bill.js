@@ -3,7 +3,8 @@ const crypto = require('crypto');
 
 const itemSchema = new mongoose.Schema({
   sno: { type: Number, default: 1 },
-  particulars: { type: String, default: 'Fresh Seafood / Prawns Supply' },
+  count: { type: String, default: '' },
+  particulars: { type: String, default: 'HEAD-ON' },
   hsn: { type: String, default: '0306' },
   quantity: { type: Number, required: true, min: 0 },
   rate: { type: Number, required: true, min: 0 },
@@ -43,6 +44,11 @@ const billSchema = new mongoose.Schema({
     required: [true, 'GSTIN is required'],
   },
   customerPhone: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  vehicleNo: {
     type: String,
     trim: true,
     default: '',

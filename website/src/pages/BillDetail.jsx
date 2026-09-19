@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { billsAPI } from '../services/api';
+import { billsAPI, settingsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDateTime, numberToWords, useToast, Toast, shareInvoicePDFOnWhatsApp } from '../utils/helpers';
 import { PrintIcon, DownloadIcon, WhatsAppIcon, PlusIcon, ArrowLeftIcon, ShareIcon } from '../components/Icons';
@@ -18,6 +18,7 @@ export default function BillDetail() {
   const { user } = useAuth();
   const { toast, showToast } = useToast();
   const [bill, setBill] = useState(null);
+  const [businessSettings, setBusinessSettings] = useState({ businessName: 'VIJAYA DURGA SEA FOODS' });
   const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -29,6 +30,7 @@ export default function BillDetail() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editCompanyName, setEditCompanyName] = useState('');
   const [editCustomerPhone, setEditCustomerPhone] = useState('');
+  const [editVehicleNo, setEditVehicleNo] = useState('');
   const [editItems, setEditItems] = useState([]);
   const [savingEdit, setSavingEdit] = useState(false);
 
@@ -44,7 +46,19 @@ export default function BillDetail() {
 
   useEffect(() => {
     loadBill();
+    loadSettings();
   }, [id]);
+
+  const loadSettings = async () => {
+    try {
+      const response = await settingsAPI.get();
+      if (response.data) {
+        setBusinessSettings(response.data);
+      }
+    } catch (error) {
+      if (import.meta.env.DEV) { console.error('Failed to load settings:', error); }
+    }
+  };
 
   const loadBill = async () => {
     try {
@@ -54,13 +68,15 @@ export default function BillDetail() {
       // Populate edit fields
       setEditCompanyName(response.data.companyName || '');
       setEditCustomerPhone(response.data.customerPhone || '');
+      setEditVehicleNo(response.data.vehicleNo || '');
       setEditItems(
         response.data.items && response.data.items.length > 0
           ? response.data.items.map((it) => ({ ...it }))
           : [
               {
                 sno: 1,
-                particulars: response.data.particulars || 'Fresh Seafood / Prawns Supply',
+                count: '',
+                particulars: response.data.particulars || 'HEAD-ON',
                 hsn: response.data.hsn || '0306',
                 quantity: response.data.quantity,
                 rate: response.data.rate,
@@ -202,6 +218,7 @@ export default function BillDetail() {
       const updatePayload = {
         companyName: editCompanyName.trim(),
         customerPhone: editCustomerPhone.replace(/\D/g, '').slice(0, 10),
+        vehicleNo: editVehicleNo.trim(),
         items: editItems,
       };
       const res = await billsAPI.update(id, updatePayload);
@@ -616,8 +633,9 @@ export default function BillDetail() {
 
           {/* 1. TOP BAR */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr auto 1fr',
+            position: 'relative',
+            display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
             borderBottom: '1.5px solid #0b5394',
             padding: '4px 12px',
@@ -625,14 +643,24 @@ export default function BillDetail() {
             fontWeight: 'bold',
             color: '#0b5394'
           }}>
-            <div style={{ textAlign: 'left', letterSpacing: '0.5px' }}>
+            <div style={{ letterSpacing: '0.5px' }}>
               TAX INVOICE / CASH / CREDIT
             </div>
-            <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 900, color: '#0b5394', letterSpacing: '1px', fontFamily: "'Noto Sans Telugu', 'Segoe UI', Arial, sans-serif" }}>
+            <div style={{
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              textAlign: 'center',
+              fontSize: '0.95rem',
+              fontWeight: 900,
+              color: '#0b5394',
+              letterSpacing: '1px',
+              fontFamily: "'Noto Sans Telugu', 'Segoe UI', Arial, sans-serif"
+            }}>
               ॥ జై శ్రీరామ్ ॥
             </div>
-            <div style={{ textAlign: 'right' }}>
-              Cell: 9441429745
+            <div>
+              Cell: {businessSettings?.phone || '9441429745'}
             </div>
           </div>
 
@@ -668,7 +696,7 @@ export default function BillDetail() {
                 margin: '0 0 2px 0',
                 fontFamily: 'Arial, sans-serif'
               }}>
-                VIJAYA DURGA AGENCIES
+                {businessSettings?.businessName || 'VIJAYA DURGA SEA FOODS'}
               </h1>
               <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#000000', margin: '2px 0' }}>
                 Prop: SATTINENI VENKATA DHANA LAXMI &nbsp;|&nbsp; GSTIN: {bill.companyGstin || '37KATPS1500Q1ZR'}
@@ -737,31 +765,32 @@ export default function BillDetail() {
             </div>
           </div>
 
-          {/* 6. MAIN ITEMS TABLE */}
+          {/* 6. MAIN ITEMS TABLE (HEAD-ON / HEAD-LESS) */}
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
             <thead>
-              <tr style={{ background: '#f0f5fa', borderBottom: '1.5px solid #0b5394', color: '#0b5394', fontWeight: 'bold', textAlign: 'center' }}>
-                <th style={{ borderRight: '1.5px solid #0b5394', padding: '5px 4px', width: '38px' }}>S.<br />No.</th>
-                <th style={{ borderRight: '1.5px solid #0b5394', padding: '5px 8px' }}>PARTICULARS</th>
-                <th style={{ borderRight: '1.5px solid #0b5394', padding: '5px 4px', width: '55px' }}>HSN</th>
-                <th style={{ borderRight: '1.5px solid #0b5394', padding: '5px 6px', width: '60px' }}>QTY.</th>
-                <th style={{ borderRight: '1.5px solid #0b5394', padding: '5px 6px', width: '68px' }}>PRICE</th>
-                <th style={{ borderRight: '1.5px solid #0b5394', padding: '5px 4px', width: '60px' }}>RATE<br />OF TAX</th>
-                <th style={{ padding: '5px 8px', width: '105px', textAlign: 'center' }}>
+              <tr style={{ background: '#f0f5fa', color: '#0b5394', fontWeight: 'bold', textAlign: 'center' }}>
+                <th rowSpan={2} style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '5px 4px', width: '38px' }}>S.<br />No.</th>
+                <th colSpan={3} style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1px solid #0b5394', padding: '4px 4px', background: '#e8f1f8' }}>HEAD-ON / HEAD-LESS</th>
+                <th rowSpan={2} style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '5px 4px', width: '60px' }}>RATE<br />OF TAX</th>
+                <th rowSpan={2} style={{ padding: '5px 8px', width: '105px', textAlign: 'center', borderBottom: '1.5px solid #0b5394' }}>
                   AMOUNT<br />
                   <span style={{ fontSize: '0.72rem' }}>Rs. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Ps.</span>
                 </th>
+              </tr>
+              <tr style={{ background: '#f8fafc', color: '#0b5394', fontWeight: 'bold', textAlign: 'center', fontSize: '0.72rem', borderBottom: '1.5px solid #0b5394' }}>
+                <th style={{ borderRight: '1.5px solid #0b5394', padding: '3px 4px', width: '65px' }}>COUNT</th>
+                <th style={{ borderRight: '1.5px solid #0b5394', padding: '3px 4px', width: '75px' }}>QTY (kg)</th>
+                <th style={{ borderRight: '1.5px solid #0b5394', padding: '3px 4px', width: '70px' }}>RATE (₹)</th>
               </tr>
             </thead>
             <tbody>
               {itemsList.map((it, idx) => (
                 <tr key={idx} style={{ height: '24px', borderBottom: '1px solid #c8d9e8' }}>
                   <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>{it.sno || idx + 1}</td>
-                  <td style={{ borderRight: '1.5px solid #0b5394', padding: '3px 8px', fontWeight: 'bold' }}>{it.particulars}</td>
-                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center' }}>{it.hsn || '0306'}</td>
-                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'normal' }}>{it.quantity} kg</td>
+                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>{it.count || ''}</td>
+                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center' }}>{it.quantity} kg</td>
                   <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', paddingRight: '6px' }}>{Number(it.rate).toFixed(2)}</td>
-                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center' }}>{it.taxRate || ''}</td>
+                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>{it.taxRate || ''}</td>
                   <td style={{ textAlign: 'right', paddingRight: '8px', fontWeight: 'bold' }}>
                     {Number(it.amount || it.quantity * it.rate).toFixed(2)}
                   </td>
@@ -771,7 +800,6 @@ export default function BillDetail() {
               {/* Blank rows to match billbook aesthetic */}
               {Array.from({ length: emptyRowsCount }).map((_, i) => (
                 <tr key={`empty-${i}`} style={{ height: '20px', borderBottom: '1px solid #c8d9e8' }}>
-                  <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
                   <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
                   <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
                   <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
@@ -800,7 +828,7 @@ export default function BillDetail() {
             </div>
           </div>
 
-          {/* 8. TAX BREAKDOWN TABLE */}
+          {/* 8. TAX BREAKDOWN TABLE (Vehicle No. replacing Taxable Value) */}
           <div style={{ borderBottom: '1.5px solid #0b5394' }}>
             <div style={{
               display: 'grid',
@@ -812,7 +840,7 @@ export default function BillDetail() {
               color: '#0b5394',
               textAlign: 'center'
             }}>
-              <div style={{ borderRight: '1px solid #0b5394', padding: '3px 2px' }}>Taxable Value</div>
+              <div style={{ borderRight: '1px solid #0b5394', padding: '3px 2px' }}>Vehicle No.</div>
               <div style={{ borderRight: '1px solid #0b5394', padding: '3px 2px' }}>CGST Tax</div>
               <div style={{ borderRight: '1px solid #0b5394', padding: '3px 2px' }}>SGST Tax</div>
               <div style={{ padding: '3px 2px' }}>IGST Tax</div>
@@ -835,7 +863,7 @@ export default function BillDetail() {
               <div style={{ color: '#0b5394', fontWeight: 'bold' }}>Amount</div>
             </div>
 
-            {/* Tax Values */}
+            {/* Tax Values with Vehicle Number in Black */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1.2fr 0.5fr 0.5fr 0.5fr 0.5fr 1fr',
@@ -844,12 +872,12 @@ export default function BillDetail() {
               height: '20px',
               alignItems: 'center'
             }}>
-              <div style={{ borderRight: '1px solid #0b5394', fontWeight: 'bold' }}>{Number(bill.taxableValue || bill.total || finalAmount).toFixed(2)}</div>
-              <div style={{ borderRight: '1px solid #0b5394' }}>{bill.cgstRate || '2.5'}</div>
-              <div style={{ borderRight: '1px solid #0b5394' }}>{Number(bill.cgstAmount || 100).toFixed(2)}</div>
-              <div style={{ borderRight: '1px solid #0b5394' }}>{bill.sgstRate || '2.5'}</div>
-              <div style={{ borderRight: '1px solid #0b5394' }}>{Number(bill.sgstAmount || 100).toFixed(2)}</div>
-              <div>{Number(bill.igstAmount || 100).toFixed(2)}</div>
+              <div style={{ borderRight: '1px solid #0b5394', fontWeight: 'bold', color: '#000000' }}>{bill.vehicleNo || ''}</div>
+              <div style={{ borderRight: '1px solid #0b5394', color: '#000000' }}>{bill.cgstRate || ''}</div>
+              <div style={{ borderRight: '1px solid #0b5394', color: '#000000' }}>{bill.cgstAmount ? Number(bill.cgstAmount).toFixed(2) : ''}</div>
+              <div style={{ borderRight: '1px solid #0b5394', color: '#000000' }}>{bill.sgstRate || ''}</div>
+              <div style={{ borderRight: '1px solid #0b5394', color: '#000000' }}>{bill.sgstAmount ? Number(bill.sgstAmount).toFixed(2) : ''}</div>
+              <div style={{ color: '#000000' }}>{bill.igstAmount ? Number(bill.igstAmount).toFixed(2) : ''}</div>
             </div>
           </div>
 
@@ -888,7 +916,7 @@ export default function BillDetail() {
 
             <div style={{ padding: '6px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center' }}>
               <div style={{ fontWeight: 'bold', color: '#0b5394', fontSize: '0.78rem' }}>
-                For VIJAYA DURGA AGENCIES
+                For {businessSettings?.businessName || 'VIJAYA DURGA SEA FOODS'}
               </div>
               <div style={{ marginTop: '24px', borderTop: '1px solid #000000', paddingTop: '2px', fontWeight: 'bold', color: '#0b5394' }}>
                 Proprietor
@@ -931,7 +959,7 @@ export default function BillDetail() {
               />
             </div>
 
-            <div className="form-group" style={{ marginBottom: '16px' }}>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
               <label className="form-label" style={{ fontWeight: 700 }}>Customer Phone (10 digits)</label>
               <input
                 type="tel"
@@ -942,13 +970,45 @@ export default function BillDetail() {
               />
             </div>
 
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label className="form-label" style={{ fontWeight: 700 }}>Vehicle Number</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="e.g. AP37TF 2633"
+                value={editVehicleNo}
+                onChange={(e) => setEditVehicleNo(e.target.value.toUpperCase())}
+              />
+            </div>
+
             <h4 style={{ margin: '0 0 8px 0', fontSize: '0.92rem', fontWeight: 700, color: '#0b5394' }}>
-              Line Items (Correct Weights & Rates)
+              Line Items (HEAD-ON / HEAD-LESS)
             </h4>
             {editItems.map((item, idx) => (
               <div key={idx} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px', marginBottom: '10px' }}>
-                <div style={{ fontWeight: 700, fontSize: '0.82rem', marginBottom: '6px', color: '#334155' }}>
-                  Item #{idx + 1}: {item.particulars}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '8px', marginBottom: '8px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b' }}>Count</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={item.count || ''}
+                      onChange={(e) => handleEditItemChange(idx, 'count', e.target.value)}
+                      placeholder="e.g. 100"
+                      style={{ fontWeight: 700 }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b' }}>HEAD-ON / HEAD-LESS</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={item.particulars || ''}
+                      onChange={(e) => handleEditItemChange(idx, 'particulars', e.target.value)}
+                      placeholder="HEAD-ON or HEAD-LESS"
+                      style={{ fontWeight: 700 }}
+                    />
+                  </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div>

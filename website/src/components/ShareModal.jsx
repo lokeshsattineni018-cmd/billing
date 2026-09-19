@@ -31,7 +31,7 @@ export default function ShareModal({ bill, onClose, showToast }) {
       if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
         await navigator.share({
           files: [pdfFile],
-          title: `Tax Invoice #${bill.billNo} - VIJAYA DURGA AGENCIES`,
+          title: `Tax Invoice #${bill.billNo} - VIJAYA DURGA SEA FOODS`,
         });
         if (showToast) showToast('Invoice shared successfully!');
         onClose();
@@ -71,7 +71,7 @@ export default function ShareModal({ bill, onClose, showToast }) {
 
   // 3. WhatsApp Direct Message
   const handleWhatsApp = () => {
-    const text = `VIJAYA DURGA AGENCIES\nTax Invoice #${bill.billNo} ${bill.isVoided ? '(VOIDED)' : ''}\n\nCustomer: ${bill.companyName}\nDate: ${formattedDate}\nTotal Amount: ${amountStr}\n\nView Official Invoice:\n${publicUrl}\n\nThank you for your business!`;
+    const text = `VIJAYA DURGA SEA FOODS\nTax Invoice #${bill.billNo} ${bill.isVoided ? '(VOIDED)' : ''}\n\nCustomer: ${bill.companyName}\nDate: ${formattedDate}\nTotal Amount: ${amountStr}\n\nView Official Invoice:\n${publicUrl}\n\nThank you for your business!`;
     const waUrl = cleanPhone
       ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(text)}`
       : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
@@ -85,8 +85,8 @@ export default function ShareModal({ bill, onClose, showToast }) {
 
   // 4. Email (Gmail / Mail App)
   const handleEmail = () => {
-    const subject = `Tax Invoice #${bill.billNo} from VIJAYA DURGA AGENCIES`;
-    const body = `Dear ${bill.companyName},\n\nPlease find your tax invoice details below:\n\nInvoice Number: #${bill.billNo}\nInvoice Date: ${formattedDate}\nTotal Amount: ${amountStr}\n\nView Official Invoice:\n${publicUrl}\n\nThank you for your business!\nVIJAYA DURGA AGENCIES\nPhone: +91 9441429745`;
+    const subject = `Tax Invoice #${bill.billNo} from VIJAYA DURGA SEA FOODS`;
+    const body = `Dear ${bill.companyName},\n\nPlease find your tax invoice details below:\n\nInvoice Number: #${bill.billNo}\nInvoice Date: ${formattedDate}\nTotal Amount: ${amountStr}\n\nView Official Invoice:\n${publicUrl}\n\nThank you for your business!\nVIJAYA DURGA SEA FOODS\nPhone: +91 9441429745`;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 

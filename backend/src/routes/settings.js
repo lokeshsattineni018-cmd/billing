@@ -7,7 +7,7 @@ const { handleServerError } = require('../utils/errorTracker');
 const router = express.Router();
 
 const DEFAULT_SETTINGS = {
-  businessName: 'VIJAYA DURGA AGENCIES',
+  businessName: 'VIJAYA DURGA SEA FOODS',
   legalName: 'SATTINENI VENKATA DHANA LAXMI',
   address: 'D.No. 2-41A, SATTINENI SRINIVASA TATAJI, Near Ramalayam, KOTHOTA - 534 281, Mutyalapalli, West Godavari Dist., A.P.',
   phone: '9441429745',

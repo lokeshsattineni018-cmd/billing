@@ -17,7 +17,7 @@ async function generateGSTR1PDF({ bills = [], dateRange = {}, settings = {} }) {
         bufferPages: true,
         info: {
           Title: `FORM GSTR-1 Statement - ${dateRange.label || 'Summary'}`,
-          Author: settings.businessName || 'VIJAYA DURGA AGENCIES',
+          Author: settings.businessName || 'VIJAYA DURGA SEA FOODS',
           Subject: 'Official Government GSTR-1 Statement of Outward Supplies',
         },
       });
@@ -90,7 +90,7 @@ async function generateGSTR1PDF({ bills = [], dateRange = {}, settings = {} }) {
       doc.font('Helvetica').fontSize(7).fillColor(textMuted);
       doc.text('2(b). Trade Name :', L + 6, y + 31);
       doc.font('Helvetica-Bold').fontSize(8).fillColor(black);
-      doc.text(settings.businessName || 'VIJAYA DURGA AGENCIES', L + 110, y + 30.5);
+      doc.text(settings.businessName || 'VIJAYA DURGA SEA FOODS', L + 110, y + 30.5);
 
       // Right Box
       doc.font('Helvetica-Bold').fontSize(7).fillColor(textMuted);
@@ -517,7 +517,7 @@ async function generateGSTR1PDF({ bills = [], dateRange = {}, settings = {} }) {
       // Right Box: Signature
       const sX = L + decLeftW;
       doc.font('Helvetica-Bold').fontSize(8).fillColor(black);
-      doc.text(`For ${settings.businessName || 'VIJAYA DURGA AGENCIES'}`, sX + 6, y + 6, {
+      doc.text(`For ${settings.businessName || 'VIJAYA DURGA SEA FOODS'}`, sX + 6, y + 6, {
         width: decRightW - 12,
         align: 'center',
       });
@@ -542,7 +542,7 @@ async function generateGSTR1PDF({ bills = [], dateRange = {}, settings = {} }) {
         doc.switchToPage(i);
         doc.font('Helvetica').fontSize(6.5).fillColor('#64748b');
         doc.text(
-          `Page ${i + 1} of ${pageCount}   |   FORM GSTR-1 Statement of Outward Supplies   |   Vijaya Durga Agencies`,
+          `Page ${i + 1} of ${pageCount}   |   FORM GSTR-1 Statement of Outward Supplies   |   Vijaya Durga Sea Foods`,
           L,
           doc.page.height - 20,
           { width: W, align: 'center' }

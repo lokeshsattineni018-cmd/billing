@@ -37,7 +37,8 @@ function calculateVerifiedBillTotals(items, cgstAmount = 0, sgstAmount = 0, igst
     const itemAmt = round2(q * r);
     return {
       sno: idx + 1,
-      particulars: it.particulars?.trim() || 'Fresh Seafood / Prawns Supply',
+      count: it.count ? String(it.count).trim() : '',
+      particulars: it.particulars?.trim() || 'HEAD-ON',
       hsn: it.hsn?.trim() || '0306',
       quantity: q,
       rate: r,

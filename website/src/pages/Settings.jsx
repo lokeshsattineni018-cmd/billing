@@ -395,7 +395,7 @@ export default function Settings() {
                   className="form-input form-input-lg"
                   value={form.businessName}
                   onChange={(e) => handleChange('businessName', e.target.value)}
-                  placeholder="e.g. VIJAYA DURGA AGENCIES"
+                  placeholder="e.g. VIJAYA DURGA SEA FOODS"
                 />
               </div>
 
@@ -554,7 +554,7 @@ export default function Settings() {
                 <span>TAX INVOICE / CASH / CREDIT</span>
                 <span>Cell: {form.phone || '9441429745'}</span>
               </div>
-              <h3 style={{ color: '#0b5394', margin: '8px 0 4px 0', fontSize: '1.3rem' }}>{form.businessName || 'VIJAYA DURGA AGENCIES'}</h3>
+              <h3 style={{ color: '#0b5394', margin: '8px 0 4px 0', fontSize: '1.3rem' }}>{form.businessName || 'VIJAYA DURGA SEA FOODS'}</h3>
               {form.legalName && <p style={{ fontWeight: 600, margin: '2px 0' }}>Prop: {form.legalName} | GSTIN: {form.gstin || '37KATPS1500Q1ZR'}</p>}
               {form.address && <p style={{ fontSize: '0.82rem', color: '#555', margin: '4px 0' }}>{form.address}</p>}
 

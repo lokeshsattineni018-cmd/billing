@@ -127,7 +127,7 @@ describe('Financial Calculation Unit Tests', () => {
     it('fills default particulars and HSN when omitted', () => {
       const items = [{ quantity: 10, rate: 100 }];
       const result = calculateVerifiedBillTotals(items);
-      assert.strictEqual(result.processedItems[0].particulars, 'Fresh Seafood / Prawns Supply');
+      assert.strictEqual(result.processedItems[0].particulars, 'HEAD-ON');
       assert.strictEqual(result.processedItems[0].hsn, '0306');
     });
   });

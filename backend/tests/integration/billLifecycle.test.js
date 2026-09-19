@@ -33,7 +33,7 @@ describe('Full Bill Lifecycle Integration Tests', () => {
     await Settings.findOneAndUpdate(
       {},
       {
-        businessName: 'Vijaya Durga Agencies',
+        businessName: 'VIJAYA DURGA SEA FOODS',
         gstin: '37ABCDE1234F1Z5',
         phone: '9848012345',
         invoicePrefix: 'VDA/',

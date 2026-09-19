@@ -326,7 +326,7 @@ router.get('/export/tally', protect, restrictTo('owner', 'admin'), async (req, r
     xml += `      <REQUESTDESC>\n`;
     xml += `        <REPORTNAME>Vouchers</REPORTNAME>\n`;
     xml += `        <STATICVARIABLES>\n`;
-    xml += `          <SVCURRENTCOMPANY>VIJAYA DURGA AGENCIES</SVCURRENTCOMPANY>\n`;
+    xml += `          <SVCURRENTCOMPANY>VIJAYA DURGA SEA FOODS</SVCURRENTCOMPANY>\n`;
     xml += `        </STATICVARIABLES>\n`;
     xml += `      </REQUESTDESC>\n`;
     xml += `      <REQUESTDATA>\n`;
@@ -424,7 +424,7 @@ router.get('/:id/reminder', protect, restrictTo('owner', 'admin'), async (req, r
     const cleanPhone = (bill.customerPhone || '').replace(/\D/g, '').slice(-10);
 
     // Formatted WhatsApp Reminder Message
-    let waMsg = `VIJAYA DURGA AGENCIES\n`;
+    let waMsg = `VIJAYA DURGA SEA FOODS\n`;
     waMsg += `Payment Reminder / చెల్లింపు రిమైండర్\n`;
     waMsg += `━━━━━━━━━━━━━━━━━━━\n`;
     waMsg += `Dear ${bill.companyName},\n`;
@@ -442,10 +442,10 @@ router.get('/:id/reminder', protect, restrictTo('owner', 'admin'), async (req, r
     waMsg += `━━━━━━━━━━━━━━━━━━━\n`;
     waMsg += `Kindly clear the payment at your earliest convenience.\n`;
     waMsg += `Thank you for your continuous business.\n`;
-    waMsg += `Vijaya Durga Agencies • Ph: ${settings.phone || '9441429745'}`;
+    waMsg += `Vijaya Durga Sea Foods • Ph: ${settings.phone || '9441429745'}`;
 
     // Formatted Compact SMS Message
-    const smsMsg = `VIJAYA DURGA AGENCIES: Dear ${bill.companyName}, gentle reminder for pending Invoice #${bill.billNo} dated ${billDate} for Rs. ${amount}. Bank: KVB A/c 4805135000002964, IFSC: KVBL0004815. Please clear payment. Ph: 9441429745`;
+    const smsMsg = `VIJAYA DURGA SEA FOODS: Dear ${bill.companyName}, gentle reminder for pending Invoice #${bill.billNo} dated ${billDate} for Rs. ${amount}. Bank: KVB A/c 4805135000002964, IFSC: KVBL0004815. Please clear payment. Ph: 9441429745`;
 
     await logActivity(req, 'SEND_REMINDER', String(bill.billNo), {
       customer: bill.companyName,
@@ -658,6 +658,7 @@ router.post('/', protect, billCreateLimiter, [
       companyName,
       companyGstin,
       customerPhone,
+      vehicleNo,
       date,
       items,
       particulars,
@@ -727,6 +728,7 @@ router.post('/', protect, billCreateLimiter, [
       companyName: companyName.trim(),
       companyGstin: gstin,
       customerPhone: customerPhone ? customerPhone.replace(/\D/g, '').slice(0, 10) : '',
+      vehicleNo: vehicleNo ? vehicleNo.trim() : '',
       particulars: calculated.processedItems[0]?.particulars || 'Fresh Seafood / Prawns Supply',
       hsn: calculated.processedItems[0]?.hsn || '0306',
       quantity: calculated.processedItems[0]?.quantity,
@@ -834,6 +836,7 @@ router.put('/:id', protect, [
     const {
       companyName,
       customerPhone,
+      vehicleNo,
       date,
       items,
       cgstRate,
@@ -847,6 +850,7 @@ router.put('/:id', protect, [
 
     if (companyName) bill.companyName = companyName.trim();
     if (customerPhone !== undefined) bill.customerPhone = customerPhone.replace(/\D/g, '').slice(0, 10);
+    if (vehicleNo !== undefined) bill.vehicleNo = vehicleNo.trim();
     if (date && isOwnerOrAdmin) bill.date = new Date(date);
     if (paymentStatus && isOwnerOrAdmin) bill.paymentStatus = paymentStatus;
 

@@ -68,7 +68,7 @@ export default function PublicInvoice() {
         <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '32px', maxWidth: '440px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
           <h3 style={{ margin: '0 0 8px 0', color: '#0f172a', fontWeight: 800 }}>Invoice Not Found</h3>
           <p style={{ margin: '0 0 20px 0', color: '#64748b', fontSize: '0.88rem' }}>{error || 'Unable to display invoice.'}</p>
-          <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Please contact Vijaya Durga Agencies for assistance.</p>
+          <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Please contact Vijaya Durga Sea Foods for assistance.</p>
         </div>
       </div>
     );
@@ -76,10 +76,12 @@ export default function PublicInvoice() {
 
   const itemsList = bill.items && bill.items.length > 0 ? bill.items : [{
     sno: 1,
-    particulars: bill.particulars || 'Fresh Seafood / Prawns Supply',
+    count: '',
+    particulars: bill.particulars || 'HEAD-ON',
     hsn: bill.hsn || '0306',
     quantity: bill.quantity,
     rate: bill.rate,
+    taxRate: '',
     amount: bill.total,
   }];
 
@@ -172,9 +174,9 @@ export default function PublicInvoice() {
         )}
 
         {/* 1. Header Bar */}
-        <div className="invoice-head-bar">
+        <div className="invoice-head-bar" style={{ position: 'relative' }}>
           <span>TAX INVOICE / CASH / CREDIT</span>
-          <span className="invoice-blessing">॥ జై శ్రీరామ్ ॥</span>
+          <span className="invoice-blessing" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>‖ జై శ్రీరామ్ ‖</span>
           <span>Cell: 9441429745</span>
         </div>
 
@@ -183,7 +185,7 @@ export default function PublicInvoice() {
           <img src="/assets/ganesha.jpg" alt="Lord Ganesha" className="invoice-brand-avatar" />
 
           <div className="invoice-title-block">
-            <h1 className="invoice-company-heading">VIJAYA DURGA AGENCIES</h1>
+            <h1 className="invoice-company-heading">VIJAYA DURGA SEA FOODS</h1>
             <div className="invoice-proprietor-line">
               Prop: <strong>SATTINENI VENKATA DHANA LAXMI</strong> &nbsp;|&nbsp; GSTIN: <strong>37KATPS1500Q1ZR</strong>
             </div>
@@ -227,22 +229,25 @@ export default function PublicInvoice() {
         <table className="invoice-items-table">
           <thead>
             <tr>
-              <th className="col-sno">S.No</th>
-              <th className="col-particulars">PARTICULARS</th>
-              <th className="col-hsn">H.S.N.</th>
-              <th className="col-qty">QUANTITY<br/><span style={{ fontSize: '0.66rem', fontWeight: 600 }}>Kgs.</span></th>
-              <th className="col-rate">RATE<br/><span style={{ fontSize: '0.66rem', fontWeight: 600 }}>Rs. &nbsp; Ps.</span></th>
-              <th className="col-amount">AMOUNT<br/><span style={{ fontSize: '0.66rem', fontWeight: 600 }}>Rs. &nbsp; Ps.</span></th>
+              <th className="col-sno" rowSpan={2}>S.No</th>
+              <th colSpan={3} style={{ borderBottom: '1px solid #0b5394', background: '#e8f1f8' }}>HEAD-ON / HEAD-LESS</th>
+              <th className="col-rate" rowSpan={2}>RATE<br/>OF TAX</th>
+              <th className="col-amount" rowSpan={2}>AMOUNT<br/><span style={{ fontSize: '0.66rem', fontWeight: 600 }}>Rs. &nbsp; Ps.</span></th>
+            </tr>
+            <tr style={{ fontSize: '0.72rem' }}>
+              <th style={{ width: '65px' }}>COUNT</th>
+              <th style={{ width: '75px' }}>QTY (kg)</th>
+              <th style={{ width: '70px' }}>RATE (₹)</th>
             </tr>
           </thead>
           <tbody>
             {itemsList.map((item, idx) => (
               <tr key={idx} className="item-data-row">
                 <td className="col-sno text-center">{item.sno || idx + 1}</td>
-                <td className="col-particulars font-bold">{item.particulars}</td>
-                <td className="col-hsn text-center">{item.hsn || '0306'}</td>
-                <td className="col-qty text-right font-bold">{Number(item.quantity || 0).toFixed(2)}</td>
-                <td className="col-rate text-right">{Number(item.rate || 0).toFixed(2)}</td>
+                <td className="text-center font-bold">{item.count || ''}</td>
+                <td className="text-right">{Number(item.quantity || 0).toFixed(2)} kg</td>
+                <td className="text-right">{Number(item.rate || 0).toFixed(2)}</td>
+                <td className="text-center font-bold">{item.taxRate || ''}</td>
                 <td className="col-amount text-right font-bold">{Number(item.amount || (item.quantity * item.rate) || 0).toFixed(2)}</td>
               </tr>
             ))}
@@ -250,43 +255,43 @@ export default function PublicInvoice() {
             {Array.from({ length: emptyRowsCount }).map((_, i) => (
               <tr key={`empty-${i}`} className="item-empty-row">
                 <td className="col-sno">&nbsp;</td>
-                <td className="col-particulars">&nbsp;</td>
-                <td className="col-hsn">&nbsp;</td>
-                <td className="col-qty">&nbsp;</td>
-                <td className="col-rate">&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
                 <td className="col-amount">&nbsp;</td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        {/* 6. Tax Breakdown */}
-        {((bill.cgstAmount > 0) || (bill.sgstAmount > 0) || (bill.igstAmount > 0)) && (
-          <div className="invoice-tax-summary-table">
+        {/* 6. Tax Breakdown with Vehicle No. */}
+        <div className="invoice-tax-summary-table">
+          {bill.vehicleNo && (
             <div className="tax-summary-row">
-              <span className="tax-summary-label">Taxable Value:</span>
-              <span className="tax-summary-val">{formatCurrency(bill.taxableValue || bill.total)}</span>
+              <span className="tax-summary-label">Vehicle No.:</span>
+              <span className="tax-summary-val" style={{ color: '#000000', fontWeight: 700 }}>{bill.vehicleNo}</span>
             </div>
-            {bill.cgstAmount > 0 && (
-              <div className="tax-summary-row">
-                <span className="tax-summary-label">CGST ({bill.cgstRate || '2.5%'}):</span>
-                <span className="tax-summary-val">{formatCurrency(bill.cgstAmount)}</span>
-              </div>
-            )}
-            {bill.sgstAmount > 0 && (
-              <div className="tax-summary-row">
-                <span className="tax-summary-label">SGST ({bill.sgstRate || '2.5%'}):</span>
-                <span className="tax-summary-val">{formatCurrency(bill.sgstAmount)}</span>
-              </div>
-            )}
-            {bill.igstAmount > 0 && (
-              <div className="tax-summary-row">
-                <span className="tax-summary-label">IGST ({bill.igstRate || '5%'}):</span>
-                <span className="tax-summary-val">{formatCurrency(bill.igstAmount)}</span>
-              </div>
-            )}
-          </div>
-        )}
+          )}
+          {bill.cgstAmount > 0 && (
+            <div className="tax-summary-row">
+              <span className="tax-summary-label">CGST ({bill.cgstRate || '2.5%'}):</span>
+              <span className="tax-summary-val">{formatCurrency(bill.cgstAmount)}</span>
+            </div>
+          )}
+          {bill.sgstAmount > 0 && (
+            <div className="tax-summary-row">
+              <span className="tax-summary-label">SGST ({bill.sgstRate || '2.5%'}):</span>
+              <span className="tax-summary-val">{formatCurrency(bill.sgstAmount)}</span>
+            </div>
+          )}
+          {bill.igstAmount > 0 && (
+            <div className="tax-summary-row">
+              <span className="tax-summary-label">IGST ({bill.igstRate || '5%'}):</span>
+              <span className="tax-summary-val">{formatCurrency(bill.igstAmount)}</span>
+            </div>
+          )}
+        </div>
 
         {/* 7. Footer: Words, Bank Details, Signature */}
         <div className="invoice-footer-grid">
@@ -300,7 +305,7 @@ export default function PublicInvoice() {
               <div className="invoice-bank-title">BANK PAYMENT DETAILS:</div>
               <div className="invoice-bank-text">
                 <div>Bank: <strong>KARUR VYSYA BANK (KVB)</strong></div>
-                <div>A/C Name: <strong>VIJAYA DURGA AGENCIES</strong></div>
+                <div>A/C Name: <strong>VIJAYA DURGA SEA FOODS</strong></div>
                 <div>A/C No: <strong>4164135000008779</strong></div>
                 <div>IFSC: <strong>KVBL0004164</strong> &nbsp;|&nbsp; Branch: <strong>BHIMAVARAM</strong></div>
               </div>
@@ -320,7 +325,7 @@ export default function PublicInvoice() {
             </div>
 
             <div className="invoice-signature-container">
-              <div className="invoice-for-company">For VIJAYA DURGA AGENCIES</div>
+              <div className="invoice-for-company">For VIJAYA DURGA SEA FOODS</div>
               <div className="invoice-sign-space"></div>
               <div className="invoice-sign-title">Authorized Signatory / Proprietor</div>
             </div>

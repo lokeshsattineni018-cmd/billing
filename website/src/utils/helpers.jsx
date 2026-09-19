@@ -179,7 +179,7 @@ export async function shareInvoicePDFOnWhatsApp(bill, showToast) {
   const rawPhone = bill.customerPhone ? bill.customerPhone.replace(/[^0-9]/g, '') : '';
   const cleanPhone = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
 
-  const caption = `VIJAYA DURGA AGENCIES
+  const caption = `VIJAYA DURGA SEA FOODS
 Tax Invoice #${bill.billNo} ${bill.isVoided ? '(VOIDED)' : ''}
 📅 Date: ${formattedDate}
 💰 Total: ${amountStr}

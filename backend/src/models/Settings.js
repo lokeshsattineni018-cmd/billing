@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const settingsSchema = new mongoose.Schema({
   businessName: {
     type: String,
-    default: 'VIJAYA DURGA AGENCIES',
+    default: 'VIJAYA DURGA SEA FOODS',
   },
   legalName: {
     type: String,

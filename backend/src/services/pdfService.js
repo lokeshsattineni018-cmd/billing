@@ -15,7 +15,7 @@ const ramDarbarBuffer = Buffer.from(ramDarbarBase64, 'base64');
 const teluguJaiShreeRamBuffer = Buffer.from(teluguJaiShreeRamBase64, 'base64');
 
 /**
- * Generate Traditional Indian Trade Invoice for VIJAYA DURGA AGENCIES
+ * Generate Traditional Indian Trade Invoice for VIJAYA DURGA SEA FOODS
  */
 async function generateBillPDFBuffer(bill) {
   return new Promise(async (resolve, reject) => {
@@ -31,7 +31,7 @@ async function generateBillPDFBuffer(bill) {
         bufferPages: true,
         info: {
           Title: `Tax Invoice - #${bill.billNo}`,
-          Author: settings.businessName || 'VIJAYA DURGA AGENCIES',
+          Author: settings.businessName || 'VIJAYA DURGA SEA FOODS',
         },
       });
 
@@ -122,7 +122,7 @@ async function generateBillPDFBuffer(bill) {
         .font('Helvetica-Bold')
         .fontSize(17)
         .fillColor(primaryBlue)
-        .text(settings.businessName || 'VIJAYA DURGA AGENCIES', centerX, y + 33, {
+        .text(settings.businessName || 'VIJAYA DURGA SEA FOODS', centerX, y + 33, {
           width: centerW,
           align: 'center',
           characterSpacing: 0.5,
@@ -214,53 +214,65 @@ async function generateBillPDFBuffer(bill) {
       y += row5H;
 
       // ═══════════════════════════════════════════════════════
-      // 6. MODERN ITEMS TABLE
+      // 6. MODERN ITEMS TABLE (HEAD-ON / HEAD-LESS)
       // ═══════════════════════════════════════════════════════
       const cols = {
-        sno:    32,
-        part:   190,
-        hsn:    50,
-        qty:    55,
-        price:  60,
-        tax:    54,
-        amt:    W - 32 - 190 - 50 - 55 - 60 - 54, // 98 pt
+        sno:    30,
+        count:  60,
+        qty:    85,
+        rate:   75,
+        tax:    60,
+        amt:    W - 30 - 60 - 85 - 75 - 60,
       };
 
       const colX = {
         sno:   L,
-        part:  L + cols.sno,
-        hsn:   L + cols.sno + cols.part,
-        qty:   L + cols.sno + cols.part + cols.hsn,
-        price: L + cols.sno + cols.part + cols.hsn + cols.qty,
-        tax:   L + cols.sno + cols.part + cols.hsn + cols.qty + cols.price,
-        amt:   L + cols.sno + cols.part + cols.hsn + cols.qty + cols.price + cols.tax,
+        count: L + cols.sno,
+        qty:   L + cols.sno + cols.count,
+        rate:  L + cols.sno + cols.count + cols.qty,
+        tax:   L + cols.sno + cols.count + cols.qty + cols.rate,
+        amt:   L + cols.sno + cols.count + cols.qty + cols.rate + cols.tax,
       };
 
-      // Table Header Row with subtle modern tint
-      const thH = 24;
-      doc.rect(L, y, W, thH).fillAndStroke('#f0f5fa', borderBlue);
+      // Table Header Row 1 (Main headers + spanning)
+      const thH1 = 16;
+      const headOnW = cols.count + cols.qty + cols.rate;
 
-      // Header cell borders
-      Object.keys(cols).forEach((key) => {
-        doc.rect(colX[key], y, cols[key], thH).stroke();
-      });
+      // S.No. cell (spans 2 rows)
+      doc.rect(colX.sno, y, cols.sno, thH1 + 14).fillAndStroke('#f0f5fa', borderBlue);
+      // HEAD-ON / HEAD-LESS spanning header
+      doc.rect(colX.count, y, headOnW, thH1).fillAndStroke('#e8f1f8', borderBlue);
+      // RATE OF TAX (spans 2 rows)
+      doc.rect(colX.tax, y, cols.tax, thH1 + 14).fillAndStroke('#f0f5fa', borderBlue);
+      // AMOUNT (spans 2 rows)
+      doc.rect(colX.amt, y, cols.amt, thH1 + 14).fillAndStroke('#f0f5fa', borderBlue);
 
       doc.font('Helvetica-Bold').fontSize(7.5).fillColor(primaryBlue);
-      const thY = y + 4;
-      doc.text('S.\nNo.', colX.sno + 2, thY, { width: cols.sno - 4, align: 'center' });
-      doc.text('PARTICULARS', colX.part + 4, y + 8, { width: cols.part - 8, align: 'center' });
-      doc.text('HSN', colX.hsn + 2, y + 8, { width: cols.hsn - 4, align: 'center' });
-      doc.text('QTY.', colX.qty + 2, y + 8, { width: cols.qty - 4, align: 'center' });
-      doc.text('PRICE', colX.price + 2, y + 8, { width: cols.price - 4, align: 'center' });
-      doc.text('RATE\nOF TAX', colX.tax + 2, thY, { width: cols.tax - 4, align: 'center' });
-      doc.text('AMOUNT\nRs.       Ps.', colX.amt + 2, thY, { width: cols.amt - 4, align: 'center' });
+      doc.text('S.\nNo.', colX.sno + 2, y + 4, { width: cols.sno - 4, align: 'center' });
+      doc.text('HEAD-ON / HEAD-LESS', colX.count + 2, y + 4, { width: headOnW - 4, align: 'center' });
+      doc.text('RATE\nOF TAX', colX.tax + 2, y + 4, { width: cols.tax - 4, align: 'center' });
+      doc.text('AMOUNT\nRs.       Ps.', colX.amt + 2, y + 4, { width: cols.amt - 4, align: 'center' });
 
-      y += thH;
+      y += thH1;
+
+      // Table Header Row 2 (Sub-headers under HEAD-ON / HEAD-LESS)
+      const thH2 = 14;
+      doc.rect(colX.count, y, cols.count, thH2).fillAndStroke('#f8fafc', borderBlue);
+      doc.rect(colX.qty, y, cols.qty, thH2).fillAndStroke('#f8fafc', borderBlue);
+      doc.rect(colX.rate, y, cols.rate, thH2).fillAndStroke('#f8fafc', borderBlue);
+
+      doc.font('Helvetica-Bold').fontSize(6.5).fillColor(primaryBlue);
+      doc.text('COUNT', colX.count + 2, y + 4, { width: cols.count - 4, align: 'center' });
+      doc.text('QTY (kg)', colX.qty + 2, y + 4, { width: cols.qty - 4, align: 'center' });
+      doc.text('RATE (₹)', colX.rate + 2, y + 4, { width: cols.rate - 4, align: 'center' });
+
+      y += thH2;
 
       // Render items
       const itemsList = bill.items && bill.items.length > 0 ? bill.items : [{
         sno: 1,
-        particulars: bill.particulars || 'Fresh Seafood / Prawns Supply',
+        count: '',
+        particulars: bill.particulars || 'HEAD-ON',
         hsn: bill.hsn || '0306',
         quantity: bill.quantity,
         rate: bill.rate,
@@ -276,16 +288,14 @@ async function generateBillPDFBuffer(bill) {
 
         doc.font('Helvetica').fontSize(9).fillColor(textDark);
         doc.text(String(index + 1), colX.sno + 2, y + 7, { width: cols.sno - 4, align: 'center' });
-        doc.font('Helvetica-Bold').text(item.particulars || 'Fresh Seafood / Prawns Supply', colX.part + 6, y + 7, { width: cols.part - 12 });
-        doc.font('Helvetica').fontSize(8.5).text(item.hsn || '0306', colX.hsn + 2, y + 7, { width: cols.hsn - 4, align: 'center' });
+        doc.font('Helvetica-Bold').text(item.count ? String(item.count) : '', colX.count + 2, y + 7, { width: cols.count - 4, align: 'center' });
         
-        // Clean regular font for Qty (not overly bold)
         doc.font('Helvetica').fontSize(9);
         doc.text(`${item.quantity} kg`, colX.qty + 2, y + 7, { width: cols.qty - 4, align: 'center' });
-        doc.text(`${Number(item.rate).toFixed(2)}`, colX.price + 2, y + 7, { width: cols.price - 8, align: 'right' });
-        doc.text(item.taxRate || '', colX.tax + 2, y + 7, { width: cols.tax - 4, align: 'center' });
+        doc.text(`${Number(item.rate).toFixed(2)}`, colX.rate + 2, y + 7, { width: cols.rate - 6, align: 'right' });
+        doc.font('Helvetica-Bold').text(item.taxRate || '', colX.tax + 2, y + 7, { width: cols.tax - 4, align: 'center' });
         doc.font('Helvetica-Bold');
-        doc.text(`${Number(item.amount).toFixed(2)}`, colX.amt + 2, y + 7, { width: cols.amt - 10, align: 'right' });
+        doc.text(`${Number(item.amount).toFixed(2)}`, colX.amt + 2, y + 7, { width: cols.amt - 8, align: 'right' });
 
         y += itemRowH;
       });
@@ -303,7 +313,7 @@ async function generateBillPDFBuffer(bill) {
 
       // ── Table TOTAL Row ──
       const totalRowH = 25;
-      const totalLabelW = cols.sno + cols.part + cols.hsn + cols.qty + cols.price;
+      const totalLabelW = cols.sno + cols.count + cols.qty + cols.rate;
 
       doc.rect(L, y, totalLabelW, totalRowH).fillAndStroke('#f0f5fa', borderBlue);
       doc.rect(L + totalLabelW, y, cols.tax, totalRowH).stroke();
@@ -345,7 +355,7 @@ async function generateBillPDFBuffer(bill) {
       doc.rect(taxX.igstAmt, y, taxColW.igstAmt, taxHeaderH).fillAndStroke('#f0f5fa', borderBlue);
 
       doc.font('Helvetica-Bold').fontSize(7.5).fillColor(primaryBlue);
-      doc.text('Taxable Value', taxX.taxable + 4, y + 4, { width: taxColW.taxable - 8, align: 'center' });
+      doc.text('Vehicle No.', taxX.taxable + 4, y + 4, { width: taxColW.taxable - 8, align: 'center' });
       doc.text('CGST Tax', taxX.cgstRate + 2, y + 4, { width: taxColW.cgstRate + taxColW.cgstAmt - 4, align: 'center' });
       doc.text('SGST Tax', taxX.sgstRate + 2, y + 4, { width: taxColW.sgstRate + taxColW.sgstAmt - 4, align: 'center' });
       doc.text('IGST Tax', taxX.igstAmt + 2, y + 4, { width: taxColW.igstAmt - 4, align: 'center' });
@@ -380,9 +390,14 @@ async function generateBillPDFBuffer(bill) {
       doc.rect(taxX.sgstAmt, y, taxColW.sgstAmt, taxDataH).stroke();
       doc.rect(taxX.igstAmt, y, taxColW.igstAmt, taxDataH).stroke();
 
-      if (bill.taxableValue > 0 || bill.cgstAmount > 0 || bill.sgstAmount > 0 || bill.igstAmount > 0) {
+      // Vehicle number in black font
+      if (bill.vehicleNo) {
+        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(textDark);
+        doc.text(bill.vehicleNo, taxX.taxable + 2, y + 5, { width: taxColW.taxable - 4, align: 'center' });
+      }
+
+      if (bill.cgstAmount > 0 || bill.sgstAmount > 0 || bill.igstAmount > 0 || bill.cgstRate || bill.sgstRate) {
         doc.font('Helvetica').fontSize(8).fillColor(textDark);
-        if (bill.taxableValue) doc.text(`${Number(bill.taxableValue).toFixed(2)}`, taxX.taxable + 2, y + 5, { width: taxColW.taxable - 4, align: 'center' });
         if (bill.cgstRate) doc.text(bill.cgstRate, taxX.cgstRate + 2, y + 5, { width: taxColW.cgstRate - 4, align: 'center' });
         if (bill.cgstAmount) doc.text(`${Number(bill.cgstAmount).toFixed(2)}`, taxX.cgstAmt + 2, y + 5, { width: taxColW.cgstAmt - 4, align: 'center' });
         if (bill.sgstRate) doc.text(bill.sgstRate, taxX.sgstRate + 2, y + 5, { width: taxColW.sgstRate - 4, align: 'center' });
@@ -441,7 +456,7 @@ async function generateBillPDFBuffer(bill) {
       // Right Box: Signature
       const sigX = L + footerLeftW;
       doc.font('Helvetica-Bold').fontSize(9.5).fillColor(primaryBlue);
-      doc.text(`For ${settings.businessName || 'VIJAYA DURGA AGENCIES'}`, sigX + 8, y + 8, {
+      doc.text(`For ${settings.businessName || 'VIJAYA DURGA SEA FOODS'}`, sigX + 8, y + 8, {
         width: footerRightW - 16,
         align: 'center',
       });
