@@ -92,8 +92,12 @@ export default function PublicInvoice() {
   const formattedDate = `${dd}-${mm}-${yyyy}`;
   const finalAmount = bill.grandTotal || bill.total || 0;
   const amountInWordsText = numberToWords(finalAmount);
-  const emptyRowsCount = Math.max(1, 5 - itemsList.length);
-  const totalQuantity = itemsList.reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
+  // Separate Prawn items from Ice item (Ice is not added to prawn total quantity)
+  const prawnItems = itemsList.filter((it) => it.count !== 'Ice' && it.particulars !== 'Ice');
+  const iceItem = itemsList.find((it) => it.count === 'Ice' || it.particulars === 'Ice');
+  const prawnTotalQty = prawnItems.reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
+  const prawnSubtotal = prawnItems.reduce((sum, it) => sum + (Number(it.amount || it.quantity * it.rate) || 0), 0);
+  const gapRowsCount = iceItem ? Math.max(2, 4 - prawnItems.length) : Math.max(1, 5 - prawnItems.length);
 
   return (
     <div style={{ minHeight: '100vh', background: '#f1f5f9', padding: '20px 12px 60px 12px', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -233,7 +237,7 @@ export default function PublicInvoice() {
               <th className="col-sno" rowSpan={2}>S.No</th>
               <th colSpan={3} style={{ borderBottom: '1px solid #0b5394', background: '#e8f1f8' }}>HEAD-ON / HEAD-LESS</th>
               <th className="col-rate" rowSpan={2}>RATE<br/>OF TAX</th>
-              <th className="col-amount" rowSpan={2}>AMOUNT<br/><span style={{ fontSize: '0.66rem', fontWeight: 600 }}>Rs. &nbsp; Ps.</span></th>
+              <th className="col-amount" rowSpan={2} style={{ verticalAlign: 'middle' }}>AMOUNT</th>
             </tr>
             <tr style={{ fontSize: '0.72rem' }}>
               <th style={{ width: '65px' }}>COUNT</th>
@@ -242,7 +246,7 @@ export default function PublicInvoice() {
             </tr>
           </thead>
           <tbody>
-            {itemsList.map((item, idx) => (
+            {prawnItems.map((item, idx) => (
               <tr key={idx} className="item-data-row">
                 <td className="col-sno text-center">{item.sno || idx + 1}</td>
                 <td className="text-center font-bold">{item.count || ''}</td>
@@ -253,7 +257,8 @@ export default function PublicInvoice() {
               </tr>
             ))}
 
-            {Array.from({ length: emptyRowsCount }).map((_, i) => (
+            {/* Blank rows (2-3 box gap if 1 item) */}
+            {Array.from({ length: gapRowsCount }).map((_, i) => (
               <tr key={`empty-${i}`} className="item-empty-row">
                 <td className="col-sno">&nbsp;</td>
                 <td>&nbsp;</td>
@@ -263,6 +268,32 @@ export default function PublicInvoice() {
                 <td className="col-amount">&nbsp;</td>
               </tr>
             ))}
+
+            {/* If Ice exists: Show Total Prawn Quantity row, then Ice row below it */}
+            {iceItem && (
+              <>
+                <tr style={{ height: '24px', background: '#f0f5fa', borderTop: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394' }}>
+                  <td className="col-sno">&nbsp;</td>
+                  <td style={{ textAlign: 'center', fontWeight: 'bold', color: '#0b5394' }}>TOTAL</td>
+                  <td style={{ textAlign: 'right', fontWeight: 800, color: '#000000' }}>
+                    {Number(prawnTotalQty.toFixed(2))} kg
+                  </td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td className="col-amount" style={{ textAlign: 'right', fontWeight: 800, color: '#000000' }}>
+                    {Number(prawnSubtotal.toFixed(2))}
+                  </td>
+                </tr>
+                <tr className="item-data-row">
+                  <td className="col-sno text-center">&nbsp;</td>
+                  <td className="text-center font-bold">Ice</td>
+                  <td className="text-right">{Number(iceItem.quantity || 0).toFixed(2)} kg</td>
+                  <td className="text-right">{Number(iceItem.rate || 0).toFixed(2)}</td>
+                  <td className="text-center font-bold">{iceItem.taxRate || '0'}</td>
+                  <td className="col-amount text-right font-bold">{Number(iceItem.amount || (iceItem.quantity * iceItem.rate) || 0).toFixed(2)}</td>
+                </tr>
+              </>
+            )}
           </tbody>
           <tfoot>
             <tr style={{
@@ -281,7 +312,7 @@ export default function PublicInvoice() {
                 color: '#000000',
                 fontSize: '0.82rem'
               }}>
-                {Number(totalQuantity.toFixed(2))} kg
+                {iceItem ? '' : `${Number(prawnTotalQty.toFixed(2))} kg`}
               </td>
               <td colSpan={2} style={{
                 borderRight: '1.5px solid #0b5394',

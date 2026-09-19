@@ -269,9 +269,13 @@ export default function BillDetail() {
   const isSameDay = new Date(bill.createdAt || bill.date).toDateString() === new Date().toDateString();
   const canEditBill = !bill.isVoided && (isSameDay || user?.role === 'admin' || user?.role === 'owner');
 
-  // Empty grid lines to match authentic printed bill book
-  const emptyRowsCount = Math.max(1, 6 - itemsList.length);
-  const totalQuantity = itemsList.reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
+  // Separate Prawn items from Ice item (Ice is not added to prawn total quantity)
+  const prawnItems = itemsList.filter((it) => it.count !== 'Ice' && it.particulars !== 'Ice');
+  const iceItem = itemsList.find((it) => it.count === 'Ice' || it.particulars === 'Ice');
+  const prawnTotalQty = prawnItems.reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
+  const prawnSubtotal = prawnItems.reduce((sum, it) => sum + (Number(it.amount || it.quantity * it.rate) || 0), 0);
+  // If only 1 prawn item, give 2-3 box gap before total quantity
+  const gapRowsCount = iceItem ? Math.max(2, 4 - prawnItems.length) : Math.max(1, 5 - prawnItems.length);
 
   return (
     <div className="page-container fade-in">
@@ -773,9 +777,8 @@ export default function BillDetail() {
                 <th rowSpan={2} style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '5px 4px', width: '38px' }}>S.<br />No.</th>
                 <th colSpan={3} style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1px solid #0b5394', padding: '4px 4px', background: '#e8f1f8' }}>HEAD-ON / HEAD-LESS</th>
                 <th rowSpan={2} style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '5px 4px', width: '60px' }}>RATE<br />OF TAX</th>
-                <th rowSpan={2} style={{ padding: '5px 8px', width: '105px', textAlign: 'center', borderBottom: '1.5px solid #0b5394' }}>
-                  AMOUNT<br />
-                  <span style={{ fontSize: '0.72rem' }}>Rs. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Ps.</span>
+                <th rowSpan={2} style={{ padding: '5px 8px', width: '105px', textAlign: 'center', borderBottom: '1.5px solid #0b5394', verticalAlign: 'middle' }}>
+                  AMOUNT
                 </th>
               </tr>
               <tr style={{ background: '#f8fafc', color: '#0b5394', fontWeight: 'bold', textAlign: 'center', fontSize: '0.72rem', borderBottom: '1.5px solid #0b5394' }}>
@@ -785,7 +788,7 @@ export default function BillDetail() {
               </tr>
             </thead>
             <tbody>
-              {itemsList.map((it, idx) => (
+              {prawnItems.map((it, idx) => (
                 <tr key={idx} style={{ height: '24px', borderBottom: '1px solid #c8d9e8' }}>
                   <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>{it.sno || idx + 1}</td>
                   <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>{it.count || ''}</td>
@@ -798,8 +801,8 @@ export default function BillDetail() {
                 </tr>
               ))}
 
-              {/* Blank rows to match billbook aesthetic */}
-              {Array.from({ length: emptyRowsCount }).map((_, i) => (
+              {/* Blank rows (2-3 box gap if 1 item) */}
+              {Array.from({ length: gapRowsCount }).map((_, i) => (
                 <tr key={`empty-${i}`} style={{ height: '20px', borderBottom: '1px solid #c8d9e8' }}>
                   <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
                   <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
@@ -809,6 +812,34 @@ export default function BillDetail() {
                   <td></td>
                 </tr>
               ))}
+
+              {/* If Ice exists: Show Total Prawn Quantity row, then Ice row below it */}
+              {iceItem && (
+                <>
+                  <tr style={{ height: '24px', background: '#f0f5fa', borderTop: '1.5px solid #0b5394', borderBottom: '1px solid #0b5394' }}>
+                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold', color: '#0b5394' }}>TOTAL</td>
+                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 800, color: '#000000' }}>
+                      {Number(prawnTotalQty.toFixed(2))} kg
+                    </td>
+                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                    <td style={{ textAlign: 'right', paddingRight: '8px', fontWeight: 800, color: '#000000' }}>
+                      {Number(prawnSubtotal.toFixed(2))}
+                    </td>
+                  </tr>
+                  <tr style={{ height: '24px', borderBottom: '1px solid #c8d9e8' }}>
+                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}></td>
+                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>Ice</td>
+                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center' }}>{Number(iceItem.quantity).toFixed(2)} kg</td>
+                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', paddingRight: '6px' }}>{Number(iceItem.rate).toFixed(2)}</td>
+                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>{iceItem.taxRate || '0'}</td>
+                    <td style={{ textAlign: 'right', paddingRight: '8px', fontWeight: 'bold' }}>
+                      {Number(iceItem.amount || iceItem.quantity * iceItem.rate).toFixed(2)}
+                    </td>
+                  </tr>
+                </>
+              )}
             </tbody>
             <tfoot>
               <tr style={{
@@ -827,7 +858,7 @@ export default function BillDetail() {
                   color: '#000000',
                   fontSize: '0.82rem'
                 }}>
-                  {Number(totalQuantity.toFixed(2))} kg
+                  {iceItem ? '' : `${Number(prawnTotalQty.toFixed(2))} kg`}
                 </td>
                 <td colSpan={2} style={{
                   borderRight: '1.5px solid #0b5394',

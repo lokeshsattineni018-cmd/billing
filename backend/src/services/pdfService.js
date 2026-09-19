@@ -251,7 +251,7 @@ async function generateBillPDFBuffer(bill) {
       doc.text('S.\nNo.', colX.sno + 2, y + 4, { width: cols.sno - 4, align: 'center' });
       doc.text('HEAD-ON / HEAD-LESS', colX.count + 2, y + 4, { width: headOnW - 4, align: 'center' });
       doc.text('RATE\nOF TAX', colX.tax + 2, y + 4, { width: cols.tax - 4, align: 'center' });
-      doc.text('AMOUNT\nRs.       Ps.', colX.amt + 2, y + 4, { width: cols.amt - 4, align: 'center' });
+      doc.text('AMOUNT', colX.amt + 2, y + 9, { width: cols.amt - 4, align: 'center' });
 
       y += thH1;
 
@@ -280,8 +280,15 @@ async function generateBillPDFBuffer(bill) {
         amount: bill.total,
       }];
 
+      // Separate Prawn items from Ice item (Ice is not added to prawn total quantity)
+      const prawnItems = itemsList.filter((it) => it.count !== 'Ice' && it.particulars !== 'Ice');
+      const iceItem = itemsList.find((it) => it.count === 'Ice' || it.particulars === 'Ice');
+      const prawnTotalQty = prawnItems.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
+      const prawnSubtotal = prawnItems.reduce((s, it) => s + (Number(it.amount || it.quantity * it.rate) || 0), 0);
+      const gapRowsCount = iceItem ? Math.max(2, 4 - prawnItems.length) : Math.max(1, 5 - prawnItems.length);
+
       const itemRowH = 24;
-      itemsList.forEach((item, index) => {
+      prawnItems.forEach((item, index) => {
         Object.keys(cols).forEach((key) => {
           doc.rect(colX[key], y, cols[key], itemRowH).stroke();
         });
@@ -295,47 +302,70 @@ async function generateBillPDFBuffer(bill) {
         doc.text(`${Number(item.rate).toFixed(2)}`, colX.rate + 2, y + 7, { width: cols.rate - 6, align: 'right' });
         doc.font('Helvetica-Bold').text(item.taxRate || '', colX.tax + 2, y + 7, { width: cols.tax - 4, align: 'center' });
         doc.font('Helvetica-Bold');
-        doc.text(`${Number(item.amount).toFixed(2)}`, colX.amt + 2, y + 7, { width: cols.amt - 8, align: 'right' });
+        doc.text(`${Number(item.amount || item.quantity * item.rate).toFixed(2)}`, colX.amt + 2, y + 7, { width: cols.amt - 8, align: 'right' });
 
         y += itemRowH;
       });
 
-      // Clean empty rows for receipt format
-      const maxReceiptRows = 6;
-      const emptyRowsCount = Math.max(1, maxReceiptRows - itemsList.length);
+      // Gap rows (2-3 box gap if 1 item)
       const emptyRowH = 18;
-      for (let i = 0; i < emptyRowsCount; i++) {
+      for (let i = 0; i < gapRowsCount; i++) {
         Object.keys(cols).forEach((key) => {
           doc.rect(colX[key], y, cols[key], emptyRowH).stroke();
         });
         y += emptyRowH;
       }
 
+      // If Ice exists: Show Total Prawn Quantity row, then Ice row below it
+      if (iceItem) {
+        // Total Prawn Quantity row
+        const pTotalH = 22;
+        doc.rect(L, y, cols.sno, pTotalH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(colX.count, y, cols.count, pTotalH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(colX.qty, y, cols.qty, pTotalH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(colX.rate, y, cols.rate + cols.tax, pTotalH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(colX.amt, y, cols.amt, pTotalH).fillAndStroke('#f0f5fa', borderBlue);
+
+        doc.font('Helvetica-Bold').fontSize(9.5).fillColor(primaryBlue);
+        doc.text('TOTAL', colX.count + 2, y + 6, { width: cols.count - 4, align: 'center' });
+        doc.font('Helvetica-Bold').fontSize(9.5).fillColor(textDark);
+        doc.text(`${Number(prawnTotalQty.toFixed(2))} kg`, colX.qty + 2, y + 6, { width: cols.qty - 4, align: 'center' });
+        doc.text(`${Number(prawnSubtotal.toFixed(2))}`, colX.amt + 2, y + 6, { width: cols.amt - 8, align: 'right' });
+
+        y += pTotalH;
+
+        // Ice row below total quantity
+        Object.keys(cols).forEach((key) => {
+          doc.rect(colX[key], y, cols[key], itemRowH).stroke();
+        });
+
+        doc.font('Helvetica-Bold').fontSize(9).fillColor(textDark);
+        doc.text('Ice', colX.count + 2, y + 7, { width: cols.count - 4, align: 'center' });
+        doc.font('Helvetica').fontSize(9);
+        doc.text(`${iceItem.quantity} kg`, colX.qty + 2, y + 7, { width: cols.qty - 4, align: 'center' });
+        doc.text(`${Number(iceItem.rate).toFixed(2)}`, colX.rate + 2, y + 7, { width: cols.rate - 6, align: 'right' });
+        doc.font('Helvetica-Bold').text(iceItem.taxRate || '0', colX.tax + 2, y + 7, { width: cols.tax - 4, align: 'center' });
+        doc.font('Helvetica-Bold');
+        doc.text(`${Number(iceItem.amount || iceItem.quantity * iceItem.rate).toFixed(2)}`, colX.amt + 2, y + 7, { width: cols.amt - 8, align: 'right' });
+
+        y += itemRowH;
+      }
+
       // ── Table TOTAL Row ──
       const totalRowH = 25;
-      const totalQty = (bill.items && bill.items.length > 0)
-        ? bill.items.reduce((s, it) => s + (Number(it.quantity) || 0), 0)
-        : (Number(bill.quantity) || 0);
-      const totalQtyDisplay = `${Number(totalQty.toFixed(2))} kg`;
-
-      // S.No + Count cell
       doc.rect(L, y, cols.sno + cols.count, totalRowH).fillAndStroke('#f0f5fa', borderBlue);
-      // QTY Total cell
       doc.rect(colX.qty, y, cols.qty, totalRowH).fillAndStroke('#f0f5fa', borderBlue);
-      // Rate + Tax (TOTAL label) cell
       doc.rect(colX.rate, y, cols.rate + cols.tax, totalRowH).fillAndStroke('#f0f5fa', borderBlue);
-      // Amount cell
       doc.rect(colX.amt, y, cols.amt, totalRowH).fillAndStroke('#f0f5fa', borderBlue);
 
-      // Total quantity under QTY column
-      doc.font('Helvetica-Bold').fontSize(9.5).fillColor(textDark);
-      doc.text(totalQtyDisplay, colX.qty + 2, y + 7, { width: cols.qty - 4, align: 'center' });
+      if (!iceItem) {
+        doc.font('Helvetica-Bold').fontSize(9.5).fillColor(textDark);
+        doc.text(`${Number(prawnTotalQty.toFixed(2))} kg`, colX.qty + 2, y + 7, { width: cols.qty - 4, align: 'center' });
+      }
 
-      // TOTAL label under Rate/Tax columns
       doc.font('Helvetica-Bold').fontSize(10.5).fillColor(primaryBlue);
       doc.text('TOTAL', colX.rate + 4, y + 7, { width: cols.rate + cols.tax - 12, align: 'right' });
 
-      // Total amount under Amount column
       doc.font('Helvetica-Bold').fontSize(11).fillColor(textDark);
       doc.text(`${bill.total.toFixed(2)}`, colX.amt + 2, y + 7, { width: cols.amt - 10, align: 'right' });
 

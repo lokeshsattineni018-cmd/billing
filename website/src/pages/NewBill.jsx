@@ -276,10 +276,10 @@ export default function NewBill() {
     const grand = Math.round((sub + tax) * 100) / 100;
 
     const itemsWeight = items.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
-    const totWeight = Math.round((itemsWeight + (hasIce ? iceQuantityNum : 0)) * 100) / 100;
+    const totWeight = Math.round(itemsWeight * 100) / 100;
 
     return { subtotal: sub, totalTax: tax, grandTotal: grand, totalWeight: totWeight };
-  }, [items, hasIce, iceAmount, iceQuantityNum, cgstAmount, sgstAmount, igstAmount]);
+  }, [items, hasIce, iceAmount, cgstAmount, sgstAmount, igstAmount]);
 
   const handleSave = async (actionType = 'save') => {
     if (!companyName.trim()) {
@@ -994,7 +994,7 @@ export default function NewBill() {
                   {t('totalBeforeTax')}
                 </span>
                 <span style={{ fontSize: '0.74rem', color: '#64748b', marginLeft: '6px' }}>
-                  ({items.length + (hasIce ? 1 : 0)} items • Total Qty: {totalWeight} kg)
+                  ({items.length} prawn {items.length === 1 ? 'item' : 'items'} • Prawn Qty: {totalWeight} kg{hasIce ? ` • Ice: ${iceQuantityNum} kg` : ''})
                 </span>
               </div>
               <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e293b' }}>
