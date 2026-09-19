@@ -271,6 +271,7 @@ export default function BillDetail() {
 
   // Empty grid lines to match authentic printed bill book
   const emptyRowsCount = Math.max(1, 6 - itemsList.length);
+  const totalQuantity = itemsList.reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
 
   return (
     <div className="page-container fade-in">
@@ -809,24 +810,45 @@ export default function BillDetail() {
                 </tr>
               ))}
             </tbody>
+            <tfoot>
+              <tr style={{
+                background: '#f0f5fa',
+                borderTop: '1.5px solid #0b5394',
+                borderBottom: '1.5px solid #0b5394',
+                height: '26px',
+                fontSize: '0.82rem'
+              }}>
+                <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                <td style={{
+                  borderRight: '1.5px solid #0b5394',
+                  textAlign: 'center',
+                  fontWeight: 800,
+                  color: '#000000',
+                  fontSize: '0.82rem'
+                }}>
+                  {Number(totalQuantity.toFixed(2))} kg
+                </td>
+                <td colSpan={2} style={{
+                  borderRight: '1.5px solid #0b5394',
+                  textAlign: 'right',
+                  paddingRight: '8px',
+                  fontWeight: 'bold',
+                  color: '#0b5394'
+                }}>
+                  TOTAL
+                </td>
+                <td style={{
+                  textAlign: 'right',
+                  paddingRight: '8px',
+                  fontWeight: 900,
+                  color: '#000000'
+                }}>
+                  {Number(bill.total || finalAmount).toFixed(2)}
+                </td>
+              </tr>
+            </tfoot>
           </table>
-
-          {/* 7. ITEMS TOTAL ROW */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 105px',
-            borderTop: '1.5px solid #0b5394',
-            borderBottom: '1.5px solid #0b5394',
-            background: '#f0f5fa',
-            fontSize: '0.85rem'
-          }}>
-            <div style={{ borderRight: '1.5px solid #0b5394', padding: '4px 10px', textAlign: 'right', fontWeight: 'bold', color: '#0b5394' }}>
-              TOTAL
-            </div>
-            <div style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 900, color: '#000000' }}>
-              {Number(bill.total || finalAmount).toFixed(2)}
-            </div>
-          </div>
 
           {/* 8. TAX BREAKDOWN TABLE (Vehicle No. replacing Taxable Value) */}
           <div style={{ borderBottom: '1.5px solid #0b5394' }}>
@@ -982,33 +1004,20 @@ export default function BillDetail() {
             </div>
 
             <h4 style={{ margin: '0 0 8px 0', fontSize: '0.92rem', fontWeight: 700, color: '#0b5394' }}>
-              Line Items (HEAD-ON / HEAD-LESS)
+              Line Items
             </h4>
             {editItems.map((item, idx) => (
               <div key={idx} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px', marginBottom: '10px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '8px', marginBottom: '8px' }}>
-                  <div>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b' }}>Count</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={item.count || ''}
-                      onChange={(e) => handleEditItemChange(idx, 'count', e.target.value)}
-                      placeholder="e.g. 100"
-                      style={{ fontWeight: 700 }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b' }}>HEAD-ON / HEAD-LESS</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={item.particulars || ''}
-                      onChange={(e) => handleEditItemChange(idx, 'particulars', e.target.value)}
-                      placeholder="HEAD-ON or HEAD-LESS"
-                      style={{ fontWeight: 700 }}
-                    />
-                  </div>
+                <div style={{ marginBottom: '8px' }}>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b' }}>Count / Item Description</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={item.count || ''}
+                    onChange={(e) => handleEditItemChange(idx, 'count', e.target.value)}
+                    placeholder="e.g. 100, 118, Ice"
+                    style={{ fontWeight: 700 }}
+                  />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div>

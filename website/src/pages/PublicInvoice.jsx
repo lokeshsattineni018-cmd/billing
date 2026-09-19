@@ -93,6 +93,7 @@ export default function PublicInvoice() {
   const finalAmount = bill.grandTotal || bill.total || 0;
   const amountInWordsText = numberToWords(finalAmount);
   const emptyRowsCount = Math.max(1, 5 - itemsList.length);
+  const totalQuantity = itemsList.reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
 
   return (
     <div style={{ minHeight: '100vh', background: '#f1f5f9', padding: '20px 12px 60px 12px', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -263,6 +264,44 @@ export default function PublicInvoice() {
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr style={{
+              background: '#f0f5fa',
+              borderTop: '1.5px solid #0b5394',
+              borderBottom: '1.5px solid #0b5394',
+              height: '26px',
+              fontSize: '0.82rem'
+            }}>
+              <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+              <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+              <td style={{
+                borderRight: '1.5px solid #0b5394',
+                textAlign: 'center',
+                fontWeight: 800,
+                color: '#000000',
+                fontSize: '0.82rem'
+              }}>
+                {Number(totalQuantity.toFixed(2))} kg
+              </td>
+              <td colSpan={2} style={{
+                borderRight: '1.5px solid #0b5394',
+                textAlign: 'right',
+                paddingRight: '8px',
+                fontWeight: 'bold',
+                color: '#0b5394'
+              }}>
+                TOTAL
+              </td>
+              <td style={{
+                textAlign: 'right',
+                paddingRight: '8px',
+                fontWeight: 900,
+                color: '#000000'
+              }}>
+                {Number(bill.total || finalAmount).toFixed(2)}
+              </td>
+            </tr>
+          </tfoot>
         </table>
 
         {/* 6. Tax Breakdown with Vehicle No. */}

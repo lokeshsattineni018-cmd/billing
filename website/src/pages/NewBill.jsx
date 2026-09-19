@@ -26,14 +26,19 @@ export default function NewBill() {
     {
       sno: 1,
       count: '',
-      particulars: 'HEAD-ON',
-      hsn: '0306',
       quantity: '',
       rate: '',
-      taxRate: '5%',
+      taxRate: '0',
       amount: 0,
     },
   ]);
+
+  // Dedicated Ice details
+  const [ice, setIce] = useState({
+    quantity: '',
+    rate: '',
+    taxRate: '0',
+  });
 
   // Tax Details
   const [cgstRate, setCgstRate] = useState('2.5');
@@ -64,17 +69,30 @@ export default function NewBill() {
       if (clone.sgstRate) setSgstRate(clone.sgstRate);
       if (clone.sgstAmount) setSgstAmount(String(clone.sgstAmount));
       if (clone.igstAmount) setIgstAmount(String(clone.igstAmount));
+
       if (clone.items && clone.items.length > 0) {
-        setItems(clone.items.map((it, idx) => ({ ...it, sno: idx + 1 })));
+        const iceItem = clone.items.find((it) => it.count === 'Ice' || it.particulars === 'Ice');
+        const prawnList = clone.items.filter((it) => it.count !== 'Ice' && it.particulars !== 'Ice');
+        if (iceItem) {
+          setIce({
+            quantity: String(iceItem.quantity || ''),
+            rate: String(iceItem.rate || ''),
+            taxRate: String(iceItem.taxRate || '0'),
+          });
+        }
+        if (prawnList.length > 0) {
+          setItems(prawnList.map((it, idx) => ({ ...it, sno: idx + 1 })));
+        } else {
+          setItems([{ sno: 1, count: '', quantity: '', rate: '', taxRate: '0', amount: 0 }]);
+        }
       } else {
         setItems([
           {
             sno: 1,
-            particulars: clone.particulars || 'Fresh Seafood / Prawns Supply',
-            hsn: clone.hsn || '0306',
+            count: '',
             quantity: clone.quantity || '',
             rate: clone.rate || '',
-            taxRate: clone.taxRate || '',
+            taxRate: clone.taxRate || '0',
             amount: clone.total || 0,
           },
         ]);
@@ -83,12 +101,12 @@ export default function NewBill() {
       return;
     }
 
-    // Task 3: Check for saved offline draft on initial load
+    // Check for saved offline draft on initial load
     try {
       const savedDraft = localStorage.getItem(DRAFT_KEY);
       if (savedDraft) {
         const draft = JSON.parse(savedDraft);
-        if (draft && (draft.companyName || (draft.items && draft.items.some((i) => i.quantity || i.rate)))) {
+        if (draft && (draft.companyName || (draft.items && draft.items.some((i) => i.quantity || i.rate)) || draft.ice?.quantity)) {
           if (draft.companyName) setCompanyName(draft.companyName);
           if (draft.customerPhone) setCustomerPhone(draft.customerPhone);
           if (draft.vehicleNo) setVehicleNo(draft.vehicleNo);
@@ -100,6 +118,7 @@ export default function NewBill() {
           if (draft.sgstAmount) setSgstAmount(draft.sgstAmount);
           if (draft.igstAmount) setIgstAmount(draft.igstAmount);
           if (draft.items && draft.items.length > 0) setItems(draft.items);
+          if (draft.ice) setIce(draft.ice);
           setHasDraftNotice(true);
         }
       }
@@ -111,7 +130,7 @@ export default function NewBill() {
   // Debounced auto-save draft to localStorage (avoids input lag while typing)
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (companyName || items.some((it) => it.quantity || it.rate)) {
+      if (companyName || items.some((it) => it.quantity || it.rate) || ice.quantity || ice.rate) {
         const draftData = {
           date,
           companyName,
@@ -119,6 +138,7 @@ export default function NewBill() {
           vehicleNo,
           paymentStatus,
           items,
+          ice,
           cgstRate,
           cgstAmount,
           sgstRate,
@@ -135,7 +155,7 @@ export default function NewBill() {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [date, companyName, customerPhone, paymentStatus, items, cgstRate, cgstAmount, sgstRate, sgstAmount, igstAmount]);
+  }, [date, companyName, customerPhone, vehicleNo, paymentStatus, items, ice, cgstRate, cgstAmount, sgstRate, sgstAmount, igstAmount]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -179,7 +199,6 @@ export default function NewBill() {
     setShowSuggestions(false);
   };
 
-  // Task 7: Restricted numeric-only 10-digit phone formatter
   const handlePhoneChange = (e) => {
     const numeric = e.target.value.replace(/\D/g, '').slice(0, 10);
     setCustomerPhone(numeric);
@@ -198,16 +217,19 @@ export default function NewBill() {
     setItems(updated);
   };
 
+  const handleIceChange = (field, value) => {
+    setIce((prev) => ({ ...prev, [field]: value }));
+  };
+
   const handleAddItem = () => {
     setItems([
       ...items,
       {
         sno: items.length + 1,
-        particulars: '',
-        hsn: '0306',
+        count: '',
         quantity: '',
         rate: '',
-        taxRate: '',
+        taxRate: '0',
         amount: 0,
       },
     ]);
@@ -223,14 +245,15 @@ export default function NewBill() {
     localStorage.removeItem(DRAFT_KEY);
     setCompanyName('');
     setCustomerPhone('');
+    setVehicleNo('');
+    setIce({ quantity: '', rate: '', taxRate: '0' });
     setItems([
       {
         sno: 1,
-        particulars: '',
-        hsn: '0306',
+        count: '',
         quantity: '',
         rate: '',
-        taxRate: '',
+        taxRate: '0',
         amount: 0,
       },
     ]);
@@ -238,15 +261,25 @@ export default function NewBill() {
     showToast('Draft cleared');
   };
 
-  const { subtotal, totalTax, grandTotal } = useMemo(() => {
-    const sub = Math.round(items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) * 100) / 100;
+  const iceQuantityNum = parseFloat(ice.quantity) || 0;
+  const iceRateNum = parseFloat(ice.rate) || 0;
+  const iceAmount = Math.round(iceQuantityNum * iceRateNum * 100) / 100;
+  const hasIce = iceQuantityNum > 0 && iceRateNum > 0;
+
+  const { subtotal, totalTax, grandTotal, totalWeight } = useMemo(() => {
+    const itemsSub = Math.round(items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) * 100) / 100;
+    const sub = Math.round((itemsSub + (hasIce ? iceAmount : 0)) * 100) / 100;
     const numCgst = parseFloat(cgstAmount) || 0;
     const numSgst = parseFloat(sgstAmount) || 0;
     const numIgst = parseFloat(igstAmount) || 0;
     const tax = Math.round((numCgst + numSgst + numIgst) * 100) / 100;
     const grand = Math.round((sub + tax) * 100) / 100;
-    return { subtotal: sub, totalTax: tax, grandTotal: grand };
-  }, [items, cgstAmount, sgstAmount, igstAmount]);
+
+    const itemsWeight = items.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
+    const totWeight = Math.round((itemsWeight + (hasIce ? iceQuantityNum : 0)) * 100) / 100;
+
+    return { subtotal: sub, totalTax: tax, grandTotal: grand, totalWeight: totWeight };
+  }, [items, hasIce, iceAmount, iceQuantityNum, cgstAmount, sgstAmount, igstAmount]);
 
   const handleSave = async (actionType = 'save') => {
     if (!companyName.trim()) {
@@ -256,33 +289,49 @@ export default function NewBill() {
 
     const hasInvalidItem = items.some((it) => !it.quantity || parseFloat(it.quantity) <= 0 || !it.rate || parseFloat(it.rate) <= 0);
     if (hasInvalidItem) {
-      showToast('Please enter a valid Quantity (> 0) and Price (> 0) for all items', 'error');
+      showToast('Please enter a valid Quantity (> 0) and Price (> 0) for all prawn items', 'error');
       return;
     }
 
     setSaving(true);
 
     try {
+      // Build final line items: Prawn items + Ice item (if entered)
+      const finalItems = items.map((it, idx) => ({
+        sno: idx + 1,
+        count: it.count ? String(it.count).trim() : '',
+        particulars: 'HEAD-ON',
+        hsn: '0306',
+        quantity: parseFloat(it.quantity) || 0,
+        rate: parseFloat(it.rate) || 0,
+        taxRate: it.taxRate || '0',
+        amount: parseFloat(it.amount) || 0,
+      }));
+
+      if (hasIce) {
+        finalItems.push({
+          sno: finalItems.length + 1,
+          count: 'Ice',
+          particulars: 'Ice',
+          hsn: '2201',
+          quantity: iceQuantityNum,
+          rate: iceRateNum,
+          taxRate: ice.taxRate || '0',
+          amount: iceAmount,
+        });
+      }
+
       const invoiceData = {
         date,
         companyName: companyName.trim(),
         customerPhone: customerPhone.trim(),
         vehicleNo: vehicleNo.trim(),
         companyGstin: companyGstin.trim(),
-        items: items.map((it, idx) => ({
-          sno: idx + 1,
-          count: it.count ? String(it.count).trim() : '',
-          particulars: it.particulars || 'HEAD-ON',
-          hsn: it.hsn || '0306',
-          quantity: parseFloat(it.quantity) || 0,
-          rate: parseFloat(it.rate) || 0,
-          taxRate: it.taxRate || '5%',
-          amount: parseFloat(it.amount) || 0,
-        })),
-        particulars: items[0]?.particulars || 'HEAD-ON',
-        hsn: items[0]?.hsn || '0306',
-        quantity: parseFloat(items[0]?.quantity) || 0,
-        rate: parseFloat(items[0]?.rate) || 0,
+        items: finalItems,
+        particulars: finalItems[0]?.particulars || 'HEAD-ON',
+        hsn: finalItems[0]?.hsn || '0306',
+        quantity: finalItems[0]?.quantity || 0,
+        rate: finalItems[0]?.rate || 0,
         taxableValue: subtotal,
         cgstRate: cgstRate.trim(),
         cgstAmount: parseFloat(cgstAmount) || 0,
@@ -552,29 +601,16 @@ export default function NewBill() {
                   )}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '8px', marginBottom: '8px' }}>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label" style={{ fontSize: '0.76rem' }}>Count</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={item.count || ''}
-                      onChange={(e) => handleItemChange(index, 'count', e.target.value)}
-                      placeholder="e.g. 100"
-                      style={{ fontWeight: 700 }}
-                    />
-                  </div>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label" style={{ fontSize: '0.76rem' }}>HEAD-ON / HEAD-LESS</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={item.particulars}
-                      onChange={(e) => handleItemChange(index, 'particulars', e.target.value)}
-                      placeholder="HEAD-ON or HEAD-LESS"
-                      style={{ fontWeight: 700 }}
-                    />
-                  </div>
+                <div style={{ marginBottom: '8px' }}>
+                  <label className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>Prawn Count</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={item.count || ''}
+                    onChange={(e) => handleItemChange(index, 'count', e.target.value)}
+                    placeholder="e.g. 100, 118"
+                    style={{ fontWeight: 700 }}
+                  />
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
@@ -615,7 +651,7 @@ export default function NewBill() {
                       className="form-input"
                       value={item.taxRate || ''}
                       onChange={(e) => handleItemChange(index, 'taxRate', e.target.value)}
-                      placeholder="5%"
+                      placeholder="0"
                     />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end' }}>
@@ -637,12 +673,10 @@ export default function NewBill() {
               <thead>
                 <tr style={{ backgroundColor: '#f8fafc' }}>
                   <th style={{ width: '45px', textAlign: 'center', verticalAlign: 'middle' }}>{t('sno')}</th>
-                  <th style={{ width: '70px', textAlign: 'center', verticalAlign: 'middle' }}>Count</th>
-                  <th style={{ verticalAlign: 'middle' }}>HEAD-ON / HEAD-LESS</th>
-                  <th style={{ width: '90px', textAlign: 'center', verticalAlign: 'middle' }}>{t('hsn')}</th>
-                  <th style={{ width: '120px', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{t('weightKg')} *</th>
-                  <th style={{ width: '120px', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{t('price')} (₹) *</th>
-                  <th style={{ width: '80px', textAlign: 'center', verticalAlign: 'middle' }}>Tax Rate</th>
+                  <th style={{ width: '110px', textAlign: 'center', verticalAlign: 'middle' }}>Prawn Count</th>
+                  <th style={{ textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{t('weightKg')} *</th>
+                  <th style={{ width: '130px', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{t('price')} (₹) *</th>
+                  <th style={{ width: '90px', textAlign: 'center', verticalAlign: 'middle' }}>Tax Rate</th>
                   <th style={{ width: '130px', textAlign: 'right', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{t('amount')} (₹)</th>
                   <th style={{ width: '45px', textAlign: 'center', verticalAlign: 'middle' }}></th>
                 </tr>
@@ -660,27 +694,7 @@ export default function NewBill() {
                         style={{ padding: '6px 8px', textAlign: 'center', fontSize: '0.9rem', fontWeight: 700 }}
                         value={item.count || ''}
                         onChange={(e) => handleItemChange(index, 'count', e.target.value)}
-                        placeholder="100"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        className="form-input"
-                        style={{ padding: '6px 10px', fontSize: '0.9rem', fontWeight: 700 }}
-                        value={item.particulars}
-                        onChange={(e) => handleItemChange(index, 'particulars', e.target.value)}
-                        placeholder="HEAD-ON or HEAD-LESS"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        className="form-input"
-                        style={{ padding: '6px 8px', textAlign: 'center', fontSize: '0.9rem' }}
-                        value={item.hsn}
-                        onChange={(e) => handleItemChange(index, 'hsn', e.target.value)}
-                        placeholder="0306"
+                        placeholder="e.g. 100"
                       />
                     </td>
                     <td>
@@ -696,7 +710,7 @@ export default function NewBill() {
                       />
                     </td>
                     <td>
-                      {/* Task 8: Tab-to-new-row on the last rate field */}
+                      {/* Tab-to-new-row on the last rate field */}
                       <input
                         type="number"
                         step="0.01"
@@ -722,7 +736,7 @@ export default function NewBill() {
                         style={{ padding: '6px 8px', textAlign: 'center', fontSize: '0.9rem' }}
                         value={item.taxRate || ''}
                         onChange={(e) => handleItemChange(index, 'taxRate', e.target.value)}
-                        placeholder="5%"
+                        placeholder="0"
                       />
                     </td>
                     <td style={{ textAlign: 'right', fontWeight: 700, fontSize: '0.95rem', color: '#0f172a' }}>
@@ -745,6 +759,114 @@ export default function NewBill() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Dedicated Ice Section */}
+          <div
+            style={{
+              marginTop: '16px',
+              background: '#f0f7ff',
+              border: '1.5px dashed #3b82f6',
+              borderRadius: '10px',
+              padding: '16px 18px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.3rem' }}>🧊</span>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#0b5394' }}>Ice Details (Optional)</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Enter ice quantity & rate if supplied with load (appears on invoice as Ice item)</div>
+                </div>
+              </div>
+              {hasIce && (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  style={{ color: '#ef4444', fontSize: '0.78rem' }}
+                  onClick={() => setIce({ quantity: '', rate: '', taxRate: '0' })}
+                >
+                  ✕ Clear Ice
+                </button>
+              )}
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                gap: '12px',
+                alignItems: 'end',
+              }}
+            >
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e293b' }}>
+                  Ice Qty (kg / bags)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="form-input"
+                  style={{ fontWeight: 700 }}
+                  placeholder="e.g. 20"
+                  value={ice.quantity}
+                  onChange={(e) => handleIceChange('quantity', e.target.value)}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e293b' }}>
+                  Ice Rate (₹)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="form-input"
+                  style={{ fontWeight: 700 }}
+                  placeholder="e.g. 200"
+                  value={ice.rate}
+                  onChange={(e) => handleIceChange('rate', e.target.value)}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e293b' }}>
+                  Rate of Tax
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="0"
+                  value={ice.taxRate}
+                  onChange={(e) => handleIceChange('taxRate', e.target.value)}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e293b' }}>
+                  Ice Amount (₹)
+                </label>
+                <div
+                  style={{
+                    padding: '8px 12px',
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '6px',
+                    fontWeight: 800,
+                    fontSize: '1.05rem',
+                    color: '#0b5394',
+                    minHeight: '38px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                  }}
+                >
+                  {formatCurrency(iceAmount)}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* ── Tax Details Breakdown Box ── */}
@@ -871,8 +993,8 @@ export default function NewBill() {
                 <span style={{ fontSize: '0.86rem', color: '#475569', fontWeight: 700 }}>
                   {t('totalBeforeTax')}
                 </span>
-                <span style={{ fontSize: '0.74rem', color: '#94a3b8', marginLeft: '6px' }}>
-                  ({items.length} {t('itemsIncluded')})
+                <span style={{ fontSize: '0.74rem', color: '#64748b', marginLeft: '6px' }}>
+                  ({items.length + (hasIce ? 1 : 0)} items • Total Qty: {totalWeight} kg)
                 </span>
               </div>
               <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1e293b' }}>

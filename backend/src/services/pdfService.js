@@ -313,14 +313,29 @@ async function generateBillPDFBuffer(bill) {
 
       // ── Table TOTAL Row ──
       const totalRowH = 25;
-      const totalLabelW = cols.sno + cols.count + cols.qty + cols.rate;
+      const totalQty = (bill.items && bill.items.length > 0)
+        ? bill.items.reduce((s, it) => s + (Number(it.quantity) || 0), 0)
+        : (Number(bill.quantity) || 0);
+      const totalQtyDisplay = `${Number(totalQty.toFixed(2))} kg`;
 
-      doc.rect(L, y, totalLabelW, totalRowH).fillAndStroke('#f0f5fa', borderBlue);
-      doc.rect(L + totalLabelW, y, cols.tax, totalRowH).stroke();
+      // S.No + Count cell
+      doc.rect(L, y, cols.sno + cols.count, totalRowH).fillAndStroke('#f0f5fa', borderBlue);
+      // QTY Total cell
+      doc.rect(colX.qty, y, cols.qty, totalRowH).fillAndStroke('#f0f5fa', borderBlue);
+      // Rate + Tax (TOTAL label) cell
+      doc.rect(colX.rate, y, cols.rate + cols.tax, totalRowH).fillAndStroke('#f0f5fa', borderBlue);
+      // Amount cell
       doc.rect(colX.amt, y, cols.amt, totalRowH).fillAndStroke('#f0f5fa', borderBlue);
 
+      // Total quantity under QTY column
+      doc.font('Helvetica-Bold').fontSize(9.5).fillColor(textDark);
+      doc.text(totalQtyDisplay, colX.qty + 2, y + 7, { width: cols.qty - 4, align: 'center' });
+
+      // TOTAL label under Rate/Tax columns
       doc.font('Helvetica-Bold').fontSize(10.5).fillColor(primaryBlue);
-      doc.text('TOTAL', L + 8, y + 7, { width: totalLabelW - 16, align: 'right' });
+      doc.text('TOTAL', colX.rate + 4, y + 7, { width: cols.rate + cols.tax - 12, align: 'right' });
+
+      // Total amount under Amount column
       doc.font('Helvetica-Bold').fontSize(11).fillColor(textDark);
       doc.text(`${bill.total.toFixed(2)}`, colX.amt + 2, y + 7, { width: cols.amt - 10, align: 'right' });
 
