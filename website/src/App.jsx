@@ -14,7 +14,7 @@ import Reports from './pages/Reports';
 import ActivityLog from './pages/ActivityLog';
 import Settings from './pages/Settings';
 import Staff from './pages/Staff';
-import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon, UserIcon, StaffIcon } from './components/Icons';
+import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon, UserIcon, StaffIcon, MenuIcon, CloseIcon } from './components/Icons';
 import logoImg from './assets/logo.png';
 import { registerAutoSync, getPendingCount, syncPendingBills } from './services/offlineQueue';
 import { billsAPI } from './services/api';
@@ -41,7 +41,7 @@ function Sidebar({ onInstall, onLogout }) {
     { path: '/', label: t('dashboard'), icon: <DashboardIcon size={18} /> },
     { path: '/new-bill', label: t('newInvoice'), icon: <PlusIcon size={18} /> },
     { path: '/bills', label: t('invoiceHistory'), icon: <InvoiceIcon size={18} /> },
-    { path: '/staff', label: t('staffWages') || 'Staff & Wages', icon: <StaffIcon size={18} /> },
+    { path: '/staff', label: t('staff') || 'Staff & Daily Operations', icon: <StaffIcon size={18} /> },
     ...(isAdmin
       ? [
           { path: '/reports', label: t('salesReports'), icon: <TrendingUpIcon size={18} /> },
@@ -153,11 +153,27 @@ function AppLayout() {
   const [installPrompt, setInstallPrompt] = useState(window.deferredInstallPrompt || null);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const { user, logout } = useAuth();
   const { lang, toggleLang, t } = useLanguage();
   const navigate = useNavigate();
 
   const isAdmin = user?.role === 'admin';
+
+  const drawerNavItems = [
+    { path: '/', label: t('dashboard'), icon: <DashboardIcon size={18} /> },
+    { path: '/new-bill', label: t('newInvoice'), icon: <PlusIcon size={18} /> },
+    { path: '/bills', label: t('invoiceHistory'), icon: <InvoiceIcon size={18} /> },
+    { path: '/staff', label: t('staff') || 'Staff & Daily Operations', icon: <StaffIcon size={18} /> },
+    ...(isAdmin
+      ? [
+          { path: '/reports', label: t('salesReports'), icon: <TrendingUpIcon size={18} /> },
+          { path: '/customers', label: t('customers'), icon: <UserIcon size={18} /> },
+          { path: '/activity-log', label: t('activityLog'), icon: <InvoiceIcon size={18} /> },
+          { path: '/settings', label: t('settings'), icon: <SettingsIcon size={18} /> },
+        ]
+      : []),
+  ];
 
   useEffect(() => {
     if (window.deferredInstallPrompt) {
@@ -294,16 +310,24 @@ function AppLayout() {
             <DownloadIcon size={13} color="#0b5394" /> {t('installApp')}
           </button>
 
-          {isAdmin && (
-            <button
-              className="btn btn-ghost btn-sm"
-              style={{ padding: '6px', color: '#64748b' }}
-              onClick={() => navigate('/settings')}
-              title={t('settings')}
-            >
-              <SettingsIcon size={17} />
-            </button>
-          )}
+          {/* Menu bar button replaces settings logo to show all available features */}
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            style={{
+              padding: '6px 8px',
+              color: '#0b5394',
+              display: 'flex',
+              alignItems: 'center',
+              background: mobileDrawerOpen ? '#eff6ff' : 'transparent',
+              borderRadius: '6px',
+            }}
+            onClick={() => setMobileDrawerOpen(true)}
+            title={t('menu') || 'Menu Options'}
+            aria-label="Open navigation menu"
+          >
+            <MenuIcon size={20} color="#0b5394" />
+          </button>
 
           <button
             className="btn btn-ghost btn-sm"
@@ -315,6 +339,150 @@ function AppLayout() {
           </button>
         </div>
       </header>
+
+      {/* Mobile & Tablet Slide-Out Sidebar Drawer */}
+      {mobileDrawerOpen && (
+        <div className="mobile-drawer-overlay" onClick={() => setMobileDrawerOpen(false)}>
+          <div className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
+            {/* Drawer Header */}
+            <div className="mobile-drawer-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <img
+                  src={logoImg}
+                  alt="Logo"
+                  style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+                />
+                <div>
+                  <div style={{ fontSize: '0.96rem', fontWeight: 900, color: '#0b5394', lineHeight: 1.2 }}>
+                    VIJAYA DURGA
+                  </div>
+                  <div style={{ fontSize: '0.66rem', color: '#64748b', fontWeight: 700, letterSpacing: '0.5px' }}>
+                    SEAFOOD & BILLING
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setMobileDrawerOpen(false)}
+                style={{ padding: '6px', color: '#64748b' }}
+                title="Close"
+              >
+                <CloseIcon size={20} />
+              </button>
+            </div>
+
+            {/* User Profile Card */}
+            <div className="mobile-drawer-user">
+              <div
+                className="user-avatar"
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  background: '#0b5394',
+                  color: '#ffffff',
+                  fontWeight: 900,
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.95rem',
+                }}
+              >
+                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                  {user?.name || 'User'}
+                </div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#0b5394', textTransform: 'uppercase' }}>
+                  {user?.role || 'staff'}
+                </div>
+              </div>
+            </div>
+
+            {/* Menu Header Label */}
+            <div
+              style={{
+                padding: '12px 18px 4px 18px',
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                color: '#94a3b8',
+                textTransform: 'uppercase',
+                letterSpacing: '0.6px',
+              }}
+            >
+              All Features & Options
+            </div>
+
+            {/* All Navigation Links */}
+            <nav className="mobile-drawer-nav">
+              {drawerNavItems.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end={item.path === '/'}
+                  className={({ isActive }) => `mobile-drawer-link ${isActive ? 'active' : ''}`}
+                  onClick={() => setMobileDrawerOpen(false)}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', width: '22px' }}>{item.icon}</span>
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </nav>
+
+            {/* Drawer Footer Actions */}
+            <div className="mobile-drawer-footer">
+              <button
+                type="button"
+                onClick={toggleLang}
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
+                  background: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  color: '#0b5394',
+                }}
+              >
+                <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 700 }}>Language / భాష</span>
+                <span style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '2px 8px', borderRadius: '6px', color: '#0b5394' }}>
+                  {lang === 'en' ? 'తెలుగు' : 'English'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className="btn-install-sidebar"
+                onClick={() => {
+                  setMobileDrawerOpen(false);
+                  handleInstallApp();
+                }}
+              >
+                <DownloadIcon size={14} color="currentColor" /> {t('installApp')}
+              </button>
+
+              <button
+                type="button"
+                className="logout-btn"
+                onClick={() => {
+                  setMobileDrawerOpen(false);
+                  setShowLogoutModal(true);
+                }}
+                style={{ width: '100%', justifyContent: 'center', borderRadius: '8px', fontWeight: 700 }}
+              >
+                <LogoutIcon size={15} /> {t('signOut')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Desktop Sidebar */}
       <Sidebar onInstall={handleInstallApp} onLogout={() => setShowLogoutModal(true)} />

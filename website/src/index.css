@@ -964,6 +964,104 @@ a:hover {
   display: flex;
 }
 
+/* ── Mobile & Tablet Sidebar Drawer ── */
+.mobile-drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 1200;
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.18s ease-out;
+}
+
+.mobile-drawer {
+  width: 310px;
+  max-width: 86vw;
+  height: 100vh;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 28px rgba(15, 23, 42, 0.18);
+  animation: slideDrawer 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+  z-index: 1201;
+}
+
+@keyframes slideDrawer {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.mobile-drawer-header {
+  padding: 16px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+}
+
+.mobile-drawer-user {
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-drawer-nav {
+  flex: 1;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.mobile-drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  color: #334155;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.mobile-drawer-link:hover {
+  background: #f1f5f9;
+  color: #0b5394;
+}
+
+.mobile-drawer-link.active {
+  background: #eff6ff;
+  color: #0b5394;
+  font-weight: 800;
+  border-left: 3px solid #0b5394;
+}
+
+.mobile-drawer-footer {
+  padding: 14px 18px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 /* ── Animations ── */
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -1019,6 +1117,23 @@ a:hover {
 
 /* ── Responsive ── */
 @media (max-width: 1024px) {
+  .mobile-header {
+    display: flex !important;
+  }
+
+  .desktop-only-sidebar,
+  .sidebar,
+  .sidebar-overlay {
+    display: none !important;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    padding-top: 66px !important;
+    padding-bottom: 76px !important;
+    min-height: 100vh;
+  }
+
   .new-bill-header-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -1033,28 +1148,6 @@ a:hover {
 }
 
 @media (max-width: 768px) {
-  .mobile-header {
-    display: flex !important;
-  }
-
-  .desktop-only-sidebar {
-    display: none !important;
-  }
-
-  .sidebar {
-    display: none !important;
-  }
-
-  .sidebar-overlay {
-    display: none !important;
-  }
-
-  .main-content {
-    margin-left: 0 !important;
-    padding-top: 66px !important;
-    padding-bottom: 76px !important;
-    min-height: 100vh;
-  }
 
   .page-container {
     padding: 12px 14px !important;

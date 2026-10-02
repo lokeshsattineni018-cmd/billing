@@ -69,3 +69,50 @@ describe('StaffWork Model & Calculations Unit Tests', () => {
     }, /Price cannot be negative/);
   });
 });
+
+const DailyIce = require('../../src/models/DailyIce');
+const DailyWastage = require('../../src/models/DailyWastage');
+
+describe('DailyIce Model Unit Tests', () => {
+  it('correctly calculates totalAmount as blocks * rate', async () => {
+    const ice = new DailyIce({
+      blocks: 25,
+      rate: 150,
+    });
+    await ice.validate();
+    assert.strictEqual(ice.totalAmount, 3750);
+  });
+
+  it('fails validation if blocks or rate is negative', async () => {
+    const ice = new DailyIce({
+      blocks: -5,
+      rate: 100,
+    });
+    await assert.rejects(async () => {
+      await ice.validate();
+    }, /Blocks cannot be negative/);
+  });
+});
+
+describe('DailyWastage Model Unit Tests', () => {
+  it('correctly calculates totalAmount as quantityKg * rate for prawn head wastage', async () => {
+    const wastage = new DailyWastage({
+      category: 'Prawn Head',
+      quantityKg: 350.5,
+      rate: 14,
+    });
+    await wastage.validate();
+    assert.strictEqual(wastage.totalAmount, 4907);
+  });
+
+  it('fails validation if quantityKg or rate is negative', async () => {
+    const wastage = new DailyWastage({
+      quantityKg: -10,
+      rate: 12,
+    });
+    await assert.rejects(async () => {
+      await wastage.validate();
+    }, /Quantity cannot be negative/);
+  });
+});
+

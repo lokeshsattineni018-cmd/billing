@@ -1,6 +1,8 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const StaffWork = require('../models/StaffWork');
+const DailyIce = require('../models/DailyIce');
+const DailyWastage = require('../models/DailyWastage');
 const { protect, restrictTo } = require('../middleware/auth');
 const { escapeRegex } = require('../middleware/security');
 const { logActivity } = require('../utils/activityLogger');
@@ -355,6 +357,517 @@ router.post('/bulk', protect, async (req, res) => {
     });
   } catch (error) {
     return handleServerError(res, error, 'Failed to save bulk staff entries', req);
+  }
+});
+
+// ==========================================
+// DAILY ICE USAGE TRACKER
+// ==========================================
+
+/**
+ * GET /api/staff/ice
+ * List ice blocks usage records
+ */
+router.get('/ice', protect, async (req, res) => {
+  try {
+    const { search, dateFrom, dateTo, paymentStatus, page = 1, limit = 50 } = req.query;
+    const filter = {};
+
+    if (search) {
+      const sanitized = escapeRegex(search.trim());
+      filter.$or = [
+        { supplierName: { $regex: sanitized, $options: 'i' } },
+        { vehicleNo: { $regex: sanitized, $options: 'i' } },
+        { notes: { $regex: sanitized, $options: 'i' } },
+      ];
+    }
+
+    if (dateFrom || dateTo) {
+      filter.date = {};
+      if (dateFrom) {
+        const dFrom = new Date(dateFrom);
+        dFrom.setHours(0, 0, 0, 0);
+        filter.date.$gte = dFrom;
+      }
+      if (dateTo) {
+        const dTo = new Date(dateTo);
+        dTo.setHours(23, 59, 59, 999);
+        filter.date.$lte = dTo;
+      }
+    }
+
+    if (paymentStatus && ['Paid', 'Pending'].includes(paymentStatus)) {
+      filter.paymentStatus = paymentStatus;
+    }
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(200, Math.max(1, parseInt(limit, 10) || 50));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [entries, totalCount] = await Promise.all([
+      DailyIce.find(filter).sort({ date: -1, createdAt: -1 }).skip(skip).limit(limitNum).lean(),
+      DailyIce.countDocuments(filter),
+    ]);
+
+    return res.json({
+      entries,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limitNum),
+      currentPage: pageNum,
+    });
+  } catch (error) {
+    return handleServerError(res, error, 'Failed to fetch ice records', req);
+  }
+});
+
+/**
+ * GET /api/staff/ice/summary
+ * Summary of ice blocks used today & overall
+ */
+router.get('/ice/summary', protect, async (req, res) => {
+  try {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const [todayAgg, overallAgg] = await Promise.all([
+      DailyIce.aggregate([
+        { $match: { date: { $gte: todayStart, $lte: todayEnd } } },
+        {
+          $group: {
+            _id: null,
+            todayBlocks: { $sum: '$blocks' },
+            todayAmount: { $sum: '$totalAmount' },
+          },
+        },
+      ]),
+      DailyIce.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalBlocks: { $sum: '$blocks' },
+            totalAmount: { $sum: '$totalAmount' },
+            totalEntries: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    const today = todayAgg[0] || { todayBlocks: 0, todayAmount: 0 };
+    const overall = overallAgg[0] || { totalBlocks: 0, totalAmount: 0, totalEntries: 0 };
+
+    return res.json({
+      todayBlocks: today.todayBlocks || 0,
+      todayAmount: Math.round((today.todayAmount || 0) * 100) / 100,
+      todayAvgRate: today.todayBlocks > 0 ? Math.round(((today.todayAmount || 0) / today.todayBlocks) * 100) / 100 : 0,
+      totalBlocks: overall.totalBlocks || 0,
+      totalAmount: Math.round((overall.totalAmount || 0) * 100) / 100,
+      totalEntries: overall.totalEntries || 0,
+    });
+  } catch (error) {
+    return handleServerError(res, error, 'Failed to fetch ice summary', req);
+  }
+});
+
+/**
+ * POST /api/staff/ice
+ * Record daily ice blocks used
+ */
+router.post(
+  '/ice',
+  protect,
+  [
+    body('blocks').isFloat({ min: 0.01 }).withMessage('Valid number of ice blocks is required'),
+    body('rate').isFloat({ min: 0 }).withMessage('Valid rate per ice block is required'),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array(), message: errors.array()[0].msg });
+    }
+
+    try {
+      const { blocks, rate, date, supplierName, vehicleNo, paymentStatus, notes } = req.body;
+      const numBlocks = parseFloat(blocks);
+      const numRate = parseFloat(rate);
+      const totalAmount = Math.round(numBlocks * numRate * 100) / 100;
+
+      const record = new DailyIce({
+        date: date ? new Date(date) : new Date(),
+        blocks: numBlocks,
+        rate: numRate,
+        totalAmount,
+        supplierName: (supplierName || '').trim(),
+        vehicleNo: (vehicleNo || '').trim(),
+        paymentStatus: paymentStatus === 'Pending' ? 'Pending' : 'Paid',
+        notes: (notes || '').trim(),
+        createdBy: req.user._id,
+      });
+
+      await record.save();
+
+      logActivity(
+        req.user._id,
+        'CREATE',
+        'StaffWork',
+        record._id,
+        `Recorded Ice Usage: ${numBlocks} blocks @ ₹${numRate} = ₹${totalAmount}`,
+        req
+      );
+
+      return res.status(201).json({
+        message: 'Ice blocks record saved successfully!',
+        record,
+      });
+    } catch (error) {
+      return handleServerError(res, error, 'Failed to save ice record', req);
+    }
+  }
+);
+
+/**
+ * PUT /api/staff/ice/:id
+ * Update ice record
+ */
+router.put('/ice/:id', protect, async (req, res) => {
+  try {
+    const { blocks, rate, date, supplierName, vehicleNo, paymentStatus, notes } = req.body;
+    const record = await DailyIce.findById(req.params.id);
+    if (!record) {
+      return res.status(404).json({ message: 'Ice record not found' });
+    }
+
+    if (blocks !== undefined) record.blocks = parseFloat(blocks) || 0;
+    if (rate !== undefined) record.rate = parseFloat(rate) || 0;
+    record.totalAmount = Math.round(record.blocks * record.rate * 100) / 100;
+
+    if (date) record.date = new Date(date);
+    if (supplierName !== undefined) record.supplierName = supplierName.trim();
+    if (vehicleNo !== undefined) record.vehicleNo = vehicleNo.trim();
+    if (paymentStatus) record.paymentStatus = paymentStatus;
+    if (notes !== undefined) record.notes = notes.trim();
+
+    await record.save();
+
+    return res.json({ message: 'Ice record updated successfully!', record });
+  } catch (error) {
+    return handleServerError(res, error, 'Failed to update ice record', req);
+  }
+});
+
+/**
+ * DELETE /api/staff/ice/:id
+ * Delete ice record
+ */
+router.delete('/ice/:id', protect, async (req, res) => {
+  try {
+    const record = await DailyIce.findByIdAndDelete(req.params.id);
+    if (!record) {
+      return res.status(404).json({ message: 'Ice record not found' });
+    }
+    return res.json({ message: 'Ice record deleted successfully' });
+  } catch (error) {
+    return handleServerError(res, error, 'Failed to delete ice record', req);
+  }
+});
+
+// ==========================================
+// DAILY PRAWN HEAD WASTAGE SALES TRACKER
+// ==========================================
+
+/**
+ * GET /api/staff/wastage
+ * List prawn head wastage sales records
+ */
+router.get('/wastage', protect, async (req, res) => {
+  try {
+    const { search, dateFrom, dateTo, paymentStatus, page = 1, limit = 50 } = req.query;
+    const filter = {};
+
+    if (search) {
+      const sanitized = escapeRegex(search.trim());
+      filter.$or = [
+        { buyerName: { $regex: sanitized, $options: 'i' } },
+        { vehicleNo: { $regex: sanitized, $options: 'i' } },
+        { notes: { $regex: sanitized, $options: 'i' } },
+      ];
+    }
+
+    if (dateFrom || dateTo) {
+      filter.date = {};
+      if (dateFrom) {
+        const dFrom = new Date(dateFrom);
+        dFrom.setHours(0, 0, 0, 0);
+        filter.date.$gte = dFrom;
+      }
+      if (dateTo) {
+        const dTo = new Date(dateTo);
+        dTo.setHours(23, 59, 59, 999);
+        filter.date.$lte = dTo;
+      }
+    }
+
+    if (paymentStatus && ['Paid', 'Pending'].includes(paymentStatus)) {
+      filter.paymentStatus = paymentStatus;
+    }
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(200, Math.max(1, parseInt(limit, 10) || 50));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [entries, totalCount] = await Promise.all([
+      DailyWastage.find(filter).sort({ date: -1, createdAt: -1 }).skip(skip).limit(limitNum).lean(),
+      DailyWastage.countDocuments(filter),
+    ]);
+
+    return res.json({
+      entries,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limitNum),
+      currentPage: pageNum,
+    });
+  } catch (error) {
+    return handleServerError(res, error, 'Failed to fetch wastage records', req);
+  }
+});
+
+/**
+ * GET /api/staff/wastage/summary
+ * Summary of prawn head wastage sold today & overall
+ */
+router.get('/wastage/summary', protect, async (req, res) => {
+  try {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const [todayAgg, overallAgg] = await Promise.all([
+      DailyWastage.aggregate([
+        { $match: { date: { $gte: todayStart, $lte: todayEnd } } },
+        {
+          $group: {
+            _id: null,
+            todayKg: { $sum: '$quantityKg' },
+            todayAmount: { $sum: '$totalAmount' },
+          },
+        },
+      ]),
+      DailyWastage.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalKg: { $sum: '$quantityKg' },
+            totalAmount: { $sum: '$totalAmount' },
+            totalEntries: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    const today = todayAgg[0] || { todayKg: 0, todayAmount: 0 };
+    const overall = overallAgg[0] || { totalKg: 0, totalAmount: 0, totalEntries: 0 };
+
+    return res.json({
+      todayKg: Math.round((today.todayKg || 0) * 100) / 100,
+      todayAmount: Math.round((today.todayAmount || 0) * 100) / 100,
+      todayAvgRate: today.todayKg > 0 ? Math.round(((today.todayAmount || 0) / today.todayKg) * 100) / 100 : 0,
+      totalKg: Math.round((overall.totalKg || 0) * 100) / 100,
+      totalAmount: Math.round((overall.totalAmount || 0) * 100) / 100,
+      totalEntries: overall.totalEntries || 0,
+    });
+  } catch (error) {
+    return handleServerError(res, error, 'Failed to fetch wastage summary', req);
+  }
+});
+
+/**
+ * POST /api/staff/wastage
+ * Record prawn head wastage sold
+ */
+router.post(
+  '/wastage',
+  protect,
+  [
+    body('quantityKg').isFloat({ min: 0.01 }).withMessage('Valid quantity (KG) is required'),
+    body('rate').isFloat({ min: 0 }).withMessage('Valid rate per KG is required'),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array(), message: errors.array()[0].msg });
+    }
+
+    try {
+      const { quantityKg, rate, date, category, buyerName, vehicleNo, paymentStatus, notes } = req.body;
+      const numKg = parseFloat(quantityKg);
+      const numRate = parseFloat(rate);
+      const totalAmount = Math.round(numKg * numRate * 100) / 100;
+
+      const record = new DailyWastage({
+        date: date ? new Date(date) : new Date(),
+        category: (category || 'Prawn Head').trim(),
+        quantityKg: numKg,
+        rate: numRate,
+        totalAmount,
+        buyerName: (buyerName || '').trim(),
+        vehicleNo: (vehicleNo || '').trim(),
+        paymentStatus: paymentStatus === 'Pending' ? 'Pending' : 'Paid',
+        notes: (notes || '').trim(),
+        createdBy: req.user._id,
+      });
+
+      await record.save();
+
+      logActivity(
+        req.user._id,
+        'CREATE',
+        'StaffWork',
+        record._id,
+        `Sold Prawn Head Wastage: ${numKg} KG @ ₹${numRate} = ₹${totalAmount}`,
+        req
+      );
+
+      return res.status(201).json({
+        message: 'Prawn head wastage sales record saved successfully!',
+        record,
+      });
+    } catch (error) {
+      return handleServerError(res, error, 'Failed to save wastage record', req);
+    }
+  }
+);
+
+/**
+ * PUT /api/staff/wastage/:id
+ * Update wastage sales record
+ */
+router.put('/wastage/:id', protect, async (req, res) => {
+  try {
+    const { quantityKg, rate, date, category, buyerName, vehicleNo, paymentStatus, notes } = req.body;
+    const record = await DailyWastage.findById(req.params.id);
+    if (!record) {
+      return res.status(404).json({ message: 'Wastage record not found' });
+    }
+
+    if (quantityKg !== undefined) record.quantityKg = parseFloat(quantityKg) || 0;
+    if (rate !== undefined) record.rate = parseFloat(rate) || 0;
+    record.totalAmount = Math.round(record.quantityKg * record.rate * 100) / 100;
+
+    if (date) record.date = new Date(date);
+    if (category !== undefined) record.category = category.trim();
+    if (buyerName !== undefined) record.buyerName = buyerName.trim();
+    if (vehicleNo !== undefined) record.vehicleNo = vehicleNo.trim();
+    if (paymentStatus) record.paymentStatus = paymentStatus;
+    if (notes !== undefined) record.notes = notes.trim();
+
+    await record.save();
+
+    return res.json({ message: 'Wastage record updated successfully!', record });
+  } catch (error) {
+    return handleServerError(res, error, 'Failed to update wastage record', req);
+  }
+});
+
+/**
+ * DELETE /api/staff/wastage/:id
+ * Delete wastage sales record
+ */
+router.delete('/wastage/:id', protect, async (req, res) => {
+  try {
+    const record = await DailyWastage.findByIdAndDelete(req.params.id);
+    if (!record) {
+      return res.status(404).json({ message: 'Wastage record not found' });
+    }
+    return res.json({ message: 'Wastage record deleted successfully' });
+  } catch (error) {
+    return handleServerError(res, error, 'Failed to delete wastage record', req);
+  }
+});
+
+/**
+ * GET /api/staff/daily-operations
+ * Consolidated summary for daily factory operations: Labor + Ice - Wastage
+ */
+router.get('/daily-operations', protect, async (req, res) => {
+  try {
+    const { date } = req.query;
+    const targetDate = date ? new Date(date) : new Date();
+    const dStart = new Date(targetDate);
+    dStart.setHours(0, 0, 0, 0);
+    const dEnd = new Date(targetDate);
+    dEnd.setHours(23, 59, 59, 999);
+
+    const matchQuery = { date: { $gte: dStart, $lte: dEnd } };
+
+    const [laborAgg, iceAgg, wastageAgg] = await Promise.all([
+      StaffWork.aggregate([
+        { $match: matchQuery },
+        {
+          $group: {
+            _id: null,
+            totalWorkers: { $addToSet: '$staffName' },
+            totalKg: { $sum: '$quantity' },
+            totalWages: { $sum: '$totalAmount' },
+          },
+        },
+      ]),
+      DailyIce.aggregate([
+        { $match: matchQuery },
+        {
+          $group: {
+            _id: null,
+            totalBlocks: { $sum: '$blocks' },
+            totalCost: { $sum: '$totalAmount' },
+          },
+        },
+      ]),
+      DailyWastage.aggregate([
+        { $match: matchQuery },
+        {
+          $group: {
+            _id: null,
+            totalKg: { $sum: '$quantityKg' },
+            totalRevenue: { $sum: '$totalAmount' },
+          },
+        },
+      ]),
+    ]);
+
+    const labor = laborAgg[0]
+      ? {
+          workerCount: laborAgg[0].totalWorkers.length,
+          totalKg: Math.round(laborAgg[0].totalKg * 100) / 100,
+          totalWages: Math.round(laborAgg[0].totalWages * 100) / 100,
+        }
+      : { workerCount: 0, totalKg: 0, totalWages: 0 };
+
+    const ice = iceAgg[0]
+      ? {
+          totalBlocks: iceAgg[0].totalBlocks,
+          totalCost: Math.round(iceAgg[0].totalCost * 100) / 100,
+        }
+      : { totalBlocks: 0, totalCost: 0 };
+
+    const wastage = wastageAgg[0]
+      ? {
+          totalKg: Math.round(wastageAgg[0].totalKg * 100) / 100,
+          totalRevenue: Math.round(wastageAgg[0].totalRevenue * 100) / 100,
+        }
+      : { totalKg: 0, totalRevenue: 0 };
+
+    const netDailyExpense = Math.round((labor.totalWages + ice.totalCost - wastage.totalRevenue) * 100) / 100;
+
+    return res.json({
+      date: targetDate.toISOString().slice(0, 10),
+      labor,
+      ice,
+      wastage,
+      netDailyExpense,
+    });
+  } catch (error) {
+    return handleServerError(res, error, 'Failed to fetch daily operations summary', req);
   }
 });
 

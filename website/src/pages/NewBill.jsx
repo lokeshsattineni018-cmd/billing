@@ -41,11 +41,11 @@ export default function NewBill() {
   });
 
   // Tax Details
-  const [cgstRate, setCgstRate] = useState('2.5');
-  const [cgstAmount, setCgstAmount] = useState('100.00');
-  const [sgstRate, setSgstRate] = useState('2.5');
-  const [sgstAmount, setSgstAmount] = useState('100.00');
-  const [igstAmount, setIgstAmount] = useState('100.00');
+  const [cgstRate, setCgstRate] = useState('0');
+  const [cgstAmount, setCgstAmount] = useState('0');
+  const [sgstRate, setSgstRate] = useState('0');
+  const [sgstAmount, setSgstAmount] = useState('0');
+  const [igstAmount, setIgstAmount] = useState('0');
 
   const [customersList, setCustomersList] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -298,6 +298,11 @@ export default function NewBill() {
     setCustomerPhone('');
     setVehicleNo('');
     setIce({ quantity: '', rate: '', taxRate: '0' });
+    setCgstRate('0');
+    setCgstAmount('0');
+    setSgstRate('0');
+    setSgstAmount('0');
+    setIgstAmount('0');
     setItems([
       {
         sno: 1,
@@ -946,7 +951,7 @@ export default function NewBill() {
                   className="form-input"
                   value={cgstRate}
                   onChange={(e) => setCgstRate(e.target.value)}
-                  placeholder="2.5"
+                  placeholder="0"
                 />
               </div>
 
@@ -958,7 +963,7 @@ export default function NewBill() {
                   className="form-input"
                   value={cgstAmount}
                   onChange={(e) => setCgstAmount(e.target.value)}
-                  placeholder="100.00"
+                  placeholder="0.00"
                 />
               </div>
 
@@ -969,7 +974,7 @@ export default function NewBill() {
                   className="form-input"
                   value={sgstRate}
                   onChange={(e) => setSgstRate(e.target.value)}
-                  placeholder="2.5"
+                  placeholder="0"
                 />
               </div>
 
@@ -981,7 +986,7 @@ export default function NewBill() {
                   className="form-input"
                   value={sgstAmount}
                   onChange={(e) => setSgstAmount(e.target.value)}
-                  placeholder="100.00"
+                  placeholder="0.00"
                 />
               </div>
 
@@ -993,7 +998,7 @@ export default function NewBill() {
                   className="form-input"
                   value={igstAmount}
                   onChange={(e) => setIgstAmount(e.target.value)}
-                  placeholder="100.00"
+                  placeholder="0.00"
                 />
               </div>
             </div>

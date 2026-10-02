@@ -11,8 +11,12 @@ import {
   EditIcon,
   CheckIcon,
   ScaleIcon,
+  IceIcon,
   RefreshIcon,
 } from '../components/Icons';
+import IceTracker from '../components/operations/IceTracker';
+import WastageTracker from '../components/operations/WastageTracker';
+import DailyNetSummary from '../components/operations/DailyNetSummary';
 
 export default function Staff() {
   const { t } = useLanguage();
@@ -365,10 +369,10 @@ export default function Staff() {
         <div>
           <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
             <StaffIcon size={24} color="#0b5394" />
-            <span>Staff & Labor Wages</span>
+            <span>{t('staff')}</span>
           </h2>
           <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.85rem' }}>
-            Daily attendance, quantity worked (kg), rate & wage accounts for all workers
+            {t('staffSubtitle')}
           </p>
         </div>
 
@@ -505,14 +509,17 @@ export default function Staff() {
           gap: '8px',
           borderBottom: '2px solid #e2e8f0',
           marginBottom: '16px',
+          overflowX: 'auto',
+          whiteSpace: 'nowrap',
+          paddingBottom: '2px',
         }}
       >
         <button
           type="button"
           onClick={() => setActiveTab('entries')}
           style={{
-            padding: '10px 18px',
-            fontSize: '0.92rem',
+            padding: '10px 16px',
+            fontSize: '0.9rem',
             fontWeight: 800,
             background: 'none',
             border: 'none',
@@ -525,7 +532,7 @@ export default function Staff() {
             gap: '8px',
           }}
         >
-          <span>Daily Work & Attendance</span>
+          <span>👥 Workers Labor</span>
           <span
             style={{
               background: activeTab === 'entries' ? '#eff6ff' : '#f1f5f9',
@@ -541,10 +548,52 @@ export default function Staff() {
 
         <button
           type="button"
+          onClick={() => setActiveTab('ice')}
+          style={{
+            padding: '10px 16px',
+            fontSize: '0.9rem',
+            fontWeight: 800,
+            background: 'none',
+            border: 'none',
+            borderBottom: activeTab === 'ice' ? '3px solid #0284c7' : '3px solid transparent',
+            color: activeTab === 'ice' ? '#0284c7' : '#64748b',
+            cursor: 'pointer',
+            marginBottom: '-2px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <span>🧊 Ice Blocks Tracker</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('wastage')}
+          style={{
+            padding: '10px 16px',
+            fontSize: '0.9rem',
+            fontWeight: 800,
+            background: 'none',
+            border: 'none',
+            borderBottom: activeTab === 'wastage' ? '3px solid #16a34a' : '3px solid transparent',
+            color: activeTab === 'wastage' ? '#16a34a' : '#64748b',
+            cursor: 'pointer',
+            marginBottom: '-2px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <span>🦐 Prawn Head Wastage</span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab('accounts')}
           style={{
-            padding: '10px 18px',
-            fontSize: '0.92rem',
+            padding: '10px 16px',
+            fontSize: '0.9rem',
             fontWeight: 800,
             background: 'none',
             border: 'none',
@@ -557,7 +606,7 @@ export default function Staff() {
             gap: '8px',
           }}
         >
-          <span>All Accounts Breakdown</span>
+          <span>📒 Workers Accounts</span>
           <span
             style={{
               background: activeTab === 'accounts' ? '#eff6ff' : '#f1f5f9',
@@ -569,6 +618,27 @@ export default function Staff() {
           >
             {summary?.staffAccounts?.length || 0}
           </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('net')}
+          style={{
+            padding: '10px 16px',
+            fontSize: '0.9rem',
+            fontWeight: 800,
+            background: 'none',
+            border: 'none',
+            borderBottom: activeTab === 'net' ? '3px solid #7c3aed' : '3px solid transparent',
+            color: activeTab === 'net' ? '#7c3aed' : '#64748b',
+            cursor: 'pointer',
+            marginBottom: '-2px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <span>📊 Daily Net Summary</span>
         </button>
       </div>
 
@@ -1088,6 +1158,15 @@ export default function Staff() {
           )}
         </div>
       )}
+
+      {/* TAB 3: ICE BLOCKS USED TRACKER */}
+      {activeTab === 'ice' && <IceTracker />}
+
+      {/* TAB 4: PRAWN HEAD WASTAGE SALES TRACKER */}
+      {activeTab === 'wastage' && <WastageTracker />}
+
+      {/* TAB 5: CONSOLIDATED DAILY OPERATIONS & NET SUMMARY */}
+      {activeTab === 'net' && <DailyNetSummary />}
 
       {/* MODAL: SINGLE WORK ENTRY (CREATE / EDIT) */}
       {modalOpen && (

@@ -4,6 +4,8 @@ const Customer = require('./Customer');
 const Settings = require('./Settings');
 const ActivityLog = require('./ActivityLog');
 const StaffWork = require('./StaffWork');
+const DailyIce = require('./DailyIce');
+const DailyWastage = require('./DailyWastage');
 
 module.exports = {
   User,
@@ -12,4 +14,6 @@ module.exports = {
   Settings,
   ActivityLog,
   StaffWork,
+  DailyIce,
+  DailyWastage,
 };

@@ -143,6 +143,22 @@ export const staffAPI = {
     const query = new URLSearchParams(params || {}).toString();
     return `${API_BASE_URL}/staff/export?${query}&token=${localStorage.getItem('srsf_token')}`;
   },
+  // Ice Blocks Tracking
+  getIce: (params) => api.get('/staff/ice', { params }),
+  getIceSummary: () => api.get('/staff/ice/summary'),
+  createIce: (data) => api.post('/staff/ice', data),
+  updateIce: (id, data) => api.put(`/staff/ice/${id}`, data),
+  deleteIce: (id) => api.delete(`/staff/ice/${id}`),
+
+  // Prawn Head Wastage Sales Tracking
+  getWastage: (params) => api.get('/staff/wastage', { params }),
+  getWastageSummary: () => api.get('/staff/wastage/summary'),
+  createWastage: (data) => api.post('/staff/wastage', data),
+  updateWastage: (id, data) => api.put(`/staff/wastage/${id}`, data),
+  deleteWastage: (id) => api.delete(`/staff/wastage/${id}`),
+
+  // Consolidated Daily Operations Summary
+  getDailyOperations: (params) => api.get('/staff/daily-operations', { params }),
 };
 
 export default api;
