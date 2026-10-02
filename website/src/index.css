@@ -1510,18 +1510,7 @@ a:hover {
     border-radius: 8px !important;
   }
 
-  /* Period filter bar: compact on mobile */
-  .dashboard-period-bar {
-    padding: 10px 12px !important;
-    border-radius: 10px !important;
-    margin-bottom: 12px !important;
-    gap: 8px !important;
-  }
 
-  .dashboard-period-bar button {
-    padding: 5px 10px !important;
-    font-size: 0.72rem !important;
-  }
 
   .dashboard-stats-grid {
     grid-template-columns: repeat(2, 1fr) !important;
