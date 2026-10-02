@@ -1183,6 +1183,22 @@ a:hover {
     max-width: 100% !important;
   }
 
+  .page-header {
+    flex-direction: column !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+  }
+
+  .page-header h2 {
+    font-size: 1.25rem !important;
+    margin-bottom: 0 !important;
+  }
+
+  .page-header p {
+    font-size: 0.78rem !important;
+    margin-top: 2px !important;
+  }
+
   .card {
     padding: 16px 12px !important;
     margin-bottom: 14px !important;
@@ -1220,7 +1236,7 @@ a:hover {
   .mobile-bills-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
   }
 
@@ -1230,26 +1246,32 @@ a:hover {
 
   .mobile-bill-card {
     background: #ffffff;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 14px 12px;
-    box-shadow: var(--shadow-sm);
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
     display: flex;
     flex-direction: column;
     gap: 8px;
     width: 100%;
+    transition: box-shadow 0.15s ease;
+  }
+
+  .mobile-bill-card:active {
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
   }
 
   .mobile-bill-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 6px;
+    padding-bottom: 8px;
     border-bottom: 1px solid #f1f5f9;
   }
 
   .mobile-bill-body {
     cursor: pointer;
+    padding: 2px 0;
   }
 
   .mobile-bill-actions {
@@ -1257,6 +1279,10 @@ a:hover {
     gap: 6px;
     padding-top: 8px;
     border-top: 1px solid #f1f5f9;
+  }
+
+  .mobile-bill-actions .btn {
+    min-height: 38px;
   }
 
   /* Mobile New Bill Item Cards */

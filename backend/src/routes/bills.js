@@ -731,7 +731,7 @@ router.post('/', protect, billCreateLimiter, [
       vehicleNo: vehicleNo ? vehicleNo.trim() : '',
       particulars: calculated.processedItems[0]?.particulars || 'Fresh Seafood / Prawns Supply',
       hsn: calculated.processedItems[0]?.hsn || '0306',
-      quantity: calculated.processedItems[0]?.quantity,
+      quantity: calculated.processedItems.reduce((sum, it) => sum + (it.quantity || 0), 0),
       rate: calculated.processedItems[0]?.rate,
       items: calculated.processedItems,
       taxableValue: taxableValue || calculated.subtotal,
@@ -865,7 +865,7 @@ router.put('/:id', protect, [
       bill.items = calculated.processedItems;
       bill.particulars = calculated.processedItems[0]?.particulars;
       bill.hsn = calculated.processedItems[0]?.hsn;
-      bill.quantity = calculated.processedItems[0]?.quantity;
+      bill.quantity = calculated.processedItems.reduce((sum, it) => sum + (it.quantity || 0), 0);
       bill.rate = calculated.processedItems[0]?.rate;
       bill.total = calculated.subtotal;
       bill.taxableValue = calculated.subtotal;

@@ -30,6 +30,15 @@ export default function BillHistory() {
   const canSeeSales = user?.role === 'owner' || user?.role === 'admin';
   const canUpdateStatus = user?.role === 'owner' || user?.role === 'admin';
 
+  // Compute total quantity from items array, with fallback to bill.quantity
+  const getTotalQuantity = (bill) => {
+    if (bill.items && bill.items.length > 0) {
+      const total = bill.items.reduce((sum, it) => sum + (it.quantity || 0), 0);
+      if (total > 0) return total;
+    }
+    return bill.quantity || 0;
+  };
+
   useEffect(() => {
     loadBills();
   }, [page, statusFilter]);
@@ -270,45 +279,62 @@ export default function BillHistory() {
           <>
             {/* Mobile Cards View (Visible on Phones & Tablets) */}
             <div className="mobile-bills-list">
-              {bills.map((bill) => (
+              {bills.map((bill) => {
+                const totalQty = getTotalQuantity(bill);
+                return (
                 <div key={bill._id} className="mobile-bill-card" style={bill.isVoided ? { background: '#fef2f2', border: '1px dashed #fca5a5', opacity: 0.85 } : {}}>
+                  {/* Top Row: Bill # + Date + Status */}
                   <div className="mobile-bill-header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span className="badge badge-blue">#{bill.billNo}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span className="badge badge-blue" style={{ fontSize: '0.8rem', padding: '3px 8px', fontWeight: 800 }}>#{bill.billNo}</span>
                       {bill.isVoided && (
-                        <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800 }}>
-                          ⛔ VOIDED
+                        <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800, fontSize: '0.72rem' }}>
+                          VOIDED
                         </span>
                       )}
-                      <span className="mobile-bill-date">{formatDate(bill.date)}</span>
                     </div>
-                    {!bill.isVoided && (
-                      <span
-                        className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}
-                        style={{ padding: '4px 10px', fontSize: '0.82rem' }}
-                      >
-                        {bill.paymentStatus || 'Pending'}
-                      </span>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 500 }}>{formatDate(bill.date)}</span>
+                      {!bill.isVoided && (
+                        <span
+                          className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}
+                          style={{ padding: '3px 8px', fontSize: '0.72rem', fontWeight: 700 }}
+                        >
+                          {bill.paymentStatus || 'Pending'}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
+                  {/* Main Body: Company + Weight + Amount */}
                   <div className="mobile-bill-body" onClick={() => navigate(`/bills/${bill._id}`)}>
                     <div style={{
-                      fontSize: '1.05rem',
+                      fontSize: '1rem',
                       fontWeight: 700,
                       color: bill.isVoided ? '#991b1b' : 'var(--text-primary)',
-                      marginBottom: '4px',
                       textDecoration: bill.isVoided ? 'line-through' : 'none',
+                      marginBottom: '8px',
+                      lineHeight: 1.3,
                     }}>
                       {bill.companyName}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-                      <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>Weight: <strong>{bill.quantity} kg</strong></span>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      background: '#f8fafc',
+                      borderRadius: '8px',
+                      padding: '8px 10px',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Weight:</span>
+                        <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>{totalQty} kg</span>
+                      </div>
                       {canSeeSales && (
                         <span style={{
-                          fontSize: '1.15rem',
+                          fontSize: '1.1rem',
                           fontWeight: 800,
-                          color: bill.isVoided ? '#dc2626' : 'var(--accent-primary)',
+                          color: bill.isVoided ? '#dc2626' : '#0b5394',
                           textDecoration: bill.isVoided ? 'line-through' : 'none',
                         }}>
                           {formatCurrency(bill.grandTotal || bill.total)}
@@ -317,49 +343,67 @@ export default function BillHistory() {
                     </div>
                   </div>
 
+                  {/* Action Buttons */}
                   <div className="mobile-bill-actions">
                     <button
-                      className="btn btn-secondary btn-sm"
+                      className="btn btn-sm"
                       style={{
                         flex: 1,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '6px',
-                        padding: '10px 8px',
-                        fontSize: '0.85rem',
+                        gap: '5px',
+                        padding: '9px 6px',
+                        fontSize: '0.82rem',
                         background: '#ffffff',
                         border: '1.5px solid #0b5394',
                         color: '#0b5394',
                         fontWeight: 700,
-                        borderRadius: '6px',
-                        boxShadow: '0 1px 3px rgba(11, 83, 148, 0.08)'
+                        borderRadius: '8px',
                       }}
                       onClick={(e) => handleDownloadPDF(e, bill._id, bill.formattedBillNo || bill.billNumber || bill.billNo)}
                       disabled={downloadingPdfId === bill._id}
                     >
                       {downloadingPdfId === bill._id ? (
                         <>
-                          <span className="btn-spinner"></span> Downloading...
+                          <span className="btn-spinner"></span> PDF...
                         </>
                       ) : (
                         <>
-                          <DownloadIcon size={16} color="#0b5394" /> Download PDF
+                          <DownloadIcon size={15} color="#0b5394" /> PDF
                         </>
                       )}
                     </button>
                     {!bill.isVoided && (
                       <button
                         className="btn btn-whatsapp btn-sm"
-                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 8px', fontSize: '0.85rem', fontWeight: 700, borderRadius: '6px' }}
+                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', padding: '9px 6px', fontSize: '0.82rem', fontWeight: 700, borderRadius: '8px' }}
                         onClick={(e) => handleShareWhatsApp(e, bill)}
                       >
-                        <WhatsAppIcon size={16} color="#ffffff" /> WhatsApp
+                        <WhatsAppIcon size={15} color="#ffffff" /> Share
                       </button>
                     )}
+                    <button
+                      className="btn btn-sm"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '9px 12px',
+                        fontSize: '0.82rem',
+                        background: '#f1f5f9',
+                        border: '1px solid #e2e8f0',
+                        color: '#475569',
+                        fontWeight: 600,
+                        borderRadius: '8px',
+                      }}
+                      onClick={() => navigate(`/bills/${bill._id}`)}
+                    >
+                      View
+                    </button>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
 
             {/* Desktop Table View (Visible on Laptop & Desktop) */}
@@ -402,7 +446,7 @@ export default function BillHistory() {
                         </span>
                       </td>
                       <td>{formatDate(bill.date)}</td>
-                      <td className="text-right">{bill.quantity} kg</td>
+                      <td className="text-right">{getTotalQuantity(bill)} kg</td>
                       <td>
                         {bill.isVoided ? (
                           <span className="badge" style={{ background: '#fecaca', color: '#991b1b', fontWeight: 700 }}>
