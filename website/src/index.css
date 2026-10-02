@@ -1469,11 +1469,23 @@ a:hover {
   overflow: hidden;
 }
 
+.show-on-mobile-flex {
+  display: none !important;
+}
+
 @media (max-width: 768px) {
   .dashboard-hero {
     padding: 16px 14px !important;
     border-radius: 12px !important;
     margin-bottom: 14px !important;
+  }
+
+  .dashboard-hero-title-area {
+    width: 100% !important;
+  }
+
+  .show-on-mobile-flex {
+    display: inline-flex !important;
   }
 
   .dashboard-hero-title {

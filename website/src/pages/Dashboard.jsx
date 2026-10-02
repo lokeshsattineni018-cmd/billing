@@ -20,8 +20,7 @@ export default function Dashboard() {
   const [dailySummary, setDailySummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [countdown, setCountdown] = useState(30);
-  const [lastUpdated, setLastUpdated] = useState(new Date());
+
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const { toast, showToast } = useToast();
@@ -51,14 +50,6 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [filterPeriod, customStart, customEnd, isAdmin]);
 
-  // Countdown timer ticker every 1 second
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prev) => (prev <= 1 ? 30 : prev - 1));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
 
   const loadDashboard = async (period = filterPeriod, start = customStart, end = customEnd, isSilent = false) => {
     if (!isSilent) setLoading(true);
@@ -70,8 +61,6 @@ export default function Dashboard() {
       }
       const response = await dashboardAPI.summary(params);
       setData(response.data);
-      setLastUpdated(new Date());
-      setCountdown(30);
     } catch (error) {
       if (import.meta.env.DEV) { console.error('Failed to load dashboard:', error); }
     } finally {
@@ -82,7 +71,6 @@ export default function Dashboard() {
 
   const handleManualRefresh = () => {
     setRefreshing(true);
-    setCountdown(30);
     loadDashboard(filterPeriod, customStart, customEnd, true);
     if (isAdmin) {
       loadAnalytics();
@@ -199,67 +187,42 @@ export default function Dashboard() {
             border: '1px solid #e2e8f0',
           }}
         >
-          {/* Top Status Bar: LIVE + Date + Sync */}
-          <div className="dashboard-hero-status" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span
+
+          {/* Header Row: Title & Action Buttons */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+            <div className="dashboard-hero-title-area" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h1 className="dashboard-hero-title" style={{ fontSize: '1.65rem', fontWeight: 900, margin: 0, letterSpacing: '-0.5px', color: '#0f172a' }}>
+                  Executive Billing Center
+                </h1>
+                <p className="dashboard-hero-subtitle" style={{ margin: '3px 0 0 0', fontSize: '0.84rem', color: '#64748b', fontWeight: 500 }}>
+                  VIJAYA DURGA AGENCIES • Real-time Financial Command
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleManualRefresh}
+                disabled={refreshing}
+                className="show-on-mobile-flex"
                 style={{
-                  display: 'inline-flex',
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '10px',
+                  padding: '7px 11px',
                   alignItems: 'center',
                   gap: '6px',
-                  background: '#ecfdf5',
-                  border: '1px solid #a7f3d0',
-                  color: '#047857',
-                  padding: '3px 10px',
-                  borderRadius: '20px',
-                  fontSize: '0.72rem',
-                  fontWeight: 800,
-                  letterSpacing: '0.6px',
-                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                  color: '#0b5394',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  flexShrink: 0,
                 }}
+                title="Reload dashboard data"
               >
-                <span className="live-pulse-dot" />
-                LIVE • {countdown}s
-              </span>
-              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
-                {currentDateStr}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={handleManualRefresh}
-              disabled={refreshing}
-              className="dashboard-sync-btn"
-              style={{
-                background: '#f8fafc',
-                border: '1px solid #cbd5e1',
-                borderRadius: '8px',
-                padding: '5px 10px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                cursor: 'pointer',
-                fontSize: '0.74rem',
-                fontWeight: 700,
-                color: '#0b5394',
-                transition: 'all 0.15s ease',
-              }}
-              title={`Last synced at ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}. Click to refresh now.`}
-            >
-              <RefreshIcon size={13} color="#0b5394" spinning={refreshing} />
-              <span>{refreshing ? 'Syncing...' : 'Sync'}</span>
-            </button>
-          </div>
-
-          {/* Title */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-            <div>
-              <h1 className="dashboard-hero-title" style={{ fontSize: '1.65rem', fontWeight: 900, margin: 0, letterSpacing: '-0.5px', color: '#0f172a' }}>
-                Executive Billing Center
-              </h1>
-              <p className="dashboard-hero-subtitle" style={{ margin: '3px 0 0 0', fontSize: '0.84rem', color: '#64748b', fontWeight: 500 }}>
-                VIJAYA DURGA AGENCIES • Real-time Financial Command
-              </p>
+                <RefreshIcon size={14} color="#0b5394" spinning={refreshing} />
+                <span>{refreshing ? '...' : 'Reload'}</span>
+              </button>
             </div>
 
             {/* Quick Action Buttons */}
@@ -284,7 +247,7 @@ export default function Dashboard() {
                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                   transition: 'all 0.15s ease',
                 }}
-                title={`Auto-refreshes every 30 seconds. Last synced at ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}. Click to refresh now.`}
+                title="Click to refresh dashboard data"
               >
                 <RefreshIcon size={16} color="#0b5394" spinning={refreshing} />
                 <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
@@ -456,78 +419,35 @@ export default function Dashboard() {
               ))}
             </div>
 
-            <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  padding: '5px 10px',
-                  borderRadius: '20px',
-                  fontSize: '0.74rem',
-                  fontWeight: 700,
-                  color: '#475569',
-                }}
+            {filterPeriod === 'custom' && (
+              <form
+                onSubmit={handleApplyCustomFilter}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}
               >
-                <span className="live-pulse-dot" />
-                <span>Auto-refresh: {countdown}s</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleManualRefresh}
-                disabled={refreshing}
-                style={{
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  padding: '5px 9px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  fontSize: '0.74rem',
-                  fontWeight: 700,
-                  color: '#0b5394',
-                  transition: 'all 0.15s ease',
-                }}
-                title="Sync now"
-              >
-                <RefreshIcon size={13} color="#0b5394" spinning={refreshing} />
-                <span>Sync</span>
-              </button>
-
-              {filterPeriod === 'custom' && (
-                <form
-                  onSubmit={handleApplyCustomFilter}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}
+                <input
+                  type="date"
+                  className="form-input"
+                  value={customStart}
+                  onChange={(e) => setCustomStart(e.target.value)}
+                  style={{ padding: '5px 10px', fontSize: '0.78rem', height: '32px' }}
+                />
+                <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>to</span>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={customEnd}
+                  onChange={(e) => setCustomEnd(e.target.value)}
+                  style={{ padding: '5px 10px', fontSize: '0.78rem', height: '32px' }}
+                />
+                <button
+                  type="submit"
+                  className="btn btn-primary btn-sm"
+                  style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, padding: '5px 12px', height: '32px' }}
                 >
-                  <input
-                    type="date"
-                    className="form-input"
-                    value={customStart}
-                    onChange={(e) => setCustomStart(e.target.value)}
-                    style={{ padding: '5px 10px', fontSize: '0.78rem', height: '32px' }}
-                  />
-                  <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>to</span>
-                  <input
-                    type="date"
-                    className="form-input"
-                    value={customEnd}
-                    onChange={(e) => setCustomEnd(e.target.value)}
-                    style={{ padding: '5px 10px', fontSize: '0.78rem', height: '32px' }}
-                  />
-                  <button
-                    type="submit"
-                    className="btn btn-primary btn-sm"
-                    style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, padding: '5px 12px', height: '32px' }}
-                  >
-                    Filter
-                  </button>
-                </form>
-              )}
-            </div>
+                  Filter
+                </button>
+              </form>
+            )}
           </div>
 
           <div className="dashboard-stats-grid">
