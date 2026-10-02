@@ -26,13 +26,7 @@ export default function BillDetail() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
-  // Edit Modal State
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editCompanyName, setEditCompanyName] = useState('');
-  const [editCustomerPhone, setEditCustomerPhone] = useState('');
-  const [editVehicleNo, setEditVehicleNo] = useState('');
-  const [editItems, setEditItems] = useState([]);
-  const [savingEdit, setSavingEdit] = useState(false);
+
 
   // Void Action State
   const [showVoidModal, setShowVoidModal] = useState(false);
@@ -64,27 +58,6 @@ export default function BillDetail() {
     try {
       const response = await billsAPI.getById(id);
       setBill(response.data);
-
-      // Populate edit fields
-      setEditCompanyName(response.data.companyName || '');
-      setEditCustomerPhone(response.data.customerPhone || '');
-      setEditVehicleNo(response.data.vehicleNo || '');
-      setEditItems(
-        response.data.items && response.data.items.length > 0
-          ? response.data.items.map((it) => ({ ...it }))
-          : [
-              {
-                sno: 1,
-                count: '',
-                particulars: response.data.particulars || 'HEAD-ON',
-                hsn: response.data.hsn || '0306',
-                quantity: response.data.quantity,
-                rate: response.data.rate,
-                taxRate: '',
-                amount: response.data.total,
-              },
-            ]
-      );
 
       // Check if redirected from NewBill with autoprint=true
       const searchParams = new URLSearchParams(location.search);
@@ -189,48 +162,7 @@ export default function BillDetail() {
     }
   };
 
-  // Edit Item Change Handler
-  const handleEditItemChange = (index, field, value) => {
-    const updated = [...editItems];
-    updated[index][field] = value;
-    if (field === 'quantity' || field === 'rate') {
-      const q = parseFloat(field === 'quantity' ? value : updated[index].quantity) || 0;
-      const r = parseFloat(field === 'rate' ? value : updated[index].rate) || 0;
-      updated[index].amount = Math.round(q * r * 100) / 100;
-    }
-    setEditItems(updated);
-  };
 
-  // Submit Edit Invoice
-  const handleSaveEdit = async () => {
-    if (!editCompanyName.trim()) {
-      showToast('Customer / Company name is required', 'error');
-      return;
-    }
-    const hasInvalid = editItems.some((it) => !it.quantity || parseFloat(it.quantity) <= 0 || !it.rate || parseFloat(it.rate) <= 0);
-    if (hasInvalid) {
-      showToast('Please enter valid Quantity (>0) and Price (>0) for all items', 'error');
-      return;
-    }
-
-    setSavingEdit(true);
-    try {
-      const updatePayload = {
-        companyName: editCompanyName.trim(),
-        customerPhone: editCustomerPhone.replace(/\D/g, '').slice(0, 10),
-        vehicleNo: editVehicleNo.trim(),
-        items: editItems,
-      };
-      const res = await billsAPI.update(id, updatePayload);
-      setBill(res.data);
-      setShowEditModal(false);
-      showToast(`Invoice #${bill.billNo} updated successfully!`);
-    } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to update invoice', 'error');
-    } finally {
-      setSavingEdit(false);
-    }
-  };
 
   if (loading) return <div className="spinner"></div>;
 
@@ -337,13 +269,13 @@ export default function BillDetail() {
             )}
           </button>
 
-          {/* Edit Invoice Button (Same-day correction) */}
+          {/* Edit Invoice Button: opens invoice in NewBill page for editing */}
           {canEditBill && (
             <button
               className="btn btn-secondary"
               style={{ padding: '10px 14px', border: '1px solid #cbd5e1', fontWeight: 600 }}
-              onClick={() => setShowEditModal(true)}
-              title="Edit customer, weights, or rates (same-day only)"
+              onClick={() => navigate('/new-bill', { state: { editBill: bill } })}
+              title="Edit invoice in billing creator"
             >
               Edit Bill
             </button>
@@ -991,119 +923,7 @@ export default function BillDetail() {
         </div>
       </div>
 
-      {/* ── MODAL: EDIT INVOICE (Same-day Typo Correction) ── */}
-      {showEditModal && (
-        <div className="modal-backdrop" onClick={() => setShowEditModal(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
-                ✏️ Edit Invoice #{bill.billNo}
-              </h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowEditModal(false)}>✕</button>
-            </div>
 
-            <div className="form-group" style={{ marginBottom: '12px' }}>
-              <label className="form-label" style={{ fontWeight: 700 }}>Customer Name *</label>
-              <input
-                type="text"
-                className="form-input"
-                value={editCompanyName}
-                onChange={(e) => setEditCompanyName(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group" style={{ marginBottom: '12px' }}>
-              <label className="form-label" style={{ fontWeight: 700 }}>Customer Phone (10 digits)</label>
-              <input
-                type="tel"
-                className="form-input"
-                value={editCustomerPhone}
-                onChange={(e) => setEditCustomerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                maxLength={10}
-              />
-            </div>
-
-            <div className="form-group" style={{ marginBottom: '16px' }}>
-              <label className="form-label" style={{ fontWeight: 700 }}>Vehicle Number</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="e.g. AP37TF 2633"
-                value={editVehicleNo}
-                onChange={(e) => setEditVehicleNo(e.target.value.toUpperCase())}
-              />
-            </div>
-
-            <h4 style={{ margin: '0 0 8px 0', fontSize: '0.92rem', fontWeight: 700, color: '#0b5394' }}>
-              Line Items
-            </h4>
-            {editItems.map((item, idx) => (
-              <div key={idx} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px', marginBottom: '10px' }}>
-                <div style={{ marginBottom: '8px' }}>
-                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b' }}>Count / Item Description</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={item.count || ''}
-                    onChange={(e) => handleEditItemChange(idx, 'count', e.target.value)}
-                    placeholder="e.g. 100, 118, Ice"
-                    style={{ fontWeight: 700 }}
-                  />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <div>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b' }}>Weight (KG)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      className="form-input"
-                      value={item.quantity}
-                      onChange={(e) => handleEditItemChange(idx, 'quantity', e.target.value)}
-                      style={{ fontWeight: 700, textAlign: 'right' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b' }}>Price / Rate (₹)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      className="form-input"
-                      value={item.rate}
-                      onChange={(e) => handleEditItemChange(idx, 'rate', e.target.value)}
-                      style={{ fontWeight: 700, textAlign: 'right' }}
-                    />
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right', fontSize: '0.85rem', fontWeight: 800, color: '#0b5394', marginTop: '6px' }}>
-                  Subtotal: {formatCurrency(item.amount || (item.quantity * item.rate) || 0)}
-                </div>
-              </div>
-            ))}
-
-            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-              <button
-                type="button"
-                className="btn btn-primary"
-                style={{ flex: 1, padding: '12px', background: '#0b5394', fontWeight: 700 }}
-                onClick={handleSaveEdit}
-                disabled={savingEdit}
-              >
-                {savingEdit ? 'Saving...' : 'Save Changes'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ padding: '12px 18px' }}
-                onClick={() => setShowEditModal(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── MODAL: VOID INVOICE CONFIRMATION ── */}
       {showVoidModal && (

@@ -53,9 +53,60 @@ export default function NewBill() {
   const [hasDraftNotice, setHasDraftNotice] = useState(false);
   const dropdownRef = useRef(null);
 
+  const [editBillId, setEditBillId] = useState(null);
+  const [editBillNo, setEditBillNo] = useState(null);
+
   useEffect(() => {
     loadSettings();
     loadCustomers();
+
+    // Check if editing an existing bill
+    if (location.state?.editBill) {
+      const edit = location.state.editBill;
+      setEditBillId(edit._id);
+      setEditBillNo(edit.billNo);
+      setCompanyName(edit.companyName || '');
+      setCustomerPhone(edit.customerPhone ? edit.customerPhone.replace(/\D/g, '').slice(0, 10) : '');
+      if (edit.vehicleNo) setVehicleNo(edit.vehicleNo);
+      if (edit.companyGstin) setCompanyGstin(edit.companyGstin);
+      if (edit.date) setDate(new Date(edit.date).toISOString().split('T')[0]);
+      if (edit.paymentStatus) setPaymentStatus(edit.paymentStatus);
+      if (edit.cgstRate) setCgstRate(String(edit.cgstRate));
+      if (edit.cgstAmount !== undefined) setCgstAmount(String(edit.cgstAmount));
+      if (edit.sgstRate) setSgstRate(String(edit.sgstRate));
+      if (edit.sgstAmount !== undefined) setSgstAmount(String(edit.sgstAmount));
+      if (edit.igstAmount !== undefined) setIgstAmount(String(edit.igstAmount));
+
+      if (edit.items && edit.items.length > 0) {
+        const iceItem = edit.items.find((it) => it.count === 'Ice' || it.particulars === 'Ice');
+        const prawnList = edit.items.filter((it) => it.count !== 'Ice' && it.particulars !== 'Ice');
+        if (iceItem) {
+          setIce({
+            quantity: String(iceItem.quantity || ''),
+            rate: String(iceItem.rate || ''),
+            taxRate: String(iceItem.taxRate || '0'),
+          });
+        }
+        if (prawnList.length > 0) {
+          setItems(prawnList.map((it, idx) => ({ ...it, sno: idx + 1 })));
+        } else {
+          setItems([{ sno: 1, count: '', quantity: '', rate: '', taxRate: '0', amount: 0 }]);
+        }
+      } else {
+        setItems([
+          {
+            sno: 1,
+            count: '',
+            quantity: edit.quantity || '',
+            rate: edit.rate || '',
+            taxRate: edit.taxRate || '0',
+            amount: edit.total || 0,
+          },
+        ]);
+      }
+      showToast(`Editing Invoice #${edit.billNo}`);
+      return;
+    }
 
     // Check if cloning an existing bill
     if (location.state?.cloneBill) {
@@ -344,19 +395,27 @@ export default function NewBill() {
         paymentStatus,
       };
 
-      const response = await billsAPI.create(invoiceData);
-      const invoice = response.data;
+      let invoice;
+      if (editBillId) {
+        const response = await billsAPI.update(editBillId, invoiceData);
+        invoice = response.data;
+        playSuccessSound();
+        showToast(`Invoice #${invoice.billNo || editBillNo} updated successfully`);
+      } else {
+        const response = await billsAPI.create(invoiceData);
+        invoice = response.data;
 
-      // Clear draft upon successful creation
-      localStorage.removeItem(DRAFT_KEY);
+        // Clear draft upon successful creation
+        localStorage.removeItem(DRAFT_KEY);
 
-      playSuccessSound();
-      showToast(`Invoice #${invoice.billNo} created successfully`);
+        playSuccessSound();
+        showToast(`Invoice #${invoice.billNo} created successfully`);
+      }
 
       if (actionType === 'print') {
-        navigate(`/bills/${invoice._id}?autoprint=true`);
+        navigate(`/bills/${invoice._id || editBillId}?autoprint=true`);
       } else {
-        navigate(`/bills/${invoice._id}`);
+        navigate(`/bills/${invoice._id || editBillId}`);
       }
     } catch (error) {
       // Task 3: Offline / Network failure draft retention
@@ -408,13 +467,15 @@ export default function NewBill() {
       {/* Page Title & Back */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>{t('newInvoiceTitle')}</h2>
+          <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>
+            {editBillId ? `Edit Invoice #${editBillNo}` : t('newInvoiceTitle')}
+          </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', margin: '2px 0 0 0' }}>
             GSTIN: <span style={{ fontWeight: 700, color: '#0b5394' }}>{companyGstin || 'Loading settings...'}</span>
           </p>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={() => navigate('/')}>
-          <ArrowLeftIcon size={16} /> {t('back')}
+        <button className="btn btn-ghost btn-sm" onClick={() => (editBillId ? navigate(`/bills/${editBillId}`) : navigate('/'))}>
+          <ArrowLeftIcon size={16} /> {editBillId ? 'Back to Invoice' : t('back')}
         </button>
       </div>
 
@@ -1033,7 +1094,7 @@ export default function NewBill() {
               type="button"
               className="btn btn-ghost"
               style={{ padding: '8px 16px', fontSize: '0.84rem', color: '#64748b', fontWeight: 600 }}
-              onClick={() => navigate('/')}
+              onClick={() => (editBillId ? navigate(`/bills/${editBillId}`) : navigate('/'))}
             >
               {t('cancel')}
             </button>
@@ -1053,7 +1114,7 @@ export default function NewBill() {
               onClick={() => handleSave('save')}
               disabled={saving}
             >
-              {t('saveOnly')}
+              {editBillId ? 'Update Invoice' : t('saveOnly')}
             </button>
 
             <button
@@ -1076,7 +1137,7 @@ export default function NewBill() {
               disabled={saving}
               title="Press Ctrl + Enter to Save and Print immediately"
             >
-              <PrintIcon size={16} color="#ffffff" /> {saving ? t('saving') : t('saveAndPrint')}
+              <PrintIcon size={16} color="#ffffff" /> {saving ? (editBillId ? 'Updating...' : t('saving')) : (editBillId ? 'Update & Print' : t('saveAndPrint'))}
             </button>
           </div>
         </div>
