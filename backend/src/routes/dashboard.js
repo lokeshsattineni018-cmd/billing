@@ -90,8 +90,8 @@ router.get('/summary', protect, restrictTo('owner', 'admin', 'staff'), async (re
     const filtered = filterStats[0] || { totalSales: 0, billCount: 0 };
     const receivables = receivablesStats[0] || { totalPending: 0, pendingCount: 0 };
 
-    // Cache dashboard summary for 60 seconds (reduces DB queries on back-navigation)
-    res.set('Cache-Control', 'private, max-age=60');
+    // Do not cache aggressively so manual refreshes fetch immediate real-time data
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.json({
       selectedPeriod: {
         period,
@@ -322,8 +322,8 @@ router.get('/analytics', protect, restrictTo('owner', 'admin', 'staff'), async (
       });
     }
 
-    // Analytics data changes slowly — cache for 5 minutes
-    res.set('Cache-Control', 'private, max-age=300');
+    // Do not cache aggressively so manual refreshes fetch immediate real-time data
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.json({
       dailyTrends: last7Days,
       monthlyTrends: last6Months,

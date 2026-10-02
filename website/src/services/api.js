@@ -78,9 +78,9 @@ export const billsAPI = {
 
 // Dashboard & Analytics
 export const dashboardAPI = {
-  summary: (params) => api.get('/dashboard/summary', { params }),
-  getDailySummary: () => api.get('/dashboard/daily-summary'),
-  getAnalytics: () => api.get('/dashboard/analytics'),
+  summary: (params) => api.get('/dashboard/summary', { params: { ...params, _t: Date.now() } }),
+  getDailySummary: () => api.get('/dashboard/daily-summary', { params: { _t: Date.now() } }),
+  getAnalytics: () => api.get('/dashboard/analytics', { params: { _t: Date.now() } }),
 };
 
 // Admin Sales Reports

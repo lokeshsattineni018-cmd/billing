@@ -54,17 +54,27 @@ export default function Dashboard() {
       setData(response.data);
     } catch (error) {
       if (import.meta.env.DEV) { console.error('Failed to load dashboard:', error); }
+      throw error;
     } finally {
       if (!isSilent) setLoading(false);
-      setRefreshing(false);
     }
   };
 
-  const handleManualRefresh = () => {
+  const handleManualRefresh = async () => {
+    if (refreshing) return;
     setRefreshing(true);
-    loadDashboard(true);
-    if (isAdmin) {
-      loadAnalytics();
+    try {
+      const minSpin = new Promise((resolve) => setTimeout(resolve, 600));
+      const tasks = [loadDashboard(true)];
+      if (isAdmin) {
+        tasks.push(loadAnalytics());
+      }
+      await Promise.all([Promise.all(tasks), minSpin]);
+      showToast('Dashboard data refreshed', 'success');
+    } catch (error) {
+      showToast('Failed to refresh dashboard. Please retry.', 'error');
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -332,13 +342,37 @@ export default function Dashboard() {
               {isOwnerOrAdmin ? t('businessOverview') : t('createManageInvoices')}
             </p>
           </div>
-          <button
-            className="btn btn-primary"
-            onClick={() => navigate('/new-bill')}
-            style={{ background: '#0b5394', color: '#ffffff', fontWeight: 800, padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            <PlusIcon size={18} color="#ffffff" /> {t('newInvoice')}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={handleManualRefresh}
+              disabled={refreshing}
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                padding: '9px 13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                color: '#0b5394',
+              }}
+              title="Refresh dashboard"
+            >
+              <RefreshIcon size={15} color="#0b5394" spinning={refreshing} />
+              <span>{refreshing ? '...' : 'Refresh'}</span>
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => navigate('/new-bill')}
+              style={{ background: '#0b5394', color: '#ffffff', fontWeight: 800, padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <PlusIcon size={18} color="#ffffff" /> {t('newInvoice')}
+            </button>
+          </div>
         </div>
       )}
 
