@@ -458,19 +458,36 @@ export default function BillDetail() {
         </div>
 
         {/* Bill Items Table */}
-        <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '10px', color: 'var(--text-primary)' }}>
-          Items Breakdown
-        </h4>
-        <div className="table-container" style={{ border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden', marginBottom: '20px' }}>
-          <table className="table" style={{ margin: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <h4 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+            Items Breakdown
+          </h4>
+          <span className="mobile-only" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'none' }}>
+            ← Scroll horizontally to view details →
+          </span>
+        </div>
+        <div
+          className="table-container items-breakdown-container"
+          style={{
+            border: '1px solid var(--border-color)',
+            borderRadius: '8px',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-x pan-y',
+            marginBottom: '20px',
+            width: '100%',
+            maxWidth: '100%'
+          }}
+        >
+          <table className="table" style={{ margin: 0, minWidth: '600px', width: '100%' }}>
             <thead>
               <tr style={{ backgroundColor: 'var(--bg-secondary)' }}>
                 <th style={{ width: '50px', textAlign: 'center' }}>S.No</th>
-                <th>PARTICULARS</th>
-                <th style={{ width: '90px', textAlign: 'center' }}>HSN</th>
-                <th style={{ width: '120px', textAlign: 'right' }}>QTY (KG)</th>
-                <th style={{ width: '120px', textAlign: 'right' }}>PRICE (₹)</th>
-                {canSeeSales && <th style={{ width: '140px', textAlign: 'right' }}>AMOUNT (₹)</th>}
+                <th style={{ minWidth: '130px' }}>PARTICULARS</th>
+                <th style={{ width: '80px', textAlign: 'center' }}>HSN</th>
+                <th style={{ width: '110px', textAlign: 'right' }}>QTY (KG)</th>
+                <th style={{ width: '110px', textAlign: 'right' }}>PRICE (₹)</th>
+                {canSeeSales && <th style={{ width: '120px', textAlign: 'right' }}>AMOUNT (₹)</th>}
               </tr>
             </thead>
             <tbody>
