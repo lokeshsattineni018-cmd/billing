@@ -107,7 +107,11 @@ app.use(async (req, res, next) => {
     await connectDB();
     if (!isDbSeeded) {
       isDbSeeded = true;
-      autoSeedUsers().catch((e) => console.log('Seed note:', e.message));
+      try {
+        await autoSeedUsers();
+      } catch (e) {
+        console.log('Seed note:', e.message);
+      }
     }
     next();
   } catch (err) {

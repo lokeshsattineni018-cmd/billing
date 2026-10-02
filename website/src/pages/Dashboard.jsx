@@ -186,6 +186,7 @@ export default function Dashboard() {
       {/* ========================================================================= */}
       {isAdmin ? (
         <div
+          className="dashboard-hero"
           style={{
             background: '#ffffff',
             borderRadius: '16px',
@@ -198,47 +199,76 @@ export default function Dashboard() {
             border: '1px solid #e2e8f0',
           }}
         >
+          {/* Top Status Bar: LIVE + Date + Sync */}
+          <div className="dashboard-hero-status" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: '#ecfdf5',
+                  border: '1px solid #a7f3d0',
+                  color: '#047857',
+                  padding: '3px 10px',
+                  borderRadius: '20px',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.6px',
+                  textTransform: 'uppercase',
+                }}
+              >
+                <span className="live-pulse-dot" />
+                LIVE • {countdown}s
+              </span>
+              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
+                {currentDateStr}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleManualRefresh}
+              disabled={refreshing}
+              className="dashboard-sync-btn"
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                padding: '5px 10px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                cursor: 'pointer',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                color: '#0b5394',
+                transition: 'all 0.15s ease',
+              }}
+              title={`Last synced at ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}. Click to refresh now.`}
+            >
+              <RefreshIcon size={13} color="#0b5394" spinning={refreshing} />
+              <span>{refreshing ? 'Syncing...' : 'Sync'}</span>
+            </button>
+          </div>
+
+          {/* Title */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    background: '#ecfdf5',
-                    border: '1px solid #a7f3d0',
-                    color: '#047857',
-                    padding: '3px 10px',
-                    borderRadius: '20px',
-                    fontSize: '0.72rem',
-                    fontWeight: 800,
-                    letterSpacing: '0.6px',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  <span className="live-pulse-dot" />
-                  LIVE • {countdown}s
-                </span>
-                <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
-                  {currentDateStr}
-                </span>
-              </div>
-
-              <h1 style={{ fontSize: '1.65rem', fontWeight: 900, margin: 0, letterSpacing: '-0.5px', color: '#0f172a' }}>
+              <h1 className="dashboard-hero-title" style={{ fontSize: '1.65rem', fontWeight: 900, margin: 0, letterSpacing: '-0.5px', color: '#0f172a' }}>
                 Executive Billing Center
               </h1>
-              <p style={{ margin: '3px 0 0 0', fontSize: '0.84rem', color: '#64748b', fontWeight: 500 }}>
+              <p className="dashboard-hero-subtitle" style={{ margin: '3px 0 0 0', fontSize: '0.84rem', color: '#64748b', fontWeight: 500 }}>
                 VIJAYA DURGA AGENCIES • Real-time Financial Command
               </p>
             </div>
 
             {/* Quick Action Buttons */}
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="dashboard-hero-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
               <button
                 type="button"
                 onClick={handleManualRefresh}
                 disabled={refreshing}
+                className="hide-on-mobile"
                 style={{
                   background: '#f8fafc',
                   border: '1px solid #cbd5e1',
@@ -301,8 +331,9 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Quick Nav Command Bar */}
+          {/* Quick Nav Command Bar — hidden on mobile (available in bottom nav) */}
           <div
+            className="hide-on-mobile"
             style={{
               display: 'flex',
               gap: '8px',
@@ -379,6 +410,7 @@ export default function Dashboard() {
         <>
           {/* Dashboard Date Filter Toolbar */}
           <div
+            className="dashboard-period-bar"
             style={{
               background: '#ffffff',
               border: '1px solid #e2e8f0',
@@ -424,7 +456,7 @@ export default function Dashboard() {
               ))}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <div
                 style={{
                   display: 'inline-flex',
