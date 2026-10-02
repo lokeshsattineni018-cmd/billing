@@ -129,5 +129,21 @@ export const backupAPI = {
   sendNow: (data) => api.post('/backup/send-now', data),
 };
 
+// Staff & Labor Work, Attendance and Wages API
+export const staffAPI = {
+  getAll: (params) => api.get('/staff', { params }),
+  getSummary: () => api.get('/staff/summary'),
+  getNames: () => api.get('/staff/names'),
+  create: (data) => api.post('/staff', data),
+  createBulk: (data) => api.post('/staff/bulk', data),
+  update: (id, data) => api.put(`/staff/${id}`, data),
+  delete: (id) => api.delete(`/staff/${id}`),
+  togglePayment: (id, data) => api.patch(`/staff/${id}/pay`, data || {}),
+  exportCSVUrl: (params) => {
+    const query = new URLSearchParams(params || {}).toString();
+    return `${API_BASE_URL}/staff/export?${query}&token=${localStorage.getItem('srsf_token')}`;
+  },
+};
+
 export default api;
 

@@ -380,10 +380,6 @@ export default function PublicInvoice() {
                 <div>IFSC: <strong>KVBL0004164</strong> &nbsp;|&nbsp; Branch: <strong>BHIMAVARAM</strong></div>
               </div>
             </div>
-
-            <div className="invoice-terms-line">
-              Goods once sold will not be taken back. Subject to local Jurisdiction.
-            </div>
           </div>
 
           <div className="invoice-footer-right">

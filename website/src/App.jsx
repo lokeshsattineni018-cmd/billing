@@ -13,7 +13,8 @@ import CustomerDirectory from './pages/CustomerDirectory';
 import Reports from './pages/Reports';
 import ActivityLog from './pages/ActivityLog';
 import Settings from './pages/Settings';
-import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon, UserIcon } from './components/Icons';
+import Staff from './pages/Staff';
+import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon, UserIcon, StaffIcon } from './components/Icons';
 import logoImg from './assets/logo.png';
 import { registerAutoSync, getPendingCount, syncPendingBills } from './services/offlineQueue';
 import { billsAPI } from './services/api';
@@ -40,6 +41,7 @@ function Sidebar({ onInstall, onLogout }) {
     { path: '/', label: t('dashboard'), icon: <DashboardIcon size={18} /> },
     { path: '/new-bill', label: t('newInvoice'), icon: <PlusIcon size={18} /> },
     { path: '/bills', label: t('invoiceHistory'), icon: <InvoiceIcon size={18} /> },
+    { path: '/staff', label: t('staffWages') || 'Staff & Wages', icon: <StaffIcon size={18} /> },
     ...(isAdmin
       ? [
           { path: '/reports', label: t('salesReports'), icon: <TrendingUpIcon size={18} /> },
@@ -324,6 +326,7 @@ function AppLayout() {
           <Route path="/new-bill" element={<NewBill />} />
           <Route path="/bills" element={<BillHistory />} />
           <Route path="/bills/:id" element={<BillDetail />} />
+          <Route path="/staff" element={<Staff />} />
           {isAdmin && <Route path="/reports" element={<Reports />} />}
           {isAdmin && <Route path="/customers" element={<CustomerDirectory />} />}
           <Route path="/ledger" element={<Navigate to="/customers" replace />} />
@@ -336,22 +339,26 @@ function AppLayout() {
       {/* Clean Mobile Bottom Navigation Bar */}
       <nav className="mobile-bottom-nav">
         <NavLink to="/" end className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
-          <DashboardIcon size={20} />
+          <DashboardIcon size={19} />
           <span>{t('dashboard')}</span>
         </NavLink>
         <NavLink to="/new-bill" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
           <div className="mobile-add-btn">
-            <PlusIcon size={22} color="#ffffff" />
+            <PlusIcon size={20} color="#ffffff" />
           </div>
           <span>{t('newInvoice')}</span>
         </NavLink>
         <NavLink to="/bills" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
-          <InvoiceIcon size={20} />
+          <InvoiceIcon size={19} />
           <span>{t('invoiceHistory')}</span>
+        </NavLink>
+        <NavLink to="/staff" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
+          <StaffIcon size={19} />
+          <span>{t('staff') || 'Staff'}</span>
         </NavLink>
         {isAdmin && (
           <NavLink to="/customers" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
-            <TrendingUpIcon size={20} />
+            <TrendingUpIcon size={19} />
             <span>{t('customers')}</span>
           </NavLink>
         )}

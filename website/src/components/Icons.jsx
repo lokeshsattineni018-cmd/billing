@@ -57,6 +57,8 @@ export const DownloadIcon = ({ size = 16, color = 'currentColor' }) => (
   </svg>
 );
 
+export const ExportIcon = DownloadIcon;
+
 export const WhatsAppIcon = ({ size = 16, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
     <path d="M12.031 2C6.507 2 2.016 6.484 2.016 12c0 1.956.564 3.784 1.54 5.337L2 22l4.821-1.53c1.488.887 3.226 1.405 5.21 1.405 5.524 0 10.015-4.484 10.015-10S17.555 2 12.031 2zm5.834 14.237c-.244.686-1.42 1.314-1.959 1.397-.518.08-1.189.114-1.921-.122-.444-.143-1.018-.335-1.758-.658-3.1-1.353-5.118-4.502-5.275-4.71-.154-.209-1.26-1.677-1.26-3.2 0-1.523.799-2.272 1.082-2.584.283-.312.618-.39.824-.39.206 0 .412.002.593.011.191.01.446-.073.698.533.26.625.885 2.164.962 2.323.078.158.13.344.025.553-.104.209-.156.34-.31.52-.155.18-.327.402-.466.54-.155.154-.316.322-.136.63.18.309.8 1.32 1.716 2.136 1.178 1.05 2.17 1.374 2.478 1.528.308.155.49.13.67-.078.18-.209.771-.902.977-1.213.205-.312.411-.26.689-.156.278.104 1.764.832 2.068.984.303.153.506.229.58.356.075.127.075.736-.169 1.422z" />
@@ -201,6 +203,30 @@ export const ArrowDownIcon = ({ size = 14, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <line x1="12" y1="5" x2="12" y2="19"></line>
     <polyline points="19 12 12 19 5 12"></polyline>
+  </svg>
+);
+
+export const StaffIcon = ({ size = 18, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="9" cy="7" r="4"></circle>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+  </svg>
+);
+
+export const ScaleIcon = ({ size = 18, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3v18"></path>
+    <path d="m3 7 9-4 9 4"></path>
+    <path d="M6 10l-3 7h6l-3-7"></path>
+    <path d="M18 10l-3 7h6l-3-7"></path>
+  </svg>
+);
+
+export const CheckIcon = ({ size = 16, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"></polyline>
   </svg>
 );
 

@@ -108,8 +108,7 @@ export default function BillHistory() {
 
   const handlePrint = (e, id) => {
     e.stopPropagation();
-    const pdfUrl = billsAPI.getPDF(id);
-    window.open(pdfUrl, '_blank');
+    navigate(`/bills/${id}?autoprint=true`);
   };
 
   const handleDownloadPDF = async (e, id, billNo) => {
@@ -355,9 +354,30 @@ export default function BillHistory() {
                         gap: '5px',
                         padding: '9px 6px',
                         fontSize: '0.82rem',
-                        background: '#ffffff',
+                        background: '#f8fafc',
                         border: '1.5px solid #0b5394',
                         color: '#0b5394',
+                        fontWeight: 700,
+                        borderRadius: '8px',
+                      }}
+                      onClick={(e) => handlePrint(e, bill._id)}
+                      title="Print Invoice"
+                    >
+                      <PrintIcon size={14} color="#0b5394" /> Print
+                    </button>
+                    <button
+                      className="btn btn-sm"
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '5px',
+                        padding: '9px 6px',
+                        fontSize: '0.82rem',
+                        background: '#ffffff',
+                        border: '1px solid #cbd5e1',
+                        color: '#334155',
                         fontWeight: 700,
                         borderRadius: '8px',
                       }}
@@ -370,7 +390,7 @@ export default function BillHistory() {
                         </>
                       ) : (
                         <>
-                          <DownloadIcon size={15} color="#0b5394" /> PDF
+                          <DownloadIcon size={14} color="#334155" /> PDF
                         </>
                       )}
                     </button>

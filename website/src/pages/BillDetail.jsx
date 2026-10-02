@@ -59,12 +59,12 @@ export default function BillDetail() {
       const response = await billsAPI.getById(id);
       setBill(response.data);
 
-      // Check if redirected from NewBill with autoprint=true
+      // Check if redirected with autoprint=true
       const searchParams = new URLSearchParams(location.search);
       if (searchParams.get('autoprint') === 'true') {
         setTimeout(() => {
           window.print();
-        }, 350);
+        }, 450);
       }
     } catch (error) {
       if (import.meta.env.DEV) { console.error('Failed to load invoice:', error); }
@@ -911,9 +911,6 @@ export default function BillDetail() {
               <div>A/c. NO : <strong>4805135000002964</strong></div>
               <div>IFSC : <strong>KVBL0004815</strong></div>
               <div>Branch : Narasapur</div>
-              <div style={{ fontSize: '0.62rem', color: '#555555', marginTop: '3px' }}>
-                Goods once sold will not be taken back. Subject to local Jurisdiction.
-              </div>
             </div>
 
             <div style={{ padding: '6px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center' }}>

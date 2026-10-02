@@ -517,9 +517,6 @@ async function generateBillPDFBuffer(bill) {
       doc.text(`Branch  : `, L + 8, y + 41, { continued: true });
       doc.font('Helvetica').text(`${settings.branch || 'Narasapur'}`);
 
-      doc.font('Helvetica').fontSize(6.8).fillColor('#444444');
-      doc.text('Goods once sold will not be taken back. Subject to local Jurisdiction.', L + 8, y + 54);
-
       // Right Box: Signature
       const sigX = L + footerLeftW;
       doc.font('Helvetica-Bold').fontSize(9.5).fillColor(primaryBlue);

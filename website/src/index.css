@@ -1320,7 +1320,8 @@ a:hover {
   }
 
   .mobile-bill-actions {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(66px, 1fr));
     gap: 6px;
     padding-top: 8px;
     border-top: 1px solid #f1f5f9;
@@ -1328,6 +1329,13 @@ a:hover {
 
   .mobile-bill-actions .btn {
     min-height: 38px;
+    padding: 8px 4px !important;
+    font-size: 0.8rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    white-space: nowrap;
   }
 
   /* Mobile New Bill Item Cards */
