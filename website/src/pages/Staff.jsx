@@ -6,7 +6,6 @@ import {
   StaffIcon,
   PlusIcon,
   SearchIcon,
-  ExportIcon,
   TrashIcon,
   EditIcon,
   CheckIcon,
@@ -389,30 +388,10 @@ export default function Staff() {
 
           <button
             className="btn btn-secondary"
-            onClick={() =>
-              window.open(
-                staffAPI.exportCSVUrl({
-                  search: search || selectedWorkerFilter,
-                  dateFrom,
-                  dateTo,
-                  paymentStatus: statusFilter,
-                }),
-                '_blank'
-              )
-            }
-            title="Download CSV report of staff wages for accounting & payout"
-            style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            <ExportIcon size={15} />
-            <span>Export CSV</span>
-          </button>
-
-          <button
-            className="btn btn-secondary"
-            onClick={() => setBulkModalOpen(true)}
+            onClick={() => setBulkModalOpen(!bulkModalOpen)}
             style={{ fontWeight: 700, border: '1.5px solid #0b5394', color: '#0b5394' }}
           >
-            ⚡ Bulk Attendance
+            ⚡ {bulkModalOpen ? 'Hide Bulk Entry' : 'Bulk Attendance'}
           </button>
 
           <button
@@ -428,7 +407,7 @@ export default function Staff() {
             }}
           >
             <PlusIcon size={16} color="#ffffff" />
-            <span>+ Add Work Entry</span>
+            <span>Add Work Entry</span>
           </button>
         </div>
       </div>
@@ -1371,154 +1350,159 @@ export default function Staff() {
         </div>
       )}
 
-      {/* MODAL: BULK ATTENDANCE RECORDING */}
+      {/* INLINE: BULK ATTENDANCE RECORDING */}
       {bulkModalOpen && (
-        <div className="modal-backdrop" onClick={() => setBulkModalOpen(false)}>
+        <div
+          className="card fade-in"
+          style={{
+            padding: '20px',
+            marginBottom: '20px',
+            border: '1.5px solid #bfdbfe',
+            background: '#fafcff',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0b5394' }}>
+                ⚡ Bulk Staff Attendance Entry
+              </h3>
+              <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                Quickly record weights and rates for multiple workers on the same date
+              </p>
+            </div>
+            <button className="btn btn-ghost btn-sm" onClick={() => setBulkModalOpen(false)} style={{ fontSize: '1.1rem' }}>✕</button>
+          </div>
+
+          {/* Date Picker for Bulk */}
+          <div style={{ marginBottom: '14px', background: '#f1f5f9', padding: '10px 14px', borderRadius: '8px', display: 'inline-block' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0b5394', display: 'block', marginBottom: '4px' }}>
+              Batch Work Date:
+            </label>
+            <input
+              type="date"
+              className="form-input"
+              style={{ maxWidth: '220px' }}
+              value={bulkDate}
+              onChange={(e) => setBulkDate(e.target.value)}
+            />
+          </div>
+
+          {/* Column Headers */}
           <div
-            className="modal-content fade-in"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '640px', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1.4fr 1fr 1fr 1fr auto',
+              gap: '8px',
+              padding: '6px 10px',
+              marginBottom: '6px',
+            }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>
-                  ⚡ Bulk Staff Attendance Entry
-                </h3>
-                <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>
-                  Quickly record weights and rates for multiple workers on the same date
-                </p>
-              </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setBulkModalOpen(false)}>✕</button>
-            </div>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Worker Name</span>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Weight (KG)</span>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Rate (₹/KG)</span>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', textAlign: 'right' }}>Total</span>
+            <span style={{ width: '28px' }}></span>
+          </div>
 
-            {/* Date Picker for Bulk */}
-            <div style={{ marginBottom: '14px', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0b5394', display: 'block', marginBottom: '4px' }}>
-                Batch Work Date:
-              </label>
-              <input
-                type="date"
-                className="form-input"
-                style={{ maxWidth: '220px' }}
-                value={bulkDate}
-                onChange={(e) => setBulkDate(e.target.value)}
-              />
-            </div>
+          {/* Rows list */}
+          <div style={{ marginBottom: '14px' }}>
+            {bulkRows.map((row, idx) => {
+              const rowQty = parseFloat(row.quantity) || 0;
+              const rowPrice = parseFloat(row.price) || 0;
+              const rowTotal = Math.round(rowQty * rowPrice * 100) / 100;
 
-            {/* Rows list */}
-            <div style={{ flex: 1, overflowY: 'auto', paddingRight: '4px', marginBottom: '14px' }}>
-              {bulkRows.map((row, idx) => {
-                const rowQty = parseFloat(row.quantity) || 0;
-                const rowPrice = parseFloat(row.price) || 0;
-                const rowTotal = Math.round(rowQty * rowPrice * 100) / 100;
-
-                return (
-                  <div
-                    key={idx}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1.4fr 1fr 1fr 1.2fr auto',
-                      gap: '8px',
-                      alignItems: 'center',
-                      background: '#ffffff',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      padding: '8px 10px',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    <div>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="Worker Name"
-                        value={row.staffName}
-                        onChange={(e) => handleBulkRowChange(idx, 'staffName', e.target.value)}
-                        style={{ height: '36px', fontSize: '0.85rem' }}
-                      />
-                    </div>
-
-                    <div>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        className="form-input"
-                        placeholder="Weight (KG)"
-                        value={row.quantity}
-                        onChange={(e) => handleBulkRowChange(idx, 'quantity', e.target.value)}
-                        style={{ height: '36px', fontSize: '0.85rem' }}
-                      />
-                    </div>
-
-                    <div>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        className="form-input"
-                        placeholder="Rate (₹)"
-                        value={row.price}
-                        onChange={(e) => handleBulkRowChange(idx, 'price', e.target.value)}
-                        style={{ height: '36px', fontSize: '0.85rem' }}
-                      />
-                    </div>
-
-                    <div style={{ textAlign: 'right', paddingRight: '6px' }}>
-                      <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0b5394' }}>
-                        {formatCurrency(rowTotal)}
-                      </span>
-                    </div>
-
-                    <div>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        style={{ padding: '4px', color: '#ef4444' }}
-                        onClick={() => handleRemoveBulkRow(idx)}
-                      >
-                        ✕
-                      </button>
-                    </div>
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1.4fr 1fr 1fr 1fr auto',
+                    gap: '8px',
+                    alignItems: 'center',
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    padding: '8px 10px',
+                    marginBottom: '6px',
+                  }}
+                >
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Worker Name"
+                    value={row.staffName}
+                    onChange={(e) => handleBulkRowChange(idx, 'staffName', e.target.value)}
+                    style={{ height: '36px', fontSize: '0.85rem' }}
+                  />
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className="form-input"
+                    placeholder="0"
+                    value={row.quantity}
+                    onChange={(e) => handleBulkRowChange(idx, 'quantity', e.target.value)}
+                    style={{ height: '36px', fontSize: '0.85rem' }}
+                  />
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className="form-input"
+                    placeholder="0"
+                    value={row.price}
+                    onChange={(e) => handleBulkRowChange(idx, 'price', e.target.value)}
+                    style={{ height: '36px', fontSize: '0.85rem' }}
+                  />
+                  <div style={{ textAlign: 'right', paddingRight: '6px' }}>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0b5394' }}>
+                      {formatCurrency(rowTotal)}
+                    </span>
                   </div>
-                );
-              })}
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    style={{ padding: '4px', color: '#ef4444', width: '28px' }}
+                    onClick={() => handleRemoveBulkRow(idx)}
+                  >
+                    ✕
+                  </button>
+                </div>
+              );
+            })}
 
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={handleAddBulkRow}
+              style={{ width: '100%', border: '1px dashed #cbd5e1', fontWeight: 700, marginTop: '4px' }}
+            >
+              + Add Another Worker Row
+            </button>
+          </div>
+
+          {/* Bulk Footer */}
+          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+              Total Batch Workers: <strong>{bulkRows.filter((r) => r.staffName?.trim()).length}</strong>
+            </span>
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={handleAddBulkRow}
-                style={{ width: '100%', border: '1px dashed #cbd5e1', fontWeight: 700 }}
+                className="btn btn-secondary"
+                onClick={() => setBulkModalOpen(false)}
               >
-                + Add Another Worker Row
+                Cancel
               </button>
-            </div>
-
-            {/* Bulk Footer */}
-            <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                  Total Batch Workers: <strong>{bulkRows.filter((r) => r.staffName?.trim()).length}</strong>
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setBulkModalOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleSaveBulk}
-                  disabled={savingBulk}
-                  style={{ background: '#0b5394', fontWeight: 800 }}
-                >
-                  {savingBulk ? 'Saving Batch...' : 'Save All Workers'}
-                </button>
-              </div>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleSaveBulk}
+                disabled={savingBulk}
+                style={{ background: '#0b5394', fontWeight: 800 }}
+              >
+                {savingBulk ? 'Saving Batch...' : 'Save All Workers'}
+              </button>
             </div>
           </div>
         </div>

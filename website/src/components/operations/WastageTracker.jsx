@@ -377,7 +377,7 @@ export default function WastageTracker() {
             style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, background: '#16a34a', borderColor: '#16a34a' }}
           >
             <PlusIcon size={16} />
-            <span>+ Record Wastage Sold</span>
+            <span>Record Wastage Sold</span>
           </button>
         </div>
       </div>

@@ -373,7 +373,7 @@ export default function IceTracker() {
             style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800 }}
           >
             <PlusIcon size={16} />
-            <span>+ Record Ice Blocks</span>
+            <span>Record Ice Blocks</span>
           </button>
         </div>
       </div>
