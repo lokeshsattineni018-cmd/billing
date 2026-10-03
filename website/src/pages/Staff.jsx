@@ -442,98 +442,33 @@ export default function Staff() {
             <span>Refresh</span>
           </button>
 
-          <button
-            className="btn btn-secondary"
-            onClick={() => setBulkModalOpen(!bulkModalOpen)}
-            style={{ fontWeight: 700, border: '1.5px solid #0b5394', color: '#0b5394' }}
-          >
-            ⚡ {bulkModalOpen ? 'Hide Bulk Entry' : 'Bulk Attendance'}
-          </button>
+          {activeTab === 'entries' && (
+            <>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setBulkModalOpen(!bulkModalOpen)}
+                style={{ fontWeight: 700, border: '1.5px solid #0b5394', color: '#0b5394' }}
+              >
+                ⚡ {bulkModalOpen ? 'Hide Bulk Entry' : 'Bulk Attendance'}
+              </button>
 
-          <button
-            className="btn btn-primary"
-            onClick={handleOpenCreate}
-            style={{
-              background: 'linear-gradient(135deg, #0b5394, #2563eb)',
-              color: '#ffffff',
-              fontWeight: 800,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            <PlusIcon size={16} color="#ffffff" />
-            <span>Add Work Entry</span>
-          </button>
-        </div>
-      </div>
-
-      {/* KPI Summary Cards */}
-      <div className="dashboard-stats-grid" style={{ marginBottom: '20px' }}>
-        {/* Today's Workers */}
-        <div className="stat-card-compact" style={{ borderLeft: '4px solid #0b5394' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              Today's Workers
-            </span>
-            <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>Today</span>
-          </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
-            {summary?.today?.todayWorkersCount || 0}
-            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b', marginLeft: '6px' }}>present</span>
-          </div>
-          <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            Total {summary?.overall?.totalWorkers || 0} active workers in registry
-          </div>
-        </div>
-
-        {/* Today's Weight Processed */}
-        <div className="stat-card-compact" style={{ borderLeft: '4px solid #0891b2' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              Today's Processed
-            </span>
-            <ScaleIcon size={16} color="#0891b2" />
-          </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0891b2', marginTop: '6px' }}>
-            {(summary?.today?.todayKg || 0).toLocaleString('en-IN')}
-            <span style={{ fontSize: '0.9rem', fontWeight: 700, marginLeft: '4px' }}>kg</span>
-          </div>
-          <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            Lifetime: {(summary?.overall?.totalKg || 0).toLocaleString('en-IN')} kg
-          </div>
-        </div>
-
-        {/* Today's Total Wages */}
-        <div className="stat-card-compact" style={{ borderLeft: '4px solid #16a34a' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              Today's Wages
-            </span>
-            <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>Earned</span>
-          </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
-            {formatCurrency(summary?.today?.todayWages || 0)}
-          </div>
-          <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            Total Earned: {formatCurrency(summary?.overall?.totalWages || 0)}
-          </div>
-        </div>
-
-        {/* Total Outstanding Wages to Pay */}
-        <div className="stat-card-compact" style={{ borderLeft: '4px solid #ea580c' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              Pending Wages
-            </span>
-            <span className="badge badge-amber" style={{ fontSize: '0.7rem' }}>To Pay</span>
-          </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '6px' }}>
-            {formatCurrency(summary?.overall?.totalPending || 0)}
-          </div>
-          <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            Paid So Far: {formatCurrency(summary?.overall?.totalPaid || 0)}
-          </div>
+              <button
+                className="btn btn-primary"
+                onClick={handleOpenCreate}
+                style={{
+                  background: 'linear-gradient(135deg, #0b5394, #2563eb)',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <PlusIcon size={16} color="#ffffff" />
+                <span>Add Work Entry</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -543,7 +478,7 @@ export default function Staff() {
           display: 'flex',
           gap: '8px',
           borderBottom: '2px solid #e2e8f0',
-          marginBottom: '16px',
+          marginBottom: '20px',
           overflowX: 'auto',
           whiteSpace: 'nowrap',
           paddingBottom: '2px',
@@ -701,6 +636,74 @@ export default function Staff() {
       {/* TAB 1: DAILY WORK & ATTENDANCE ENTRIES */}
       {activeTab === 'entries' && (
         <>
+          {/* Worker KPI Summary Cards */}
+          <div className="dashboard-stats-grid" style={{ marginBottom: '20px' }}>
+            {/* Today's Workers */}
+            <div className="stat-card-compact" style={{ borderLeft: '4px solid #0b5394' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                  Today's Workers
+                </span>
+                <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>Today</span>
+              </div>
+              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
+                {summary?.today?.todayWorkersCount || 0}
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b', marginLeft: '6px' }}>present</span>
+              </div>
+              <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+                Total {summary?.overall?.totalWorkers || 0} active workers in registry
+              </div>
+            </div>
+
+            {/* Today's Weight Processed */}
+            <div className="stat-card-compact" style={{ borderLeft: '4px solid #0891b2' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                  Today's Processed
+                </span>
+                <ScaleIcon size={16} color="#0891b2" />
+              </div>
+              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0891b2', marginTop: '6px' }}>
+                {(summary?.today?.todayKg || 0).toLocaleString('en-IN')}
+                <span style={{ fontSize: '0.9rem', fontWeight: 700, marginLeft: '4px' }}>kg</span>
+              </div>
+              <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+                Lifetime: {(summary?.overall?.totalKg || 0).toLocaleString('en-IN')} kg
+              </div>
+            </div>
+
+            {/* Today's Total Wages */}
+            <div className="stat-card-compact" style={{ borderLeft: '4px solid #16a34a' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                  Today's Wages
+                </span>
+                <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>Earned</span>
+              </div>
+              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
+                {formatCurrency(summary?.today?.todayWages || 0)}
+              </div>
+              <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+                Total Earned: {formatCurrency(summary?.overall?.totalWages || 0)}
+              </div>
+            </div>
+
+            {/* Total Outstanding Wages to Pay */}
+            <div className="stat-card-compact" style={{ borderLeft: '4px solid #ea580c' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                  Pending Wages
+                </span>
+                <span className="badge badge-amber" style={{ fontSize: '0.7rem' }}>To Pay</span>
+              </div>
+              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '6px' }}>
+                {formatCurrency(summary?.overall?.totalPending || 0)}
+              </div>
+              <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+                Paid So Far: {formatCurrency(summary?.overall?.totalPaid || 0)}
+              </div>
+            </div>
+          </div>
           {/* Active worker filter notice */}
           {selectedWorkerFilter && (
             <div
