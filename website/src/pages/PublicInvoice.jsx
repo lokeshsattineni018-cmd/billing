@@ -97,7 +97,7 @@ export default function PublicInvoice() {
   const iceItem = itemsList.find((it) => it.count === 'Ice' || it.particulars === 'Ice');
   const prawnTotalQty = prawnItems.reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
   const prawnSubtotal = prawnItems.reduce((sum, it) => sum + (Number(it.amount || it.quantity * it.rate) || 0), 0);
-  const gapRowsCount = iceItem ? Math.max(2, 4 - prawnItems.length) : Math.max(1, 5 - prawnItems.length);
+  const gapRowsCount = prawnItems.length >= 4 ? 0 : (iceItem ? Math.max(0, 3 - prawnItems.length) : Math.max(1, 4 - prawnItems.length));
 
   return (
     <div style={{ minHeight: '100vh', background: '#f1f5f9', padding: '20px 12px 60px 12px', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>

@@ -672,8 +672,25 @@ export default function BillHistory() {
                       )}
                     </button>
                   ) : (
-                    <div style={{ fontSize: '0.82rem', color: '#16a34a', fontWeight: 700, padding: '6px 0' }}>
-                      ✓ {t('allLoaded') || 'All invoices loaded'} ({pagination.total || bills.length} total)
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: '#f1f5f9',
+                        border: '1px solid #cbd5e1',
+                        color: '#0f172a',
+                        fontWeight: 800,
+                        fontSize: '0.84rem',
+                        padding: '8px 18px',
+                        borderRadius: '8px',
+                        margin: '6px 0',
+                      }}
+                    >
+                      <span style={{ color: '#0b5394' }}>✓</span>
+                      <span>
+                        {t('allLoaded') || 'All invoices loaded'} ({pagination.total || bills.length} total)
+                      </span>
                     </div>
                   )}
                 </div>

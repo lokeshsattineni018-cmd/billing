@@ -237,14 +237,15 @@ async function generateBillPDFBuffer(bill) {
 
       // ═══════════════════════════════════════════════════════
       // 6. MODERN ITEMS TABLE (HEAD-ON / HEAD-LESS)
+      // Balanced column widths: tight, clean Amount column without awkward white space
       // ═══════════════════════════════════════════════════════
       const cols = {
-        sno:    30,
-        count:  60,
-        qty:    85,
-        rate:   75,
-        tax:    60,
-        amt:    W - 30 - 60 - 85 - 75 - 60,
+        sno:    32,
+        count:  84,
+        qty:    115,
+        rate:   95,
+        tax:    75,
+        amt:    W - 32 - 84 - 115 - 95 - 75, // 138 pt: crisp & perfectly proportioned
       };
 
       const colX = {
@@ -307,7 +308,7 @@ async function generateBillPDFBuffer(bill) {
       const iceItem = itemsList.find((it) => it.count === 'Ice' || it.particulars === 'Ice');
       const prawnTotalQty = prawnItems.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
       const prawnSubtotal = prawnItems.reduce((s, it) => s + (Number(it.amount || it.quantity * it.rate) || 0), 0);
-      const gapRowsCount = iceItem ? Math.max(2, 4 - prawnItems.length) : Math.max(1, 5 - prawnItems.length);
+      const gapRowsCount = prawnItems.length >= 4 ? 0 : (iceItem ? Math.max(0, 3 - prawnItems.length) : Math.max(1, 4 - prawnItems.length));
 
       const itemRowH = 24;
       prawnItems.forEach((item, index) => {
