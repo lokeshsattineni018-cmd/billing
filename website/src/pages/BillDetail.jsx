@@ -627,11 +627,11 @@ export default function BillDetail() {
             padding: '8px 16px'
           }}>
             {/* Lord Ganesha on Left */}
-            <div style={{ width: '60px', textAlign: 'left', flexShrink: 0 }}>
+            <div style={{ width: '92px', textAlign: 'left', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
               <img
                 src={ganeshaImg}
                 alt="Lord Ganesha"
-                style={{ width: '56px', height: '56px', objectFit: 'contain' }}
+                style={{ width: '84px', height: '84px', objectFit: 'contain' }}
               />
             </div>
 
@@ -661,11 +661,11 @@ export default function BillDetail() {
             </div>
 
             {/* Ram Darbar on Right */}
-            <div style={{ width: '60px', textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ width: '92px', textAlign: 'right', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
               <img
                 src={ramDarbarImg}
                 alt="Ram Darbar"
-                style={{ width: '56px', height: '56px', objectFit: 'contain' }}
+                style={{ width: '84px', height: '84px', objectFit: 'contain' }}
               />
             </div>
           </div>

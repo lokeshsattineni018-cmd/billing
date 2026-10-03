@@ -3,6 +3,9 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { formatCurrency, formatDateTime, numberToWords } from '../utils/helpers';
 import { PrintIcon, DownloadIcon } from '../components/Icons';
+import ganeshaImg from '../assets/ganesha.jpg';
+import durgaImg from '../assets/durga.jpg';
+import ramDarbarImg from '../assets/ram_darbar.jpg';
 
 export default function PublicInvoice() {
   const { id } = useParams();
@@ -186,12 +189,15 @@ export default function PublicInvoice() {
         </div>
 
         {/* 2. Brand Crest & Business Title */}
-        <div className="invoice-brand-row">
-          <img src="/assets/ganesha.jpg" alt="Lord Ganesha" className="invoice-brand-avatar" />
+        <div className="invoice-brand-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px' }}>
+          <div style={{ width: '92px', textAlign: 'left', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+            <img src={ganeshaImg} alt="Lord Ganesha" style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
+          </div>
 
-          <div className="invoice-title-block">
-            <h1 className="invoice-company-heading">VIJAYA DURGA SEA FOODS</h1>
-            <div className="invoice-proprietor-line">
+          <div className="invoice-title-block" style={{ flex: 1, textAlign: 'center', padding: '0 8px' }}>
+            <img src={durgaImg} alt="Durga Maa" style={{ width: '32px', height: '32px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }} />
+            <h1 className="invoice-company-heading" style={{ margin: '0 0 2px 0' }}>VIJAYA DURGA SEA FOODS</h1>
+            <div className="invoice-proprietor-line" style={{ margin: '2px 0' }}>
               Prop: <strong>SATTINENI VENKATA DHANA LAXMI</strong> &nbsp;|&nbsp; GSTIN: <strong>37KATPS1500Q1ZR</strong>
             </div>
             <div className="invoice-address-line">
@@ -199,7 +205,9 @@ export default function PublicInvoice() {
             </div>
           </div>
 
-          <img src="/assets/durga.jpg" alt="Durga Maa" className="invoice-brand-avatar" />
+          <div style={{ width: '92px', textAlign: 'right', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+            <img src={ramDarbarImg} alt="Ram Darbar" style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
+          </div>
         </div>
 
         {/* 3. Invoice No & Date */}

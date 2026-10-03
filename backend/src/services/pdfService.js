@@ -104,29 +104,29 @@ async function generateBillPDFBuffer(bill) {
       // ═══════════════════════════════════════════════════════
       // 2. MAIN HEADER (Lord Vinayaka - Maa Durga - Ram Darbar)
       // ═══════════════════════════════════════════════════════
-      const headerBoxH = 76;
+      const headerBoxH = 80;
       doc.rect(L, y, W, headerBoxH).strokeColor(borderBlue).lineWidth(lineW).stroke();
 
-      const sideLogoSize = 58;
-      const sideLogoY = y + 8;
+      const sideLogoSize = 70;
+      const sideLogoY = y + 5;
 
       // Left: Lord Vinayaka (Ganesha) Logo from Buffer
       try {
-        doc.image(ganeshaBuffer, L + 10, sideLogoY, { width: sideLogoSize, height: sideLogoSize });
+        doc.image(ganeshaBuffer, L + 8, sideLogoY, { width: sideLogoSize, height: sideLogoSize });
       } catch (e) {
         console.error('Ganesha logo error:', e);
       }
 
       // Right: Ram Darbar Logo from Buffer
       try {
-        doc.image(ramDarbarBuffer, R - sideLogoSize - 10, sideLogoY, { width: sideLogoSize, height: sideLogoSize });
+        doc.image(ramDarbarBuffer, R - sideLogoSize - 8, sideLogoY, { width: sideLogoSize, height: sideLogoSize });
       } catch (e) {
         console.error('Ram Darbar logo error:', e);
       }
 
       // Center Column
-      const centerW = W - (sideLogoSize * 2) - 40;
-      const centerX = L + sideLogoSize + 20;
+      const centerW = W - (sideLogoSize * 2) - 24;
+      const centerX = L + sideLogoSize + 12;
 
       // Center Top: Maa Durga Emblem from Buffer
       const durgaSize = 28;
