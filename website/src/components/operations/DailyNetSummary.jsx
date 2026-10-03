@@ -31,7 +31,10 @@ export default function DailyNetSummary() {
   const iceCost = data?.ice?.totalCost || 0;
   const totalOperatingCosts = Math.round((laborWages + iceCost) * 100) / 100;
   const wastageRevenue = data?.wastage?.totalRevenue || 0;
-  const netDailyExpense = Math.round((totalOperatingCosts - wastageRevenue) * 100) / 100;
+  const netSurplus = Math.round((wastageRevenue - totalOperatingCosts) * 100) / 100;
+  const isProfit = netSurplus > 0;
+  const isLoss = netSurplus < 0;
+  const absNet = Math.abs(netSurplus);
 
   return (
     <div>
@@ -90,41 +93,74 @@ export default function DailyNetSummary() {
             style={{
               padding: '24px',
               marginBottom: '24px',
-              background: 'linear-gradient(135deg, #0b5394 0%, #1e40af 100%)',
+              background: isProfit
+                ? 'linear-gradient(135deg, #065f46 0%, #047857 50%, #059669 100%)'
+                : 'linear-gradient(135deg, #0b5394 0%, #1e40af 100%)',
               color: '#ffffff',
               borderRadius: '14px',
-              boxShadow: '0 8px 24px rgba(11, 83, 148, 0.22)',
+              boxShadow: isProfit
+                ? '0 8px 24px rgba(5, 150, 105, 0.28)'
+                : '0 8px 24px rgba(11, 83, 148, 0.22)',
+              transition: 'background 0.3s ease',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
               <div>
-                <span
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.18)',
-                    padding: '4px 12px',
-                    borderRadius: '20px',
-                    fontSize: '0.74rem',
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}
-                >
-                  Date: {formatDate(selectedDate)}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.18)',
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                      fontSize: '0.74rem',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    Date: {formatDate(selectedDate)}
+                  </span>
+                  <span
+                    style={{
+                      background: isProfit ? '#dcfce7' : isLoss ? '#fee2e2' : '#f1f5f9',
+                      color: isProfit ? '#166534' : isLoss ? '#991b1b' : '#334155',
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                      fontSize: '0.74rem',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    {isProfit ? 'PROFIT / SURPLUS ✨' : isLoss ? 'NET EXPENSE' : 'BREAK-EVEN'}
+                  </span>
+                </div>
                 <h2 style={{ margin: '10px 0 4px 0', fontSize: '1.8rem', fontWeight: 900 }}>
-                  Net Factory Operating Cost
+                  {isProfit ? 'Net Factory Profit' : isLoss ? 'Net Factory Operating Cost' : 'Factory Break-Even'}
                 </h2>
                 <p style={{ margin: 0, opacity: 0.9, fontSize: '0.86rem' }}>
-                  (Worker Wages + Ice Blocks Cost) - Prawn Head Wastage Revenue
+                  {isProfit
+                    ? `Prawn Head Wastage Revenue (+${formatCurrency(wastageRevenue)}) exceeded all factory expenses (${formatCurrency(totalOperatingCosts)})`
+                    : isLoss
+                    ? `(Worker Wages + Ice Blocks Cost) - Prawn Head Wastage Revenue`
+                    : `Wastage byproduct revenue perfectly balanced all factory operating costs`}
                 </p>
               </div>
 
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: '0.8rem', opacity: 0.85, fontWeight: 700, textTransform: 'uppercase' }}>
-                  Net Daily Balance
+                  {isProfit ? 'Net Daily Profit' : isLoss ? 'Net Daily Expense' : 'Net Daily Balance'}
                 </div>
-                <div style={{ fontSize: '2.4rem', fontWeight: 900, marginTop: '4px', letterSpacing: '-0.5px' }}>
-                  {formatCurrency(netDailyExpense)}
+                <div
+                  style={{
+                    fontSize: '2.4rem',
+                    fontWeight: 900,
+                    marginTop: '4px',
+                    letterSpacing: '-0.5px',
+                    color: isProfit ? '#a7f3d0' : '#ffffff',
+                  }}
+                >
+                  {isProfit ? `+ ${formatCurrency(absNet)}` : isLoss ? `- ${formatCurrency(absNet)}` : '₹0.00'}
                 </div>
               </div>
             </div>
@@ -156,8 +192,13 @@ export default function DailyNetSummary() {
 
               <div>
                 <div style={{ opacity: 0.8, fontSize: '0.75rem', fontWeight: 700 }}>Wastage Cost Recovery</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: isProfit ? '#a7f3d0' : '#ffffff' }}>
                   {totalOperatingCosts > 0 ? `${Math.round((wastageRevenue / totalOperatingCosts) * 100)}%` : '0%'}
+                  {isProfit && (
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, marginLeft: '6px', opacity: 0.95 }}>
+                      (Full Coverage + Profit)
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
