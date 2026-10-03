@@ -339,7 +339,7 @@ export default function WastageTracker() {
               type="text"
               className="form-input"
               style={{ paddingLeft: '32px', height: '34px', fontSize: '0.82rem' }}
-              placeholder="Search buyer, vehicle, notes..."
+              placeholder="Search notes..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && loadEntries()}
@@ -433,12 +433,11 @@ export default function WastageTracker() {
             <table className="table" style={{ margin: 0 }}>
               <thead>
                 <tr>
-                  <th style={{ width: '110px' }}>Date</th>
+                  <th style={{ width: '120px' }}>Date</th>
                   <th>Category</th>
                   <th className="text-right" style={{ width: '140px' }}>Quantity Sold (KG)</th>
                   <th className="text-right" style={{ width: '120px' }}>Rate / KG</th>
                   <th className="text-right" style={{ width: '150px' }}>Total Amount</th>
-                  <th>Buyer / Purchaser</th>
                   <th style={{ width: '110px' }}>Status</th>
                   <th>Notes</th>
                   <th className="text-center" style={{ width: '100px' }}>Actions</th>
@@ -468,14 +467,6 @@ export default function WastageTracker() {
                       <strong style={{ fontSize: '0.96rem', color: '#16a34a' }}>
                         {formatCurrency(entry.totalAmount)}
                       </strong>
-                    </td>
-                    <td>
-                      <span style={{ fontWeight: 600 }}>{entry.buyerName || '—'}</span>
-                      {entry.vehicleNo && (
-                        <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                          🚗 {entry.vehicleNo}
-                        </div>
-                      )}
                     </td>
                     <td>
                       <span className={`badge ${entry.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}>
@@ -618,29 +609,7 @@ export default function WastageTracker() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '12px' }}>
-                <div className="form-group">
-                  <label className="form-label">Buyer / Purchaser (Optional)</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. Aqua Feeds / Fish Meal Plant"
-                    value={formData.buyerName}
-                    onChange={(e) => setFormData({ ...formData, buyerName: e.target.value })}
-                  />
-                </div>
 
-                <div className="form-group">
-                  <label className="form-label">Vehicle No. (Optional)</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. AP 07 AB 1234"
-                    value={formData.vehicleNo}
-                    onChange={(e) => setFormData({ ...formData, vehicleNo: e.target.value })}
-                  />
-                </div>
-              </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="form-group">

@@ -335,7 +335,7 @@ export default function IceTracker() {
               type="text"
               className="form-input"
               style={{ paddingLeft: '32px', height: '34px', fontSize: '0.82rem' }}
-              placeholder="Search supplier, vehicle, notes..."
+              placeholder="Search notes..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && loadEntries()}
@@ -428,12 +428,11 @@ export default function IceTracker() {
             <table className="table" style={{ margin: 0 }}>
               <thead>
                 <tr>
-                  <th style={{ width: '110px' }}>Date</th>
-                  <th className="text-right" style={{ width: '130px' }}>Ice Blocks</th>
-                  <th className="text-right" style={{ width: '130px' }}>Rate / Block</th>
-                  <th className="text-right" style={{ width: '150px' }}>Total Amount</th>
-                  <th>Supplier / Plant</th>
-                  <th style={{ width: '110px' }}>Status</th>
+                  <th style={{ width: '120px' }}>Date</th>
+                  <th className="text-right" style={{ width: '140px' }}>Ice Blocks</th>
+                  <th className="text-right" style={{ width: '140px' }}>Rate / Block</th>
+                  <th className="text-right" style={{ width: '160px' }}>Total Amount</th>
+                  <th style={{ width: '120px' }}>Status</th>
                   <th>Notes</th>
                   <th className="text-center" style={{ width: '100px' }}>Actions</th>
                 </tr>
@@ -457,14 +456,6 @@ export default function IceTracker() {
                       <strong style={{ fontSize: '0.96rem', color: 'var(--text-primary)' }}>
                         {formatCurrency(entry.totalAmount)}
                       </strong>
-                    </td>
-                    <td>
-                      <span style={{ fontWeight: 600 }}>{entry.supplierName || '—'}</span>
-                      {entry.vehicleNo && (
-                        <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                          🚗 {entry.vehicleNo}
-                        </div>
-                      )}
                     </td>
                     <td>
                       <span className={`badge ${entry.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}>
@@ -594,29 +585,7 @@ export default function IceTracker() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '12px' }}>
-                <div className="form-group">
-                  <label className="form-label">Supplier / Ice Plant (Optional)</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. Sri Rama Ice Plant"
-                    value={formData.supplierName}
-                    onChange={(e) => setFormData({ ...formData, supplierName: e.target.value })}
-                  />
-                </div>
 
-                <div className="form-group">
-                  <label className="form-label">Vehicle No. (Optional)</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. AP 16 TX 1234"
-                    value={formData.vehicleNo}
-                    onChange={(e) => setFormData({ ...formData, vehicleNo: e.target.value })}
-                  />
-                </div>
-              </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="form-group">
