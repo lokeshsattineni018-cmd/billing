@@ -69,6 +69,8 @@ router.put('/', protect, restrictTo('admin'), async (req, res) => {
     if (smtpHost !== undefined) settings.smtpHost = smtpHost;
     if (smtpPort !== undefined) settings.smtpPort = smtpPort;
     if (invoicePrefix !== undefined) settings.invoicePrefix = invoicePrefix.trim();
+    if (req.body.backupScheduleTime !== undefined) settings.backupScheduleTime = req.body.backupScheduleTime;
+    if (req.body.pushNotificationsEnabled !== undefined) settings.pushNotificationsEnabled = req.body.pushNotificationsEnabled;
 
     await settings.save();
     // Never expose smtpPass to frontend

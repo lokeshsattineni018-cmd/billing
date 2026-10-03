@@ -138,4 +138,56 @@ router.post('/send-now', protect, restrictTo('admin', 'owner'), async (req, res)
   }
 });
 
+/**
+ * GET /api/backup/full-export
+ * Full system data snapshot export (Bills, Customers, StaffWork, Ice, Wastage, Settings)
+ */
+router.get('/full-export', protect, restrictTo('admin', 'owner'), async (req, res) => {
+  try {
+    const Customer = require('../models/Customer');
+    const StaffWork = require('../models/StaffWork');
+    const DailyIce = require('../models/DailyIce');
+    const DailyWastage = require('../models/DailyWastage');
+
+    const [bills, customers, staffEntries, iceLogs, wastageLogs, settings] = await Promise.all([
+      Bill.find().sort({ billNo: 1 }).lean(),
+      Customer.find().sort({ name: 1 }).lean(),
+      StaffWork.find().sort({ date: -1 }).lean(),
+      DailyIce.find().sort({ date: -1 }).lean(),
+      DailyWastage.find().sort({ date: -1 }).lean(),
+      Settings.findOne().select('-smtpPass').lean(),
+    ]);
+
+    const exportPayload = {
+      version: '2.0.0',
+      exportedAt: new Date().toISOString(),
+      businessName: settings?.businessName || 'VIJAYA DURGA AGENCIES',
+      counts: {
+        bills: bills.length,
+        customers: customers.length,
+        staffWorkEntries: staffEntries.length,
+        iceRecords: iceLogs.length,
+        wastageRecords: wastageLogs.length,
+      },
+      data: {
+        bills,
+        customers,
+        staffWork: staffEntries,
+        iceTracking: iceLogs,
+        wastageTracking: wastageLogs,
+        settings,
+      },
+    };
+
+    const filename = `vijaya_durga_full_backup_${new Date().toISOString().split('T')[0]}.json`;
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return res.status(200).json(exportPayload);
+  } catch (error) {
+    console.error('Full export error:', error);
+    return handleServerError(res, error, 'Failed to generate full data export', req);
+  }
+});
+
 module.exports = router;
+

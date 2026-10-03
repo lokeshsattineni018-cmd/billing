@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { settingsAPI, usersAPI, backupAPI } from '../services/api';
 import { useToast, Toast, formatDate } from '../utils/helpers';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
+import { requestNotificationPermission, sendBrowserNotification, getNotificationPermission } from '../utils/notifications';
 import {
   LogoutIcon,
   PlusIcon,
@@ -16,11 +18,14 @@ import {
 
 export default function Settings() {
   const { user: currentUser, logout } = useAuth();
+  const { t } = useLanguage();
   const { toast, showToast } = useToast();
   const isAdmin = currentUser?.role === 'admin';
   const isOwnerOrAdmin = currentUser?.role === 'owner' || currentUser?.role === 'admin';
 
   const [activeTab, setActiveTab] = useState('business'); // 'business' | 'users' | 'backup'
+  const [notificationPerm, setNotificationPerm] = useState(getNotificationPermission());
+  const [exportingFullBackup, setExportingFullBackup] = useState(false);
 
   // Business & Backup Settings State
   const [form, setForm] = useState({
@@ -35,6 +40,8 @@ export default function Settings() {
     branch: '',
     backupEmail: '',
     backupEnabled: true,
+    backupScheduleTime: '21:00',
+    pushNotificationsEnabled: true,
     smtpUser: '',
     smtpConfigured: false,
     invoicePrefix: 'VDA/',
@@ -122,6 +129,8 @@ export default function Settings() {
         branch: response.data.branch || '',
         backupEmail: response.data.backupEmail || '',
         backupEnabled: response.data.backupEnabled !== undefined ? response.data.backupEnabled : true,
+        backupScheduleTime: response.data.backupScheduleTime || '21:00',
+        pushNotificationsEnabled: response.data.pushNotificationsEnabled !== undefined ? response.data.pushNotificationsEnabled : true,
         smtpUser: response.data.smtpUser || '',
         smtpConfigured: !!response.data.smtpConfigured,
         invoicePrefix: response.data.invoicePrefix || 'VDA/',
@@ -200,6 +209,57 @@ export default function Settings() {
       showToast(error.response?.data?.message || 'Failed to send backup email', 'error');
     } finally {
       setSendingBackup(false);
+    }
+  };
+
+  const handleDownloadFullBackup = async () => {
+    setExportingFullBackup(true);
+    try {
+      const res = await backupAPI.getFullExport();
+      const jsonStr = JSON.stringify(res.data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.href = url;
+      const dateStr = new Date().toISOString().split('T')[0];
+      downloadAnchor.download = `vijaya_durga_full_backup_${dateStr}.json`;
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      URL.revokeObjectURL(url);
+      showToast(
+        `Full system backup exported! (${res.data.counts?.bills || 0} bills, ${res.data.counts?.staffWorkEntries || 0} staff entries)`,
+        'success'
+      );
+    } catch (err) {
+      showToast('Failed to export full system backup', 'error');
+    } finally {
+      setExportingFullBackup(false);
+    }
+  };
+
+  const handleEnableNotifications = async () => {
+    const result = await requestNotificationPermission();
+    if (result.success) {
+      setNotificationPerm('granted');
+      showToast('Push notifications enabled successfully!', 'success');
+      sendBrowserNotification('VIJAYA DURGA AGENCIES', {
+        body: 'Push notifications are now active on this device!',
+      });
+    } else {
+      setNotificationPerm(result.permission || 'denied');
+      showToast('Notification permission was not granted by browser.', 'error');
+    }
+  };
+
+  const handleTestNotification = () => {
+    const sent = sendBrowserNotification('🔔 Test Notification', {
+      body: 'VIJAYA DURGA AGENCIES notifications are working properly!',
+    });
+    if (sent) {
+      showToast('Test notification sent!', 'success');
+    } else {
+      showToast('Please enable notifications first.', 'error');
     }
   };
 
@@ -876,6 +936,24 @@ export default function Settings() {
                   />
                 </div>
 
+                <div className="form-group" style={{ marginBottom: '14px' }}>
+                  <label className="form-label" style={{ fontWeight: 700 }}>
+                    ⏰ {t('scheduledTime') || 'Automated Daily Backup Time'}
+                  </label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <input
+                      type="time"
+                      className="form-input"
+                      style={{ maxWidth: '160px' }}
+                      value={form.backupScheduleTime || '21:00'}
+                      onChange={(e) => handleChange('backupScheduleTime', e.target.value)}
+                    />
+                    <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                      (IST daily schedule for automated sales summary email)
+                    </span>
+                  </div>
+                </div>
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <input
                     type="checkbox"
@@ -932,9 +1010,112 @@ export default function Settings() {
                 <div style={{ background: '#ffffff', padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontFamily: 'monospace', fontSize: '0.78rem', margin: '6px 0', wordBreak: 'break-all', color: '#0b5394' }}>
                   {typeof window !== 'undefined' ? window.location.origin : 'https://billing-snowy-three.vercel.app'}/api/backup/daily-summary?secret=vijaya-durga-super-secret-key-2024
                 </div>
-                Schedule it for <strong>9:00 PM IST</strong> every day!
+                Schedule it for <strong>{form.backupScheduleTime || '9:00 PM'} IST</strong> every day!
               </li>
             </ul>
+          </div>
+
+          {/* CARD: FULL DATABASE EXPORT & BACKUP */}
+          <div className="card" style={{ background: '#f8fafc', border: '1.5px solid #bfdbfe', borderRadius: '12px', padding: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+                📦
+              </div>
+              <div>
+                <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0b5394' }}>
+                  {t('fullDataExport') || 'Full System Data Export & Backup'}
+                </h4>
+                <p style={{ fontSize: '0.78rem', color: '#64748b', margin: '2px 0 0 0' }}>
+                  {t('fullDataExportDesc') || 'Download a complete JSON snapshot of all bills, customers, staff attendance, ice records, and settings'}
+                </p>
+              </div>
+            </div>
+
+            <p style={{ fontSize: '0.84rem', color: '#475569', lineHeight: 1.5, marginBottom: '16px' }}>
+              Keep a secure copy of your entire business registry on your laptop, phone, or pen drive. All records are archived with exact weights, rates, GST tax breakdown, and worker history.
+            </p>
+
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={exportingFullBackup}
+              onClick={handleDownloadFullBackup}
+              style={{
+                background: '#0b5394',
+                fontWeight: 800,
+                padding: '10px 20px',
+                fontSize: '0.88rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderRadius: '8px',
+                boxShadow: '0 2px 8px rgba(11, 83, 148, 0.15)',
+              }}
+            >
+              {exportingFullBackup ? (
+                <>
+                  <span className="btn-spinner"></span>
+                  <span>{t('exportingData') || 'Generating Full Database Backup...'}</span>
+                </>
+              ) : (
+                <>
+                  <span>📥</span>
+                  <span>{t('downloadFullBackup') || 'Download Full System Backup (.json)'}</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* CARD: BROWSER PUSH NOTIFICATIONS */}
+          <div className="card" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+                🔔
+              </div>
+              <div>
+                <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
+                  {t('pushNotifications') || 'Browser Push Notifications'}
+                </h4>
+                <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                  {t('pushNotificationsDesc') || 'Get notified for payments, overdue bills, and daily summaries'}
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>
+                  Permission Status:{' '}
+                  <span style={{ color: notificationPerm === 'granted' ? '#16a34a' : notificationPerm === 'denied' ? '#dc2626' : '#d97706' }}>
+                    {notificationPerm === 'granted' ? '✅ Active / Granted' : notificationPerm === 'denied' ? '❌ Blocked in Browser' : '⚠️ Not Enabled'}
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
+                  Alerts for recorded payments and overdue credit bills appear directly on your desktop or phone screen
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {notificationPerm !== 'granted' && (
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={handleEnableNotifications}
+                    style={{ background: '#0b5394', fontWeight: 800, borderRadius: '6px' }}
+                  >
+                    {t('enablePush') || 'Enable Notifications'}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleTestNotification}
+                  style={{ fontWeight: 700, borderRadius: '6px' }}
+                >
+                  🔔 {t('testNotification') || 'Send Test Alert'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

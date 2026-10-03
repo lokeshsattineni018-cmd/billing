@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { billsAPI } from '../services/api';
 import { formatCurrency, formatDate } from '../utils/helpers';
+import { notifyPaymentReceived } from '../utils/notifications';
 
 export default function PaymentModal({ billId, onClose, onSuccess }) {
   const [loading, setLoading] = useState(true);
@@ -64,6 +65,7 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
         notes,
         date,
       });
+      notifyPaymentReceived(billData?.customerName, numAmt);
       if (onSuccess) {
         onSuccess(res.data.message);
       }

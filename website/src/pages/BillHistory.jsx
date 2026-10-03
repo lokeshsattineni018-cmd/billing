@@ -2,18 +2,23 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast, shareInvoicePDFOnWhatsApp } from '../utils/helpers';
 import { SearchIcon, PrintIcon, DownloadIcon, WhatsAppIcon, DownloadIcon as ExportIcon, PlusIcon, ShareIcon } from '../components/Icons';
+import { SkeletonTable } from '../components/Skeleton';
 import ReminderModal from '../components/ReminderModal';
 import PaymentModal from '../components/PaymentModal';
 
 export default function BillHistory() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { toast, showToast } = useToast();
 
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [displayMode, setDisplayMode] = useState('scroll'); // 'scroll' | 'pages'
   const [search, setSearch] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -56,12 +61,35 @@ export default function BillHistory() {
       if (statusFilter) params.status = statusFilter;
 
       const response = await billsAPI.list(params);
-      setBills(response.data.bills);
-      setPagination(response.data.pagination);
+      setBills(response.data.bills || []);
+      setPagination(response.data.pagination || {});
     } catch (error) {
       if (import.meta.env.DEV) { console.error('Failed to load invoices:', error); }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (loadingMore || page >= (pagination.pages || 1)) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const params = { page: nextPage, limit: 15 };
+      if (search.trim()) params.search = search.trim();
+      if (dateFrom) params.from = dateFrom;
+      if (dateTo) params.to = dateTo;
+      if (statusFilter) params.status = statusFilter;
+
+      const response = await billsAPI.list(params);
+      const newBills = response.data.bills || [];
+      setBills((prev) => [...prev, ...newBills]);
+      setPage(nextPage);
+      setPagination(response.data.pagination || {});
+    } catch (error) {
+      showToast('Failed to load more invoices', 'error');
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -273,7 +301,7 @@ export default function BillHistory() {
       {/* Bills Table */}
       <div className="card">
         {loading ? (
-          <div className="spinner"></div>
+          <SkeletonTable rows={8} cols={6} hasHeader={false} />
         ) : bills.length > 0 ? (
           <>
             {/* Mobile Cards View (Visible on Phones & Tablets) */}
@@ -559,39 +587,132 @@ export default function BillHistory() {
               </table>
             </div>
 
-            {/* Pagination */}
-            {pagination.pages > 1 && (
-              <div className="pagination">
-                <button
-                  onClick={() => setPage(page - 1)}
-                  disabled={page === 1}
-                >
-                  Prev
-                </button>
-                {Array.from({ length: pagination.pages }, (_, i) => i + 1)
-                  .filter((p) => Math.abs(p - page) <= 2 || p === 1 || p === pagination.pages)
-                  .map((p, idx, arr) => {
-                    const showEllipsis = idx > 0 && p - arr[idx - 1] > 1;
-                    return (
-                      <span key={p}>
-                        {showEllipsis && <span className="pagination-ellipsis">...</span>}
-                        <button
-                          className={page === p ? 'active' : ''}
-                          onClick={() => setPage(p)}
-                        >
-                          {p}
-                        </button>
-                      </span>
-                    );
-                  })}
-                <button
-                  onClick={() => setPage(page + 1)}
-                  disabled={page === pagination.pages}
-                >
-                  Next
-                </button>
+            {/* Pagination & Infinite Load More Controls */}
+            <div style={{ marginTop: '20px', padding: '16px 20px', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '14px', alignItems: 'center', borderRadius: '0 0 12px 12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '10px' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>
+                  {t('showingBills')
+                    .replace('{count}', bills.length)
+                    .replace('{total}', pagination.total || bills.length)}
+                </span>
+
+                {/* View Mode Toggle: Load More vs Pages */}
+                {pagination.pages > 1 && (
+                  <div style={{ display: 'flex', gap: '4px', background: '#e2e8f0', padding: '3px', borderRadius: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setDisplayMode('scroll')}
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: '0.76rem',
+                        fontWeight: 700,
+                        border: 'none',
+                        borderRadius: '6px',
+                        background: displayMode === 'scroll' ? '#ffffff' : 'transparent',
+                        color: displayMode === 'scroll' ? '#0b5394' : '#64748b',
+                        boxShadow: displayMode === 'scroll' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ⚡ {t('loadMore') || 'Load More'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDisplayMode('pages')}
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: '0.76rem',
+                        fontWeight: 700,
+                        border: 'none',
+                        borderRadius: '6px',
+                        background: displayMode === 'pages' ? '#ffffff' : 'transparent',
+                        color: displayMode === 'pages' ? '#0b5394' : '#64748b',
+                        boxShadow: displayMode === 'pages' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      📄 Pages
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* In Scroll / Load More Mode */}
+              {displayMode === 'scroll' ? (
+                <div style={{ textAlign: 'center', width: '100%' }}>
+                  {bills.length < (pagination.total || 0) ? (
+                    <button
+                      type="button"
+                      onClick={handleLoadMore}
+                      disabled={loadingMore}
+                      className="btn btn-primary"
+                      style={{
+                        width: '100%',
+                        maxWidth: '360px',
+                        padding: '11px 20px',
+                        fontSize: '0.9rem',
+                        fontWeight: 800,
+                        borderRadius: '10px',
+                        background: '#0b5394',
+                        boxShadow: '0 4px 12px rgba(11, 83, 148, 0.15)',
+                        margin: '0 auto',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      {loadingMore ? (
+                        <>
+                          <span className="btn-spinner"></span>
+                          Loading invoices...
+                        </>
+                      ) : (
+                        `↓ ${t('loadMore')} (${(pagination.total || 0) - bills.length} remaining)`
+                      )}
+                    </button>
+                  ) : (
+                    <div style={{ fontSize: '0.82rem', color: '#16a34a', fontWeight: 700, padding: '6px 0' }}>
+                      ✓ {t('allLoaded') || 'All invoices loaded'} ({pagination.total || bills.length} total)
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Paginated View */
+                pagination.pages > 1 && (
+                  <div className="pagination" style={{ margin: 0 }}>
+                    <button
+                      onClick={() => setPage(page - 1)}
+                      disabled={page === 1}
+                    >
+                      Prev
+                    </button>
+                    {Array.from({ length: pagination.pages }, (_, i) => i + 1)
+                      .filter((p) => Math.abs(p - page) <= 2 || p === 1 || p === pagination.pages)
+                      .map((p, idx, arr) => {
+                        const showEllipsis = idx > 0 && p - arr[idx - 1] > 1;
+                        return (
+                          <span key={p}>
+                            {showEllipsis && <span className="pagination-ellipsis">...</span>}
+                            <button
+                              className={page === p ? 'active' : ''}
+                              onClick={() => setPage(p)}
+                            >
+                              {p}
+                            </button>
+                          </span>
+                        );
+                      })}
+                    <button
+                      onClick={() => setPage(page + 1)}
+                      disabled={page === pagination.pages}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
           </>
         ) : (
           <div className="empty-state">

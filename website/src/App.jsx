@@ -15,6 +15,7 @@ import ActivityLog from './pages/ActivityLog';
 import Settings from './pages/Settings';
 import Staff from './pages/Staff';
 import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon, UserIcon, StaffIcon, MenuIcon, CloseIcon } from './components/Icons';
+import ErrorBoundary from './components/ErrorBoundary';
 import logoImg from './assets/logo.png';
 import { registerAutoSync, getPendingCount, syncPendingBills } from './services/offlineQueue';
 import { billsAPI } from './services/api';
@@ -489,19 +490,21 @@ function AppLayout() {
 
       {/* Main Content Area */}
       <main className="main-content">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/new-bill" element={<NewBill />} />
-          <Route path="/bills" element={<BillHistory />} />
-          <Route path="/bills/:id" element={<BillDetail />} />
-          <Route path="/staff" element={<Staff />} />
-          {isAdmin && <Route path="/reports" element={<Reports />} />}
-          {isAdmin && <Route path="/customers" element={<CustomerDirectory />} />}
-          <Route path="/ledger" element={<Navigate to="/customers" replace />} />
-          {isAdmin && <Route path="/activity-log" element={<ActivityLog />} />}
-          {isAdmin && <Route path="/settings" element={<Settings />} />}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/new-bill" element={<NewBill />} />
+            <Route path="/bills" element={<BillHistory />} />
+            <Route path="/bills/:id" element={<BillDetail />} />
+            <Route path="/staff" element={<Staff />} />
+            {isAdmin && <Route path="/reports" element={<Reports />} />}
+            {isAdmin && <Route path="/customers" element={<CustomerDirectory />} />}
+            <Route path="/ledger" element={<Navigate to="/customers" replace />} />
+            {isAdmin && <Route path="/activity-log" element={<ActivityLog />} />}
+            {isAdmin && <Route path="/settings" element={<Settings />} />}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </ErrorBoundary>
       </main>
 
       {/* Clean Mobile Bottom Navigation Bar */}
@@ -631,20 +634,22 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <LanguageProvider>
-          <Routes>
-            <Route path="/login" element={<LoginWrapper />} />
-            {/* Public Invoice Routes (Zero Login for Customers) */}
-            <Route path="/view/:id" element={<PublicInvoice />} />
-            <Route path="/invoice/view/:id" element={<PublicInvoice />} />
-            <Route
-              path="/*"
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/login" element={<LoginWrapper />} />
+              {/* Public Invoice Routes (Zero Login for Customers) */}
+              <Route path="/view/:id" element={<PublicInvoice />} />
+              <Route path="/invoice/view/:id" element={<PublicInvoice />} />
+              <Route
+                path="/*"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </ErrorBoundary>
         </LanguageProvider>
       </AuthProvider>
     </BrowserRouter>

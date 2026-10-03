@@ -65,6 +65,14 @@ const settingsSchema = new mongoose.Schema({
     type: String,
     default: 'VDA/',
   },
+  backupScheduleTime: {
+    type: String,
+    default: '21:00',
+  },
+  pushNotificationsEnabled: {
+    type: Boolean,
+    default: true,
+  },
 }, {
   timestamps: true,
 });

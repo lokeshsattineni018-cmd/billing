@@ -127,6 +127,8 @@ export const usersAPI = {
 // Daily Backup API
 export const backupAPI = {
   sendNow: (data) => api.post('/backup/send-now', data),
+  getFullExport: () => api.get('/backup/full-export'),
+  exportFullBackupUrl: () => `${API_BASE_URL}/backup/full-export?token=${localStorage.getItem('srsf_token')}`,
 };
 
 // Staff & Labor Work, Attendance and Wages API

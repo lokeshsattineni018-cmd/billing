@@ -6,6 +6,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
 import { TrendingUpIcon, CalendarIcon, PlusIcon, WhatsAppIcon, InvoiceIcon, RefreshIcon } from '../components/Icons';
 import { RevenueTrendChart, TopCustomersBarChart, PaymentStatusDonut } from '../components/AnalyticsCharts';
+import { SkeletonKPIGrid, SkeletonTable, SkeletonChart, SkeletonCard, Skeleton } from '../components/Skeleton';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -154,7 +155,22 @@ export default function Dashboard() {
     year: 'numeric',
   });
 
-  if (loading) return <div className="spinner" style={{ minHeight: '60vh' }}></div>;
+  if (loading) {
+    return (
+      <div className="page-container fade-in" style={{ maxWidth: '1440px', margin: '0 auto' }}>
+        <div style={{ padding: '24px 28px', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
+          <Skeleton width="220px" height="28px" style={{ marginBottom: '8px' }} />
+          <Skeleton width="340px" height="14px" />
+        </div>
+        <SkeletonKPIGrid count={4} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+          <SkeletonChart />
+          <SkeletonCard height="260px" />
+        </div>
+        <SkeletonTable rows={5} cols={6} />
+      </div>
+    );
+  }
 
   return (
     <div className="page-container fade-in" style={{ maxWidth: '1440px', margin: '0 auto' }}>

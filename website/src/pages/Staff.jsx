@@ -16,6 +16,8 @@ import {
 import IceTracker from '../components/operations/IceTracker';
 import WastageTracker from '../components/operations/WastageTracker';
 import DailyNetSummary from '../components/operations/DailyNetSummary';
+import StaffAttendanceCalendar from '../components/StaffAttendanceCalendar';
+import { SkeletonTable } from '../components/Skeleton';
 
 export default function Staff() {
   const { t } = useLanguage();
@@ -304,6 +306,60 @@ export default function Staff() {
   const handleRemoveBulkRow = (index) => {
     if (bulkRows.length <= 1) return;
     setBulkRows((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCopyYesterdayTeam = () => {
+    const entriesBeforeBulkDate = entries.filter((e) => {
+      const eDate = e.date ? e.date.split('T')[0] : '';
+      return eDate < bulkDate;
+    });
+
+    let targetEntries = [];
+    if (entriesBeforeBulkDate.length > 0) {
+      const sorted = [...entriesBeforeBulkDate].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      const mostRecentDate = sorted[0].date ? sorted[0].date.split('T')[0] : '';
+      targetEntries = sorted.filter((e) => (e.date ? e.date.split('T')[0] : '') === mostRecentDate);
+    } else if (entries.length > 0) {
+      targetEntries = entries.slice(0, 20);
+    }
+
+    if (targetEntries.length === 0) {
+      if (staffNames.length > 0) {
+        const rows = staffNames.slice(0, 10).map((name) => {
+          const sName = typeof name === 'string' ? name : name.staffName;
+          return {
+            staffName: sName,
+            quantity: '',
+            price: '30',
+            workType: 'Peeling / Seafood Processing',
+            paymentStatus: 'Pending',
+          };
+        });
+        setBulkRows(rows);
+        showToast(`Loaded ${rows.length} workers from registry!`, 'success');
+        return;
+      }
+      showToast('No previous worker records found to copy', 'error');
+      return;
+    }
+
+    const seen = new Set();
+    const rows = [];
+    for (const item of targetEntries) {
+      if (item.staffName && !seen.has(item.staffName.trim().toLowerCase())) {
+        seen.add(item.staffName.trim().toLowerCase());
+        rows.push({
+          staffName: item.staffName,
+          quantity: '',
+          price: item.price !== undefined ? String(item.price) : '30',
+          workType: item.workType || 'Peeling / Seafood Processing',
+          paymentStatus: 'Pending',
+        });
+      }
+    }
+
+    setBulkRows(rows);
+    showToast(t('copyYesterdaySuccess') || `Loaded ${rows.length} workers from previous team!`, 'success');
   };
 
   const handleSaveBulk = async () => {
@@ -619,6 +675,27 @@ export default function Staff() {
         >
           <span>📊 Daily Net Summary</span>
         </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('calendar')}
+          style={{
+            padding: '10px 16px',
+            fontSize: '0.9rem',
+            fontWeight: 800,
+            background: 'none',
+            border: 'none',
+            borderBottom: activeTab === 'calendar' ? '3px solid #16a34a' : '3px solid transparent',
+            color: activeTab === 'calendar' ? '#16a34a' : '#64748b',
+            cursor: 'pointer',
+            marginBottom: '-2px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <span>📅 {t('attendanceCalendar') || 'Attendance Calendar'}</span>
+        </button>
       </div>
 
       {/* TAB 1: DAILY WORK & ATTENDANCE ENTRIES */}
@@ -781,7 +858,7 @@ export default function Staff() {
           {/* Entries Content */}
           <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
             {loading ? (
-              <div className="spinner" style={{ margin: '40px auto' }}></div>
+              <SkeletonTable rows={7} cols={6} hasHeader={false} />
             ) : entries.length === 0 ? (
               <div style={{ padding: '48px 20px', textAlign: 'center', color: '#64748b' }}>
                 <StaffIcon size={44} color="#94a3b8" />
@@ -1147,6 +1224,15 @@ export default function Staff() {
       {/* TAB 5: CONSOLIDATED DAILY OPERATIONS & NET SUMMARY */}
       {activeTab === 'net' && <DailyNetSummary />}
 
+      {/* TAB 6: WORKER ATTENDANCE CALENDAR */}
+      {activeTab === 'calendar' && (
+        <StaffAttendanceCalendar
+          entries={entries}
+          staffNames={staffNames}
+          defaultWorker={selectedWorkerFilter}
+        />
+      )}
+
       {/* MODAL: SINGLE WORK ENTRY (CREATE / EDIT) */}
       {modalOpen && (
         <div className="modal-backdrop" onClick={() => setModalOpen(false)}>
@@ -1373,18 +1459,42 @@ export default function Staff() {
             <button className="btn btn-ghost btn-sm" onClick={() => setBulkModalOpen(false)} style={{ fontSize: '1.1rem' }}>✕</button>
           </div>
 
-          {/* Date Picker for Bulk */}
-          <div style={{ marginBottom: '14px', background: '#f1f5f9', padding: '10px 14px', borderRadius: '8px', display: 'inline-block' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0b5394', display: 'block', marginBottom: '4px' }}>
-              Batch Work Date:
-            </label>
-            <input
-              type="date"
-              className="form-input"
-              style={{ maxWidth: '220px' }}
-              value={bulkDate}
-              onChange={(e) => setBulkDate(e.target.value)}
-            />
+          {/* Date Picker for Bulk & Copy Yesterday's Team */}
+          <div style={{ marginBottom: '14px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ background: '#f1f5f9', padding: '10px 14px', borderRadius: '8px', display: 'inline-block' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0b5394', display: 'block', marginBottom: '4px' }}>
+                Batch Work Date:
+              </label>
+              <input
+                type="date"
+                className="form-input"
+                style={{ maxWidth: '220px' }}
+                value={bulkDate}
+                onChange={(e) => setBulkDate(e.target.value)}
+              />
+            </div>
+
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={handleCopyYesterdayTeam}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: '#eff6ff',
+                border: '1.5px solid #0b5394',
+                color: '#0b5394',
+                fontWeight: 800,
+                fontSize: '0.84rem',
+                borderRadius: '8px',
+                padding: '9px 16px',
+                boxShadow: '0 2px 6px rgba(11, 83, 148, 0.08)',
+              }}
+              title="Auto-fill worker names from yesterday's attendance team"
+            >
+              <span>{t('copyYesterdayTeam') || "⚡ Copy Yesterday's Team"}</span>
+            </button>
           </div>
 
           {/* Column Headers */}
