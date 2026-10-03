@@ -104,11 +104,11 @@ async function generateBillPDFBuffer(bill) {
       // ═══════════════════════════════════════════════════════
       // 2. MAIN HEADER (Lord Vinayaka - Maa Durga - Ram Darbar)
       // ═══════════════════════════════════════════════════════
-      const headerBoxH = 80;
+      const headerBoxH = 82;
       doc.rect(L, y, W, headerBoxH).strokeColor(borderBlue).lineWidth(lineW).stroke();
 
       const sideLogoSize = 70;
-      const sideLogoY = y + 5;
+      const sideLogoY = y + 6;
 
       // Left: Lord Vinayaka (Ganesha) Logo from Buffer
       try {
@@ -129,9 +129,9 @@ async function generateBillPDFBuffer(bill) {
       const centerX = L + sideLogoSize + 12;
 
       // Center Top: Maa Durga Emblem from Buffer
-      const durgaSize = 28;
+      const durgaSize = 34;
       try {
-        doc.image(durgaBuffer, centerX + (centerW / 2) - (durgaSize / 2), y + 4, {
+        doc.image(durgaBuffer, centerX + (centerW / 2) - (durgaSize / 2), y + 3, {
           width: durgaSize,
           height: durgaSize,
         });
@@ -142,9 +142,9 @@ async function generateBillPDFBuffer(bill) {
       // Center Trade Name
       doc
         .font('Helvetica-Bold')
-        .fontSize(17)
+        .fontSize(16.5)
         .fillColor(primaryBlue)
-        .text(settings.businessName || 'VIJAYA DURGA SEA FOODS', centerX, y + 33, {
+        .text(settings.businessName || 'VIJAYA DURGA SEA FOODS', centerX, y + 37.5, {
           width: centerW,
           align: 'center',
           characterSpacing: 0.5,
@@ -155,7 +155,7 @@ async function generateBillPDFBuffer(bill) {
         .font('Helvetica-Bold')
         .fontSize(7.5)
         .fillColor(textDark)
-        .text(`Prop: ${settings.legalName || 'SATTINENI VENKATA DHANA LAXMI'}   |   GSTIN: ${settings.gstin || '37KATPS1500Q1ZR'}`, centerX, y + 52, {
+        .text(`Prop: ${settings.legalName || 'SATTINENI VENKATA DHANA LAXMI'}   |   GSTIN: ${settings.gstin || '37KATPS1500Q1ZR'}`, centerX, y + 54.5, {
           width: centerW,
           align: 'center',
         });
@@ -168,7 +168,7 @@ async function generateBillPDFBuffer(bill) {
         .text(
           settings.address || 'D.No. 2-41A, SATTINENI SRINIVASA TATAJI, Near Ramalayam, KOTHOTA - 534 281, Mutyalapalli, West Godavari Dist., A.P.',
           centerX - 10,
-          y + 62,
+          y + 64.5,
           { width: centerW + 20, align: 'center' }
         );
 

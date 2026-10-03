@@ -195,7 +195,7 @@ export default function PublicInvoice() {
           </div>
 
           <div className="invoice-title-block" style={{ flex: 1, textAlign: 'center', padding: '0 8px' }}>
-            <img src={durgaImg} alt="Durga Maa" style={{ width: '32px', height: '32px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }} />
+            <img src={durgaImg} alt="Durga Maa" style={{ width: '44px', height: '44px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }} />
             <h1 className="invoice-company-heading" style={{ margin: '0 0 2px 0' }}>VIJAYA DURGA SEA FOODS</h1>
             <div className="invoice-proprietor-line" style={{ margin: '2px 0' }}>
               Prop: <strong>SATTINENI VENKATA DHANA LAXMI</strong> &nbsp;|&nbsp; GSTIN: <strong>37KATPS1500Q1ZR</strong>
