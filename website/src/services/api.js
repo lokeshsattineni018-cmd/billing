@@ -134,7 +134,7 @@ export const backupAPI = {
 // Staff & Labor Work, Attendance and Wages API
 export const staffAPI = {
   getAll: (params) => api.get('/staff', { params }),
-  getSummary: () => api.get('/staff/summary'),
+  getSummary: (params) => api.get('/staff/summary', { params }),
   getNames: () => api.get('/staff/names'),
   create: (data) => api.post('/staff', data),
   createBulk: (data) => api.post('/staff/bulk', data),
@@ -147,14 +147,14 @@ export const staffAPI = {
   },
   // Ice Blocks Tracking
   getIce: (params) => api.get('/staff/ice', { params }),
-  getIceSummary: () => api.get('/staff/ice/summary'),
+  getIceSummary: (params) => api.get('/staff/ice/summary', { params }),
   createIce: (data) => api.post('/staff/ice', data),
   updateIce: (id, data) => api.put(`/staff/ice/${id}`, data),
   deleteIce: (id) => api.delete(`/staff/ice/${id}`),
 
   // Prawn Head Wastage Sales Tracking
   getWastage: (params) => api.get('/staff/wastage', { params }),
-  getWastageSummary: () => api.get('/staff/wastage/summary'),
+  getWastageSummary: (params) => api.get('/staff/wastage/summary', { params }),
   createWastage: (data) => api.post('/staff/wastage', data),
   updateWastage: (id, data) => api.put(`/staff/wastage/${id}`, data),
   deleteWastage: (id) => api.delete(`/staff/wastage/${id}`),

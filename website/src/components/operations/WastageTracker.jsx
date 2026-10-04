@@ -45,7 +45,7 @@ export default function WastageTracker() {
 
   useEffect(() => {
     loadData();
-  }, [dateFrom, dateTo, statusFilter]);
+  }, [dateFilter, dateFrom, dateTo, statusFilter]);
 
   const loadData = async () => {
     setLoading(true);
@@ -76,7 +76,11 @@ export default function WastageTracker() {
 
   const loadSummary = async () => {
     try {
-      const res = await staffAPI.getWastageSummary();
+      const params = {};
+      if (dateFilter) params.dateFilter = dateFilter;
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
+      const res = await staffAPI.getWastageSummary(params);
       setSummary(res.data);
     } catch (err) {
       if (import.meta.env.DEV) {
@@ -219,14 +223,18 @@ export default function WastageTracker() {
       <Toast toast={toast} />
 
       {/* KPI Summary Cards */}
+      {(() => {
+        const periodLabel = dateFilter === 'today' || (dateFilter === 'all' && !dateFrom) ? "Today's" : dateFilter === 'yesterday' ? "Yesterday's" : dateFilter === 'week' ? '7-Day' : dateFilter === 'month' ? "This Month's" : 'Filtered';
+        const badgeLabel = dateFilter === 'today' || (dateFilter === 'all' && !dateFrom) ? 'Today' : dateFilter === 'yesterday' ? 'Yesterday' : dateFilter === 'week' ? '7 Days' : dateFilter === 'month' ? 'Month' : 'Custom';
+        return (
       <div className="dashboard-stats-grid" style={{ marginBottom: '20px' }}>
-        {/* Today's Wastage Sold (KG) */}
+        {/* Period Wastage Sold (KG) */}
         <div className="stat-card-compact" style={{ borderLeft: '4px solid #16a34a' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              Today's Prawn Head Sold
+              {periodLabel} Prawn Head Sold
             </span>
-            <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>Today</span>
+            <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>{badgeLabel}</span>
           </div>
           <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
             {(summary?.todayKg || 0).toLocaleString('en-IN')}
@@ -237,11 +245,11 @@ export default function WastageTracker() {
           </div>
         </div>
 
-        {/* Today's Wastage Revenue */}
+        {/* Period Wastage Revenue */}
         <div className="stat-card-compact" style={{ borderLeft: '4px solid #059669' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              Today's Revenue
+              {periodLabel} Revenue
             </span>
             <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>Income</span>
           </div>
@@ -257,7 +265,7 @@ export default function WastageTracker() {
         <div className="stat-card-compact" style={{ borderLeft: '4px solid #0b5394' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              Today's Selling Rate
+              {periodLabel} Selling Rate
             </span>
             <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>₹ / KG</span>
           </div>
@@ -265,7 +273,7 @@ export default function WastageTracker() {
             ₹{summary?.todayAvgRate?.toFixed(2) || '0.00'}
           </div>
           <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            Average selling price per KG today
+            Average selling price per KG in period
           </div>
         </div>
 
@@ -285,6 +293,8 @@ export default function WastageTracker() {
           </div>
         </div>
       </div>
+        );
+      })()}
 
       {/* Control Bar & Action Buttons */}
       <div

@@ -28,6 +28,16 @@ const dailyIceSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    iceFrom: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    iceTo: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     vehicleNo: {
       type: String,
       trim: true,

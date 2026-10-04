@@ -640,7 +640,7 @@ export default function BillDetail() {
               <img
                 src={durgaImg}
                 alt="Durga Maa"
-                style={{ width: '44px', height: '44px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }}
+                style={{ width: '54px', height: '54px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }}
               />
               <h1 style={{
                 color: '#0b5394',

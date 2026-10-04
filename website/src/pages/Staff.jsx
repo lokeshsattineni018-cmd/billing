@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { staffAPI } from '../services/api';
-import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
+import { formatCurrency, formatDate, numberToWords, useToast, Toast } from '../utils/helpers';
 import { useLanguage } from '../context/LanguageContext';
 import {
   StaffIcon,
@@ -12,12 +12,16 @@ import {
   ScaleIcon,
   IceIcon,
   RefreshIcon,
+  PrintIcon,
 } from '../components/Icons';
 import IceTracker from '../components/operations/IceTracker';
 import WastageTracker from '../components/operations/WastageTracker';
 import DailyNetSummary from '../components/operations/DailyNetSummary';
 import StaffAttendanceCalendar from '../components/StaffAttendanceCalendar';
 import { SkeletonTable } from '../components/Skeleton';
+import ganeshaImg from '../assets/ganesha.jpg';
+import durgaImg from '../assets/durga.jpg';
+import ramDarbarImg from '../assets/ram_darbar.jpg';
 
 export default function Staff() {
   const { t } = useLanguage();
@@ -54,6 +58,17 @@ export default function Staff() {
   });
   const [saving, setSaving] = useState(false);
 
+  // Single Worker Entry Bill Print State
+  const [activeBillEntry, setActiveBillEntry] = useState(null);
+  const singleBillRef = useRef(null);
+
+  // Single Worker Full Statement Bill Print State
+  const [statementWorker, setStatementWorker] = useState(null);
+  const [statementEntries, setStatementEntries] = useState([]);
+  const [statementSummary, setStatementSummary] = useState(null);
+  const [printingStatement, setPrintingStatement] = useState(false);
+  const workerStatementRef = useRef(null);
+
   // Bulk Entry Modal
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [bulkDate, setBulkDate] = useState(new Date().toISOString().split('T')[0]);
@@ -69,7 +84,7 @@ export default function Staff() {
 
   useEffect(() => {
     loadAllData();
-  }, [dateFrom, dateTo, statusFilter, workTypeFilter, selectedWorkerFilter]);
+  }, [dateFilter, dateFrom, dateTo, statusFilter, workTypeFilter, selectedWorkerFilter]);
 
   const loadAllData = async () => {
     setLoading(true);
@@ -103,12 +118,86 @@ export default function Staff() {
 
   const loadSummary = async () => {
     try {
-      const res = await staffAPI.getSummary();
+      const params = {};
+      if (dateFilter) params.dateFilter = dateFilter;
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
+      const res = await staffAPI.getSummary(params);
       setSummary(res.data);
     } catch (err) {
       if (import.meta.env.DEV) {
         console.error('Failed to load summary:', err);
       }
+    }
+  };
+
+  // Generate & Print Wage Voucher for a single work entry
+  const handlePrintEntryBill = (entry) => {
+    setActiveBillEntry(entry);
+    setTimeout(() => {
+      if (singleBillRef.current) {
+        const printWindow = window.open('', '_blank', 'width=900,height=700');
+        printWindow.document.write('<html><head><title>Worker Labor Wage Voucher</title>');
+        printWindow.document.write('<style>body{margin:0;padding:16px;font-family:Arial,Helvetica,sans-serif;color:#000;}@media print{body{padding:0;}@page{size:auto;margin:10mm;}}</style>');
+        printWindow.document.write('</head><body>');
+        printWindow.document.write(singleBillRef.current.innerHTML);
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => printWindow.print(), 300);
+      }
+    }, 100);
+  };
+
+  // Generate & Print Statement Bill for a single particular worker
+  const handlePrintWorkerStatement = async (workerName) => {
+    if (!workerName) return;
+    setPrintingStatement(true);
+    showToast(`Preparing wage bill statement for ${workerName}...`, 'info');
+    try {
+      const params = { search: workerName };
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
+      const res = await staffAPI.getAll(params);
+      const workerRows = (res.data.entries || []).filter(
+        (e) => e.staffName.toLowerCase() === workerName.toLowerCase()
+      );
+
+      const acc = summary?.staffAccounts?.find((a) => a.staffName.toLowerCase() === workerName.toLowerCase());
+
+      const totalKg = Math.round(workerRows.reduce((sum, r) => sum + (r.quantity || 0), 0) * 100) / 100;
+      const totalEarned = Math.round(workerRows.reduce((sum, r) => sum + (r.totalAmount || 0), 0) * 100) / 100;
+      const totalPaid = Math.round(workerRows.reduce((sum, r) => sum + (r.paymentStatus === 'Paid' ? r.totalAmount : (r.amountPaid || 0)), 0) * 100) / 100;
+      const pendingBalance = Math.round((totalEarned - totalPaid) * 100) / 100;
+
+      setStatementWorker(workerName);
+      setStatementEntries(workerRows);
+      setStatementSummary({
+        totalKg,
+        totalEarned,
+        totalPaid,
+        pendingBalance,
+        staffPhone: workerRows[0]?.staffPhone || acc?.staffPhone || '',
+        daysWorkedCount: acc?.daysWorkedCount || new Set(workerRows.map(r => r.date?.split('T')[0])).size,
+      });
+
+      setTimeout(() => {
+        if (workerStatementRef.current) {
+          const printWindow = window.open('', '_blank', 'width=900,height=700');
+          printWindow.document.write('<html><head><title>Worker Wage Statement & Settlement Bill</title>');
+          printWindow.document.write('<style>body{margin:0;padding:16px;font-family:Arial,Helvetica,sans-serif;color:#000;}@media print{body{padding:0;}@page{size:auto;margin:10mm;}}</style>');
+          printWindow.document.write('</head><body>');
+          printWindow.document.write(workerStatementRef.current.innerHTML);
+          printWindow.document.write('</body></html>');
+          printWindow.document.close();
+          printWindow.focus();
+          setTimeout(() => printWindow.print(), 300);
+        }
+      }, 150);
+    } catch (err) {
+      showToast('Failed to generate worker statement bill', 'error');
+    } finally {
+      setPrintingStatement(false);
     }
   };
 
@@ -423,11 +512,50 @@ export default function Staff() {
       >
         <div>
           <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-            <StaffIcon size={24} color="#0b5394" />
-            <span>{t('staff')}</span>
+            {activeTab === 'ice' ? (
+              <>
+                <IceIcon size={24} color="#0284c7" />
+                <span>Ice Blocks Usage & Tracker</span>
+              </>
+            ) : activeTab === 'wastage' ? (
+              <>
+                <ScaleIcon size={24} color="#16a34a" />
+                <span>Prawn Head Wastage Sales</span>
+              </>
+            ) : activeTab === 'accounts' ? (
+              <>
+                <span style={{ fontSize: '1.3rem' }}>📒</span>
+                <span>Worker Accounts & Wage Ledger</span>
+              </>
+            ) : activeTab === 'net' ? (
+              <>
+                <span style={{ fontSize: '1.3rem' }}>📊</span>
+                <span>Daily Operations Net Summary</span>
+              </>
+            ) : activeTab === 'calendar' ? (
+              <>
+                <span style={{ fontSize: '1.3rem' }}>📅</span>
+                <span>Staff Attendance Calendar</span>
+              </>
+            ) : (
+              <>
+                <StaffIcon size={24} color="#0b5394" />
+                <span>{t('staff') || 'Workers Labor & Daily Operations'}</span>
+              </>
+            )}
           </h2>
           <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.85rem' }}>
-            {t('staffSubtitle')}
+            {activeTab === 'ice'
+              ? 'Track daily ice block purchases, suppliers, recipients, factory usage & cooling expenses'
+              : activeTab === 'wastage'
+              ? 'Track daily prawn head and shell byproduct sales, rates, and extra factory revenue'
+              : activeTab === 'accounts'
+              ? 'Cumulative weight processed, total wages earned, settlements and balances for all staff'
+              : activeTab === 'net'
+              ? 'Consolidated daily financial overview: worker wages + ice expenses vs. prawn head revenue'
+              : activeTab === 'calendar'
+              ? 'Monthly calendar overview of worker shifts, attendance and activity'
+              : t('staffSubtitle') || 'Record and manage daily staff labor, peeling work, attendance and wages'}
           </p>
         </div>
 
@@ -637,14 +765,18 @@ export default function Staff() {
       {activeTab === 'entries' && (
         <>
           {/* Worker KPI Summary Cards */}
+          {(() => {
+            const periodLabel = dateFilter === 'today' ? "Today's" : dateFilter === 'yesterday' ? "Yesterday's" : dateFilter === 'week' ? '7-Day' : dateFilter === 'month' ? "This Month's" : (dateFilter === 'all' && !dateFrom) ? 'All-Time' : 'Filtered';
+            const badgeLabel = dateFilter === 'today' ? 'Today' : dateFilter === 'yesterday' ? 'Yesterday' : dateFilter === 'week' ? '7 Days' : dateFilter === 'month' ? 'Month' : (dateFilter === 'all' && !dateFrom) ? 'All Time' : 'Custom';
+            return (
           <div className="dashboard-stats-grid" style={{ marginBottom: '20px' }}>
-            {/* Today's Workers */}
+            {/* Period Workers */}
             <div className="stat-card-compact" style={{ borderLeft: '4px solid #0b5394' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-                  Today's Workers
+                  {periodLabel} Workers
                 </span>
-                <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>Today</span>
+                <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{badgeLabel}</span>
               </div>
               <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
                 {summary?.today?.todayWorkersCount || 0}
@@ -655,11 +787,11 @@ export default function Staff() {
               </div>
             </div>
 
-            {/* Today's Weight Processed */}
+            {/* Period Weight Processed */}
             <div className="stat-card-compact" style={{ borderLeft: '4px solid #0891b2' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-                  Today's Processed
+                  {periodLabel} Processed
                 </span>
                 <ScaleIcon size={16} color="#0891b2" />
               </div>
@@ -672,11 +804,11 @@ export default function Staff() {
               </div>
             </div>
 
-            {/* Today's Total Wages */}
+            {/* Period Total Wages */}
             <div className="stat-card-compact" style={{ borderLeft: '4px solid #16a34a' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-                  Today's Wages
+                  {periodLabel} Wages
                 </span>
                 <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>Earned</span>
               </div>
@@ -688,22 +820,24 @@ export default function Staff() {
               </div>
             </div>
 
-            {/* Total Outstanding Wages to Pay */}
+            {/* Period Outstanding Wages to Pay */}
             <div className="stat-card-compact" style={{ borderLeft: '4px solid #ea580c' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-                  Pending Wages
+                  {periodLabel} Pending
                 </span>
                 <span className="badge badge-amber" style={{ fontSize: '0.7rem' }}>To Pay</span>
               </div>
               <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '6px' }}>
-                {formatCurrency(summary?.overall?.totalPending || 0)}
+                {formatCurrency(dateFilter === 'all' && !dateFrom ? summary?.overall?.totalPending || 0 : summary?.today?.periodPending || 0)}
               </div>
               <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-                Paid So Far: {formatCurrency(summary?.overall?.totalPaid || 0)}
+                Paid in Period: {formatCurrency(dateFilter === 'all' && !dateFrom ? summary?.overall?.totalPaid || 0 : summary?.today?.periodPaid || 0)} • Due: {formatCurrency(summary?.overall?.totalPending || 0)}
               </div>
             </div>
           </div>
+            );
+          })()}
 
           {/* INLINE: BULK ATTENDANCE RECORDING */}
           {bulkModalOpen && (
@@ -887,34 +1021,66 @@ export default function Staff() {
             </div>
           )}
 
-          {/* Active worker filter notice */}
+          {/* Active worker filter notice with Print Worker Wage Bill button */}
           {selectedWorkerFilter && (
             <div
               style={{
                 background: '#eff6ff',
-                border: '1px solid #bfdbfe',
+                border: '1.5px solid #bfdbfe',
                 borderRadius: '8px',
-                padding: '8px 14px',
+                padding: '10px 14px',
                 marginBottom: '14px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '10px',
               }}
             >
-              <span style={{ fontSize: '0.85rem', color: '#1e40af', fontWeight: 700 }}>
-                Showing work records for: <strong>{selectedWorkerFilter}</strong>
-              </span>
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => {
-                  setSelectedWorkerFilter('');
-                  setSearch('');
-                  loadEntries();
-                }}
-                style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 700 }}
-              >
-                Clear Worker Filter ✕
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '0.88rem', color: '#1e40af', fontWeight: 700 }}>
+                  Showing work records for: <strong>{selectedWorkerFilter}</strong>
+                </span>
+                <span className="badge badge-blue" style={{ fontSize: '0.72rem' }}>
+                  {entries.length} entries
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => handlePrintWorkerStatement(selectedWorkerFilter)}
+                  disabled={printingStatement}
+                  style={{
+                    background: '#7c3aed',
+                    color: '#ffffff',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    border: 'none',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    boxShadow: '0 2px 4px rgba(124, 58, 237, 0.2)',
+                  }}
+                  title={`Print official settlement / wage bill for ${selectedWorkerFilter}`}
+                >
+                  <PrintIcon size={14} color="#ffffff" />
+                  <span>{printingStatement ? 'Generating...' : `Print ${selectedWorkerFilter}'s Wage Bill`}</span>
+                </button>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => {
+                    setSelectedWorkerFilter('');
+                    setSearch('');
+                    loadEntries();
+                  }}
+                  style={{ fontSize: '0.78rem', color: '#ef4444', fontWeight: 700 }}
+                >
+                  Clear Worker Filter ✕
+                </button>
+              </div>
             </div>
           )}
 
@@ -1126,6 +1292,16 @@ export default function Staff() {
                       {/* Action Buttons */}
                       <div className="mobile-bill-actions">
                         <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => handlePrintEntryBill(entry)}
+                          style={{ color: '#7c3aed', borderColor: '#ddd6fe', fontWeight: 800, background: '#f5f3ff' }}
+                        >
+                          <PrintIcon size={14} color="#7c3aed" />
+                          <span>Bill</span>
+                        </button>
+
+                        <button
                           className={`btn btn-sm ${entry.paymentStatus === 'Paid' ? 'btn-ghost' : 'btn-primary'}`}
                           style={
                             entry.paymentStatus === 'Paid'
@@ -1171,7 +1347,7 @@ export default function Staff() {
                         <th className="text-right">Rate (₹/KG)</th>
                         <th className="text-right">Total Wages</th>
                         <th className="text-center">Payment Status</th>
-                        <th className="text-center" style={{ width: '220px' }}>Actions</th>
+                        <th className="text-center" style={{ width: '270px' }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1219,6 +1395,25 @@ export default function Staff() {
                           </td>
                           <td className="text-center">
                             <div className="action-buttons" style={{ justifyContent: 'center' }}>
+                              <button
+                                type="button"
+                                className="btn btn-sm"
+                                style={{
+                                  padding: '4px 8px',
+                                  fontSize: '0.75rem',
+                                  background: '#f5f3ff',
+                                  color: '#7c3aed',
+                                  border: '1px solid #ddd6fe',
+                                  fontWeight: 800,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                }}
+                                onClick={() => handlePrintEntryBill(entry)}
+                                title="Print single worker wage voucher"
+                              >
+                                <PrintIcon size={13} color="#7c3aed" /> Bill
+                              </button>
                               <button
                                 className={`btn btn-sm ${entry.paymentStatus === 'Paid' ? 'btn-ghost' : 'btn-primary'}`}
                                 style={
@@ -1316,13 +1511,32 @@ export default function Staff() {
                       </div>
                     </div>
 
-                    <button
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => handleViewWorkerHistory(acc.staffName)}
-                      style={{ width: '100%', marginTop: '4px', fontSize: '0.8rem', fontWeight: 700 }}
-                    >
-                      View All Entries for {acc.staffName} →
-                    </button>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '6px' }}>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => handleViewWorkerHistory(acc.staffName)}
+                        style={{ fontSize: '0.8rem', fontWeight: 700 }}
+                      >
+                        View Entries →
+                      </button>
+                      <button
+                        className="btn btn-sm"
+                        onClick={() => handlePrintWorkerStatement(acc.staffName)}
+                        style={{
+                          fontSize: '0.8rem',
+                          fontWeight: 800,
+                          background: '#f5f3ff',
+                          color: '#7c3aed',
+                          border: '1px solid #ddd6fe',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <PrintIcon size={14} color="#7c3aed" /> Bill
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1339,7 +1553,7 @@ export default function Staff() {
                       <th className="text-right">Total Wages Earned</th>
                       <th className="text-right">Amount Paid</th>
                       <th className="text-right">Pending Balance</th>
-                      <th className="text-center" style={{ width: '160px' }}>Action</th>
+                      <th className="text-center" style={{ width: '220px' }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1383,13 +1597,32 @@ export default function Staff() {
                           </strong>
                         </td>
                         <td className="text-center">
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => handleViewWorkerHistory(acc.staffName)}
-                            style={{ fontSize: '0.78rem', fontWeight: 700 }}
-                          >
-                            View Entries →
-                          </button>
+                          <div style={{ display: 'inline-flex', gap: '6px' }}>
+                            <button
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => handleViewWorkerHistory(acc.staffName)}
+                              style={{ fontSize: '0.78rem', fontWeight: 700 }}
+                            >
+                              Entries →
+                            </button>
+                            <button
+                              className="btn btn-sm"
+                              onClick={() => handlePrintWorkerStatement(acc.staffName)}
+                              style={{
+                                fontSize: '0.78rem',
+                                fontWeight: 800,
+                                background: '#f5f3ff',
+                                color: '#7c3aed',
+                                border: '1px solid #ddd6fe',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                              title={`Print complete wage statement bill for ${acc.staffName}`}
+                            >
+                              <PrintIcon size={13} color="#7c3aed" /> Bill
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1618,6 +1851,323 @@ export default function Staff() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── 1. HIDDEN PRINTABLE BILL: SINGLE WORKER WAGE VOUCHER ── */}
+      {activeBillEntry && (
+        <div ref={singleBillRef} style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+          <div style={{ border: '1.5px solid #0b5394', background: '#ffffff', color: '#000000', fontFamily: 'Arial, Helvetica, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
+            {/* Top Bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #0b5394', padding: '4px 12px', fontSize: '0.82rem', fontWeight: 'bold', color: '#0b5394' }}>
+              <div>WORKER LABOR WAGE VOUCHER</div>
+              <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 900, letterSpacing: '1px' }}>॥ జై శ్రీరామ్ ॥</div>
+              <div>Cell: 9441429745</div>
+            </div>
+
+            {/* Company Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1.5px solid #0b5394', padding: '8px 16px' }}>
+              <div style={{ width: '88px', textAlign: 'left', flexShrink: 0 }}>
+                <img src={ganeshaImg} alt="Lord Ganesha" style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
+              </div>
+              <div style={{ flex: 1, textAlign: 'center', padding: '0 8px' }}>
+                <img src={durgaImg} alt="Durga Maa" style={{ width: '54px', height: '54px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }} />
+                <h1 style={{ color: '#0b5394', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '0.8px', margin: '0 0 2px 0', fontFamily: 'Arial, sans-serif' }}>
+                  VIJAYA DURGA SEA FOODS
+                </h1>
+                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#000000', margin: '2px 0' }}>
+                  Prop: SATTINENI VENKATA DHANA LAXMI &nbsp;|&nbsp; GSTIN: 37KATPS1500Q1ZR
+                </div>
+                <div style={{ fontSize: '0.68rem', color: '#000000', lineHeight: '1.25' }}>
+                  D.No. 2-41A, SATTINENI SRINIVASA TATAJI, Near Ramalayam, KOTHOTA - 534 281, Mutyalapalli, West Godavari Dist., A.P.
+                </div>
+              </div>
+              <div style={{ width: '88px', textAlign: 'right', flexShrink: 0 }}>
+                <img src={ramDarbarImg} alt="Ram Darbar" style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
+              </div>
+            </div>
+
+            {/* Voucher No & Date Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.85rem' }}>
+              <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
+                <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                  #WV-{activeBillEntry._id ? activeBillEntry._id.slice(-6).toUpperCase() : 'REC'}
+                </span>
+              </div>
+              <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
+                <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(activeBillEntry.date)}</span>
+              </div>
+            </div>
+
+            {/* Worker Name Row */}
+            <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1.5px solid #0b5394', padding: '6px 10px', gap: '10px', fontSize: '0.9rem' }}>
+              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Worker Name:</span>
+              <strong style={{ fontSize: '1.05rem', color: '#000000' }}>{activeBillEntry.staffName}</strong>
+              {activeBillEntry.staffPhone && (
+                <span style={{ fontSize: '0.8rem', color: '#64748b', marginLeft: 'auto' }}>
+                  Cell: <strong>{activeBillEntry.staffPhone}</strong>
+                </span>
+              )}
+            </div>
+
+            {/* Shift & Status Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.82rem' }}>
+              <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Work Category & Shift: </span>
+                <span style={{ fontWeight: 'bold' }}>{activeBillEntry.workType || 'Processing'} ({activeBillEntry.shift || 'Full Day'})</span>
+              </div>
+              <div style={{ padding: '5px 10px' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Payment Status: </span>
+                <span style={{ fontWeight: 'bold', color: activeBillEntry.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>
+                  {activeBillEntry.paymentStatus || 'Pending'}
+                </span>
+              </div>
+            </div>
+
+            {/* Items Table */}
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              <thead>
+                <tr style={{ background: '#f0f5fa', color: '#0b5394', fontWeight: 'bold', textAlign: 'center' }}>
+                  <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '6px 4px', width: '45px' }}>S.No.</th>
+                  <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '6px 8px', textAlign: 'left' }}>Work Description / Service</th>
+                  <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '6px', width: '120px' }}>Weight (kg)</th>
+                  <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '6px', width: '110px' }}>Rate (₹/kg)</th>
+                  <th style={{ borderBottom: '1.5px solid #0b5394', padding: '6px', width: '130px', textAlign: 'right' }}>Total Wages (₹)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style={{ height: '30px', borderBottom: '1px solid #c8d9e8' }}>
+                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>1</td>
+                  <td style={{ borderRight: '1.5px solid #0b5394', padding: '6px 8px', fontWeight: 'bold' }}>
+                    {activeBillEntry.workType || 'Seafood Labor Processing'} ({activeBillEntry.shift || 'Full Day'})
+                  </td>
+                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>
+                    {activeBillEntry.quantity} kg
+                  </td>
+                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', paddingRight: '8px' }}>
+                    ₹{Number(activeBillEntry.price).toFixed(2)}
+                  </td>
+                  <td style={{ textAlign: 'right', paddingRight: '8px', fontWeight: 'bold' }}>
+                    ₹{Number(activeBillEntry.totalAmount).toFixed(2)}
+                  </td>
+                </tr>
+                {/* 2 Blank lines for authentic invoice layout spacing */}
+                {[1, 2].map((i) => (
+                  <tr key={i} style={{ height: '22px', borderBottom: '1px solid #c8d9e8' }}>
+                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                    <td></td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr style={{ background: '#e8f1f8', borderTop: '1.5px solid #0b5394', fontWeight: 'bold' }}>
+                  <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 900 }}>
+                    TOTAL WAGE AMOUNT:
+                  </td>
+                  <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 900, color: '#000000' }}>
+                    ₹{Number(activeBillEntry.totalAmount).toFixed(2)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+
+            {/* Notes if present */}
+            {activeBillEntry.notes && (
+              <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#fafafa' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Notes / Remarks: </span>{activeBillEntry.notes}
+              </div>
+            )}
+
+            {/* Amount in Words */}
+            <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
+              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Amount in Words: </span>
+              <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(activeBillEntry.totalAmount)}</span>
+            </div>
+
+            {/* Bank Details & Signatures */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1.5px solid #0b5394', fontSize: '0.74rem', lineHeight: '1.4' }}>
+              <div style={{ borderRight: '1.5px solid #0b5394', padding: '6px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center' }}>
+                <div style={{ fontWeight: 'bold', color: '#0b5394', fontSize: '0.78rem' }}>
+                  Worker Signature / Thumb Impression
+                </div>
+                <div style={{ marginTop: '28px', borderTop: '1px solid #000000', paddingTop: '2px', fontWeight: 'bold' }}>
+                  {activeBillEntry.staffName}
+                </div>
+              </div>
+
+              <div style={{ padding: '6px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center' }}>
+                <div style={{ fontWeight: 'bold', color: '#0b5394', fontSize: '0.78rem' }}>
+                  For VIJAYA DURGA SEA FOODS
+                </div>
+                <div style={{ marginTop: '28px', borderTop: '1px solid #000000', paddingTop: '2px', fontWeight: 'bold', color: '#0b5394' }}>
+                  Proprietor / Authorized Signature
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 2. HIDDEN PRINTABLE BILL: WORKER WAGE STATEMENT & SETTLEMENT BILL ── */}
+      {statementWorker && statementSummary && (
+        <div ref={workerStatementRef} style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+          <div style={{ border: '1.5px solid #0b5394', background: '#ffffff', color: '#000000', fontFamily: 'Arial, Helvetica, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
+            {/* Top Bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #0b5394', padding: '4px 12px', fontSize: '0.82rem', fontWeight: 'bold', color: '#0b5394' }}>
+              <div>WORKER WAGE STATEMENT & SETTLEMENT BILL</div>
+              <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 900, letterSpacing: '1px' }}>॥ జై శ్రీరామ్ ॥</div>
+              <div>Cell: 9441429745</div>
+            </div>
+
+            {/* Company Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1.5px solid #0b5394', padding: '8px 16px' }}>
+              <div style={{ width: '88px', textAlign: 'left', flexShrink: 0 }}>
+                <img src={ganeshaImg} alt="Lord Ganesha" style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
+              </div>
+              <div style={{ flex: 1, textAlign: 'center', padding: '0 8px' }}>
+                <img src={durgaImg} alt="Durga Maa" style={{ width: '54px', height: '54px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }} />
+                <h1 style={{ color: '#0b5394', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '0.8px', margin: '0 0 2px 0', fontFamily: 'Arial, sans-serif' }}>
+                  VIJAYA DURGA SEA FOODS
+                </h1>
+                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#000000', margin: '2px 0' }}>
+                  Prop: SATTINENI VENKATA DHANA LAXMI &nbsp;|&nbsp; GSTIN: 37KATPS1500Q1ZR
+                </div>
+                <div style={{ fontSize: '0.68rem', color: '#000000', lineHeight: '1.25' }}>
+                  D.No. 2-41A, SATTINENI SRINIVASA TATAJI, Near Ramalayam, KOTHOTA - 534 281, Mutyalapalli, West Godavari Dist., A.P.
+                </div>
+              </div>
+              <div style={{ width: '88px', textAlign: 'right', flexShrink: 0 }}>
+                <img src={ramDarbarImg} alt="Ram Darbar" style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
+              </div>
+            </div>
+
+            {/* Statement No & Date Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.85rem' }}>
+              <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Statement No.</span>
+                <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                  #STMT-{statementWorker.replace(/\s+/g, '').slice(0, 4).toUpperCase()}-{Date.now().toString().slice(-4)}
+                </span>
+              </div>
+              <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
+                <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(new Date())}</span>
+              </div>
+            </div>
+
+            {/* Worker Name Row */}
+            <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1.5px solid #0b5394', padding: '6px 10px', gap: '10px', fontSize: '0.9rem' }}>
+              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Worker Name:</span>
+              <strong style={{ fontSize: '1.05rem', color: '#000000' }}>{statementWorker}</strong>
+              {statementSummary.staffPhone && (
+                <span style={{ fontSize: '0.8rem', color: '#64748b', marginLeft: 'auto' }}>
+                  Cell: <strong>{statementSummary.staffPhone}</strong>
+                </span>
+              )}
+            </div>
+
+            {/* Period & Days Worked Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.82rem' }}>
+              <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Period: </span>
+                <span style={{ fontWeight: 'bold' }}>
+                  {dateFrom && dateTo ? `${formatDate(dateFrom)} to ${formatDate(dateTo)}` : dateFilter === 'week' ? 'Past 7 Days' : dateFilter === 'month' ? 'This Month' : 'All-Time Record'}
+                </span>
+              </div>
+              <div style={{ padding: '5px 10px' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Days Worked: </span>
+                <span style={{ fontWeight: 'bold' }}>{statementSummary.daysWorkedCount} days ({statementEntries.length} sessions)</span>
+              </div>
+            </div>
+
+            {/* Items Table */}
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+              <thead>
+                <tr style={{ background: '#f0f5fa', color: '#0b5394', fontWeight: 'bold', textAlign: 'center' }}>
+                  <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '5px 4px', width: '38px' }}>S.No.</th>
+                  <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '5px 6px', width: '85px' }}>Date</th>
+                  <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '5px 6px', textAlign: 'left' }}>Work Category & Shift</th>
+                  <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '5px 6px', width: '85px', textAlign: 'right' }}>Weight (kg)</th>
+                  <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '5px 6px', width: '85px', textAlign: 'right' }}>Rate (₹)</th>
+                  <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '5px 6px', width: '95px', textAlign: 'right' }}>Wages (₹)</th>
+                  <th style={{ borderBottom: '1.5px solid #0b5394', padding: '5px 6px', width: '75px', textAlign: 'center' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {statementEntries.map((row, idx) => (
+                  <tr key={idx} style={{ height: '24px', borderBottom: '1px solid #c8d9e8' }}>
+                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>{idx + 1}</td>
+                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center' }}>{formatDate(row.date)}</td>
+                    <td style={{ borderRight: '1.5px solid #0b5394', padding: '4px 6px' }}>{row.workType || 'Processing'} {row.shift && row.shift !== 'Full Day' ? `(${row.shift})` : ''}</td>
+                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', paddingRight: '6px', fontWeight: 'bold' }}>{row.quantity} kg</td>
+                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', paddingRight: '6px' }}>₹{Number(row.price).toFixed(2)}</td>
+                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', paddingRight: '6px', fontWeight: 'bold' }}>₹{Number(row.totalAmount).toFixed(2)}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 'bold', color: row.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>{row.paymentStatus}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                {/* Grand Total Row */}
+                <tr style={{ background: '#e8f1f8', borderTop: '1.5px solid #0b5394', fontWeight: 'bold' }}>
+                  <td colSpan={3} style={{ textAlign: 'right', padding: '6px 10px', color: '#0b5394', fontSize: '0.88rem', fontWeight: 900 }}>
+                    TOTAL PROCESSED:
+                  </td>
+                  <td style={{ textAlign: 'right', padding: '6px', fontWeight: 900, color: '#0b5394', borderRight: '1.5px solid #0b5394' }}>
+                    {statementSummary.totalKg} kg
+                  </td>
+                  <td style={{ textAlign: 'right', padding: '6px 8px', color: '#0b5394', fontWeight: 900, borderRight: '1.5px solid #0b5394' }}>
+                    TOTAL:
+                  </td>
+                  <td style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.95rem', fontWeight: 900, color: '#000000', borderRight: '1.5px solid #0b5394' }}>
+                    ₹{statementSummary.totalEarned.toFixed(2)}
+                  </td>
+                  <td></td>
+                </tr>
+
+                {/* Paid vs Due Row */}
+                <tr style={{ background: '#f8fafc', borderTop: '1px solid #0b5394', fontSize: '0.82rem' }}>
+                  <td colSpan={3} style={{ textAlign: 'right', padding: '5px 10px', color: '#16a34a', fontWeight: 'bold' }}>
+                    Amount Paid: ₹{statementSummary.totalPaid.toFixed(2)}
+                  </td>
+                  <td colSpan={4} style={{ textAlign: 'right', padding: '6px 10px', fontWeight: 900, fontSize: '0.95rem', color: statementSummary.pendingBalance > 0 ? '#b12704' : '#16a34a' }}>
+                    NET BALANCE PAYABLE: ₹{statementSummary.pendingBalance.toFixed(2)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+
+            {/* Amount in Words */}
+            <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
+              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Total Earned in Words: </span>
+              <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(statementSummary.totalEarned)}</span>
+            </div>
+
+            {/* Bank Details & Signatures */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1.5px solid #0b5394', fontSize: '0.74rem', lineHeight: '1.4' }}>
+              <div style={{ borderRight: '1.5px solid #0b5394', padding: '6px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center' }}>
+                <div style={{ fontWeight: 'bold', color: '#0b5394', fontSize: '0.78rem' }}>
+                  Worker Signature / Acknowledgment
+                </div>
+                <div style={{ marginTop: '28px', borderTop: '1px solid #000000', paddingTop: '2px', fontWeight: 'bold' }}>
+                  {statementWorker}
+                </div>
+              </div>
+
+              <div style={{ padding: '6px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center' }}>
+                <div style={{ fontWeight: 'bold', color: '#0b5394', fontSize: '0.78rem' }}>
+                  For VIJAYA DURGA SEA FOODS
+                </div>
+                <div style={{ marginTop: '28px', borderTop: '1px solid #000000', paddingTop: '2px', fontWeight: 'bold', color: '#0b5394' }}>
+                  Proprietor / Authorized Signature
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

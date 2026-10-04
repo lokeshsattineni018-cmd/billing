@@ -77,9 +77,30 @@ router.get('/', protect, async (req, res) => {
  */
 router.get('/summary', protect, async (req, res) => {
   try {
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const { dateFrom, dateTo, dateFilter } = req.query;
+
+    // Build period filter
+    let periodMatch = {};
+    if (dateFilter === 'all' && !dateFrom && !dateTo) {
+      periodMatch = {};
+    } else if (dateFrom || dateTo) {
+      periodMatch.date = {};
+      if (dateFrom) {
+        const dFrom = new Date(dateFrom);
+        dFrom.setHours(0, 0, 0, 0);
+        periodMatch.date.$gte = dFrom;
+      }
+      if (dateTo) {
+        const dTo = new Date(dateTo);
+        dTo.setHours(23, 59, 59, 999);
+        periodMatch.date.$lte = dTo;
+      }
+    } else {
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+      periodMatch = { date: { $gte: startOfToday, $lte: endOfToday } };
+    }
 
     // 1. Overall Totals
     const overallAgg = await StaffWork.aggregate([
@@ -107,12 +128,10 @@ router.get('/summary', protect, async (req, res) => {
       },
     ]);
 
-    // 2. Today's Totals
-    const todayAgg = await StaffWork.aggregate([
+    // 2. Period Totals (dynamic based on dateFrom/dateTo)
+    const periodAgg = await StaffWork.aggregate([
       {
-        $match: {
-          date: { $gte: startOfToday, $lte: endOfToday },
-        },
+        $match: periodMatch,
       },
       {
         $group: {
@@ -120,6 +139,20 @@ router.get('/summary', protect, async (req, res) => {
           todayWorkersCount: { $addToSet: '$staffName' },
           todayKg: { $sum: '$quantity' },
           todayWages: { $sum: '$totalAmount' },
+          periodPending: {
+            $sum: {
+              $cond: [
+                { $eq: ['$paymentStatus', 'Paid'] },
+                0,
+                { $subtract: ['$totalAmount', { $ifNull: ['$amountPaid', 0] }] },
+              ],
+            },
+          },
+          periodPaid: {
+            $sum: {
+              $cond: [{ $eq: ['$paymentStatus', 'Paid'] }, '$totalAmount', { $ifNull: ['$amountPaid', 0] }],
+            },
+          },
         },
       },
     ]);
@@ -183,16 +216,20 @@ router.get('/summary', protect, async (req, res) => {
       totalPending: 0,
     };
 
-    const today = todayAgg[0]
+    const today = periodAgg[0]
       ? {
-          todayWorkersCount: todayAgg[0].todayWorkersCount?.length || 0,
-          todayKg: Math.round((todayAgg[0].todayKg || 0) * 100) / 100,
-          todayWages: Math.round((todayAgg[0].todayWages || 0) * 100) / 100,
+          todayWorkersCount: periodAgg[0].todayWorkersCount?.length || 0,
+          todayKg: Math.round((periodAgg[0].todayKg || 0) * 100) / 100,
+          todayWages: Math.round((periodAgg[0].todayWages || 0) * 100) / 100,
+          periodPending: Math.round((periodAgg[0].periodPending || 0) * 100) / 100,
+          periodPaid: Math.round((periodAgg[0].periodPaid || 0) * 100) / 100,
         }
       : {
           todayWorkersCount: 0,
           todayKg: 0,
           todayWages: 0,
+          periodPending: 0,
+          periodPaid: 0,
         };
 
     return res.json({
@@ -377,6 +414,8 @@ router.get('/ice', protect, async (req, res) => {
       const sanitized = escapeRegex(search.trim());
       filter.$or = [
         { supplierName: { $regex: sanitized, $options: 'i' } },
+        { iceFrom: { $regex: sanitized, $options: 'i' } },
+        { iceTo: { $regex: sanitized, $options: 'i' } },
         { vehicleNo: { $regex: sanitized, $options: 'i' } },
         { notes: { $regex: sanitized, $options: 'i' } },
       ];
@@ -426,19 +465,41 @@ router.get('/ice', protect, async (req, res) => {
  */
 router.get('/ice/summary', protect, async (req, res) => {
   try {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
+    const { dateFrom, dateTo, dateFilter } = req.query;
 
-    const [todayAgg, overallAgg] = await Promise.all([
+    // Build date filter for "period" metrics (replaces hardcoded "today")
+    let periodFilter = {};
+    if (dateFilter === 'all' && !dateFrom && !dateTo) {
+      periodFilter = {};
+    } else if (dateFrom || dateTo) {
+      periodFilter.date = {};
+      if (dateFrom) {
+        const dFrom = new Date(dateFrom);
+        dFrom.setHours(0, 0, 0, 0);
+        periodFilter.date.$gte = dFrom;
+      }
+      if (dateTo) {
+        const dTo = new Date(dateTo);
+        dTo.setHours(23, 59, 59, 999);
+        periodFilter.date.$lte = dTo;
+      }
+    } else {
+      // Default to today
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+      periodFilter = { date: { $gte: todayStart, $lte: todayEnd } };
+    }
+
+    const [periodAgg, overallAgg] = await Promise.all([
       DailyIce.aggregate([
-        { $match: { date: { $gte: todayStart, $lte: todayEnd } } },
+        { $match: periodFilter },
         {
           $group: {
             _id: null,
-            todayBlocks: { $sum: '$blocks' },
-            todayAmount: { $sum: '$totalAmount' },
+            periodBlocks: { $sum: '$blocks' },
+            periodAmount: { $sum: '$totalAmount' },
           },
         },
       ]),
@@ -454,13 +515,13 @@ router.get('/ice/summary', protect, async (req, res) => {
       ]),
     ]);
 
-    const today = todayAgg[0] || { todayBlocks: 0, todayAmount: 0 };
+    const period = periodAgg[0] || { periodBlocks: 0, periodAmount: 0 };
     const overall = overallAgg[0] || { totalBlocks: 0, totalAmount: 0, totalEntries: 0 };
 
     return res.json({
-      todayBlocks: today.todayBlocks || 0,
-      todayAmount: Math.round((today.todayAmount || 0) * 100) / 100,
-      todayAvgRate: today.todayBlocks > 0 ? Math.round(((today.todayAmount || 0) / today.todayBlocks) * 100) / 100 : 0,
+      todayBlocks: period.periodBlocks || 0,
+      todayAmount: Math.round((period.periodAmount || 0) * 100) / 100,
+      todayAvgRate: period.periodBlocks > 0 ? Math.round(((period.periodAmount || 0) / period.periodBlocks) * 100) / 100 : 0,
       totalBlocks: overall.totalBlocks || 0,
       totalAmount: Math.round((overall.totalAmount || 0) * 100) / 100,
       totalEntries: overall.totalEntries || 0,
@@ -488,7 +549,7 @@ router.post(
     }
 
     try {
-      const { blocks, rate, date, supplierName, vehicleNo, paymentStatus, notes } = req.body;
+      const { blocks, rate, date, supplierName, iceFrom, iceTo, vehicleNo, paymentStatus, notes } = req.body;
       const numBlocks = parseFloat(blocks);
       const numRate = parseFloat(rate);
       const totalAmount = Math.round(numBlocks * numRate * 100) / 100;
@@ -499,6 +560,8 @@ router.post(
         rate: numRate,
         totalAmount,
         supplierName: (supplierName || '').trim(),
+        iceFrom: (iceFrom || '').trim(),
+        iceTo: (iceTo || '').trim(),
         vehicleNo: (vehicleNo || '').trim(),
         paymentStatus: paymentStatus === 'Pending' ? 'Pending' : 'Paid',
         notes: (notes || '').trim(),
@@ -532,7 +595,7 @@ router.post(
  */
 router.put('/ice/:id', protect, async (req, res) => {
   try {
-    const { blocks, rate, date, supplierName, vehicleNo, paymentStatus, notes } = req.body;
+    const { blocks, rate, date, supplierName, iceFrom, iceTo, vehicleNo, paymentStatus, notes } = req.body;
     const record = await DailyIce.findById(req.params.id);
     if (!record) {
       return res.status(404).json({ message: 'Ice record not found' });
@@ -544,6 +607,8 @@ router.put('/ice/:id', protect, async (req, res) => {
 
     if (date) record.date = new Date(date);
     if (supplierName !== undefined) record.supplierName = supplierName.trim();
+    if (iceFrom !== undefined) record.iceFrom = iceFrom.trim();
+    if (iceTo !== undefined) record.iceTo = iceTo.trim();
     if (vehicleNo !== undefined) record.vehicleNo = vehicleNo.trim();
     if (paymentStatus) record.paymentStatus = paymentStatus;
     if (notes !== undefined) record.notes = notes.trim();
@@ -638,19 +703,39 @@ router.get('/wastage', protect, async (req, res) => {
  */
 router.get('/wastage/summary', protect, async (req, res) => {
   try {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
+    const { dateFrom, dateTo, dateFilter } = req.query;
 
-    const [todayAgg, overallAgg] = await Promise.all([
+    let periodFilter = {};
+    if (dateFilter === 'all' && !dateFrom && !dateTo) {
+      periodFilter = {};
+    } else if (dateFrom || dateTo) {
+      periodFilter.date = {};
+      if (dateFrom) {
+        const dFrom = new Date(dateFrom);
+        dFrom.setHours(0, 0, 0, 0);
+        periodFilter.date.$gte = dFrom;
+      }
+      if (dateTo) {
+        const dTo = new Date(dateTo);
+        dTo.setHours(23, 59, 59, 999);
+        periodFilter.date.$lte = dTo;
+      }
+    } else {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+      periodFilter = { date: { $gte: todayStart, $lte: todayEnd } };
+    }
+
+    const [periodAgg, overallAgg] = await Promise.all([
       DailyWastage.aggregate([
-        { $match: { date: { $gte: todayStart, $lte: todayEnd } } },
+        { $match: periodFilter },
         {
           $group: {
             _id: null,
-            todayKg: { $sum: '$quantityKg' },
-            todayAmount: { $sum: '$totalAmount' },
+            periodKg: { $sum: '$quantityKg' },
+            periodAmount: { $sum: '$totalAmount' },
           },
         },
       ]),
@@ -666,13 +751,13 @@ router.get('/wastage/summary', protect, async (req, res) => {
       ]),
     ]);
 
-    const today = todayAgg[0] || { todayKg: 0, todayAmount: 0 };
+    const period = periodAgg[0] || { periodKg: 0, periodAmount: 0 };
     const overall = overallAgg[0] || { totalKg: 0, totalAmount: 0, totalEntries: 0 };
 
     return res.json({
-      todayKg: Math.round((today.todayKg || 0) * 100) / 100,
-      todayAmount: Math.round((today.todayAmount || 0) * 100) / 100,
-      todayAvgRate: today.todayKg > 0 ? Math.round(((today.todayAmount || 0) / today.todayKg) * 100) / 100 : 0,
+      todayKg: Math.round((period.periodKg || 0) * 100) / 100,
+      todayAmount: Math.round((period.periodAmount || 0) * 100) / 100,
+      todayAvgRate: period.periodKg > 0 ? Math.round(((period.periodAmount || 0) / period.periodKg) * 100) / 100 : 0,
       totalKg: Math.round((overall.totalKg || 0) * 100) / 100,
       totalAmount: Math.round((overall.totalAmount || 0) * 100) / 100,
       totalEntries: overall.totalEntries || 0,

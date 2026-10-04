@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { staffAPI } from '../../services/api';
-import { formatCurrency, formatDate, useToast, Toast } from '../../utils/helpers';
+import { formatCurrency, formatDate, numberToWords, useToast, Toast } from '../../utils/helpers';
 import { useLanguage } from '../../context/LanguageContext';
 import {
   PlusIcon,
@@ -10,7 +10,11 @@ import {
   IceIcon,
   CheckIcon,
   RefreshIcon,
+  PrintIcon,
 } from '../Icons';
+import ganeshaImg from '../../assets/ganesha.jpg';
+import durgaImg from '../../assets/durga.jpg';
+import ramDarbarImg from '../../assets/ram_darbar.jpg';
 
 export default function IceTracker() {
   const { t } = useLanguage();
@@ -35,6 +39,8 @@ export default function IceTracker() {
     date: new Date().toISOString().split('T')[0],
     blocks: '',
     rate: '',
+    iceFrom: '',
+    iceTo: '',
     supplierName: '',
     vehicleNo: '',
     paymentStatus: 'Paid',
@@ -42,9 +48,13 @@ export default function IceTracker() {
   });
   const [saving, setSaving] = useState(false);
 
+  // Bill Preview State
+  const [billEntry, setBillEntry] = useState(null);
+  const billRef = useRef(null);
+
   useEffect(() => {
     loadData();
-  }, [dateFrom, dateTo, statusFilter]);
+  }, [dateFilter, dateFrom, dateTo, statusFilter]);
 
   const loadData = async () => {
     setLoading(true);
@@ -75,7 +85,11 @@ export default function IceTracker() {
 
   const loadSummary = async () => {
     try {
-      const res = await staffAPI.getIceSummary();
+      const params = {};
+      if (dateFilter) params.dateFilter = dateFilter;
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
+      const res = await staffAPI.getIceSummary(params);
       setSummary(res.data);
     } catch (err) {
       if (import.meta.env.DEV) {
@@ -127,6 +141,8 @@ export default function IceTracker() {
       date: new Date().toISOString().split('T')[0],
       blocks: '',
       rate: '',
+      iceFrom: '',
+      iceTo: '',
       supplierName: '',
       vehicleNo: '',
       paymentStatus: 'Paid',
@@ -141,6 +157,8 @@ export default function IceTracker() {
       date: entry.date ? new Date(entry.date).toISOString().split('T')[0] : '',
       blocks: entry.blocks || '',
       rate: entry.rate || '',
+      iceFrom: entry.iceFrom || '',
+      iceTo: entry.iceTo || '',
       supplierName: entry.supplierName || '',
       vehicleNo: entry.vehicleNo || '',
       paymentStatus: entry.paymentStatus || 'Paid',
@@ -169,6 +187,8 @@ export default function IceTracker() {
         date: formData.date,
         blocks: numBlocks,
         rate: numRate,
+        iceFrom: formData.iceFrom.trim(),
+        iceTo: formData.iceTo.trim(),
         supplierName: formData.supplierName.trim(),
         vehicleNo: formData.vehicleNo.trim(),
         paymentStatus: formData.paymentStatus,
@@ -206,9 +226,31 @@ export default function IceTracker() {
     }
   };
 
+  // Generate Bill for a single ice entry
+  const handleGenerateBill = (entry) => {
+    setBillEntry(entry);
+    setTimeout(() => {
+      if (billRef.current) {
+        const printWindow = window.open('', '_blank', 'width=900,height=700');
+        printWindow.document.write('<html><head><title>Ice Purchase Bill</title>');
+        printWindow.document.write('<style>body{margin:0;padding:16px;font-family:Arial,Helvetica,sans-serif;color:#000;}@media print{body{padding:0;}}</style>');
+        printWindow.document.write('</head><body>');
+        printWindow.document.write(billRef.current.innerHTML);
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => printWindow.print(), 300);
+      }
+    }, 100);
+  };
+
   const liveBlocks = parseFloat(formData.blocks) || 0;
   const liveRate = parseFloat(formData.rate) || 0;
   const liveTotal = Math.round(liveBlocks * liveRate * 100) / 100;
+
+  // Dynamic period label
+  const periodLabel = dateFilter === 'today' || (dateFilter === 'all' && !dateFrom) ? "Today's" : dateFilter === 'yesterday' ? "Yesterday's" : dateFilter === 'week' ? '7-Day' : dateFilter === 'month' ? "This Month's" : 'Filtered';
+  const badgeLabel = dateFilter === 'today' || (dateFilter === 'all' && !dateFrom) ? 'Today' : dateFilter === 'yesterday' ? 'Yesterday' : dateFilter === 'week' ? '7 Days' : dateFilter === 'month' ? 'Month' : 'Custom';
 
   return (
     <div>
@@ -216,13 +258,13 @@ export default function IceTracker() {
 
       {/* KPI Summary Cards */}
       <div className="dashboard-stats-grid" style={{ marginBottom: '20px' }}>
-        {/* Today's Ice Blocks */}
+        {/* Period Ice Blocks */}
         <div className="stat-card-compact" style={{ borderLeft: '4px solid #0284c7' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              Today's Ice Blocks
+              {periodLabel} Ice Blocks
             </span>
-            <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>Today</span>
+            <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{badgeLabel}</span>
           </div>
           <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0284c7', marginTop: '6px' }}>
             {summary?.todayBlocks || 0}
@@ -233,11 +275,11 @@ export default function IceTracker() {
           </div>
         </div>
 
-        {/* Today's Ice Cost */}
+        {/* Period Ice Cost */}
         <div className="stat-card-compact" style={{ borderLeft: '4px solid #0891b2' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              Today's Ice Cost
+              {periodLabel} Ice Cost
             </span>
             <IceIcon size={16} color="#0891b2" />
           </div>
@@ -253,7 +295,7 @@ export default function IceTracker() {
         <div className="stat-card-compact" style={{ borderLeft: '4px solid #6366f1' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              Today's Rate / Block
+              {periodLabel} Rate / Block
             </span>
             <span className="badge badge-purple" style={{ fontSize: '0.7rem' }}>₹ / Block</span>
           </div>
@@ -261,7 +303,7 @@ export default function IceTracker() {
             ₹{summary?.todayAvgRate?.toFixed(2) || '0.00'}
           </div>
           <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            Average cost per block today
+            Average cost per block in period
           </div>
         </div>
 
@@ -335,7 +377,7 @@ export default function IceTracker() {
               type="text"
               className="form-input"
               style={{ paddingLeft: '32px', height: '34px', fontSize: '0.82rem' }}
-              placeholder="Search notes..."
+              placeholder="Search supplier, from, to..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && loadEntries()}
@@ -428,13 +470,15 @@ export default function IceTracker() {
             <table className="table" style={{ margin: 0 }}>
               <thead>
                 <tr>
-                  <th style={{ width: '120px' }}>Date</th>
-                  <th className="text-right" style={{ width: '140px' }}>Ice Blocks</th>
-                  <th className="text-right" style={{ width: '140px' }}>Rate / Block</th>
-                  <th className="text-right" style={{ width: '160px' }}>Total Amount</th>
-                  <th style={{ width: '120px' }}>Status</th>
+                  <th style={{ width: '100px' }}>Date</th>
+                  <th style={{ width: '120px' }}>From</th>
+                  <th style={{ width: '120px' }}>To</th>
+                  <th className="text-right" style={{ width: '90px' }}>Blocks</th>
+                  <th className="text-right" style={{ width: '100px' }}>Rate</th>
+                  <th className="text-right" style={{ width: '120px' }}>Total</th>
+                  <th style={{ width: '80px' }}>Status</th>
                   <th>Notes</th>
-                  <th className="text-center" style={{ width: '100px' }}>Actions</th>
+                  <th className="text-center" style={{ width: '120px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -442,6 +486,12 @@ export default function IceTracker() {
                   <tr key={entry._id}>
                     <td style={{ fontWeight: 700, fontSize: '0.84rem' }}>
                       {formatDate(entry.date)}
+                    </td>
+                    <td style={{ fontSize: '0.82rem', color: '#0b5394', fontWeight: 600 }}>
+                      {entry.iceFrom || '—'}
+                    </td>
+                    <td style={{ fontSize: '0.82rem', color: '#16a34a', fontWeight: 600 }}>
+                      {entry.iceTo || '—'}
                     </td>
                     <td className="text-right">
                       <span style={{ fontWeight: 900, color: '#0284c7', fontSize: '0.98rem' }}>
@@ -467,6 +517,15 @@ export default function IceTracker() {
                     </td>
                     <td className="text-center">
                       <div style={{ display: 'inline-flex', gap: '4px' }}>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => handleGenerateBill(entry)}
+                          title="Generate Bill"
+                          style={{ padding: '4px 6px' }}
+                        >
+                          <PrintIcon size={14} color="#7c3aed" />
+                        </button>
                         <button
                           type="button"
                           className="btn btn-ghost btn-sm"
@@ -498,7 +557,7 @@ export default function IceTracker() {
       {/* MODAL: RECORD / EDIT ICE USAGE */}
       {modalOpen && (
         <div className="modal-backdrop" onClick={() => setModalOpen(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '460px' }}>
+          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ background: '#e0f2fe', padding: '6px', borderRadius: '8px', color: '#0284c7' }}>
@@ -523,11 +582,39 @@ export default function IceTracker() {
                 />
               </div>
 
+              {/* Ice From / To */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontWeight: 700 }}>
+                    🏭 Ice From <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>(Supplier)</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Sri Rama Ice Plant"
+                    value={formData.iceFrom}
+                    onChange={(e) => setFormData({ ...formData, iceFrom: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontWeight: 700 }}>
+                    📦 Ice To <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>(Receiver)</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Factory / Cold Storage"
+                    value={formData.iceTo}
+                    onChange={(e) => setFormData({ ...formData, iceTo: e.target.value })}
+                  />
+                </div>
+              </div>
+
               {/* Dynamic Calculation Row: Blocks * Rate = Total */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="form-group">
                   <label className="form-label" style={{ fontWeight: 700 }}>
-                    Ice Blocks Used Today <span style={{ color: '#ef4444' }}>*</span>
+                    Ice Blocks Used <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
                     type="number"
@@ -585,8 +672,6 @@ export default function IceTracker() {
                 </div>
               </div>
 
-
-
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="form-group">
                   <label className="form-label">Payment Status</label>
@@ -631,6 +716,164 @@ export default function IceTracker() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden printable bill template for ice entries (Matches Normal Bill Layout) */}
+      {billEntry && (
+        <div ref={billRef} style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+          <div style={{ border: '1.5px solid #0b5394', background: '#ffffff', color: '#000000', fontFamily: 'Arial, Helvetica, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
+            {/* 1. TOP BAR */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #0b5394', padding: '4px 12px', fontSize: '0.82rem', fontWeight: 'bold', color: '#0b5394' }}>
+              <div>ICE PURCHASE & USAGE VOUCHER</div>
+              <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 900, letterSpacing: '1px' }}>॥ జై శ్రీరామ్ ॥</div>
+              <div>Cell: 9441429745</div>
+            </div>
+
+            {/* 2. COMPANY HEADER WITH 3 DIVINE EMBLEMS */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1.5px solid #0b5394', padding: '8px 16px' }}>
+              <div style={{ width: '88px', textAlign: 'left', flexShrink: 0 }}>
+                <img src={ganeshaImg} alt="Lord Ganesha" style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
+              </div>
+              <div style={{ flex: 1, textAlign: 'center', padding: '0 8px' }}>
+                <img src={durgaImg} alt="Durga Maa" style={{ width: '54px', height: '54px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }} />
+                <h1 style={{ color: '#0b5394', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '0.8px', margin: '0 0 2px 0', fontFamily: 'Arial, sans-serif' }}>
+                  VIJAYA DURGA SEA FOODS
+                </h1>
+                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#000000', margin: '2px 0' }}>
+                  Prop: SATTINENI VENKATA DHANA LAXMI &nbsp;|&nbsp; GSTIN: 37KATPS1500Q1ZR
+                </div>
+                <div style={{ fontSize: '0.68rem', color: '#000000', lineHeight: '1.25' }}>
+                  D.No. 2-41A, SATTINENI SRINIVASA TATAJI, Near Ramalayam, KOTHOTA - 534 281, Mutyalapalli, West Godavari Dist., A.P.
+                </div>
+              </div>
+              <div style={{ width: '88px', textAlign: 'right', flexShrink: 0 }}>
+                <img src={ramDarbarImg} alt="Ram Darbar" style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
+              </div>
+            </div>
+
+            {/* 3. VOUCHER NO & DATE ROW */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.85rem' }}>
+              <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
+                <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                  #ICE-{billEntry._id ? billEntry._id.slice(-6).toUpperCase() : 'REC'}
+                </span>
+              </div>
+              <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
+                <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(billEntry.date)}</span>
+              </div>
+            </div>
+
+            {/* 4. FROM & TO ROW (WHO SUPPLIED & WHO RECEIVED) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.85rem' }}>
+              <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Ice From (Supplier): </span>
+                <strong style={{ color: '#000000' }}>{billEntry.iceFrom || billEntry.supplierName || 'Sri Rama Ice Plant'}</strong>
+              </div>
+              <div style={{ padding: '6px 10px' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Ice To (Receiver): </span>
+                <strong style={{ color: '#000000' }}>{billEntry.iceTo || 'Factory / Cold Storage'}</strong>
+              </div>
+            </div>
+
+            {/* 5. STATUS & VEHICLE ROW */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.82rem' }}>
+              <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Payment Status: </span>
+                <span style={{ fontWeight: 'bold', color: billEntry.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>
+                  {billEntry.paymentStatus || 'Paid'}
+                </span>
+              </div>
+              <div style={{ padding: '5px 10px' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Vehicle / Transport: </span>
+                <span style={{ fontWeight: 'bold', color: '#000000' }}>{billEntry.vehicleNo || 'Direct Delivery'}</span>
+              </div>
+            </div>
+
+            {/* 6. ITEMS TABLE */}
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              <thead>
+                <tr style={{ background: '#f0f5fa', color: '#0b5394', fontWeight: 'bold', textAlign: 'center' }}>
+                  <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '6px 4px', width: '45px' }}>S.No.</th>
+                  <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '6px 8px', textAlign: 'left' }}>Description of Supply</th>
+                  <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '6px', width: '120px' }}>Quantity</th>
+                  <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '6px', width: '110px' }}>Rate (₹)</th>
+                  <th style={{ borderBottom: '1.5px solid #0b5394', padding: '6px', width: '130px', textAlign: 'right' }}>Amount (₹)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style={{ height: '30px', borderBottom: '1px solid #c8d9e8' }}>
+                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>1</td>
+                  <td style={{ borderRight: '1.5px solid #0b5394', padding: '6px 8px', fontWeight: 'bold' }}>
+                    Commercial Ice Blocks (Factory Preservation)
+                  </td>
+                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>
+                    {billEntry.blocks} blocks
+                  </td>
+                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', paddingRight: '8px' }}>
+                    ₹{Number(billEntry.rate).toFixed(2)}
+                  </td>
+                  <td style={{ textAlign: 'right', paddingRight: '8px', fontWeight: 'bold' }}>
+                    ₹{Number(billEntry.totalAmount).toFixed(2)}
+                  </td>
+                </tr>
+                {/* 2 Blank lines for authentic invoice layout spacing */}
+                {[1, 2].map((i) => (
+                  <tr key={i} style={{ height: '22px', borderBottom: '1px solid #c8d9e8' }}>
+                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                    <td></td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr style={{ background: '#e8f1f8', borderTop: '1.5px solid #0b5394', fontWeight: 'bold' }}>
+                  <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 900 }}>
+                    TOTAL AMOUNT:
+                  </td>
+                  <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 900, color: '#000000' }}>
+                    ₹{Number(billEntry.totalAmount).toFixed(2)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+
+            {/* Notes if present */}
+            {billEntry.notes && (
+              <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#fafafa' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Notes / Remarks: </span>{billEntry.notes}
+              </div>
+            )}
+
+            {/* Amount in Words */}
+            <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
+              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Amount in Words: </span>
+              <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(billEntry.totalAmount)}</span>
+            </div>
+
+            {/* 7. BANK DETAILS & SIGNATURE (Exact Normal Bill Footer) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', borderTop: '1.5px solid #0b5394', fontSize: '0.74rem', lineHeight: '1.4' }}>
+              <div style={{ borderRight: '1.5px solid #0b5394', padding: '6px 10px' }}>
+                <div style={{ fontWeight: 'bold', color: '#0b5394' }}>BANK : KARUR VYSYA BANK</div>
+                <div>A/c. NO : <strong>4805135000002964</strong></div>
+                <div>IFSC : <strong>KVBL0004815</strong></div>
+                <div>Branch : Narasapur</div>
+              </div>
+
+              <div style={{ padding: '6px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center' }}>
+                <div style={{ fontWeight: 'bold', color: '#0b5394', fontSize: '0.78rem' }}>
+                  For VIJAYA DURGA SEA FOODS
+                </div>
+                <div style={{ marginTop: '24px', borderTop: '1px solid #000000', paddingTop: '2px', fontWeight: 'bold', color: '#0b5394' }}>
+                  Proprietor / Authorized Signature
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
