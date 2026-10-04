@@ -39,7 +39,7 @@ router.get('/', protect, async (req, res) => {
       }
     }
 
-    if (paymentStatus && ['Pending', 'Paid'].includes(paymentStatus)) {
+    if (paymentStatus && ['Pending', 'Paid', 'Partial'].includes(paymentStatus)) {
       filter.paymentStatus = paymentStatus;
     }
 
@@ -507,6 +507,11 @@ router.get('/ice/summary', protect, async (req, res) => {
             _id: null,
             periodBlocks: { $sum: '$blocks' },
             periodAmount: { $sum: '$totalAmount' },
+            periodPending: {
+              $sum: {
+                $cond: [{ $eq: ['$paymentStatus', 'Pending'] }, '$totalAmount', 0],
+              },
+            },
           },
         },
       ]),
@@ -522,13 +527,23 @@ router.get('/ice/summary', protect, async (req, res) => {
       ]),
     ]);
 
-    const period = periodAgg[0] || { periodBlocks: 0, periodAmount: 0 };
+    const period = periodAgg[0] || { periodBlocks: 0, periodAmount: 0, periodPending: 0 };
     const overall = overallAgg[0] || { totalBlocks: 0, totalAmount: 0, totalEntries: 0 };
 
     return res.json({
+      periodBlocks: period.periodBlocks || 0,
+      periodCost: Math.round((period.periodAmount || 0) * 100) / 100,
+      periodAmount: Math.round((period.periodAmount || 0) * 100) / 100,
+      periodPending: Math.round((period.periodPending || 0) * 100) / 100,
       todayBlocks: period.periodBlocks || 0,
       todayAmount: Math.round((period.periodAmount || 0) * 100) / 100,
       todayAvgRate: period.periodBlocks > 0 ? Math.round(((period.periodAmount || 0) / period.periodBlocks) * 100) / 100 : 0,
+      overall: {
+        totalBlocks: overall.totalBlocks || 0,
+        totalCost: Math.round((overall.totalAmount || 0) * 100) / 100,
+        totalAmount: Math.round((overall.totalAmount || 0) * 100) / 100,
+        totalEntries: overall.totalEntries || 0,
+      },
       totalBlocks: overall.totalBlocks || 0,
       totalAmount: Math.round((overall.totalAmount || 0) * 100) / 100,
       totalEntries: overall.totalEntries || 0,
@@ -826,6 +841,11 @@ router.get('/wastage/summary', protect, async (req, res) => {
             _id: null,
             periodKg: { $sum: '$quantityKg' },
             periodAmount: { $sum: '$totalAmount' },
+            periodPending: {
+              $sum: {
+                $cond: [{ $eq: ['$paymentStatus', 'Pending'] }, '$totalAmount', 0],
+              },
+            },
           },
         },
       ]),
@@ -841,13 +861,23 @@ router.get('/wastage/summary', protect, async (req, res) => {
       ]),
     ]);
 
-    const period = periodAgg[0] || { periodKg: 0, periodAmount: 0 };
+    const period = periodAgg[0] || { periodKg: 0, periodAmount: 0, periodPending: 0 };
     const overall = overallAgg[0] || { totalKg: 0, totalAmount: 0, totalEntries: 0 };
 
     return res.json({
+      periodKg: Math.round((period.periodKg || 0) * 100) / 100,
+      periodRevenue: Math.round((period.periodAmount || 0) * 100) / 100,
+      periodAmount: Math.round((period.periodAmount || 0) * 100) / 100,
+      periodPending: Math.round((period.periodPending || 0) * 100) / 100,
       todayKg: Math.round((period.periodKg || 0) * 100) / 100,
       todayAmount: Math.round((period.periodAmount || 0) * 100) / 100,
       todayAvgRate: period.periodKg > 0 ? Math.round(((period.periodAmount || 0) / period.periodKg) * 100) / 100 : 0,
+      overall: {
+        totalKg: Math.round((overall.totalKg || 0) * 100) / 100,
+        totalRevenue: Math.round((overall.totalAmount || 0) * 100) / 100,
+        totalAmount: Math.round((overall.totalAmount || 0) * 100) / 100,
+        totalEntries: overall.totalEntries || 0,
+      },
       totalKg: Math.round((overall.totalKg || 0) * 100) / 100,
       totalAmount: Math.round((overall.totalAmount || 0) * 100) / 100,
       totalEntries: overall.totalEntries || 0,
@@ -1190,34 +1220,62 @@ router.put('/:id', protect, restrictTo('admin', 'owner'), async (req, res) => {
  */
 router.patch('/:id/pay', protect, async (req, res) => {
   try {
-    const { status, paymentMode } = req.body;
+    const { status, amountPaid, paymentMode, paymentDate, notes } = req.body;
     const entry = await StaffWork.findById(req.params.id);
     if (!entry) {
       return res.status(404).json({ message: 'Staff work entry not found' });
     }
 
-    const newStatus = status || (entry.paymentStatus === 'Paid' ? 'Pending' : 'Paid');
-    entry.paymentStatus = newStatus;
-
-    if (newStatus === 'Paid') {
-      entry.amountPaid = entry.totalAmount;
-      entry.paymentDate = new Date();
+    if (amountPaid !== undefined) {
+      const parsedAmount = Math.max(0, Math.round(Number(amountPaid) * 100) / 100);
+      entry.amountPaid = parsedAmount;
+      if (parsedAmount >= entry.totalAmount) {
+        entry.paymentStatus = 'Paid';
+        entry.amountPaid = entry.totalAmount;
+      } else if (parsedAmount > 0) {
+        entry.paymentStatus = 'Partial';
+      } else {
+        entry.paymentStatus = 'Pending';
+      }
+      entry.paymentDate = parsedAmount > 0 ? (paymentDate ? new Date(paymentDate) : new Date()) : null;
       if (paymentMode) entry.paymentMode = paymentMode;
+      if (notes !== undefined) entry.notes = notes;
+    } else if (status) {
+      entry.paymentStatus = status;
+      if (status === 'Paid') {
+        entry.amountPaid = entry.totalAmount;
+        entry.paymentDate = paymentDate ? new Date(paymentDate) : new Date();
+        if (paymentMode) entry.paymentMode = paymentMode;
+      } else if (status === 'Pending') {
+        entry.amountPaid = 0;
+        entry.paymentDate = null;
+      }
     } else {
-      entry.amountPaid = 0;
-      entry.paymentDate = null;
+      const newStatus = entry.paymentStatus === 'Paid' ? 'Pending' : 'Paid';
+      entry.paymentStatus = newStatus;
+      if (newStatus === 'Paid') {
+        entry.amountPaid = entry.totalAmount;
+        entry.paymentDate = new Date();
+        if (paymentMode) entry.paymentMode = paymentMode;
+      } else {
+        entry.amountPaid = 0;
+        entry.paymentDate = null;
+      }
     }
 
     await entry.save();
 
-    await logActivity(req, 'STAFF_WORK_PAYMENT_TOGGLED', entry._id, {
+    await logActivity(req, 'STAFF_WORK_PAYMENT_UPDATED', entry._id, {
       staffName: entry.staffName,
       status: entry.paymentStatus,
-      amount: entry.totalAmount,
+      amountPaid: entry.amountPaid,
+      totalAmount: entry.totalAmount,
+      balanceDue: Math.max(0, entry.totalAmount - entry.amountPaid),
+      paymentMode: entry.paymentMode,
     });
 
     return res.json({
-      message: `Payment status updated to ${entry.paymentStatus} for ${entry.staffName}`,
+      message: `Payment updated for ${entry.staffName}: ₹${entry.amountPaid} paid (${entry.paymentStatus})`,
       entry,
     });
   } catch (error) {

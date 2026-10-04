@@ -31,6 +31,9 @@ function getDateRange(range, customStart, customEnd) {
   } else if (range === 'last_month') {
     start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     end = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else if (range === 'all') {
+    start = new Date(0);
+    end = new Date(now.getFullYear() + 10, 11, 31);
   } else if (range === 'custom' && customStart && customEnd) {
     start = new Date(customStart);
     start.setHours(0, 0, 0, 0);

@@ -756,7 +756,7 @@ export default function IceTracker() {
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
                 <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
-                  #{billEntry.voucherNo || (viewingBill?.voucherNo || 'ICE-1')}
+                  {billEntry.voucherNo || (viewingBill?.voucherNo || 'ICE-1')}
                 </span>
               </div>
               <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>

@@ -56,7 +56,10 @@ export default function Reports() {
     let dateFrom = '';
     let dateTo = '';
 
-    if (range === 'today') {
+    if (range === 'all') {
+      dateFrom = '';
+      dateTo = '';
+    } else if (range === 'today') {
       dateFrom = fmt(now);
       dateTo = fmt(now);
     } else if (range === 'yesterday') {
@@ -73,8 +76,9 @@ export default function Reports() {
       dateTo = fmt(now);
     } else if (range === 'this_month') {
       const startM = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endM = new Date(now.getFullYear(), now.getMonth() + 1, 0);
       dateFrom = fmt(startM);
-      dateTo = fmt(now);
+      dateTo = fmt(endM);
     } else if (range === 'last_month') {
       const startLM = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const endLM = new Date(now.getFullYear(), now.getMonth(), 0);
@@ -132,10 +136,11 @@ export default function Reports() {
     try {
       const { dateFrom, dateTo } = getDates();
       const [resEntries, resSummary] = await Promise.all([
-        staffAPI.getIce({ dateFrom, dateTo }),
+        staffAPI.getIce({ dateFrom, dateTo, limit: 1000 }),
         staffAPI.getIceSummary({ dateFilter: range, dateFrom, dateTo }),
       ]);
-      setIceData({ entries: resEntries.data.records || [], summary: resSummary.data });
+      const entries = resEntries.data.entries || resEntries.data.records || [];
+      setIceData({ entries, summary: resSummary.data });
     } catch (err) {
       if (import.meta.env.DEV) { console.error('Failed to load ice report:', err); }
     } finally {
@@ -148,10 +153,11 @@ export default function Reports() {
     try {
       const { dateFrom, dateTo } = getDates();
       const [resEntries, resSummary] = await Promise.all([
-        staffAPI.getAll({ dateFrom, dateTo }),
+        staffAPI.getAll({ dateFrom, dateTo, limit: 1000 }),
         staffAPI.getSummary({ dateFilter: range, dateFrom, dateTo }),
       ]);
-      setStaffData({ entries: resEntries.data.entries || [], summary: resSummary.data });
+      const entries = resEntries.data.entries || resEntries.data.records || [];
+      setStaffData({ entries, summary: resSummary.data });
     } catch (err) {
       if (import.meta.env.DEV) { console.error('Failed to load staff report:', err); }
     } finally {
@@ -164,10 +170,11 @@ export default function Reports() {
     try {
       const { dateFrom, dateTo } = getDates();
       const [resEntries, resSummary] = await Promise.all([
-        staffAPI.getWastage({ dateFrom, dateTo }),
+        staffAPI.getWastage({ dateFrom, dateTo, limit: 1000 }),
         staffAPI.getWastageSummary({ dateFilter: range, dateFrom, dateTo }),
       ]);
-      setWastageData({ entries: resEntries.data.records || [], summary: resSummary.data });
+      const entries = resEntries.data.entries || resEntries.data.records || [];
+      setWastageData({ entries, summary: resSummary.data });
     } catch (err) {
       if (import.meta.env.DEV) { console.error('Failed to load wastage report:', err); }
     } finally {
@@ -291,13 +298,98 @@ export default function Reports() {
 
   const summary = report?.summary || {};
 
+  // Dynamic fallback calculation for Ice from entries if summary is 0 or missing
+  const iceEntries = iceData.entries || [];
+  const totalIceBlocks =
+    (iceData.summary?.periodBlocks !== undefined && iceData.summary?.periodBlocks !== 0)
+      ? iceData.summary.periodBlocks
+      : iceData.summary?.todayBlocks ||
+        iceData.summary?.overall?.totalBlocks ||
+        iceEntries.reduce((s, e) => s + (Number(e.blocks) || 0), 0);
+  const totalIceCost =
+    (iceData.summary?.periodCost !== undefined && iceData.summary?.periodCost !== 0)
+      ? iceData.summary.periodCost
+      : iceData.summary?.todayAmount ||
+        iceData.summary?.overall?.totalCost ||
+        iceData.summary?.overall?.totalAmount ||
+        Math.round(iceEntries.reduce((s, e) => s + (Number(e.totalAmount) || 0), 0) * 100) / 100;
+  const avgIceRate =
+    totalIceBlocks > 0 ? (totalIceCost / totalIceBlocks).toFixed(2) : '0.00';
+  const pendingIceToPlants =
+    iceData.summary?.periodPending !== undefined
+      ? iceData.summary.periodPending
+      : Math.round(
+          iceEntries
+            .filter((e) => e.paymentStatus === 'Pending')
+            .reduce((s, e) => s + (Number(e.totalAmount) || 0), 0) * 100
+        ) / 100;
+
+  // Dynamic fallback calculation for Wastage from entries
+  const wastageEntries = wastageData.entries || [];
+  const totalWastageKg =
+    (wastageData.summary?.periodKg !== undefined && wastageData.summary?.periodKg !== 0)
+      ? wastageData.summary.periodKg
+      : wastageData.summary?.todayKg ||
+        wastageData.summary?.overall?.totalKg ||
+        Math.round(wastageEntries.reduce((s, e) => s + (Number(e.quantityKg) || 0), 0) * 10) / 10;
+  const totalWastageRevenue =
+    (wastageData.summary?.periodRevenue !== undefined && wastageData.summary?.periodRevenue !== 0)
+      ? wastageData.summary.periodRevenue
+      : wastageData.summary?.todayAmount ||
+        wastageData.summary?.overall?.totalRevenue ||
+        wastageData.summary?.overall?.totalAmount ||
+        Math.round(wastageEntries.reduce((s, e) => s + (Number(e.totalAmount) || 0), 0) * 100) / 100;
+  const avgWastageRate =
+    totalWastageKg > 0 ? (totalWastageRevenue / totalWastageKg).toFixed(2) : '0.00';
+  const pendingWastageReceivables =
+    wastageData.summary?.periodPending !== undefined
+      ? wastageData.summary.periodPending
+      : Math.round(
+          wastageEntries
+            .filter((e) => e.paymentStatus === 'Pending')
+            .reduce((s, e) => s + (Number(e.totalAmount) || 0), 0) * 100
+        ) / 100;
+
+  // Dynamic fallback calculation for Worker Wages from entries
+  const staffEntries = staffData.entries || [];
+  const totalWorkerWages =
+    (staffData.summary?.today?.todayWages !== undefined && staffData.summary?.today?.todayWages !== 0)
+      ? staffData.summary.today.todayWages
+      : staffData.summary?.today?.periodTotal ||
+        staffData.summary?.overall?.totalWages ||
+        Math.round(staffEntries.reduce((s, e) => s + (Number(e.totalAmount) || 0), 0) * 100) / 100;
+  const totalWorkerKg =
+    (staffData.summary?.today?.todayKg !== undefined && staffData.summary?.today?.todayKg !== 0)
+      ? staffData.summary.today.todayKg
+      : staffData.summary?.today?.periodKg ||
+        staffData.summary?.overall?.totalKg ||
+        Math.round(staffEntries.reduce((s, e) => s + (Number(e.quantity) || 0), 0) * 10) / 10;
+  const totalWorkerPending =
+    staffData.summary?.today?.periodPending !== undefined
+      ? staffData.summary.today.periodPending
+      : staffData.summary?.overall?.totalPending !== undefined
+      ? staffData.summary.overall.totalPending
+      : Math.round(
+          staffEntries
+            .filter((e) => e.paymentStatus !== 'Paid')
+            .reduce((s, e) => s + Math.max(0, (e.totalAmount || 0) - (e.amountPaid || 0)), 0) * 100
+        ) / 100;
+  const totalWorkerPaid =
+    staffData.summary?.today?.periodPaid !== undefined
+      ? staffData.summary.today.periodPaid
+      : staffData.summary?.overall?.totalPaid !== undefined
+      ? staffData.summary.overall.totalPaid
+      : Math.round(
+          staffEntries.reduce((s, e) => s + (e.paymentStatus === 'Paid' ? (e.totalAmount || 0) : (e.amountPaid || 0)), 0) * 100
+        ) / 100;
+
   // Financial Net Aggregation values
   const grossSales = summary?.grossRevenue || 0;
-  const wastageRev = wastageData.summary?.periodRevenue || wastageData.summary?.overall?.totalRevenue || 0;
+  const wastageRev = totalWastageRevenue;
   const totalDirectInflow = grossSales + wastageRev;
 
-  const iceCost = iceData.summary?.periodCost || iceData.summary?.overall?.totalCost || 0;
-  const workerWages = staffData.summary?.today?.periodTotal || staffData.summary?.overall?.totalWages || 0;
+  const iceCost = totalIceCost;
+  const workerWages = totalWorkerWages;
   const totalFactoryOutflow = iceCost + workerWages;
 
   const netOperationalMargin = Math.round((totalDirectInflow - totalFactoryOutflow) * 100) / 100;
@@ -588,6 +680,7 @@ export default function Reports() {
               {lang === 'te' ? 'కాల పరిమితి:' : 'Range:'}
             </span>
             {[
+              { id: 'all', label: lang === 'te' ? 'అన్ని తేదీలు' : 'All Dates' },
               { id: 'today', label: t('today') },
               { id: 'yesterday', label: t('yesterday') },
               { id: 'this_week', label: t('thisWeek') },
@@ -842,7 +935,7 @@ export default function Reports() {
                     {lang === 'te' ? 'మొత్తం ఐస్ బ్లాకులు' : 'Total Ice Blocks'}
                   </div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0284c7', marginTop: '6px' }}>
-                    {iceData.summary?.periodBlocks ?? iceData.summary?.overall?.totalBlocks ?? 0}
+                    {totalIceBlocks}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
                     {iceData.entries.length} {lang === 'te' ? 'కొనుగోళ్లు' : 'purchases'}
@@ -854,7 +947,7 @@ export default function Reports() {
                     {lang === 'te' ? 'మొత్తం ఐస్ ఖర్చు' : 'Total Ice Cost'}
                   </div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '6px' }}>
-                    {formatCurrency(iceData.summary?.periodCost ?? iceData.summary?.overall?.totalCost ?? 0)}
+                    {formatCurrency(totalIceCost)}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
                     {lang === 'te' ? 'కూలింగ్ ఖర్చులు' : 'Cooling expenses'}
@@ -866,7 +959,7 @@ export default function Reports() {
                     {lang === 'te' ? 'సగటు రేటు / బ్లాక్' : 'Average Rate / Block'}
                   </div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
-                    ₹{((iceData.summary?.periodCost || 0) / Math.max(1, (iceData.summary?.periodBlocks || 0))).toFixed(2)}
+                    ₹{avgIceRate}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>Per block average</div>
                 </div>
@@ -876,7 +969,7 @@ export default function Reports() {
                     {lang === 'te' ? 'ప్లాంట్ చెల్లింపుల బాకీ' : 'Pending to Plants'}
                   </div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#7c3aed', marginTop: '6px' }}>
-                    {formatCurrency(iceData.summary?.periodPending || 0)}
+                    {formatCurrency(pendingIceToPlants)}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
                     {lang === 'te' ? 'చెల్లించాల్సినది' : 'Unpaid invoices'}
@@ -954,7 +1047,7 @@ export default function Reports() {
                     {lang === 'te' ? 'మొత్తం కూలీ వేతనాలు' : 'Total Labor Wages'}
                   </div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
-                    {formatCurrency(staffData.summary?.today?.periodTotal ?? staffData.summary?.overall?.totalWages ?? 0)}
+                    {formatCurrency(totalWorkerWages)}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
                     {staffData.entries.length} {lang === 'te' ? 'పని షిఫ్ట్‌లు' : 'work entries'}
@@ -966,7 +1059,7 @@ export default function Reports() {
                     {lang === 'te' ? 'ప్రాసెస్ చేసిన తూకం' : 'Processed Weight'}
                   </div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
-                    {(staffData.summary?.today?.periodKg ?? staffData.summary?.overall?.totalKg ?? 0).toFixed(1)} kg
+                    {totalWorkerKg.toFixed(1)} kg
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
                     {lang === 'te' ? 'పీలింగ్ పరిమాణం' : 'Peeling production'}
@@ -978,7 +1071,7 @@ export default function Reports() {
                     {lang === 'te' ? 'కార్మికుల సంఖ్య' : 'Active Workers'}
                   </div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#7c3aed', marginTop: '6px' }}>
-                    {staffData.summary?.staffAccounts?.length || staffData.summary?.overall?.activeWorkers || 0}
+                    {staffData.summary?.staffAccounts?.length || staffData.summary?.overall?.activeWorkers || new Set(staffData.entries.map(e => e.staffName)).size}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>Registered team</div>
                 </div>
@@ -988,10 +1081,10 @@ export default function Reports() {
                     {lang === 'te' ? 'చెల్లించాల్సిన బాకీ కూలీ' : 'Unpaid Wages Pending'}
                   </div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '6px' }}>
-                    {formatCurrency(staffData.summary?.today?.periodPending ?? staffData.summary?.overall?.totalPending ?? 0)}
+                    {formatCurrency(totalWorkerPending)}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                    {lang === 'te' ? 'చెల్లించినది: ' : 'Paid: '}{formatCurrency(staffData.summary?.today?.periodPaid ?? staffData.summary?.overall?.totalPaid ?? 0)}
+                    {lang === 'te' ? 'చెల్లించినది: ' : 'Paid: '}{formatCurrency(totalWorkerPaid)}
                   </div>
                 </div>
               </div>
@@ -1103,7 +1196,7 @@ export default function Reports() {
                     {lang === 'te' ? 'మొత్తం వేస్టేజ్ ఆదాయం' : 'Total Wastage Revenue'}
                   </div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
-                    {formatCurrency(wastageData.summary?.periodRevenue ?? wastageData.summary?.overall?.totalRevenue ?? 0)}
+                    {formatCurrency(totalWastageRevenue)}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
                     {wastageData.entries.length} {lang === 'te' ? 'అమ్మకాలు' : 'sales shipments'}
@@ -1115,7 +1208,7 @@ export default function Reports() {
                     {lang === 'te' ? 'అమ్మిన వేస్టేజ్ తూకం' : 'Total Wastage Sold'}
                   </div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
-                    {(wastageData.summary?.periodKg ?? wastageData.summary?.overall?.totalKg ?? 0).toFixed(1)} kg
+                    {totalWastageKg.toFixed(1)} kg
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
                     {lang === 'te' ? 'రొయ్య తలల ఉప-ఉత్పత్తి' : 'Prawn head byproduct'}
@@ -1127,7 +1220,7 @@ export default function Reports() {
                     {lang === 'te' ? 'సగటు అమ్మకం ధర' : 'Average Selling Rate'}
                   </div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#7c3aed', marginTop: '6px' }}>
-                    ₹{((wastageData.summary?.periodRevenue || 0) / Math.max(1, (wastageData.summary?.periodKg || 0))).toFixed(2)}/kg
+                    ₹{avgWastageRate}/kg
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>Per KG market recovery</div>
                 </div>
@@ -1137,7 +1230,7 @@ export default function Reports() {
                     {lang === 'te' ? 'కొనుగోలుదారుల బాకీ' : 'Pending From Buyers'}
                   </div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '6px' }}>
-                    {formatCurrency(wastageData.summary?.periodPending || 0)}
+                    {formatCurrency(pendingWastageReceivables)}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
                     {lang === 'te' ? 'వసూలు కావాల్సినది' : 'Receivables'}
@@ -1270,7 +1363,7 @@ export default function Reports() {
                 +{formatCurrency(wastageRev)}
               </div>
               <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                {(wastageData.summary?.periodKg || 0).toFixed(0)} kg byproduct
+                {totalWastageKg.toFixed(0)} kg byproduct
               </div>
             </div>
 
@@ -1286,7 +1379,7 @@ export default function Reports() {
                 -{formatCurrency(iceCost)}
               </div>
               <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                {iceData.summary?.periodBlocks || 0} blocks consumed
+                {totalIceBlocks} blocks consumed
               </div>
             </div>
 
@@ -1302,7 +1395,7 @@ export default function Reports() {
                 -{formatCurrency(workerWages)}
               </div>
               <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                {(staffData.summary?.today?.periodKg || 0).toFixed(0)} kg peeled
+                {totalWorkerKg.toFixed(0)} kg peeled
               </div>
             </div>
           </div>
@@ -1334,19 +1427,19 @@ export default function Reports() {
                   <tr style={{ background: '#f0fdf4' }}>
                     <td style={{ fontWeight: 800, color: '#16a34a' }}>(+) Prawn Head Wastage Revenue</td>
                     <td style={{ color: '#475569' }}>Feed plant byproduct sales & shell waste recoveries</td>
-                    <td className="text-right font-mono">{(wastageData.summary?.periodKg || 0).toFixed(1)} kg</td>
+                    <td className="text-right font-mono">{totalWastageKg.toFixed(1)} kg</td>
                     <td className="text-right font-mono" style={{ fontWeight: 900, color: '#16a34a' }}>+{formatCurrency(wastageRev)}</td>
                   </tr>
                   <tr style={{ background: '#fff7ed' }}>
                     <td style={{ fontWeight: 800, color: '#ea580c' }}>(-) Worker Peeling Labor Wages</td>
                     <td style={{ color: '#475569' }}>Daily labor attendance wages (weight * piece rate)</td>
-                    <td className="text-right font-mono">{(staffData.summary?.today?.periodKg || 0).toFixed(1)} kg</td>
+                    <td className="text-right font-mono">{totalWorkerKg.toFixed(1)} kg</td>
                     <td className="text-right font-mono" style={{ fontWeight: 900, color: '#dc2626' }}>-{formatCurrency(workerWages)}</td>
                   </tr>
                   <tr style={{ background: '#f0f9ff' }}>
                     <td style={{ fontWeight: 800, color: '#0284c7' }}>(-) Ice Blocks Procurement</td>
                     <td style={{ color: '#475569' }}>Factory preservation ice blocks supplied by ice plants</td>
-                    <td className="text-right font-mono">{iceData.summary?.periodBlocks || 0} blocks</td>
+                    <td className="text-right font-mono">{totalIceBlocks} blocks</td>
                     <td className="text-right font-mono" style={{ fontWeight: 900, color: '#dc2626' }}>-{formatCurrency(iceCost)}</td>
                   </tr>
                   <tr style={{ background: isNetSurplus ? '#ecfdf5' : '#fef2f2', borderTop: '2px solid #0f172a' }}>

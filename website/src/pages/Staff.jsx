@@ -4,6 +4,7 @@ import { formatCurrency, formatDate, numberToWords, useToast, Toast } from '../u
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import VoucherBillModal from '../components/VoucherBillModal';
+import WorkerPaymentModal from '../components/WorkerPaymentModal';
 import {
   StaffIcon,
   PlusIcon,
@@ -79,6 +80,7 @@ export default function Staff() {
 
   // In-app Voucher Viewer Modal State (Like normal bill page with WhatsApp & Print)
   const [viewingVoucher, setViewingVoucher] = useState(null);
+  const [payingEntry, setPayingEntry] = useState(null);
 
   // Single Worker Entry Bill Print State
   const [activeBillEntry, setActiveBillEntry] = useState(null);
@@ -1379,12 +1381,20 @@ export default function Staff() {
                           style={
                             entry.paymentStatus === 'Paid'
                               ? { color: '#059669', background: '#ecfdf5', border: '1px solid #a7f3d0' }
+                              : entry.paymentStatus === 'Partial'
+                              ? { color: '#b45309', background: '#fffbeb', border: '1px solid #fde68a' }
                               : { background: '#16a34a', color: '#ffffff' }
                           }
-                          onClick={() => handleTogglePayment(entry)}
+                          onClick={() => setPayingEntry(entry)}
                         >
                           <CheckIcon size={14} />
-                          <span>{entry.paymentStatus === 'Paid' ? 'Paid ✓' : 'Mark Paid'}</span>
+                          <span>
+                            {entry.paymentStatus === 'Paid'
+                              ? 'Paid ✓'
+                              : entry.paymentStatus === 'Partial'
+                              ? `Pay Due (₹${Math.max(0, (entry.totalAmount || 0) - (entry.amountPaid || 0)).toFixed(0)})`
+                              : 'Pay'}
+                          </span>
                         </button>
 
                         {canEditDelete && (
@@ -1462,12 +1472,18 @@ export default function Staff() {
                           </td>
                           <td className="text-center">
                             <span
-                              className={`badge ${entry.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}
+                              className={`badge ${
+                                entry.paymentStatus === 'Paid'
+                                  ? 'badge-green'
+                                  : entry.paymentStatus === 'Partial'
+                                  ? 'badge-amber'
+                                  : 'badge-amber'
+                              }`}
                               style={{ cursor: 'pointer' }}
-                              onClick={() => handleTogglePayment(entry)}
-                              title="Click to toggle payment status"
+                              onClick={() => setPayingEntry(entry)}
+                              title="Click to record or adjust wage payment"
                             >
-                              {entry.paymentStatus}
+                              {entry.paymentStatus === 'Partial' ? `Partial (₹${entry.amountPaid})` : entry.paymentStatus}
                             </span>
                           </td>
                           <td className="text-center">
@@ -1496,12 +1512,14 @@ export default function Staff() {
                                 style={
                                   entry.paymentStatus === 'Paid'
                                     ? { padding: '4px 8px', fontSize: '0.75rem', background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' }
+                                    : entry.paymentStatus === 'Partial'
+                                    ? { padding: '4px 8px', fontSize: '0.75rem', background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a' }
                                     : { padding: '4px 8px', fontSize: '0.75rem', background: '#16a34a', color: '#ffffff' }
                                 }
-                                onClick={() => handleTogglePayment(entry)}
-                                title={entry.paymentStatus === 'Paid' ? 'Mark Unpaid' : 'Mark Paid'}
+                                onClick={() => setPayingEntry(entry)}
+                                title={entry.paymentStatus === 'Paid' ? 'View / Adjust Payment' : 'Record Wage Payment'}
                               >
-                                <CheckIcon size={13} /> {entry.paymentStatus === 'Paid' ? 'Paid' : 'Pay'}
+                                <CheckIcon size={13} /> {entry.paymentStatus === 'Paid' ? 'Paid' : entry.paymentStatus === 'Partial' ? 'Pay Due' : 'Pay'}
                               </button>
                               {canEditDelete && (
                                 <>
@@ -1974,7 +1992,7 @@ export default function Staff() {
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
                 <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
-                  #{activeBillEntry.voucherNo || (viewingVoucher?.voucherNo || 'WB-1')}
+                  {activeBillEntry.voucherNo || (viewingVoucher?.voucherNo || 'WB-1')}
                 </span>
               </div>
               <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -2077,9 +2095,9 @@ export default function Staff() {
                 <div style={{ fontWeight: 'bold', color: '#0b5394', marginBottom: '2px', fontSize: '0.76rem' }}>
                   Bank Account Details:
                 </div>
-                <div><strong>Bank:</strong> Andhra Pragathi Grameena Bank</div>
-                <div><strong>A/C No:</strong> 191630100000305</div>
-                <div><strong>IFSC:</strong> APGB0003116 &nbsp;|&nbsp; <strong>Branch:</strong> Mutyalapalli</div>
+                <div><strong>Bank:</strong> KARUR VYSYA BANK</div>
+                <div><strong>A/C No:</strong> 4805135000002964</div>
+                <div><strong>IFSC:</strong> KVBL0004815 &nbsp;|&nbsp; <strong>Branch:</strong> Narasapur</div>
               </div>
 
               <div style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center', background: '#ffffff' }}>
@@ -2261,6 +2279,22 @@ export default function Staff() {
           type={viewingVoucher.type}
           data={viewingVoucher.data}
           voucherNo={viewingVoucher.voucherNo}
+        />
+      )}
+
+      {/* ── WORKER PAYMENT MODAL (CUSTOM AMOUNT, PARTIAL OR FULL PAY) ── */}
+      {payingEntry && (
+        <WorkerPaymentModal
+          isOpen={Boolean(payingEntry)}
+          entry={payingEntry}
+          onClose={() => setPayingEntry(null)}
+          onSuccess={(updated) => {
+            setEntries((prev) =>
+              prev.map((item) => (item._id === updated._id ? { ...item, ...updated } : item))
+            );
+            showToast(`Payment updated for ${updated.staffName}`, 'success');
+            loadSummary();
+          }}
         />
       )}
     </div>

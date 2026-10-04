@@ -39,7 +39,7 @@ export default function VoucherBillModal({
       ? 'ICE-1'
       : type === 'worker'
       ? 'WB-1'
-      : `#STMT-${data.workerName || 'ALL'}`);
+      : `STMT-${data.workerName || 'ALL'}`);
 
   const handlePrint = () => {
     const printArea = printAreaRef.current;
@@ -60,9 +60,9 @@ export default function VoucherBillModal({
 
     const title =
       type === 'ice'
-        ? `Ice Bill #${resolvedVoucherNo}`
+        ? `Ice Bill ${resolvedVoucherNo}`
         : type === 'worker'
-        ? `Worker Bill #${resolvedVoucherNo}`
+        ? `Worker Bill ${resolvedVoucherNo}`
         : `Worker Statement - ${data.workerName || 'Worker'}`;
 
     const doc = iframe.contentWindow.document;
@@ -91,7 +91,7 @@ export default function VoucherBillModal({
       const from = data.iceFrom || data.supplierName || 'Sri Rama Ice Plant';
       const to = data.iceTo || 'Factory / Cold Storage';
       const text = `*VIJAYA DURGA SEA FOODS*
-*ICE BILL: #${resolvedVoucherNo}*
+*ICE BILL: ${resolvedVoucherNo}*
 📅 *Date:* ${dateStr}
 🏢 *From (Supplier):* ${from}
 🏭 *To (Receiver):* ${to}
@@ -108,7 +108,7 @@ Thank you!`;
       const phone = data.staffPhone ? data.staffPhone.replace(/[^0-9]/g, '') : '';
       const cleanPhone = phone.length === 10 ? '91' + phone : phone;
       const text = `*VIJAYA DURGA SEA FOODS*
-*WORKER BILL: #${resolvedVoucherNo}*
+*WORKER BILL: ${resolvedVoucherNo}*
 👤 *Worker Name:* ${data.staffName}
 📅 *Date:* ${dateStr}
 💼 *Work & Shift:* ${data.workType || 'Processing'} (${data.shift || 'Full Day'})
@@ -211,7 +211,7 @@ Thank you!`;
                 color: '#0f172a',
               }}
             >
-              {modalTitle} <span style={{ color: '#0b5394' }}>#{resolvedVoucherNo}</span>
+              {modalTitle} <span style={{ color: '#0b5394' }}>{resolvedVoucherNo}</span>
             </h2>
             <span
               className={`badge ${isPaid ? 'badge-green' : 'badge-amber'}`}
@@ -382,7 +382,7 @@ Thank you!`;
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
                   <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
-                    #{resolvedVoucherNo}
+                    {resolvedVoucherNo}
                   </span>
                 </div>
                 <div style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -495,7 +495,7 @@ Thank you!`;
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
                   <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
-                    #{resolvedVoucherNo}
+                    {resolvedVoucherNo}
                   </span>
                 </div>
                 <div style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -743,9 +743,9 @@ Thank you!`;
               <div style={{ fontWeight: 'bold', color: '#0b5394', marginBottom: '2px', fontSize: '0.76rem' }}>
                 Bank Account Details:
               </div>
-              <div><strong>Bank:</strong> Andhra Pragathi Grameena Bank</div>
-              <div><strong>A/C No:</strong> 191630100000305</div>
-              <div><strong>IFSC:</strong> APGB0003116 &nbsp;|&nbsp; <strong>Branch:</strong> Mutyalapalli</div>
+              <div><strong>Bank:</strong> KARUR VYSYA BANK</div>
+              <div><strong>A/C No:</strong> 4805135000002964</div>
+              <div><strong>IFSC:</strong> KVBL0004815 &nbsp;|&nbsp; <strong>Branch:</strong> Narasapur</div>
             </div>
 
             <div
