@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 
 const dailyIceSchema = new mongoose.Schema(
   {
+    voucherNo: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     date: {
       type: Date,
       required: [true, 'Date is required'],

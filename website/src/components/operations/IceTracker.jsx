@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { staffAPI } from '../../services/api';
 import { formatCurrency, formatDate, numberToWords, useToast, Toast } from '../../utils/helpers';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
+import VoucherBillModal from '../VoucherBillModal';
 import {
   PlusIcon,
   SearchIcon,
@@ -19,6 +21,8 @@ import ramDarbarImg from '../../assets/ram_darbar.jpg';
 export default function IceTracker() {
   const { t } = useLanguage();
   const { toast, showToast } = useToast();
+  const { user } = useAuth();
+  const canEditDelete = user?.role === 'admin' || user?.role === 'owner';
 
   const [entries, setEntries] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -48,8 +52,9 @@ export default function IceTracker() {
   });
   const [saving, setSaving] = useState(false);
 
-  // Bill Preview State
+  // Bill Preview State (In-app modal like normal bill page)
   const [billEntry, setBillEntry] = useState(null);
+  const [viewingBill, setViewingBill] = useState(null);
   const billRef = useRef(null);
 
   useEffect(() => {
@@ -226,22 +231,11 @@ export default function IceTracker() {
     }
   };
 
-  // Generate Bill for a single ice entry
-  const handleGenerateBill = (entry) => {
+  // Generate & View Bill for a single ice entry (In-app viewer with WhatsApp & Print)
+  const handleGenerateBill = (entry, index = 0) => {
+    const vNo = entry.voucherNo || (entries.length > 0 ? `ICE-${entries.length - index}` : 'ICE-1');
     setBillEntry(entry);
-    setTimeout(() => {
-      if (billRef.current) {
-        const printWindow = window.open('', '_blank', 'width=900,height=700');
-        printWindow.document.write('<html><head><title>Ice Purchase Bill</title>');
-        printWindow.document.write('<style>body{margin:0;padding:16px;font-family:Arial,Helvetica,sans-serif;color:#000;}@media print{body{padding:0;}}</style>');
-        printWindow.document.write('</head><body>');
-        printWindow.document.write(billRef.current.innerHTML);
-        printWindow.document.write('</body></html>');
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => printWindow.print(), 300);
-      }
-    }, 100);
+    setViewingBill({ entry, voucherNo: vNo });
   };
 
   const liveBlocks = parseFloat(formData.blocks) || 0;
@@ -482,7 +476,7 @@ export default function IceTracker() {
                 </tr>
               </thead>
               <tbody>
-                {entries.map((entry) => (
+                {entries.map((entry, index) => (
                   <tr key={entry._id}>
                     <td style={{ fontWeight: 700, fontSize: '0.84rem' }}>
                       {formatDate(entry.date)}
@@ -520,30 +514,34 @@ export default function IceTracker() {
                         <button
                           type="button"
                           className="btn btn-ghost btn-sm"
-                          onClick={() => handleGenerateBill(entry)}
-                          title="Generate Bill"
+                          onClick={() => handleGenerateBill(entry, index)}
+                          title="Generate & View Bill"
                           style={{ padding: '4px 6px' }}
                         >
                           <PrintIcon size={14} color="#7c3aed" />
                         </button>
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => handleOpenEditModal(entry)}
-                          title="Edit"
-                          style={{ padding: '4px 6px' }}
-                        >
-                          <EditIcon size={14} color="#0b5394" />
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => handleDelete(entry)}
-                          title="Delete"
-                          style={{ padding: '4px 6px' }}
-                        >
-                          <TrashIcon size={14} color="#ef4444" />
-                        </button>
+                        {canEditDelete && (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => handleOpenEditModal(entry)}
+                              title="Edit"
+                              style={{ padding: '4px 6px' }}
+                            >
+                              <EditIcon size={14} color="#0b5394" />
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => handleDelete(entry)}
+                              title="Delete"
+                              style={{ padding: '4px 6px' }}
+                            >
+                              <TrashIcon size={14} color="#ef4444" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -726,7 +724,7 @@ export default function IceTracker() {
           <div style={{ border: '1.5px solid #0b5394', background: '#ffffff', color: '#000000', fontFamily: 'Arial, Helvetica, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
             {/* 1. TOP BAR */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #0b5394', padding: '4px 12px', fontSize: '0.82rem', fontWeight: 'bold', color: '#0b5394' }}>
-              <div>ICE PURCHASE & USAGE VOUCHER</div>
+              <div>ICE BILL</div>
               <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 900, letterSpacing: '1px' }}>॥ జై శ్రీరామ్ ॥</div>
               <div>Cell: 9441429745</div>
             </div>
@@ -758,7 +756,7 @@ export default function IceTracker() {
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
                 <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
-                  #ICE-{billEntry._id ? billEntry._id.slice(-6).toUpperCase() : 'REC'}
+                  #{billEntry.voucherNo || (viewingBill?.voucherNo || 'ICE-1')}
                 </span>
               </div>
               <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -779,21 +777,15 @@ export default function IceTracker() {
               </div>
             </div>
 
-            {/* 5. STATUS & VEHICLE ROW */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.82rem' }}>
-              <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Payment Status: </span>
-                <span style={{ fontWeight: 'bold', color: billEntry.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>
-                  {billEntry.paymentStatus || 'Paid'}
-                </span>
-              </div>
-              <div style={{ padding: '5px 10px' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Vehicle / Transport: </span>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>{billEntry.vehicleNo || 'Direct Delivery'}</span>
-              </div>
+            {/* 5. STATUS ROW (Vehicle / Transport Removed) */}
+            <div style={{ borderBottom: '1.5px solid #0b5394', fontSize: '0.82rem', padding: '5px 10px' }}>
+              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Payment Status: </span>
+              <span style={{ fontWeight: 'bold', color: billEntry.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>
+                {billEntry.paymentStatus || 'Paid'}
+              </span>
             </div>
 
-            {/* 6. ITEMS TABLE */}
+            {/* 6. ITEMS TABLE (Description is ICE) */}
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
               <thead>
                 <tr style={{ background: '#f0f5fa', color: '#0b5394', fontWeight: 'bold', textAlign: 'center' }}>
@@ -808,7 +800,7 @@ export default function IceTracker() {
                 <tr style={{ height: '30px', borderBottom: '1px solid #c8d9e8' }}>
                   <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>1</td>
                   <td style={{ borderRight: '1.5px solid #0b5394', padding: '6px 8px', fontWeight: 'bold' }}>
-                    Commercial Ice Blocks (Factory Preservation)
+                    ICE
                   </td>
                   <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>
                     {billEntry.blocks} blocks
@@ -820,7 +812,6 @@ export default function IceTracker() {
                     ₹{Number(billEntry.totalAmount).toFixed(2)}
                   </td>
                 </tr>
-                {/* 2 Blank lines for authentic invoice layout spacing */}
                 {[1, 2].map((i) => (
                   <tr key={i} style={{ height: '22px', borderBottom: '1px solid #c8d9e8' }}>
                     <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
@@ -843,14 +834,7 @@ export default function IceTracker() {
               </tfoot>
             </table>
 
-            {/* Notes if present */}
-            {billEntry.notes && (
-              <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#fafafa' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Notes / Remarks: </span>{billEntry.notes}
-              </div>
-            )}
-
-            {/* Amount in Words */}
+            {/* Amount in Words (NO Notes / Remarks row) */}
             <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
               <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Amount in Words: </span>
               <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(billEntry.totalAmount)}</span>
@@ -876,6 +860,17 @@ export default function IceTracker() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── IN-APP VOUCHER BILL VIEWER MODAL (LIKE NORMAL BILL PAGE WITH WHATSAPP & PRINT) ── */}
+      {viewingBill && (
+        <VoucherBillModal
+          isOpen={Boolean(viewingBill)}
+          onClose={() => setViewingBill(null)}
+          type="ice"
+          data={viewingBill.entry}
+          voucherNo={viewingBill.voucherNo}
+        />
       )}
     </div>
   );

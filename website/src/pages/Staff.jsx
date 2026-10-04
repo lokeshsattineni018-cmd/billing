@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { staffAPI } from '../services/api';
 import { formatCurrency, formatDate, numberToWords, useToast, Toast } from '../utils/helpers';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
+import VoucherBillModal from '../components/VoucherBillModal';
 import {
   StaffIcon,
   PlusIcon,
@@ -41,6 +43,8 @@ function getInitialBulkDraft() {
 export default function Staff() {
   const { t, lang } = useLanguage();
   const { toast, showToast } = useToast();
+  const { user } = useAuth();
+  const canEditDelete = user?.role === 'admin' || user?.role === 'owner';
 
   const [activeTab, setActiveTab] = useState('entries'); // 'entries' | 'accounts'
   const [entries, setEntries] = useState([]);
@@ -72,6 +76,9 @@ export default function Staff() {
     notes: '',
   });
   const [saving, setSaving] = useState(false);
+
+  // In-app Voucher Viewer Modal State (Like normal bill page with WhatsApp & Print)
+  const [viewingVoucher, setViewingVoucher] = useState(null);
 
   // Single Worker Entry Bill Print State
   const [activeBillEntry, setActiveBillEntry] = useState(null);
@@ -169,25 +176,18 @@ export default function Staff() {
     }
   };
 
-  // Generate & Print Wage Voucher for a single work entry
-  const handlePrintEntryBill = (entry) => {
+  // Generate & View Worker Wage Bill (In-app viewer with WhatsApp & Print)
+  const handlePrintEntryBill = (entry, index = 0) => {
+    const vNo = entry.voucherNo || (entries.length > 0 ? `WB-${entries.length - index}` : 'WB-1');
     setActiveBillEntry(entry);
-    setTimeout(() => {
-      if (singleBillRef.current) {
-        const printWindow = window.open('', '_blank', 'width=900,height=700');
-        printWindow.document.write('<html><head><title>Worker Labor Wage Voucher</title>');
-        printWindow.document.write('<style>body{margin:0;padding:16px;font-family:Arial,Helvetica,sans-serif;color:#000;}@media print{body{padding:0;}@page{size:auto;margin:10mm;}}</style>');
-        printWindow.document.write('</head><body>');
-        printWindow.document.write(singleBillRef.current.innerHTML);
-        printWindow.document.write('</body></html>');
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => printWindow.print(), 300);
-      }
-    }, 100);
+    setViewingVoucher({
+      type: 'worker',
+      data: entry,
+      voucherNo: vNo,
+    });
   };
 
-  // Generate & Print Statement Bill for a single particular worker
+  // Generate & View Statement Bill for a single worker (In-app viewer with WhatsApp & Print)
   const handlePrintWorkerStatement = async (workerName) => {
     if (!workerName) return;
     setPrintingStatement(true);
@@ -208,30 +208,28 @@ export default function Staff() {
       const totalPaid = Math.round(workerRows.reduce((sum, r) => sum + (r.paymentStatus === 'Paid' ? r.totalAmount : (r.amountPaid || 0)), 0) * 100) / 100;
       const pendingBalance = Math.round((totalEarned - totalPaid) * 100) / 100;
 
-      setStatementWorker(workerName);
-      setStatementEntries(workerRows);
-      setStatementSummary({
+      const stmtSummary = {
         totalKg,
         totalEarned,
         totalPaid,
         pendingBalance,
         staffPhone: workerRows[0]?.staffPhone || acc?.staffPhone || '',
         daysWorkedCount: acc?.daysWorkedCount || new Set(workerRows.map(r => r.date?.split('T')[0])).size,
-      });
+      };
 
-      setTimeout(() => {
-        if (workerStatementRef.current) {
-          const printWindow = window.open('', '_blank', 'width=900,height=700');
-          printWindow.document.write('<html><head><title>Worker Wage Statement & Settlement Bill</title>');
-          printWindow.document.write('<style>body{margin:0;padding:16px;font-family:Arial,Helvetica,sans-serif;color:#000;}@media print{body{padding:0;}@page{size:auto;margin:10mm;}}</style>');
-          printWindow.document.write('</head><body>');
-          printWindow.document.write(workerStatementRef.current.innerHTML);
-          printWindow.document.write('</body></html>');
-          printWindow.document.close();
-          printWindow.focus();
-          setTimeout(() => printWindow.print(), 300);
-        }
-      }, 150);
+      setStatementWorker(workerName);
+      setStatementEntries(workerRows);
+      setStatementSummary(stmtSummary);
+
+      setViewingVoucher({
+        type: 'statement',
+        data: {
+          workerName,
+          entries: workerRows,
+          summary: stmtSummary,
+        },
+        voucherNo: `#STMT-${workerName.replace(/\s+/g, '').slice(0, 6).toUpperCase()}`,
+      });
     } catch (err) {
       showToast('Failed to generate worker statement bill', 'error');
     } finally {
@@ -1300,7 +1298,7 @@ export default function Staff() {
               <>
                 {/* Mobile Cards View (Visible on Mobile & Tablet) */}
                 <div className="mobile-bills-list" style={{ padding: '12px' }}>
-                  {entries.map((entry) => (
+                  {entries.map((entry, index) => (
                     <div key={entry._id} className="mobile-bill-card">
                       {/* Header */}
                       <div className="mobile-bill-header">
@@ -1369,7 +1367,7 @@ export default function Staff() {
                         <button
                           type="button"
                           className="btn btn-secondary btn-sm"
-                          onClick={() => handlePrintEntryBill(entry)}
+                          onClick={() => handlePrintEntryBill(entry, index)}
                           style={{ color: '#7c3aed', borderColor: '#ddd6fe', fontWeight: 800, background: '#f5f3ff' }}
                         >
                           <PrintIcon size={14} color="#7c3aed" />
@@ -1389,22 +1387,26 @@ export default function Staff() {
                           <span>{entry.paymentStatus === 'Paid' ? 'Paid ✓' : 'Mark Paid'}</span>
                         </button>
 
-                        <button
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => handleOpenEdit(entry)}
-                        >
-                          <EditIcon size={14} />
-                          <span>Edit</span>
-                        </button>
+                        {canEditDelete && (
+                          <>
+                            <button
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => handleOpenEdit(entry)}
+                            >
+                              <EditIcon size={14} />
+                              <span>Edit</span>
+                            </button>
 
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          style={{ color: '#ef4444' }}
-                          onClick={() => handleDeleteEntry(entry)}
-                        >
-                          <TrashIcon size={14} color="#ef4444" />
-                          <span>Delete</span>
-                        </button>
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              style={{ color: '#ef4444' }}
+                              onClick={() => handleDeleteEntry(entry)}
+                            >
+                              <TrashIcon size={14} color="#ef4444" />
+                              <span>Delete</span>
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1426,7 +1428,7 @@ export default function Staff() {
                       </tr>
                     </thead>
                     <tbody>
-                      {entries.map((entry) => (
+                      {entries.map((entry, index) => (
                         <tr key={entry._id}>
                           <td>{formatDate(entry.date)}</td>
                           <td>
@@ -1484,8 +1486,8 @@ export default function Staff() {
                                   alignItems: 'center',
                                   gap: '4px',
                                 }}
-                                onClick={() => handlePrintEntryBill(entry)}
-                                title="Print single worker wage voucher"
+                                onClick={() => handlePrintEntryBill(entry, index)}
+                                title="Generate & View Worker Wage Bill"
                               >
                                 <PrintIcon size={13} color="#7c3aed" /> Bill
                               </button>
@@ -1501,22 +1503,26 @@ export default function Staff() {
                               >
                                 <CheckIcon size={13} /> {entry.paymentStatus === 'Paid' ? 'Paid' : 'Pay'}
                               </button>
-                              <button
-                                className="btn btn-secondary btn-sm"
-                                style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-                                onClick={() => handleOpenEdit(entry)}
-                                title="Edit entry"
-                              >
-                                <EditIcon size={13} /> Edit
-                              </button>
-                              <button
-                                className="btn btn-ghost btn-sm"
-                                style={{ padding: '4px 8px', color: '#ef4444' }}
-                                onClick={() => handleDeleteEntry(entry)}
-                                title="Delete entry"
-                              >
-                                <TrashIcon size={13} color="#ef4444" />
-                              </button>
+                              {canEditDelete && (
+                                <>
+                                  <button
+                                    className="btn btn-secondary btn-sm"
+                                    style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                                    onClick={() => handleOpenEdit(entry)}
+                                    title="Edit entry"
+                                  >
+                                    <EditIcon size={13} /> Edit
+                                  </button>
+                                  <button
+                                    className="btn btn-ghost btn-sm"
+                                    style={{ padding: '4px 8px', color: '#ef4444' }}
+                                    onClick={() => handleDeleteEntry(entry)}
+                                    title="Delete entry"
+                                  >
+                                    <TrashIcon size={13} color="#ef4444" />
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -1936,7 +1942,7 @@ export default function Staff() {
           <div style={{ border: '1.5px solid #0b5394', background: '#ffffff', color: '#000000', fontFamily: 'Arial, Helvetica, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
             {/* Top Bar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #0b5394', padding: '4px 12px', fontSize: '0.82rem', fontWeight: 'bold', color: '#0b5394' }}>
-              <div>WORKER LABOR WAGE VOUCHER</div>
+              <div>WORKER BILL</div>
               <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 900, letterSpacing: '1px' }}>॥ జై శ్రీరామ్ ॥</div>
               <div>Cell: 9441429745</div>
             </div>
@@ -1968,7 +1974,7 @@ export default function Staff() {
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
                 <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
-                  #WV-{activeBillEntry._id ? activeBillEntry._id.slice(-6).toUpperCase() : 'REC'}
+                  #{activeBillEntry.voucherNo || (viewingVoucher?.voucherNo || 'WB-1')}
                 </span>
               </div>
               <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -2065,22 +2071,22 @@ export default function Staff() {
               <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(activeBillEntry.totalAmount)}</span>
             </div>
 
-            {/* Bank Details & Signatures */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1.5px solid #0b5394', fontSize: '0.74rem', lineHeight: '1.4' }}>
-              <div style={{ borderRight: '1.5px solid #0b5394', padding: '6px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center' }}>
-                <div style={{ fontWeight: 'bold', color: '#0b5394', fontSize: '0.78rem' }}>
-                  Worker Signature / Thumb Impression
+            {/* Bank Details & Proprietor Signature (Worker signature removed as requested) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', borderTop: '1.5px solid #0b5394', fontSize: '0.74rem', lineHeight: '1.4' }}>
+              <div style={{ borderRight: '1.5px solid #0b5394', padding: '8px 12px', background: '#fafafa' }}>
+                <div style={{ fontWeight: 'bold', color: '#0b5394', marginBottom: '2px', fontSize: '0.76rem' }}>
+                  Bank Account Details:
                 </div>
-                <div style={{ marginTop: '28px', borderTop: '1px solid #000000', paddingTop: '2px', fontWeight: 'bold' }}>
-                  {activeBillEntry.staffName}
-                </div>
+                <div><strong>Bank:</strong> Andhra Pragathi Grameena Bank</div>
+                <div><strong>A/C No:</strong> 191630100000305</div>
+                <div><strong>IFSC:</strong> APGB0003116 &nbsp;|&nbsp; <strong>Branch:</strong> Mutyalapalli</div>
               </div>
 
-              <div style={{ padding: '6px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center' }}>
-                <div style={{ fontWeight: 'bold', color: '#0b5394', fontSize: '0.78rem' }}>
+              <div style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center', background: '#ffffff' }}>
+                <div style={{ fontWeight: 'bold', color: '#0b5394', fontSize: '0.8rem' }}>
                   For VIJAYA DURGA SEA FOODS
                 </div>
-                <div style={{ marginTop: '28px', borderTop: '1px solid #000000', paddingTop: '2px', fontWeight: 'bold', color: '#0b5394' }}>
+                <div style={{ marginTop: '32px', borderTop: '1px solid #000000', paddingTop: '2px', fontWeight: 'bold', color: '#0b5394' }}>
                   Proprietor / Authorized Signature
                 </div>
               </div>
@@ -2245,6 +2251,17 @@ export default function Staff() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── IN-APP VOUCHER BILL VIEWER MODAL (LIKE NORMAL BILL PAGE WITH WHATSAPP & PRINT) ── */}
+      {viewingVoucher && (
+        <VoucherBillModal
+          isOpen={Boolean(viewingVoucher)}
+          onClose={() => setViewingVoucher(null)}
+          type={viewingVoucher.type}
+          data={viewingVoucher.data}
+          voucherNo={viewingVoucher.voucherNo}
+        />
       )}
     </div>
   );

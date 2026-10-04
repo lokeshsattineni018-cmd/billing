@@ -298,7 +298,11 @@ router.post(
       const totalAmount = Math.round(numQty * numPrice * 100) / 100;
       const isPaid = paymentStatus === 'Paid';
 
+      const count = await StaffWork.countDocuments();
+      const voucherNo = `WB-${count + 1}`;
+
       const entry = await StaffWork.create({
+        voucherNo,
         staffName: staffName.trim(),
         staffPhone: staffPhone ? staffPhone.trim() : '',
         date: date ? new Date(date) : new Date(),
@@ -346,6 +350,7 @@ router.post('/bulk', protect, async (req, res) => {
 
     const workDate = date ? new Date(date) : new Date();
     const docsToInsert = [];
+    let currentCount = await StaffWork.countDocuments();
 
     for (const item of entries) {
       const staffName = item.staffName?.trim();
@@ -356,10 +361,12 @@ router.post('/bulk', protect, async (req, res) => {
         continue;
       }
 
+      currentCount += 1;
       const totalAmount = Math.round(quantity * price * 100) / 100;
       const isPaid = item.paymentStatus === 'Paid';
 
       docsToInsert.push({
+        voucherNo: `WB-${currentCount}`,
         staffName,
         staffPhone: item.staffPhone ? item.staffPhone.trim() : '',
         date: workDate,
@@ -554,7 +561,11 @@ router.post(
       const numRate = parseFloat(rate);
       const totalAmount = Math.round(numBlocks * numRate * 100) / 100;
 
+      const count = await DailyIce.countDocuments();
+      const voucherNo = `ICE-${count + 1}`;
+
       const record = new DailyIce({
+        voucherNo,
         date: date ? new Date(date) : new Date(),
         blocks: numBlocks,
         rate: numRate,
@@ -654,7 +665,7 @@ router.get('/ice/export', protect, async (req, res) => {
  * PUT /api/staff/ice/:id
  * Update ice record
  */
-router.put('/ice/:id', protect, async (req, res) => {
+router.put('/ice/:id', protect, restrictTo('admin', 'owner'), async (req, res) => {
   try {
     const { blocks, rate, date, supplierName, iceFrom, iceTo, vehicleNo, paymentStatus, notes } = req.body;
     const record = await DailyIce.findById(req.params.id);
@@ -696,7 +707,7 @@ router.put('/ice/:id', protect, async (req, res) => {
  * DELETE /api/staff/ice/:id
  * Delete ice record
  */
-router.delete('/ice/:id', protect, async (req, res) => {
+router.delete('/ice/:id', protect, restrictTo('admin', 'owner'), async (req, res) => {
   try {
     const record = await DailyIce.findByIdAndDelete(req.params.id);
     if (!record) {
@@ -967,7 +978,7 @@ router.get('/wastage/export', protect, async (req, res) => {
  * PUT /api/staff/wastage/:id
  * Update wastage sales record
  */
-router.put('/wastage/:id', protect, async (req, res) => {
+router.put('/wastage/:id', protect, restrictTo('admin', 'owner'), async (req, res) => {
   try {
     const { quantityKg, rate, date, category, buyerName, vehicleNo, paymentStatus, notes } = req.body;
     const record = await DailyWastage.findById(req.params.id);
@@ -1008,7 +1019,7 @@ router.put('/wastage/:id', protect, async (req, res) => {
  * DELETE /api/staff/wastage/:id
  * Delete wastage sales record
  */
-router.delete('/wastage/:id', protect, async (req, res) => {
+router.delete('/wastage/:id', protect, restrictTo('admin', 'owner'), async (req, res) => {
   try {
     const record = await DailyWastage.findByIdAndDelete(req.params.id);
     if (!record) {
@@ -1117,7 +1128,7 @@ router.get('/daily-operations', protect, async (req, res) => {
  * PUT /api/staff/:id
  * Update an existing work entry
  */
-router.put('/:id', protect, async (req, res) => {
+router.put('/:id', protect, restrictTo('admin', 'owner'), async (req, res) => {
   try {
     const {
       staffName,
@@ -1218,7 +1229,7 @@ router.patch('/:id/pay', protect, async (req, res) => {
  * DELETE /api/staff/:id
  * Delete a work entry
  */
-router.delete('/:id', protect, async (req, res) => {
+router.delete('/:id', protect, restrictTo('admin', 'owner'), async (req, res) => {
   try {
     const entry = await StaffWork.findById(req.params.id);
     if (!entry) {

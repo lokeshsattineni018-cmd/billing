@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 
 const staffWorkSchema = new mongoose.Schema(
   {
+    voucherNo: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     staffName: {
       type: String,
       required: [true, 'Staff / worker name is required'],

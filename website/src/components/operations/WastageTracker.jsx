@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { staffAPI } from '../../services/api';
 import { formatCurrency, formatDate, useToast, Toast } from '../../utils/helpers';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   PlusIcon,
   SearchIcon,
@@ -15,6 +16,8 @@ import {
 export default function WastageTracker() {
   const { t } = useLanguage();
   const { toast, showToast } = useToast();
+  const { user } = useAuth();
+  const canEditDelete = user?.role === 'admin' || user?.role === 'owner';
 
   const [entries, setEntries] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -487,26 +490,30 @@ export default function WastageTracker() {
                       {entry.notes || '—'}
                     </td>
                     <td className="text-center">
-                      <div style={{ display: 'inline-flex', gap: '4px' }}>
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => handleOpenEditModal(entry)}
-                          title="Edit"
-                          style={{ padding: '4px 6px' }}
-                        >
-                          <EditIcon size={14} color="#0b5394" />
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => handleDelete(entry)}
-                          title="Delete"
-                          style={{ padding: '4px 6px' }}
-                        >
-                          <TrashIcon size={14} color="#ef4444" />
-                        </button>
-                      </div>
+                      {canEditDelete ? (
+                        <div style={{ display: 'inline-flex', gap: '4px' }}>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => handleOpenEditModal(entry)}
+                            title="Edit"
+                            style={{ padding: '4px 6px' }}
+                          >
+                            <EditIcon size={14} color="#0b5394" />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => handleDelete(entry)}
+                            title="Delete"
+                            style={{ padding: '4px 6px' }}
+                          >
+                            <TrashIcon size={14} color="#ef4444" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
