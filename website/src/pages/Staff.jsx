@@ -230,7 +230,7 @@ export default function Staff() {
           entries: workerRows,
           summary: stmtSummary,
         },
-        voucherNo: `#STMT-${workerName.replace(/\s+/g, '').slice(0, 6).toUpperCase()}`,
+        voucherNo: `STMT-${workerName.replace(/\s+/g, '').slice(0, 6).toUpperCase()}`,
       });
     } catch (err) {
       showToast('Failed to generate worker statement bill', 'error');
@@ -2151,7 +2151,7 @@ export default function Staff() {
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Statement No.</span>
                 <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
-                  #STMT-{statementWorker.replace(/\s+/g, '').slice(0, 4).toUpperCase()}-{Date.now().toString().slice(-4)}
+                  STMT-{statementWorker.replace(/\s+/g, '').slice(0, 4).toUpperCase()}-{Date.now().toString().slice(-4)}
                 </span>
               </div>
               <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>

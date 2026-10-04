@@ -169,6 +169,9 @@ export const staffAPI = {
 
   // Consolidated Daily Operations Summary
   getDailyOperations: (params) => api.get('/staff/daily-operations', { params }),
+
+  // Voucher PDF Generation (Ice Bill, Worker Bill, Worker Statement)
+  getVoucherPDF: (payload) => api.post('/staff/voucher/pdf', payload, { responseType: 'blob' }),
 };
 
 export default api;

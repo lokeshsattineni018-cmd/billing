@@ -7,6 +7,7 @@ const { protect, restrictTo } = require('../middleware/auth');
 const { escapeRegex } = require('../middleware/security');
 const { logActivity } = require('../utils/activityLogger');
 const { handleServerError, captureException } = require('../utils/errorTracker');
+const { generateVoucherPDFBuffer } = require('../services/voucherPdfService');
 
 const router = express.Router();
 
@@ -1380,6 +1381,30 @@ router.get('/export', protect, async (req, res) => {
     return res.status(200).send(csvContent);
   } catch (error) {
     return handleServerError(res, error, 'Failed to export staff work report', req);
+  }
+});
+
+/**
+ * POST /api/staff/voucher/pdf
+ * Generate downloadable / shareable PDF for vouchers (worker wage, ice bill, worker statement)
+ */
+router.post('/voucher/pdf', protect, async (req, res) => {
+  try {
+    const { type, data, voucherNo } = req.body;
+    if (!data) {
+      return res.status(400).json({ success: false, message: 'Voucher data is required' });
+    }
+
+    const pdfBuffer = await generateVoucherPDFBuffer({ type, data, voucherNo });
+    const cleanNo = (voucherNo || '1').replace(/[^a-zA-Z0-9_-]/g, '');
+    const fileName = `${(type || 'voucher').toUpperCase()}_${cleanNo}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    return res.status(200).send(pdfBuffer);
+  } catch (error) {
+    return handleServerError(res, error, 'Failed to generate voucher PDF', req);
   }
 });
 

@@ -1,6 +1,7 @@
-import React, { useRef, useEffect } from 'react';
-import { PrintIcon, WhatsAppIcon, ArrowLeftIcon } from './Icons';
+import React, { useRef, useEffect, useState } from 'react';
+import { PrintIcon, WhatsAppIcon, ArrowLeftIcon, DownloadIcon } from './Icons';
 import { formatDate, numberToWords } from '../utils/helpers';
+import { staffAPI } from '../services/api';
 import ganeshaImg from '../assets/ganesha.jpg';
 import durgaImg from '../assets/durga.jpg';
 import ramDarbarImg from '../assets/ram_darbar.jpg';
@@ -13,6 +14,8 @@ export default function VoucherBillModal({
   voucherNo,
 }) {
   const printAreaRef = useRef(null);
+  const [sharingPdf, setSharingPdf] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   // Close on Escape key press
   useEffect(() => {
@@ -85,12 +88,50 @@ export default function VoucherBillModal({
     }, 250);
   };
 
-  const handleWhatsApp = () => {
+  const handleDownloadPDF = async () => {
+    if (downloadingPdf) return;
+    setDownloadingPdf(true);
+    const cleanNo = resolvedVoucherNo.replace(/[^a-zA-Z0-9_-]/g, '');
+    const fileName = `${type === 'ice' ? 'IceBill' : type === 'worker' ? 'WorkerBill' : 'WorkerStatement'}-${cleanNo}.pdf`;
+    try {
+      const res = await staffAPI.getVoucherPDF({
+        type,
+        data,
+        voucherNo: resolvedVoucherNo,
+      });
+      const fileBlobUrl = window.URL.createObjectURL(res.data);
+      const link = document.createElement('a');
+      link.href = fileBlobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(fileBlobUrl);
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.error('PDF download error:', err);
+      }
+      alert('Could not download PDF. Please try again.');
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
+  const handleWhatsApp = async () => {
+    if (sharingPdf) return;
+    setSharingPdf(true);
+
+    const cleanNo = resolvedVoucherNo.replace(/[^a-zA-Z0-9_-]/g, '');
+    const fileName = `${type === 'ice' ? 'IceBill' : type === 'worker' ? 'WorkerBill' : 'WorkerStatement'}-${cleanNo}.pdf`;
+
+    let caption = '';
+    let cleanPhone = '';
+
     if (type === 'ice') {
       const dateStr = formatDate(data.date);
       const from = data.iceFrom || data.supplierName || 'Sri Rama Ice Plant';
       const to = data.iceTo || 'Factory / Cold Storage';
-      const text = `*VIJAYA DURGA SEA FOODS*
+      caption = `*VIJAYA DURGA SEA FOODS*
 *ICE BILL: ${resolvedVoucherNo}*
 📅 *Date:* ${dateStr}
 🏢 *From (Supplier):* ${from}
@@ -102,12 +143,11 @@ export default function VoucherBillModal({
 🏷️ *Payment Status:* ${data.paymentStatus || 'Paid'}
 
 Thank you!`;
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     } else if (type === 'worker') {
       const dateStr = formatDate(data.date);
       const phone = data.staffPhone ? data.staffPhone.replace(/[^0-9]/g, '') : '';
-      const cleanPhone = phone.length === 10 ? '91' + phone : phone;
-      const text = `*VIJAYA DURGA SEA FOODS*
+      cleanPhone = phone.length === 10 ? '91' + phone : phone;
+      caption = `*VIJAYA DURGA SEA FOODS*
 *WORKER BILL: ${resolvedVoucherNo}*
 👤 *Worker Name:* ${data.staffName}
 📅 *Date:* ${dateStr}
@@ -118,14 +158,10 @@ Thank you!`;
 🏷️ *Payment Status:* ${data.paymentStatus || 'Pending'}
 
 Thank you!`;
-      const url = cleanPhone
-        ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(text)}`
-        : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-      window.open(url, '_blank');
     } else if (type === 'statement') {
       const phone = data.summary?.staffPhone ? data.summary.staffPhone.replace(/[^0-9]/g, '') : '';
-      const cleanPhone = phone.length === 10 ? '91' + phone : phone;
-      const text = `*VIJAYA DURGA SEA FOODS*
+      cleanPhone = phone.length === 10 ? '91' + phone : phone;
+      caption = `*VIJAYA DURGA SEA FOODS*
 *WORKER WAGE STATEMENT & SETTLEMENT BILL*
 👤 *Worker Name:* ${data.workerName}
 📅 *Date:* ${formatDate(new Date())}
@@ -136,10 +172,63 @@ Thank you!`;
 ⏳ *Pending Balance Due:* ₹${Number(data.summary?.pendingBalance || 0).toFixed(2)}
 
 Thank you!`;
-      const url = cleanPhone
-        ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(text)}`
-        : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-      window.open(url, '_blank');
+    }
+
+    try {
+      // 1. Fetch generated PDF blob from backend
+      const res = await staffAPI.getVoucherPDF({
+        type,
+        data,
+        voucherNo: resolvedVoucherNo,
+      });
+
+      const blob = res.data;
+      const pdfFile = new File([blob], fileName, { type: 'application/pdf' });
+
+      // 2. Try Native Web Share API with real PDF Attachment (Mobile iOS/Android/Mac)
+      // Directly opens share sheet with PDF document icon & WhatsApp action
+      if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+        await navigator.share({
+          files: [pdfFile],
+          title: fileName,
+          text: caption,
+        });
+        setSharingPdf(false);
+        return;
+      }
+
+      // 3. Fallback for Desktop browsers without direct file sharing:
+      // Download the PDF file directly to user device
+      const fileBlobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = fileBlobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(fileBlobUrl);
+
+      // Open WhatsApp to send caption & attach downloaded PDF
+      const waUrl = cleanPhone
+        ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(caption)}`
+        : `https://api.whatsapp.com/send?text=${encodeURIComponent(caption)}`;
+
+      window.location.href = waUrl;
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        // User cancelled native share sheet
+        setSharingPdf(false);
+        return;
+      }
+      if (import.meta.env.DEV) {
+        console.warn('PDF share failed, falling back to direct link:', err);
+      }
+      const waUrl = cleanPhone
+        ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(caption)}`
+        : `https://api.whatsapp.com/send?text=${encodeURIComponent(caption)}`;
+      window.location.href = waUrl;
+    } finally {
+      setSharingPdf(false);
     }
   };
 
@@ -225,6 +314,7 @@ Thank you!`;
             <button
               type="button"
               className="btn btn-whatsapp"
+              disabled={sharingPdf}
               style={{
                 fontWeight: 700,
                 padding: '9px 16px',
@@ -233,10 +323,38 @@ Thank you!`;
                 gap: '8px',
                 borderRadius: '8px',
                 fontSize: '0.9rem',
+                opacity: sharingPdf ? 0.75 : 1,
+                cursor: sharingPdf ? 'wait' : 'pointer',
               }}
               onClick={handleWhatsApp}
             >
-              <WhatsAppIcon size={18} color="#ffffff" /> Share WhatsApp
+              <WhatsAppIcon size={18} color="#ffffff" />
+              {sharingPdf ? 'Preparing PDF...' : 'Share WhatsApp'}
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-secondary"
+              disabled={downloadingPdf}
+              style={{
+                fontWeight: 700,
+                padding: '9px 14px',
+                background: '#ffffff',
+                border: '1.5px solid #cbd5e1',
+                color: '#334155',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                opacity: downloadingPdf ? 0.75 : 1,
+                cursor: downloadingPdf ? 'wait' : 'pointer',
+              }}
+              onClick={handleDownloadPDF}
+              title="Download PDF"
+            >
+              <DownloadIcon size={16} color="#334155" />
+              {downloadingPdf ? 'Downloading...' : 'PDF'}
             </button>
 
             <button
