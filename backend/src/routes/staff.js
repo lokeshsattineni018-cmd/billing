@@ -570,14 +570,15 @@ router.post(
 
       await record.save();
 
-      logActivity(
-        req.user._id,
-        'CREATE',
-        'StaffWork',
-        record._id,
-        `Recorded Ice Usage: ${numBlocks} blocks @ ₹${numRate} = ₹${totalAmount}`,
-        req
-      );
+      await logActivity(req, 'ICE_RECORDED', record._id, {
+        targetType: 'ICE',
+        blocks: record.blocks,
+        rate: record.rate,
+        totalAmount: record.totalAmount,
+        iceFrom: record.iceFrom || record.supplierName || '',
+        iceTo: record.iceTo || '',
+        paymentStatus: record.paymentStatus,
+      });
 
       return res.status(201).json({
         message: 'Ice blocks record saved successfully!',
@@ -588,6 +589,66 @@ router.post(
     }
   }
 );
+
+/**
+ * GET /api/staff/ice/export
+ * Download CSV file of ice block purchases
+ */
+router.get('/ice/export', protect, async (req, res) => {
+  try {
+    const { search, dateFrom, dateTo, paymentStatus } = req.query;
+    const filter = {};
+    if (search) {
+      const q = escapeRegex(search.trim());
+      filter.$or = [
+        { supplierName: { $regex: q, $options: 'i' } },
+        { iceFrom: { $regex: q, $options: 'i' } },
+        { iceTo: { $regex: q, $options: 'i' } },
+      ];
+    }
+    if (dateFrom || dateTo) {
+      filter.date = {};
+      if (dateFrom) {
+        const d = new Date(dateFrom);
+        d.setHours(0, 0, 0, 0);
+        filter.date.$gte = d;
+      }
+      if (dateTo) {
+        const d = new Date(dateTo);
+        d.setHours(23, 59, 59, 999);
+        filter.date.$lte = d;
+      }
+    }
+    if (paymentStatus) {
+      filter.paymentStatus = paymentStatus;
+    }
+
+    const records = await DailyIce.find(filter).sort({ date: -1 }).lean();
+    const headers = ['Date', 'Ice From (Supplier)', 'Ice To (Receiver)', 'Blocks', 'Rate per Block (INR)', 'Total Amount (INR)', 'Payment Status', 'Vehicle No', 'Notes'];
+    const rows = records.map((r) => {
+      const dStr = new Date(r.date).toLocaleDateString('en-IN');
+      return [
+        dStr,
+        `"${(r.iceFrom || r.supplierName || '').replace(/"/g, '""')}"`,
+        `"${(r.iceTo || '').replace(/"/g, '""')}"`,
+        r.blocks || 0,
+        (r.rate || 0).toFixed(2),
+        (r.totalAmount || 0).toFixed(2),
+        r.paymentStatus || 'Paid',
+        `"${(r.vehicleNo || '').replace(/"/g, '""')}"`,
+        `"${(r.notes || '').replace(/"/g, '""')}"`,
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\r\n');
+    const filename = `Ice_Purchases_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return res.status(200).send(csvContent);
+  } catch (error) {
+    return handleServerError(res, error, 'Failed to export ice report', req);
+  }
+});
 
 /**
  * PUT /api/staff/ice/:id
@@ -615,6 +676,16 @@ router.put('/ice/:id', protect, async (req, res) => {
 
     await record.save();
 
+    await logActivity(req, 'ICE_UPDATED', record._id, {
+      targetType: 'ICE',
+      blocks: record.blocks,
+      rate: record.rate,
+      totalAmount: record.totalAmount,
+      iceFrom: record.iceFrom || record.supplierName || '',
+      iceTo: record.iceTo || '',
+      paymentStatus: record.paymentStatus,
+    });
+
     return res.json({ message: 'Ice record updated successfully!', record });
   } catch (error) {
     return handleServerError(res, error, 'Failed to update ice record', req);
@@ -631,6 +702,14 @@ router.delete('/ice/:id', protect, async (req, res) => {
     if (!record) {
       return res.status(404).json({ message: 'Ice record not found' });
     }
+
+    await logActivity(req, 'ICE_DELETED', req.params.id, {
+      targetType: 'ICE',
+      blocks: record.blocks,
+      totalAmount: record.totalAmount,
+      iceFrom: record.iceFrom || record.supplierName || '',
+    });
+
     return res.json({ message: 'Ice record deleted successfully' });
   } catch (error) {
     return handleServerError(res, error, 'Failed to delete ice record', req);
@@ -805,14 +884,15 @@ router.post(
 
       await record.save();
 
-      logActivity(
-        req.user._id,
-        'CREATE',
-        'StaffWork',
-        record._id,
-        `Sold Prawn Head Wastage: ${numKg} KG @ ₹${numRate} = ₹${totalAmount}`,
-        req
-      );
+      await logActivity(req, 'WASTAGE_RECORDED', record._id, {
+        targetType: 'WASTAGE',
+        category: record.category,
+        quantityKg: record.quantityKg,
+        rate: record.rate,
+        totalAmount: record.totalAmount,
+        buyerName: record.buyerName || '',
+        paymentStatus: record.paymentStatus,
+      });
 
       return res.status(201).json({
         message: 'Prawn head wastage sales record saved successfully!',
@@ -823,6 +903,65 @@ router.post(
     }
   }
 );
+
+/**
+ * GET /api/staff/wastage/export
+ * Download CSV file of prawn head wastage sales
+ */
+router.get('/wastage/export', protect, async (req, res) => {
+  try {
+    const { search, dateFrom, dateTo, paymentStatus } = req.query;
+    const filter = {};
+    if (search) {
+      const q = escapeRegex(search.trim());
+      filter.$or = [
+        { buyerName: { $regex: q, $options: 'i' } },
+        { category: { $regex: q, $options: 'i' } },
+      ];
+    }
+    if (dateFrom || dateTo) {
+      filter.date = {};
+      if (dateFrom) {
+        const d = new Date(dateFrom);
+        d.setHours(0, 0, 0, 0);
+        filter.date.$gte = d;
+      }
+      if (dateTo) {
+        const d = new Date(dateTo);
+        d.setHours(23, 59, 59, 999);
+        filter.date.$lte = d;
+      }
+    }
+    if (paymentStatus) {
+      filter.paymentStatus = paymentStatus;
+    }
+
+    const records = await DailyWastage.find(filter).sort({ date: -1 }).lean();
+    const headers = ['Date', 'Category', 'Quantity (KG)', 'Rate per KG (INR)', 'Total Amount (INR)', 'Buyer Name', 'Payment Status', 'Vehicle No', 'Notes'];
+    const rows = records.map((r) => {
+      const dStr = new Date(r.date).toLocaleDateString('en-IN');
+      return [
+        dStr,
+        `"${(r.category || 'Prawn Head').replace(/"/g, '""')}"`,
+        (r.quantityKg || 0).toFixed(2),
+        (r.rate || 0).toFixed(2),
+        (r.totalAmount || 0).toFixed(2),
+        `"${(r.buyerName || '').replace(/"/g, '""')}"`,
+        r.paymentStatus || 'Paid',
+        `"${(r.vehicleNo || '').replace(/"/g, '""')}"`,
+        `"${(r.notes || '').replace(/"/g, '""')}"`,
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\r\n');
+    const filename = `Wastage_Sales_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return res.status(200).send(csvContent);
+  } catch (error) {
+    return handleServerError(res, error, 'Failed to export wastage report', req);
+  }
+});
 
 /**
  * PUT /api/staff/wastage/:id
@@ -849,6 +988,16 @@ router.put('/wastage/:id', protect, async (req, res) => {
 
     await record.save();
 
+    await logActivity(req, 'WASTAGE_UPDATED', record._id, {
+      targetType: 'WASTAGE',
+      category: record.category,
+      quantityKg: record.quantityKg,
+      rate: record.rate,
+      totalAmount: record.totalAmount,
+      buyerName: record.buyerName || '',
+      paymentStatus: record.paymentStatus,
+    });
+
     return res.json({ message: 'Wastage record updated successfully!', record });
   } catch (error) {
     return handleServerError(res, error, 'Failed to update wastage record', req);
@@ -865,6 +1014,14 @@ router.delete('/wastage/:id', protect, async (req, res) => {
     if (!record) {
       return res.status(404).json({ message: 'Wastage record not found' });
     }
+
+    await logActivity(req, 'WASTAGE_DELETED', req.params.id, {
+      targetType: 'WASTAGE',
+      category: record.category,
+      quantityKg: record.quantityKg,
+      totalAmount: record.totalAmount,
+    });
+
     return res.json({ message: 'Wastage record deleted successfully' });
   } catch (error) {
     return handleServerError(res, error, 'Failed to delete wastage record', req);

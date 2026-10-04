@@ -151,6 +151,10 @@ export const staffAPI = {
   createIce: (data) => api.post('/staff/ice', data),
   updateIce: (id, data) => api.put(`/staff/ice/${id}`, data),
   deleteIce: (id) => api.delete(`/staff/ice/${id}`),
+  exportIceCSVUrl: (params) => {
+    const query = new URLSearchParams(params || {}).toString();
+    return `${API_BASE_URL}/staff/ice/export?${query}&token=${localStorage.getItem('srsf_token')}`;
+  },
 
   // Prawn Head Wastage Sales Tracking
   getWastage: (params) => api.get('/staff/wastage', { params }),
@@ -158,6 +162,10 @@ export const staffAPI = {
   createWastage: (data) => api.post('/staff/wastage', data),
   updateWastage: (id, data) => api.put(`/staff/wastage/${id}`, data),
   deleteWastage: (id) => api.delete(`/staff/wastage/${id}`),
+  exportWastageCSVUrl: (params) => {
+    const query = new URLSearchParams(params || {}).toString();
+    return `${API_BASE_URL}/staff/wastage/export?${query}&token=${localStorage.getItem('srsf_token')}`;
+  },
 
   // Consolidated Daily Operations Summary
   getDailyOperations: (params) => api.get('/staff/daily-operations', { params }),

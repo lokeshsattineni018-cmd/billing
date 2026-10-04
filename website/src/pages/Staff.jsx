@@ -23,8 +23,23 @@ import ganeshaImg from '../assets/ganesha.jpg';
 import durgaImg from '../assets/durga.jpg';
 import ramDarbarImg from '../assets/ram_darbar.jpg';
 
+const BULK_DRAFT_KEY = 'srsf_bulk_worker_draft';
+
+function getInitialBulkDraft() {
+  try {
+    const raw = localStorage.getItem(BULK_DRAFT_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.rows) && parsed.rows.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
 export default function Staff() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { toast, showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState('entries'); // 'entries' | 'accounts'
@@ -69,15 +84,38 @@ export default function Staff() {
   const [printingStatement, setPrintingStatement] = useState(false);
   const workerStatementRef = useRef(null);
 
-  // Bulk Entry Modal
-  const [bulkModalOpen, setBulkModalOpen] = useState(false);
-  const [bulkDate, setBulkDate] = useState(new Date().toISOString().split('T')[0]);
-  const [bulkRows, setBulkRows] = useState([
+  // Bulk Entry Modal with Persistent Draft across pages & tab changes
+  const savedBulkDraft = getInitialBulkDraft();
+  const [bulkModalOpen, setBulkModalOpen] = useState(() => !!savedBulkDraft?.isOpen);
+  const [bulkDate, setBulkDate] = useState(() => savedBulkDraft?.date || new Date().toISOString().split('T')[0]);
+  const [bulkRows, setBulkRows] = useState(() => savedBulkDraft?.rows || [
     { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
     { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
     { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
   ]);
   const [savingBulk, setSavingBulk] = useState(false);
+
+  // Auto-save bulk draft to localStorage whenever rows, date or modal state change
+  useEffect(() => {
+    try {
+      const hasContent = bulkRows.some(
+        (r) => (r.staffName && r.staffName.trim()) || (r.quantity && parseFloat(r.quantity) > 0) || (r.price && parseFloat(r.price) > 0)
+      );
+      if (hasContent || bulkModalOpen) {
+        localStorage.setItem(
+          BULK_DRAFT_KEY,
+          JSON.stringify({
+            date: bulkDate,
+            rows: bulkRows,
+            isOpen: bulkModalOpen,
+            savedAt: new Date().toISOString(),
+          })
+        );
+      } else {
+        localStorage.removeItem(BULK_DRAFT_KEY);
+      }
+    } catch (e) {}
+  }, [bulkDate, bulkRows, bulkModalOpen]);
 
   // Selected Worker filter from Accounts tab
   const [selectedWorkerFilter, setSelectedWorkerFilter] = useState('');
@@ -451,6 +489,19 @@ export default function Staff() {
     showToast(t('copyYesterdaySuccess') || `Loaded ${rows.length} workers from previous team!`, 'success');
   };
 
+  const handleClearDraft = () => {
+    if (window.confirm(t('discardDraftConfirm') || 'Clear unsaved draft entries?')) {
+      localStorage.removeItem(BULK_DRAFT_KEY);
+      setBulkRows([
+        { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
+        { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
+        { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
+      ]);
+      setBulkModalOpen(false);
+      showToast('Draft entries cleared', 'info');
+    }
+  };
+
   const handleSaveBulk = async () => {
     const validRows = bulkRows.filter(
       (r) => r.staffName?.trim() && parseFloat(r.quantity) > 0 && parseFloat(r.price) >= 0
@@ -468,6 +519,7 @@ export default function Staff() {
         entries: validRows,
       });
       showToast(res.data.message || `Saved ${validRows.length} entries!`, 'success');
+      localStorage.removeItem(BULK_DRAFT_KEY);
       setBulkModalOpen(false);
       setBulkRows([
         { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
@@ -515,47 +567,47 @@ export default function Staff() {
             {activeTab === 'ice' ? (
               <>
                 <IceIcon size={24} color="#0284c7" />
-                <span>Ice Blocks Usage & Tracker</span>
+                <span>{t('iceTrackerTitle') || 'Ice Blocks Usage & Tracker'}</span>
               </>
             ) : activeTab === 'wastage' ? (
               <>
                 <ScaleIcon size={24} color="#16a34a" />
-                <span>Prawn Head Wastage Sales</span>
+                <span>{t('wastageTrackerTitle') || 'Prawn Head Wastage Sales'}</span>
               </>
             ) : activeTab === 'accounts' ? (
               <>
                 <span style={{ fontSize: '1.3rem' }}>📒</span>
-                <span>Worker Accounts & Wage Ledger</span>
+                <span>{t('workerAccountsTitle') || 'Worker Accounts & Wage Ledger'}</span>
               </>
             ) : activeTab === 'net' ? (
               <>
                 <span style={{ fontSize: '1.3rem' }}>📊</span>
-                <span>Daily Operations Net Summary</span>
+                <span>{t('dailyNetTitle') || 'Daily Operations Net Summary'}</span>
               </>
             ) : activeTab === 'calendar' ? (
               <>
                 <span style={{ fontSize: '1.3rem' }}>📅</span>
-                <span>Staff Attendance Calendar</span>
+                <span>{t('attendanceCalendarTitle') || 'Staff Attendance Calendar'}</span>
               </>
             ) : (
               <>
                 <StaffIcon size={24} color="#0b5394" />
-                <span>{t('staff') || 'Workers Labor & Daily Operations'}</span>
+                <span>{t('workerLaborTitle') || t('staff') || 'Workers Labor & Daily Operations'}</span>
               </>
             )}
           </h2>
           <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.85rem' }}>
             {activeTab === 'ice'
-              ? 'Track daily ice block purchases, suppliers, recipients, factory usage & cooling expenses'
+              ? (t('iceTrackerSubtitle') || 'Track daily ice block purchases, suppliers, recipients, factory usage & cooling expenses')
               : activeTab === 'wastage'
-              ? 'Track daily prawn head and shell byproduct sales, rates, and extra factory revenue'
+              ? (t('wastageTrackerSubtitle') || 'Track daily prawn head and shell byproduct sales, rates, and extra factory revenue')
               : activeTab === 'accounts'
-              ? 'Cumulative weight processed, total wages earned, settlements and balances for all staff'
+              ? (t('workerAccountsSubtitle') || 'Cumulative weight processed, total wages earned, settlements and balances for all staff')
               : activeTab === 'net'
-              ? 'Consolidated daily financial overview: worker wages + ice expenses vs. prawn head revenue'
+              ? (t('dailyNetSubtitle') || 'Consolidated daily financial overview: worker wages + ice expenses vs. prawn head revenue')
               : activeTab === 'calendar'
-              ? 'Monthly calendar overview of worker shifts, attendance and activity'
-              : t('staffSubtitle') || 'Record and manage daily staff labor, peeling work, attendance and wages'}
+              ? (t('attendanceCalendarSubtitle') || 'Monthly calendar overview of worker shifts, attendance and activity')
+              : (t('workerLaborSubtitle') || t('staffSubtitle') || 'Record and manage daily staff labor, peeling work, attendance and wages')}
           </p>
         </div>
 
@@ -567,7 +619,7 @@ export default function Staff() {
             style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
           >
             <RefreshIcon size={15} spinning={refreshing} />
-            <span>Refresh</span>
+            <span>{lang === 'te' ? 'రిఫ్రెష్' : 'Refresh'}</span>
           </button>
 
           {activeTab === 'entries' && (
@@ -577,7 +629,7 @@ export default function Staff() {
                 onClick={() => setBulkModalOpen(!bulkModalOpen)}
                 style={{ fontWeight: 700, border: '1.5px solid #0b5394', color: '#0b5394' }}
               >
-                ⚡ {bulkModalOpen ? 'Hide Bulk Entry' : 'Bulk Attendance'}
+                ⚡ {bulkModalOpen ? (t('hideBulkEntry') || 'Hide Bulk Entry') : (t('bulkAttendance') || 'Bulk Attendance')}
               </button>
 
               <button
@@ -593,7 +645,7 @@ export default function Staff() {
                 }}
               >
                 <PlusIcon size={16} color="#ffffff" />
-                <span>Add Work Entry</span>
+                <span>{t('addWorkEntry') || 'Add Work Entry'}</span>
               </button>
             </>
           )}
@@ -630,7 +682,7 @@ export default function Staff() {
             gap: '8px',
           }}
         >
-          <span>👥 Workers Labor</span>
+          <span>👥 {t('workerLaborTitle') || 'Workers Labor'}</span>
           <span
             style={{
               background: activeTab === 'entries' ? '#eff6ff' : '#f1f5f9',
@@ -646,7 +698,7 @@ export default function Staff() {
 
         <button
           type="button"
-          onClick={() => { setActiveTab('ice'); setBulkModalOpen(false); }}
+          onClick={() => setActiveTab('ice')}
           style={{
             padding: '10px 16px',
             fontSize: '0.9rem',
@@ -662,12 +714,12 @@ export default function Staff() {
             gap: '8px',
           }}
         >
-          <span>🧊 Ice Blocks Tracker</span>
+          <span>🧊 {t('iceBlocks') || 'Ice Blocks Tracker'}</span>
         </button>
 
         <button
           type="button"
-          onClick={() => { setActiveTab('wastage'); setBulkModalOpen(false); }}
+          onClick={() => setActiveTab('wastage')}
           style={{
             padding: '10px 16px',
             fontSize: '0.9rem',
@@ -683,12 +735,12 @@ export default function Staff() {
             gap: '8px',
           }}
         >
-          <span>🦐 Prawn Head Wastage</span>
+          <span>🦐 {t('prawnHeadWastage') || 'Prawn Head Wastage'}</span>
         </button>
 
         <button
           type="button"
-          onClick={() => { setActiveTab('accounts'); setBulkModalOpen(false); }}
+          onClick={() => setActiveTab('accounts')}
           style={{
             padding: '10px 16px',
             fontSize: '0.9rem',
@@ -704,7 +756,7 @@ export default function Staff() {
             gap: '8px',
           }}
         >
-          <span>📒 Workers Accounts</span>
+          <span>📒 {t('workerAccounts') || 'Workers Accounts'}</span>
           <span
             style={{
               background: activeTab === 'accounts' ? '#eff6ff' : '#f1f5f9',
@@ -720,7 +772,7 @@ export default function Staff() {
 
         <button
           type="button"
-          onClick={() => { setActiveTab('net'); setBulkModalOpen(false); }}
+          onClick={() => setActiveTab('net')}
           style={{
             padding: '10px 16px',
             fontSize: '0.9rem',
@@ -736,12 +788,12 @@ export default function Staff() {
             gap: '8px',
           }}
         >
-          <span>📊 Daily Net Summary</span>
+          <span>📊 {t('dailyOperations') || 'Daily Net Summary'}</span>
         </button>
 
         <button
           type="button"
-          onClick={() => { setActiveTab('calendar'); setBulkModalOpen(false); }}
+          onClick={() => setActiveTab('calendar')}
           style={{
             padding: '10px 16px',
             fontSize: '0.9rem',
@@ -852,11 +904,16 @@ export default function Staff() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0b5394' }}>
-                    ⚡ Bulk Staff Attendance Entry
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0b5394', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span>⚡ {t('bulkStaffAttendanceEntry') || 'Bulk Staff Attendance Entry'}</span>
+                    {bulkRows.some((r) => r.staffName?.trim() || r.quantity) && (
+                      <span style={{ fontSize: '0.72rem', color: '#16a34a', background: '#dcfce7', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>
+                        ✓ {t('draftSaved') || 'Draft Auto-Saved'}
+                      </span>
+                    )}
                   </h3>
                   <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>
-                    Quickly record weights and rates for multiple workers on the same date
+                    {t('bulkStaffSubtitle') || 'Quickly record weights and rates for multiple workers on the same date'}
                   </p>
                 </div>
                 <button className="btn btn-ghost btn-sm" onClick={() => setBulkModalOpen(false)} style={{ fontSize: '1.1rem' }}>✕</button>
@@ -866,7 +923,7 @@ export default function Staff() {
               <div style={{ marginBottom: '14px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
                 <div style={{ background: '#f1f5f9', padding: '10px 14px', borderRadius: '8px', display: 'inline-block' }}>
                   <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0b5394', display: 'block', marginBottom: '4px' }}>
-                    Batch Work Date:
+                    {t('batchWorkDate') || 'Batch Work Date'}:
                   </label>
                   <input
                     type="date"
@@ -910,10 +967,10 @@ export default function Staff() {
                   marginBottom: '6px',
                 }}
               >
-                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Worker Name</span>
-                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Weight (KG)</span>
-                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Rate (₹/KG)</span>
-                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', textAlign: 'right' }}>Total</span>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('workerName') || 'Worker Name'}</span>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('weightKg') || 'Weight (KG)'}</span>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('ratePerKg') || 'Rate (₹/KG)'}</span>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', textAlign: 'right' }}>{t('total') || 'Total'}</span>
                 <span style={{ width: '28px' }}></span>
               </div>
 
@@ -942,7 +999,7 @@ export default function Staff() {
                       <input
                         type="text"
                         className="form-input"
-                        placeholder="Worker Name"
+                        placeholder={t('workerName') || "Worker Name"}
                         value={row.staffName}
                         onChange={(e) => handleBulkRowChange(idx, 'staffName', e.target.value)}
                         style={{ height: '36px', fontSize: '0.85rem' }}
@@ -990,22 +1047,32 @@ export default function Staff() {
                   onClick={handleAddBulkRow}
                   style={{ width: '100%', border: '1px dashed #cbd5e1', fontWeight: 700, marginTop: '4px' }}
                 >
-                  + Add Another Worker Row
+                  {t('addAnotherWorkerRow') || '+ Add Another Worker Row'}
                 </button>
               </div>
 
               {/* Bulk Footer */}
               <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                 <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                  Total Batch Workers: <strong>{bulkRows.filter((r) => r.staffName?.trim()).length}</strong>
+                  {t('totalBatchWorkers') || 'Total Batch Workers'}: <strong>{bulkRows.filter((r) => r.staffName?.trim()).length}</strong>
                 </span>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  {bulkRows.some((r) => r.staffName?.trim() || r.quantity) && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={handleClearDraft}
+                      style={{ color: '#ef4444', fontWeight: 700, fontSize: '0.8rem' }}
+                    >
+                      🗑️ {t('clearDraft') || 'Clear Draft'}
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="btn btn-secondary"
                     onClick={() => setBulkModalOpen(false)}
                   >
-                    Cancel
+                    {t('cancel') || 'Cancel'}
                   </button>
                   <button
                     type="button"
@@ -1014,7 +1081,7 @@ export default function Staff() {
                     disabled={savingBulk}
                     style={{ background: '#0b5394', fontWeight: 800 }}
                   >
-                    {savingBulk ? 'Saving Batch...' : 'Save All Workers'}
+                    {savingBulk ? (t('saving') || 'Saving Batch...') : (t('saveAllWorkers') || 'Save All Workers')}
                   </button>
                 </div>
               </div>
@@ -1098,12 +1165,12 @@ export default function Staff() {
                 {/* Search Worker Name */}
                 <div>
                   <label className="filter-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>
-                    Worker Name
+                    {t('workerName') || 'Worker Name'}
                   </label>
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="Search name..."
+                    placeholder={lang === 'te' ? 'కార్మికుని పేరు వెతకండి...' : 'Search name...'}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
@@ -1112,25 +1179,25 @@ export default function Staff() {
                 {/* Quick Date Presets */}
                 <div>
                   <label className="filter-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>
-                    Period Preset
+                    {lang === 'te' ? 'కాల పరిమితి' : 'Period Preset'}
                   </label>
                   <select
                     className="form-select"
                     value={dateFilter}
                     onChange={(e) => handleDatePreset(e.target.value)}
                   >
-                    <option value="all">All Dates</option>
-                    <option value="today">Today</option>
-                    <option value="yesterday">Yesterday</option>
-                    <option value="week">Past 7 Days</option>
-                    <option value="month">This Month</option>
+                    <option value="all">{lang === 'te' ? 'అన్ని తేదీలు' : 'All Dates'}</option>
+                    <option value="today">{t('today') || 'Today'}</option>
+                    <option value="yesterday">{t('yesterday') || 'Yesterday'}</option>
+                    <option value="week">{lang === 'te' ? 'గత 7 రోజులు' : 'Past 7 Days'}</option>
+                    <option value="month">{t('thisMonth') || 'This Month'}</option>
                   </select>
                 </div>
 
                 {/* Date From */}
                 <div>
                   <label className="filter-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>
-                    From Date
+                    {lang === 'te' ? 'ప్రారంభ తేదీ' : 'From Date'}
                   </label>
                   <input
                     type="date"
@@ -1146,7 +1213,7 @@ export default function Staff() {
                 {/* Date To */}
                 <div>
                   <label className="filter-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>
-                    To Date
+                    {lang === 'te' ? 'ముగింపు తేదీ' : 'To Date'}
                   </label>
                   <input
                     type="date"
@@ -1162,16 +1229,16 @@ export default function Staff() {
                 {/* Payment Status Filter */}
                 <div>
                   <label className="filter-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>
-                    Payment Status
+                    {t('paymentStatus') || 'Payment Status'}
                   </label>
                   <select
                     className="form-select"
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                   >
-                    <option value="">All Statuses</option>
-                    <option value="Pending">Pending Only</option>
-                    <option value="Paid">Paid Only</option>
+                    <option value="">{lang === 'te' ? 'అన్ని రకాలు' : 'All Statuses'}</option>
+                    <option value="Pending">{lang === 'te' ? 'బాకీ ఉన్నవి మాత్రమే' : 'Pending Only'}</option>
+                    <option value="Paid">{lang === 'te' ? 'చెల్లించినవి మాత్రమే' : 'Paid Only'}</option>
                   </select>
                 </div>
 
@@ -1192,15 +1259,23 @@ export default function Staff() {
                       gap: '6px',
                     }}
                   >
-                    <SearchIcon size={15} color="#ffffff" /> Search
+                    <SearchIcon size={15} color="#ffffff" />
+                    <span>{lang === 'te' ? 'వెతకండి' : 'Filter'}</span>
                   </button>
                   <button
                     type="button"
-                    className="btn btn-ghost"
+                    className="btn btn-secondary"
                     onClick={handleClearFilters}
-                    style={{ height: '42px', padding: '0 12px', color: '#64748b' }}
+                    style={{
+                      height: '42px',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    title="Clear all filters"
                   >
-                    Clear
+                    <span>{lang === 'te' ? 'రీసెట్' : 'Reset'}</span>
                   </button>
                 </div>
               </div>
