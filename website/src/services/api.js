@@ -81,6 +81,7 @@ export const dashboardAPI = {
   summary: (params) => api.get('/dashboard/summary', { params: { ...params, _t: Date.now() } }),
   getDailySummary: () => api.get('/dashboard/daily-summary', { params: { _t: Date.now() } }),
   getAnalytics: () => api.get('/dashboard/analytics', { params: { _t: Date.now() } }),
+  getProfitLoss: (params) => api.get('/dashboard/profit-loss', { params: { ...params, _t: Date.now() } }),
 };
 
 // Admin Sales Reports

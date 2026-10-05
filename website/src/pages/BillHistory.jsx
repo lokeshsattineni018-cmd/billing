@@ -4,10 +4,12 @@ import { billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast, shareInvoicePDFOnWhatsApp } from '../utils/helpers';
-import { SearchIcon, PrintIcon, DownloadIcon, WhatsAppIcon, DownloadIcon as ExportIcon, PlusIcon, ShareIcon } from '../components/Icons';
+import { SearchIcon, PrintIcon, DownloadIcon, WhatsAppIcon, DownloadIcon as ExportIcon, PlusIcon, ShareIcon, InvoiceIcon } from '../components/Icons';
 import { SkeletonTable } from '../components/Skeleton';
 import ReminderModal from '../components/ReminderModal';
 import PaymentModal from '../components/PaymentModal';
+import SwipeableItem from '../components/SwipeableItem';
+import PullToRefresh from '../components/PullToRefresh';
 
 export default function BillHistory() {
   const navigate = useNavigate();
@@ -178,8 +180,9 @@ export default function BillHistory() {
 
 
   return (
-    <div className="page-container fade-in">
-      <Toast toast={toast} />
+    <PullToRefresh onRefresh={() => loadBills(1)}>
+      <div className="page-container fade-in">
+        <Toast toast={toast} />
 
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
@@ -306,12 +309,42 @@ export default function BillHistory() {
           <>
             {/* Mobile Cards View (Visible on Phones & Tablets) */}
             <div className="mobile-bills-list">
+              <div style={{ fontSize: '0.72rem', color: '#94a3b8', textAlign: 'right', padding: '0 4px 6px 0', fontWeight: 600 }}>
+                👈 Swipe card left for quick actions
+              </div>
               {bills.map((bill) => {
                 const totalQty = getTotalQuantity(bill);
                 return (
-                <div key={bill._id} className="mobile-bill-card" style={bill.isVoided ? { background: '#fef2f2', border: '1px dashed #fca5a5', opacity: 0.85 } : {}}>
-                  {/* Top Row: Bill # + Date + Status */}
-                  <div className="mobile-bill-header">
+                  <SwipeableItem
+                    key={bill._id}
+                    actions={[
+                      ...(!bill.isVoided
+                        ? [
+                            {
+                              label: 'WhatsApp',
+                              icon: <WhatsAppIcon size={16} color="#ffffff" />,
+                              background: '#25D366',
+                              onClick: () => handleShareWhatsApp(null, bill),
+                            },
+                          ]
+                        : []),
+                      {
+                        label: 'Print',
+                        icon: <PrintIcon size={16} color="#ffffff" />,
+                        background: '#0b5394',
+                        onClick: () => handlePrint(null, bill._id),
+                      },
+                      {
+                        label: 'View',
+                        icon: <InvoiceIcon size={16} color="#ffffff" />,
+                        background: '#4f46e5',
+                        onClick: () => navigate(`/bills/${bill._id}`),
+                      },
+                    ]}
+                  >
+                    <div className="mobile-bill-card" style={bill.isVoided ? { background: '#fef2f2', border: '1px dashed #fca5a5', opacity: 0.85 } : {}}>
+                      {/* Top Row: Bill # + Date + Status */}
+                      <div className="mobile-bill-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span className="badge badge-blue" style={{ fontSize: '0.8rem', padding: '3px 8px', fontWeight: 800 }}>#{bill.billNo}</span>
                       {bill.isVoided && (
@@ -451,6 +484,7 @@ export default function BillHistory() {
                     </button>
                   </div>
                 </div>
+              </SwipeableItem>
               )})}
             </div>
 
@@ -757,6 +791,7 @@ export default function BillHistory() {
           }}
         />
       )}
-    </div>
+      </div>
+    </PullToRefresh>
   );
 }

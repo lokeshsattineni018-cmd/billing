@@ -1,6 +1,9 @@
 const express = require('express');
 const Bill = require('../models/Bill');
 const User = require('../models/User');
+const StaffWork = require('../models/StaffWork');
+const DailyIce = require('../models/DailyIce');
+const DailyWastage = require('../models/DailyWastage');
 const { protect, restrictTo } = require('../middleware/auth');
 const { handleServerError } = require('../utils/errorTracker');
 
@@ -333,6 +336,196 @@ router.get('/analytics', protect, restrictTo('owner', 'admin', 'staff'), async (
   } catch (error) {
     console.error('Analytics Error:', error);
     return handleServerError(res, error, 'Server error', req);
+  }
+});
+
+/**
+ * GET /api/dashboard/profit-loss
+ * Calculate live Profit & Loss (Revenue vs Operating Expenses) with margins
+ */
+router.get('/profit-loss', protect, restrictTo('owner', 'admin'), async (req, res) => {
+  try {
+    const { period = 'this_month', startDate, endDate } = req.query;
+    const now = new Date();
+
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    let filterStart, filterEnd, periodLabel;
+    if (period === 'today') {
+      filterStart = startOfDay;
+      filterEnd = endOfDay;
+      periodLabel = 'Today';
+    } else if (period === 'this_week') {
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+      filterStart = new Date(now.getFullYear(), now.getMonth(), diff);
+      filterStart.setHours(0, 0, 0, 0);
+      filterEnd = endOfDay;
+      periodLabel = 'This Week';
+    } else if (period === 'this_month') {
+      filterStart = startOfMonth;
+      filterEnd = endOfMonth;
+      periodLabel = 'This Month';
+    } else if (period === 'custom' && startDate && endDate) {
+      filterStart = new Date(startDate);
+      filterStart.setHours(0, 0, 0, 0);
+      filterEnd = new Date(endDate);
+      filterEnd.setHours(23, 59, 59, 999);
+      periodLabel = 'Custom Range';
+    } else {
+      filterStart = startOfMonth;
+      filterEnd = endOfMonth;
+      periodLabel = 'This Month';
+    }
+
+    const dateFilter = { date: { $gte: filterStart, $lt: filterEnd } };
+
+    const [
+      billSalesAgg,
+      wastageSalesAgg,
+      staffWagesAgg,
+      iceExpensesAgg,
+      dailyBills,
+      dailyWastage,
+      dailyStaff,
+      dailyIce,
+    ] = await Promise.all([
+      // 1. Total Bill Sales
+      Bill.aggregate([
+        { $match: { ...dateFilter, isVoided: { $ne: true } } },
+        { $group: { _id: null, total: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, count: { $sum: 1 } } },
+      ]),
+      // 2. Total Wastage Sales
+      DailyWastage.aggregate([
+        { $match: dateFilter },
+        { $group: { _id: null, total: { $sum: '$totalAmount' }, kg: { $sum: '$quantityKg' } } },
+      ]),
+      // 3. Total Staff Wages
+      StaffWork.aggregate([
+        { $match: dateFilter },
+        { $group: { _id: null, total: { $sum: '$totalAmount' }, count: { $sum: 1 } } },
+      ]),
+      // 4. Total Ice Expenses
+      DailyIce.aggregate([
+        { $match: dateFilter },
+        { $group: { _id: null, total: { $sum: '$totalAmount' }, blocks: { $sum: '$blocks' } } },
+      ]),
+      // 5. Daily timeline for bills
+      Bill.aggregate([
+        { $match: { ...dateFilter, isVoided: { $ne: true } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: '+05:30' } },
+            total: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
+          },
+        },
+      ]),
+      // 6. Daily timeline for wastage
+      DailyWastage.aggregate([
+        { $match: dateFilter },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: '+05:30' } },
+            total: { $sum: '$totalAmount' },
+          },
+        },
+      ]),
+      // 7. Daily timeline for staff
+      StaffWork.aggregate([
+        { $match: dateFilter },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: '+05:30' } },
+            total: { $sum: '$totalAmount' },
+          },
+        },
+      ]),
+      // 8. Daily timeline for ice
+      DailyIce.aggregate([
+        { $match: dateFilter },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: '+05:30' } },
+            total: { $sum: '$totalAmount' },
+          },
+        },
+      ]),
+    ]);
+
+    const invoiceSales = Math.round((billSalesAgg[0]?.total || 0) * 100) / 100;
+    const wastageSales = Math.round((wastageSalesAgg[0]?.total || 0) * 100) / 100;
+    const totalRevenue = Math.round((invoiceSales + wastageSales) * 100) / 100;
+
+    const staffWages = Math.round((staffWagesAgg[0]?.total || 0) * 100) / 100;
+    const iceExpenses = Math.round((iceExpensesAgg[0]?.total || 0) * 100) / 100;
+    const totalExpenses = Math.round((staffWages + iceExpenses) * 100) / 100;
+
+    const netProfit = Math.round((totalRevenue - totalExpenses) * 100) / 100;
+    const marginPercent = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 1000) / 10 : 0;
+
+    // Build unique sorted list of dates in the timeline
+    const allDateKeys = Array.from(new Set([
+      ...dailyBills.map((d) => d._id),
+      ...dailyWastage.map((d) => d._id),
+      ...dailyStaff.map((d) => d._id),
+      ...dailyIce.map((d) => d._id),
+    ])).sort();
+
+    const timeline = allDateKeys.map((dateKey) => {
+      const bSales = dailyBills.find((d) => d._id === dateKey)?.total || 0;
+      const wSales = dailyWastage.find((d) => d._id === dateKey)?.total || 0;
+      const sWages = dailyStaff.find((d) => d._id === dateKey)?.total || 0;
+      const iExp = dailyIce.find((d) => d._id === dateKey)?.total || 0;
+
+      const dayRevenue = Math.round((bSales + wSales) * 100) / 100;
+      const dayExpenses = Math.round((sWages + iExp) * 100) / 100;
+      const dayNet = Math.round((dayRevenue - dayExpenses) * 100) / 100;
+      const dayMargin = dayRevenue > 0 ? Math.round((dayNet / dayRevenue) * 1000) / 10 : 0;
+
+      return {
+        date: dateKey,
+        revenue: dayRevenue,
+        invoiceSales: bSales,
+        wastageSales: wSales,
+        expenses: dayExpenses,
+        staffWages: sWages,
+        iceExpenses: iExp,
+        netProfit: dayNet,
+        marginPercent: dayMargin,
+      };
+    });
+
+    res.json({
+      period,
+      periodLabel,
+      startDate: filterStart,
+      endDate: filterEnd,
+      revenue: {
+        invoiceSales,
+        invoiceCount: billSalesAgg[0]?.count || 0,
+        wastageSales,
+        wastageKg: wastageSalesAgg[0]?.kg || 0,
+        totalRevenue,
+      },
+      expenses: {
+        staffWages,
+        staffEntries: staffWagesAgg[0]?.count || 0,
+        iceExpenses,
+        iceBlocks: iceExpensesAgg[0]?.blocks || 0,
+        totalExpenses,
+      },
+      pnl: {
+        netProfit,
+        marginPercent,
+        status: netProfit >= 0 ? 'PROFIT' : 'LOSS',
+      },
+      timeline,
+    });
+  } catch (error) {
+    return handleServerError(res, error, 'Failed to calculate profit & loss', req);
   }
 });
 

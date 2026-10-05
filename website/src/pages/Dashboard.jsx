@@ -7,6 +7,9 @@ import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
 import { TrendingUpIcon, CalendarIcon, PlusIcon, WhatsAppIcon, InvoiceIcon, RefreshIcon } from '../components/Icons';
 import { RevenueTrendChart, TopCustomersBarChart, PaymentStatusDonut } from '../components/AnalyticsCharts';
 import { SkeletonKPIGrid, SkeletonTable, SkeletonChart, SkeletonCard, Skeleton } from '../components/Skeleton';
+import CountUp from '../components/CountUp';
+import PullToRefresh from '../components/PullToRefresh';
+import ProfitLossWidget from '../components/ProfitLossWidget';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -155,6 +158,14 @@ export default function Dashboard() {
     year: 'numeric',
   });
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return { en: 'Good Morning', te: 'శుభోదయం', icon: '🌅' };
+    if (hour < 17) return { en: 'Good Afternoon', te: 'శుభ మధ్యాహ్నం', icon: '☀️' };
+    return { en: 'Good Evening', te: 'శుభ సాయంత్రం', icon: '🌆' };
+  };
+  const greeting = getGreeting();
+
   if (loading) {
     return (
       <div className="page-container fade-in" style={{ maxWidth: '1440px', margin: '0 auto' }}>
@@ -173,8 +184,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="page-container fade-in" style={{ maxWidth: '1440px', margin: '0 auto' }}>
-      <Toast toast={toast} />
+    <PullToRefresh onRefresh={handleManualRefresh}>
+      <div className="page-container fade-in" style={{ maxWidth: '1440px', margin: '0 auto' }}>
+        <Toast toast={toast} />
 
       {/* ========================================================================= */}
       {/* 1. EXECUTIVE COMMAND HERO (ADMIN) OR SIMPLE HEADER (STAFF/OWNER)          */}
@@ -200,10 +212,10 @@ export default function Dashboard() {
             <div className="dashboard-hero-title-area" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h1 className="dashboard-hero-title" style={{ fontSize: '1.65rem', fontWeight: 900, margin: 0, letterSpacing: '-0.5px', color: '#0f172a' }}>
-                  Executive Billing Center
+                  {greeting.icon} {greeting.en}, {user?.name || 'Owner'}
                 </h1>
-                <p className="dashboard-hero-subtitle" style={{ margin: '3px 0 0 0', fontSize: '0.84rem', color: '#64748b', fontWeight: 500 }}>
-                  VIJAYA DURGA AGENCIES • Real-time Financial Command
+                <p className="dashboard-hero-subtitle" style={{ margin: '3px 0 0 0', fontSize: '0.84rem', color: '#64748b', fontWeight: 600 }}>
+                  VIJAYA DURGA AGENCIES • {greeting.te} • {currentDateStr}
                 </p>
               </div>
               <button
@@ -301,55 +313,107 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Quick Nav Command Bar — hidden on mobile (available in bottom nav) */}
-          <div
-            className="hide-on-mobile"
-            style={{
-              display: 'flex',
-              gap: '8px',
-              flexWrap: 'wrap',
-              marginTop: '18px',
-              paddingTop: '16px',
-              borderTop: '1px solid #f1f5f9',
-            }}
-          >
-            {[
-              { label: 'Sales Reports →', path: '/reports' },
-              { label: 'Customers →', path: '/customers' },
-              { label: 'Tally XML Export', action: () => window.open(billsAPI.exportTallyUrl(), '_blank') },
-              { label: 'Activity Audit Log →', path: '/activity-log' },
-            ].map((btn, i) => (
+            {/* Quick Action Navigation Bar */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '16px', alignItems: 'center' }}>
               <button
-                key={i}
                 type="button"
-                onClick={btn.action || (() => navigate(btn.path))}
+                className="btn btn-primary btn-sm"
+                onClick={() => navigate('/new-bill')}
                 style={{
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  color: '#334155',
-                  padding: '6px 14px',
+                  background: '#0b5394',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  padding: '7px 14px',
                   borderRadius: '8px',
-                  fontSize: '0.76rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#eff6ff';
-                  e.currentTarget.style.borderColor = '#bfdbfe';
-                  e.currentTarget.style.color = '#0b5394';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#f8fafc';
-                  e.currentTarget.style.borderColor = '#e2e8f0';
-                  e.currentTarget.style.color = '#334155';
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 8px rgba(11, 83, 148, 0.25)',
                 }}
               >
-                {btn.label}
+                <PlusIcon size={15} color="#ffffff" /> New Invoice
               </button>
-            ))}
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => navigate('/staff')}
+                style={{
+                  fontWeight: 700,
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  background: '#f8fafc',
+                }}
+              >
+                ⚡ Staff Labor
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => navigate('/staff')}
+                style={{
+                  fontWeight: 700,
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  background: '#f8fafc',
+                }}
+              >
+                🧊 Ice Tracking
+              </button>
+              <button
+                type="button"
+                className="btn btn-whatsapp btn-sm"
+                onClick={handleOpenDailySummary}
+                style={{
+                  fontWeight: 700,
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                }}
+              >
+                <WhatsAppIcon size={14} color="#ffffff" /> Daily Summary
+              </button>
+            </div>
+
+            {/* Smart Outstanding Alert Pill */}
+            {(data?.receivables?.pendingCount > 0 || data?.receivables?.totalPending > 0) && (
+              <div
+                onClick={() => navigate('/bills')}
+                style={{
+                  marginTop: '14px',
+                  padding: '10px 14px',
+                  background: '#fffbeb',
+                  border: '1px solid #fde68a',
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  fontSize: '0.82rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '1rem' }}>⚠️</span>
+                  <span style={{ color: '#92400e', fontWeight: 800 }}>
+                    {data.receivables.pendingCount} Invoices Awaiting Payment
+                  </span>
+                  <span style={{ color: '#b45309', fontWeight: 700 }}>
+                    ({formatCurrency(data.receivables.totalPending)})
+                  </span>
+                </div>
+                <span style={{ color: '#b45309', fontWeight: 800, fontSize: '0.78rem' }}>
+                  Review Invoices →
+                </span>
+              </div>
+            )}
           </div>
-        </div>
       ) : (
         <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '20px' }}>
           <div>
@@ -411,7 +475,7 @@ export default function Dashboard() {
                     {t('todaysSales')}
                   </span>
                   <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#0b5394', marginTop: '4px', letterSpacing: '-0.5px' }}>
-                    {formatCurrency(data?.today?.totalSales ?? data?.selectedPeriod?.totalSales ?? 0)}
+                    <CountUp value={data?.today?.totalSales ?? data?.selectedPeriod?.totalSales ?? 0} isCurrency />
                   </div>
                 </div>
                 <div
@@ -435,7 +499,7 @@ export default function Dashboard() {
 
               <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
                 <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-                  {data?.today?.billCount ?? data?.selectedPeriod?.billCount ?? 0} {t('bills')}
+                  <CountUp value={data?.today?.billCount ?? data?.selectedPeriod?.billCount ?? 0} /> {t('bills')}
                 </span>
                 <span style={{ background: '#f0fdf4', color: '#16a34a', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
                   Today
@@ -451,7 +515,7 @@ export default function Dashboard() {
                   {t('thisMonthSales')}
                 </span>
                 <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#10b981', marginTop: '4px', letterSpacing: '-0.5px' }}>
-                  {formatCurrency(data?.month?.totalSales || 0)}
+                  <CountUp value={data?.month?.totalSales || 0} isCurrency />
                 </div>
               </div>
               <div
@@ -475,7 +539,7 @@ export default function Dashboard() {
 
             <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
               <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-                {data?.month?.billCount || 0} {t('bills')}
+                <CountUp value={data?.month?.billCount || 0} /> {t('bills')}
               </span>
               <span style={{ background: '#ecfdf5', color: '#059669', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
                 MTD
@@ -491,7 +555,7 @@ export default function Dashboard() {
                   {t('outstandingReceivables')}
                 </span>
                 <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#d97706', marginTop: '4px', letterSpacing: '-0.5px' }}>
-                  {formatCurrency(data?.receivables?.totalPending || 0)}
+                  <CountUp value={data?.receivables?.totalPending || 0} isCurrency />
                 </div>
               </div>
               <div
@@ -515,7 +579,7 @@ export default function Dashboard() {
 
             <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
               <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-                {data?.receivables?.pendingCount || 0} unpaid
+                <CountUp value={data?.receivables?.pendingCount || 0} /> unpaid
               </span>
               <span style={{ background: '#fef3c7', color: '#b45309', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
                 Pending
@@ -531,7 +595,7 @@ export default function Dashboard() {
                   {t('totalLifetimeInvoices')}
                 </span>
                 <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#4338ca', marginTop: '4px', letterSpacing: '-0.5px' }}>
-                  {data?.totalBills || 0}
+                  <CountUp value={data?.totalBills || 0} />
                 </div>
               </div>
 
@@ -567,6 +631,11 @@ export default function Dashboard() {
         </div>
         </>
       )}
+
+      {/* ========================================================================= */}
+      {/* 2.5 LIVE PROFIT & LOSS (P&L) WITH MARGIN TRACKING                          */}
+      {/* ========================================================================= */}
+      {isAdmin && <ProfitLossWidget />}
 
       {/* ========================================================================= */}
       {/* 3. VISUAL ANALYTICS & REVENUE TREND ENGINE (ADMIN EXCLUSIVE)               */}
@@ -899,6 +968,7 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </PullToRefresh>
   );
 }
