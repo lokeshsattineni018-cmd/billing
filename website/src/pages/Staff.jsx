@@ -1336,63 +1336,6 @@ export default function Staff() {
             </form>
           </div>
 
-          {/* Batch Pay Banner Bar for Pending Worker Wages */}
-          {pendingEntries.length > 0 && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '10px',
-                padding: '12px 16px',
-                background: 'linear-gradient(90deg, #eff6ff 0%, #f0fdf4 100%)',
-                border: '1px solid #bfdbfe',
-                borderRadius: '10px',
-                marginBottom: '14px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '1.2rem' }}>⚡</span>
-                <div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>
-                    {pendingEntries.length} Pending Worker {pendingEntries.length === 1 ? 'Wage' : 'Wages'}
-                    <span style={{ color: '#0b5394', marginLeft: '6px' }}>• {formatCurrency(pendingTotalWage)}</span>
-                  </div>
-                  <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
-                    {selectedEntryIds.length > 0
-                      ? `${selectedEntryIds.length} worker(s) selected (${formatCurrency(selectedPendingTotal)})`
-                      : 'Select workers or pay all at once with one click'}
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={handleSelectAllPending}
-                  className="btn btn-secondary btn-sm"
-                  style={{ fontSize: '0.78rem', fontWeight: 700 }}
-                >
-                  {selectedEntryIds.length === pendingEntries.length && pendingEntries.length > 0 ? 'Deselect All' : 'Select All'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowBatchModal(true)}
-                  className="btn btn-primary btn-sm"
-                  style={{
-                    background: '#16a34a',
-                    border: 'none',
-                    fontWeight: 800,
-                    fontSize: '0.78rem',
-                    boxShadow: '0 2px 8px rgba(22, 163, 74, 0.25)',
-                  }}
-                >
-                  ✓ Pay {selectedEntryIds.length > 0 ? `Selected (${selectedEntryIds.length})` : `All Pending (${pendingEntries.length})`}
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Entries Content */}
           <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
