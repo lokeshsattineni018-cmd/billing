@@ -20,9 +20,8 @@ const Staff = lazy(() => import('./pages/Staff'));
 import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon, UserIcon, StaffIcon, MenuIcon, CloseIcon } from './components/Icons';
 import ErrorBoundary from './components/ErrorBoundary';
 import logoImg from './assets/logo.png';
-import { registerAutoSync, getPendingCount, syncPendingBills } from './services/offlineQueue';
-import { billsAPI } from './services/api';
-import { playSuccessSound } from './utils/helpers';
+import ShedModeSyncBar from './components/ShedModeSyncBar';
+import { initSyncManager } from './services/syncManager';
 import './index.css';
 
 // Shared loading spinner for lazy-loaded pages
@@ -233,63 +232,18 @@ function AppLayout() {
 
   const isIOS = typeof navigator !== 'undefined' && (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
-  const [pendingCount, setPendingCount] = useState(0);
-  const [syncing, setSyncing] = useState(false);
-
-  // Online/offline listeners + auto-sync
+  // Initialize background and foreground sync manager for Shed Mode
   useEffect(() => {
-    const goOffline = () => setIsOffline(true);
-    const goOnline = () => {
-      setIsOffline(false);
-      // Auto-sync pending bills
-      (async () => {
-        const count = await getPendingCount();
-        if (count > 0) {
-          setSyncing(true);
-          const result = await syncPendingBills(billsAPI);
-          setSyncing(false);
-          setPendingCount(0);
-          if (result.synced > 0) {
-            playSuccessSound();
-          }
-        }
-      })();
-    };
-
-    window.addEventListener('offline', goOffline);
-    window.addEventListener('online', goOnline);
-
-    // Check pending count on mount
-    getPendingCount().then(setPendingCount).catch(() => {});
-
+    const cleanup = initSyncManager();
     return () => {
-      window.removeEventListener('offline', goOffline);
-      window.removeEventListener('online', goOnline);
+      if (cleanup) cleanup();
     };
   }, []);
 
   return (
     <div className="app-layout">
-      {/* Offline / Syncing Banner */}
-      {isOffline && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
-          background: 'linear-gradient(90deg, #f59e0b, #d97706)', color: '#fff',
-          textAlign: 'center', padding: '6px 16px', fontSize: '0.82rem', fontWeight: 700,
-        }}>
-          ⚡ You are offline — bills will be saved locally and auto-synced
-        </div>
-      )}
-      {syncing && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
-          background: 'linear-gradient(90deg, #0b5394, #1e40af)', color: '#fff',
-          textAlign: 'center', padding: '6px 16px', fontSize: '0.82rem', fontWeight: 700,
-        }}>
-          🔄 Syncing pending bills...
-        </div>
-      )}
+      {/* True Offline-First Shed Mode & Cloud Sync Bar */}
+      <ShedModeSyncBar />
       {/* Clean Fixed Mobile Top Header */}
       <header className="mobile-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => navigate('/')}>

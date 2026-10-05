@@ -10,6 +10,8 @@ import ShareModal from '../components/ShareModal';
 import ganeshaImg from '../assets/ganesha.jpg';
 import durgaImg from '../assets/durga.jpg';
 import ramDarbarImg from '../assets/ram_darbar.jpg';
+import { getOfflineBill, saveOfflineBill, getMasterCache } from '../utils/offlineDb';
+import { flushSyncQueue } from '../services/syncManager';
 
 export default function BillDetail() {
   const { id } = useParams();
@@ -41,6 +43,12 @@ export default function BillDetail() {
   useEffect(() => {
     loadBill();
     loadSettings();
+
+    const handleSyncComplete = () => {
+      loadBill();
+    };
+    window.addEventListener('vda-sync-completed', handleSyncComplete);
+    return () => window.removeEventListener('vda-sync-completed', handleSyncComplete);
   }, [id]);
 
   const loadSettings = async () => {
@@ -50,26 +58,63 @@ export default function BillDetail() {
         setBusinessSettings(response.data);
       }
     } catch (error) {
+      try {
+        const cached = await getMasterCache('settings');
+        if (cached) setBusinessSettings(cached);
+      } catch (e) {}
       if (import.meta.env.DEV) { console.error('Failed to load settings:', error); }
+    }
+  };
+
+  const checkAutoprint = () => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('autoprint') === 'true') {
+      setTimeout(() => {
+        window.print();
+      }, 450);
     }
   };
 
   const loadBill = async () => {
     try {
+      if (id && id.startsWith('offline_')) {
+        const offlineData = await getOfflineBill(id);
+        if (offlineData) {
+          setBill(offlineData);
+          checkAutoprint();
+          setLoading(false);
+          return;
+        }
+      }
+
       const response = await billsAPI.getById(id);
       setBill(response.data);
-
-      // Check if redirected with autoprint=true
-      const searchParams = new URLSearchParams(location.search);
-      if (searchParams.get('autoprint') === 'true') {
-        setTimeout(() => {
-          window.print();
-        }, 450);
-      }
+      saveOfflineBill({ ...response.data, isOffline: false, synced: true }).catch(() => {});
+      checkAutoprint();
     } catch (error) {
+      try {
+        const cached = await getOfflineBill(id);
+        if (cached) {
+          setBill(cached);
+          checkAutoprint();
+          setLoading(false);
+          return;
+        }
+      } catch (e) {}
       if (import.meta.env.DEV) { console.error('Failed to load invoice:', error); }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleManualSync = async () => {
+    showToast('Syncing offline invoice to MongoDB Atlas cloud...', 'info');
+    const result = await flushSyncQueue();
+    if (result.synced > 0) {
+      showToast('Successfully synced to MongoDB Atlas!', 'success');
+      loadBill();
+    } else {
+      showToast('Could not connect to MongoDB Atlas. Retrying when signal strengthens.', 'error');
     }
   };
 
@@ -225,6 +270,11 @@ export default function BillDetail() {
                 ⛔ VOIDED / CANCELLED
               </span>
             )}
+            {bill.isOffline && (
+              <span className="badge" style={{ background: '#fef3c7', color: '#92400e', fontWeight: 800, fontSize: '0.82rem', border: '1px solid #fcd34d' }}>
+                ⚡ SHED MODE VOUCHER
+              </span>
+            )}
           </div>
           <p style={{ color: 'var(--text-secondary)', marginTop: '2px', fontSize: '0.85rem' }}>
             {formatDateTime(bill.date)}
@@ -323,6 +373,54 @@ export default function BillDetail() {
           </button>
         </div>
       </div>
+
+      {/* Shed Mode Offline Voucher Notice */}
+      {bill.isOffline && (
+        <div
+          className="no-print"
+          style={{
+            background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+            border: '1.5px solid #fde68a',
+            borderRadius: '12px',
+            padding: '14px 20px',
+            marginBottom: '18px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '12px',
+            boxShadow: '0 2px 8px rgba(217, 119, 6, 0.08)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '1.6rem' }}>⚡</span>
+            <div>
+              <div style={{ fontWeight: 800, color: '#92400e', fontSize: '0.95rem' }}>
+                Shed Mode Offline Voucher (#{bill.billNo})
+              </div>
+              <div style={{ fontSize: '0.82rem', color: '#b45309', marginTop: '2px' }}>
+                Saved in local browser memory. Thermal slip and A4 bill are 100% printable. Will automatically sync to MongoDB Atlas when data connects.
+              </div>
+            </div>
+          </div>
+          {typeof navigator !== 'undefined' && navigator.onLine && (
+            <button
+              className="btn btn-primary"
+              onClick={handleManualSync}
+              style={{
+                fontWeight: 700,
+                fontSize: '0.82rem',
+                padding: '8px 16px',
+                background: '#d97706',
+                border: 'none',
+                boxShadow: '0 2px 6px rgba(217, 119, 6, 0.3)',
+              }}
+            >
+              🔄 Sync to Atlas Cloud Now
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Payment Settlement Card (if not voided) */}
       {!bill.isVoided && (

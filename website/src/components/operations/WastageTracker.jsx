@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { staffAPI } from '../../services/api';
-import { formatCurrency, formatDate, useToast, Toast } from '../../utils/helpers';
+import { formatCurrency, formatDate, useToast, Toast, playSuccessSound } from '../../utils/helpers';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import { enqueueShedAction } from '../../services/syncManager';
 import {
   PlusIcon,
   SearchIcon,
@@ -190,6 +191,31 @@ export default function WastageTracker() {
         await staffAPI.updateWastage(editingEntry._id, payload);
         showToast('Wastage sales record updated!', 'success');
       } else {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          const tempId = `offline_wastage_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+          const offlineWastage = {
+            ...payload,
+            _id: tempId,
+            voucherNo: `WASTE-OFFLINE-${Date.now().toString().slice(-4)}`,
+            isOffline: true,
+            createdAt: new Date().toISOString(),
+          };
+
+          await enqueueShedAction({
+            type: 'CREATE_WASTAGE',
+            endpoint: '/staff/wastage',
+            payload,
+            clientRefId: tempId,
+            label: `Wastage: ${payload.quantityKg} kg (${payload.buyerName || 'Buyer'})`,
+          });
+
+          setEntries((prev) => [offlineWastage, ...prev]);
+          playSuccessSound();
+          showToast(`⚡ Shed Mode: Recorded ${payload.quantityKg} kg wastage sales offline!`, 'info');
+          setModalOpen(false);
+          return;
+        }
+
         await staffAPI.createWastage(payload);
         showToast('Prawn head wastage sales record saved!', 'success');
       }
@@ -197,6 +223,33 @@ export default function WastageTracker() {
       setModalOpen(false);
       await loadData();
     } catch (err) {
+      const isNetworkErr = !err.response || err.code === 'ERR_NETWORK' || err.message?.includes('Network');
+      if (isNetworkErr && !editingEntry) {
+        try {
+          const tempId = `offline_wastage_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+          const offlineWastage = {
+            ...payload,
+            _id: tempId,
+            voucherNo: `WASTE-OFFLINE-${Date.now().toString().slice(-4)}`,
+            isOffline: true,
+            createdAt: new Date().toISOString(),
+          };
+
+          await enqueueShedAction({
+            type: 'CREATE_WASTAGE',
+            endpoint: '/staff/wastage',
+            payload,
+            clientRefId: tempId,
+            label: `Wastage: ${payload.quantityKg} kg (${payload.buyerName || 'Buyer'})`,
+          });
+
+          setEntries((prev) => [offlineWastage, ...prev]);
+          playSuccessSound();
+          showToast(`⚡ Shed Mode: Recorded ${payload.quantityKg} kg wastage sales offline!`, 'info');
+          setModalOpen(false);
+          return;
+        } catch (e) {}
+      }
       showToast(err.response?.data?.message || 'Failed to save wastage record', 'error');
     } finally {
       setSaving(false);

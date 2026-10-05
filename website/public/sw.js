@@ -1,8 +1,10 @@
-const CACHE_NAME = 'vda-billing-v8';
+const CACHE_NAME = 'vda-shed-mode-v9';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/favicon.svg',
+  '/icons.svg',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
 ];
@@ -10,21 +12,47 @@ const STATIC_ASSETS = [
 // ─── Install: pre-cache shell assets ───
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)).then(() => self.skipWaiting())
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(STATIC_ASSETS))
+      .then(() => self.skipWaiting())
   );
 });
 
-// ─── Activate: purge old caches ───
+// ─── Activate: purge old caches & claim clients immediately ───
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) return caches.delete(key);
-        })
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys.map((key) => {
+            if (key !== CACHE_NAME) return caches.delete(key);
+          })
+        )
       )
-    ).then(() => self.clients.claim())
+      .then(() => self.clients.claim())
   );
+});
+
+// ─── Background Sync Event (Zero-Network Shed Mode) ───
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-shed-records' || event.tag === 'vda-shed-sync') {
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window' }).then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({ type: 'BACKGROUND_SYNC_TRIGGERED' });
+        });
+      })
+    );
+  }
+});
+
+// ─── Post Message listener from client apps ───
+self.addEventListener('message', (event) => {
+  if (event.data?.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
 });
 
 // ─── Fetch: tiered caching strategy ───
@@ -41,15 +69,17 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.match(event.request).then((cached) => {
         if (cached) return cached;
-        return fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const clone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return networkResponse;
-        }).catch(() => {
-          return new Response('', { status: 408, statusText: 'Offline' });
-        });
+        return fetch(event.request)
+          .then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              const clone = networkResponse.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            }
+            return networkResponse;
+          })
+          .catch(() => {
+            return new Response('', { status: 408, statusText: 'Offline' });
+          });
       })
     );
     return;
@@ -60,52 +90,68 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
         const cached = await cache.match(event.request);
-        const fetchPromise = fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            cache.put(event.request, networkResponse.clone());
-          }
-          return networkResponse;
-        }).catch(() => null);
+        const fetchPromise = fetch(event.request)
+          .then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          })
+          .catch(() => null);
 
         // Return cached immediately, update in background
-        return cached || fetchPromise || new Response(JSON.stringify({ message: 'Offline' }), {
-          status: 503,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return (
+          cached ||
+          fetchPromise ||
+          new Response(JSON.stringify({ message: 'Offline' }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' },
+          })
+        );
       })
     );
     return;
   }
 
-  // ── Strategy 3: Other API requests — Network-first with graceful fallback ──
+  // ── Strategy 3: Master Data API requests — Network-first with Cache-Write & Graceful Fallback ──
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(event.request).catch(async () => {
-        const cached = await caches.match(event.request);
-        if (cached) return cached;
-        return new Response(JSON.stringify({ message: 'Network offline / connection error' }), {
-          status: 503,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      })
-    );
-    return;
-  }
-
-  // ── Strategy 4: Images — Cache-first with network fallback ──
-  if (/\.(png|jpg|jpeg|gif|svg|webp|ico)(\?|$)/i.test(url.pathname)) {
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        if (cached) return cached;
-        return fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
             const clone = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
           return networkResponse;
-        }).catch(() => {
-          return new Response('', { status: 408, statusText: 'Offline' });
-        });
+        })
+        .catch(async () => {
+          const cached = await caches.match(event.request);
+          if (cached) return cached;
+          return new Response(JSON.stringify({ message: 'Network offline / Shed mode fallback' }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        })
+    );
+    return;
+  }
+
+  // ── Strategy 4: Images & Assets — Cache-first with network fallback ──
+  if (/\.(png|jpg|jpeg|gif|svg|webp|ico)(\?|$)/i.test(url.pathname)) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request)
+          .then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+              const clone = networkResponse.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            }
+            return networkResponse;
+          })
+          .catch(() => {
+            return new Response('', { status: 408, statusText: 'Offline' });
+          });
       })
     );
     return;

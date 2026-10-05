@@ -5,7 +5,8 @@ import { billsAPI, settingsAPI } from '../services/api';
 import { formatCurrency, useToast, Toast, playSuccessSound, playErrorSound } from '../utils/helpers';
 import { useLanguage } from '../context/LanguageContext';
 import { PrintIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
-import { savePendingBill } from '../services/offlineQueue';
+import { saveOfflineBill, getMasterCache } from '../utils/offlineDb';
+import { enqueueShedAction } from '../services/syncManager';
 
 const DRAFT_KEY = 'srsf_bill_draft';
 
@@ -225,10 +226,20 @@ export default function NewBill() {
       if (response.data && response.data.gstin) {
         setCompanyGstin(response.data.gstin);
       } else {
-        showToast('Business GSTIN not set. Please update in Settings.', 'error');
+        const cached = await getMasterCache('settings');
+        if (cached && cached.gstin) {
+          setCompanyGstin(cached.gstin);
+        } else {
+          showToast('Business GSTIN not set. Please update in Settings.', 'error');
+        }
       }
     } catch (error) {
-      if (import.meta.env.DEV) { console.error('Failed to load settings:', error); }
+      const cached = await getMasterCache('settings');
+      if (cached && cached.gstin) {
+        setCompanyGstin(cached.gstin);
+      } else if (import.meta.env.DEV) {
+        console.error('Failed to load settings:', error);
+      }
     }
   };
 
@@ -237,9 +248,19 @@ export default function NewBill() {
       const response = await billsAPI.getCustomers();
       if (response.data && response.data.customers) {
         setCustomersList(response.data.customers);
+      } else {
+        const cached = await getMasterCache('customers');
+        if (cached && cached.customers) {
+          setCustomersList(cached.customers);
+        }
       }
     } catch (error) {
-      if (import.meta.env.DEV) { console.error('Failed to load customer list:', error); }
+      const cached = await getMasterCache('customers');
+      if (cached && cached.customers) {
+        setCustomersList(cached.customers);
+      } else if (import.meta.env.DEV) {
+        console.error('Failed to load customer list:', error);
+      }
     }
   };
 
@@ -452,6 +473,51 @@ export default function NewBill() {
         paymentStatus,
       };
 
+      const saveOfflineBillComplete = async (payload) => {
+        const randSeq = Math.floor(1000 + Math.random() * 9000);
+        const tempId = `offline_bill_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+        const tempBillNo = `SHED-OFFLINE-${randSeq}`;
+        const offlineRecord = {
+          ...payload,
+          _id: tempId,
+          billNo: tempBillNo,
+          formattedBillNo: tempBillNo,
+          isOffline: true,
+          synced: false,
+          createdAt: new Date().toISOString(),
+          subtotal: payload.taxableValue || payload.total || 0,
+          grandTotal: payload.grandTotal || payload.total || 0,
+          total: payload.total || 0,
+          paidAmount: payload.paymentStatus === 'Paid' ? payload.grandTotal : 0,
+          balanceDue: payload.paymentStatus === 'Paid' ? 0 : payload.grandTotal,
+        };
+
+        await saveOfflineBill(offlineRecord);
+        await enqueueShedAction({
+          type: 'CREATE_BILL',
+          endpoint: '/bills',
+          payload,
+          clientRefId: tempId,
+          label: `Invoice #${tempBillNo} (${payload.companyName})`,
+        });
+
+        return offlineRecord;
+      };
+
+      // ── Zero-Network Shed Mode Direct Path ──
+      if (!editBillId && typeof navigator !== 'undefined' && !navigator.onLine) {
+        const offlineInvoice = await saveOfflineBillComplete(invoiceData);
+        localStorage.removeItem(DRAFT_KEY);
+        playSuccessSound();
+        showToast(`⚡ Shed Mode: Invoice #${offlineInvoice.billNo} saved locally! Printing receipt...`, 'info');
+        if (actionType === 'print') {
+          navigate(`/bills/${offlineInvoice._id}?autoprint=true`);
+        } else {
+          navigate(`/bills/${offlineInvoice._id}`);
+        }
+        return;
+      }
+
       let invoice;
       if (editBillId) {
         const response = await billsAPI.update(editBillId, invoiceData);
@@ -475,17 +541,50 @@ export default function NewBill() {
         navigate(`/bills/${invoice._id || editBillId}`);
       }
     } catch (error) {
-      // Task 3: Offline / Network failure draft retention
-      const isNetworkError = !error.response || error.code === 'ERR_NETWORK';
-      if (isNetworkError) {
-        // Save to IndexedDB offline queue
+      // Offline / Network failure: seamless Shed Mode fall-through
+      const isNetworkError = !error.response || error.code === 'ERR_NETWORK' || error.message?.includes('Network');
+      if (isNetworkError && !editBillId) {
         try {
-          await savePendingBill(invoiceData);
-          playErrorSound();
-          showToast('📱 Saved offline! Will auto-sync when connected.', 'error');
+          const randSeq = Math.floor(1000 + Math.random() * 9000);
+          const tempId = `offline_bill_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+          const tempBillNo = `SHED-OFFLINE-${randSeq}`;
+          const offlineInvoice = {
+            ...invoiceData,
+            _id: tempId,
+            billNo: tempBillNo,
+            formattedBillNo: tempBillNo,
+            isOffline: true,
+            synced: false,
+            createdAt: new Date().toISOString(),
+            subtotal: invoiceData.taxableValue || invoiceData.total || 0,
+            grandTotal: invoiceData.grandTotal || invoiceData.total || 0,
+            total: invoiceData.total || 0,
+            paidAmount: invoiceData.paymentStatus === 'Paid' ? invoiceData.grandTotal : 0,
+            balanceDue: invoiceData.paymentStatus === 'Paid' ? 0 : invoiceData.grandTotal,
+          };
+
+          await saveOfflineBill(offlineInvoice);
+          await enqueueShedAction({
+            type: 'CREATE_BILL',
+            endpoint: '/bills',
+            payload: invoiceData,
+            clientRefId: tempId,
+            label: `Invoice #${tempBillNo} (${invoiceData.companyName})`,
+          });
+
+          localStorage.removeItem(DRAFT_KEY);
+          playSuccessSound();
+          showToast(`⚡ Shed Mode: Invoice #${offlineInvoice.billNo} saved locally & queued for sync!`, 'info');
+
+          if (actionType === 'print') {
+            navigate(`/bills/${offlineInvoice._id}?autoprint=true`);
+          } else {
+            navigate(`/bills/${offlineInvoice._id}`);
+          }
+          return;
         } catch (offlineErr) {
           playErrorSound();
-          showToast('Failed to save offline. Please try again.', 'error');
+          showToast('Failed to save offline voucher. Please try again.', 'error');
         }
       } else {
         playErrorSound();

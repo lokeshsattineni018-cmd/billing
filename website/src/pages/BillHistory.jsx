@@ -10,6 +10,7 @@ import ReminderModal from '../components/ReminderModal';
 import PaymentModal from '../components/PaymentModal';
 import SwipeableItem from '../components/SwipeableItem';
 import PullToRefresh from '../components/PullToRefresh';
+import { getAllOfflineBills } from '../utils/offlineDb';
 
 export default function BillHistory() {
   const navigate = useNavigate();
@@ -48,6 +49,9 @@ export default function BillHistory() {
 
   useEffect(() => {
     loadBills();
+    const handleSync = () => loadBills();
+    window.addEventListener('vda-sync-completed', handleSync);
+    return () => window.removeEventListener('vda-sync-completed', handleSync);
   }, [page, statusFilter]);
 
   const loadBills = async (resetPage = false) => {
@@ -62,10 +66,29 @@ export default function BillHistory() {
       if (dateTo) params.to = dateTo;
       if (statusFilter) params.status = statusFilter;
 
+      // Retrieve any pending offline bills from local IndexedDB
+      const offlineBills = await getAllOfflineBills().catch(() => []);
+      const pendingOffline = offlineBills.filter((b) => b.isOffline && !b.synced);
+
       const response = await billsAPI.list(params);
-      setBills(response.data.bills || []);
+      const serverBills = response.data.bills || [];
+
+      // Prepend pending offline invoices at the top of first page
+      if (currentPage === 1 && pendingOffline.length > 0) {
+        setBills([...pendingOffline, ...serverBills]);
+      } else {
+        setBills(serverBills);
+      }
       setPagination(response.data.pagination || {});
     } catch (error) {
+      // Offline fallback: load cached bills from local IndexedDB
+      try {
+        const offlineBills = await getAllOfflineBills().catch(() => []);
+        if (offlineBills.length > 0) {
+          setBills(offlineBills);
+          setPagination({ total: offlineBills.length, pages: 1 });
+        }
+      } catch (e) {}
       if (import.meta.env.DEV) { console.error('Failed to load invoices:', error); }
     } finally {
       setLoading(false);
@@ -352,6 +375,11 @@ export default function BillHistory() {
                           VOIDED
                         </span>
                       )}
+                      {bill.isOffline && (
+                        <span className="badge" style={{ background: '#fef3c7', color: '#92400e', fontWeight: 800, fontSize: '0.72rem' }}>
+                          ⚡ Shed Offline
+                        </span>
+                      )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 500 }}>{formatDate(bill.date)}</span>
@@ -510,6 +538,11 @@ export default function BillHistory() {
                         {bill.isVoided && (
                           <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800, marginLeft: '6px' }}>
                             VOIDED
+                          </span>
+                        )}
+                        {bill.isOffline && (
+                          <span className="badge" style={{ background: '#fef3c7', color: '#92400e', fontWeight: 800, marginLeft: '6px', fontSize: '0.72rem' }}>
+                            ⚡ Shed Offline
                           </span>
                         )}
                       </td>

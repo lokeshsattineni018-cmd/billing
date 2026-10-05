@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { setMasterCache, getMasterCache } from '../utils/offlineDb';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -19,10 +20,27 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor — handle 401 expired session
+// Response interceptor — handle 401 expired session & transparent offline fallback
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
+  (response) => {
+    // Cache critical master data into IndexedDB on successful GET
+    try {
+      const url = response.config?.url || '';
+      if (response.config?.method?.toLowerCase() === 'get' && response.data) {
+        if (url.includes('/settings') && !url.includes('/counter-status')) {
+          setMasterCache('settings', response.data);
+        } else if (url.includes('/bills/customers/list') || url.includes('/customers')) {
+          setMasterCache('customers', response.data);
+        } else if (url.includes('/staff/names')) {
+          setMasterCache('staffNames', response.data);
+        } else if (url.includes('/staff/summary')) {
+          setMasterCache('staffSummary', response.data);
+        }
+      }
+    } catch (e) {}
+    return response;
+  },
+  async (error) => {
     // If it's a login attempt, pass the error to the form directly without reloading
     const isLoginRequest = error.config?.url?.includes('/auth/login');
     if (error.response?.status === 401 && !isLoginRequest) {
@@ -32,6 +50,29 @@ api.interceptors.response.use(
         window.location.href = '/login';
       }
     }
+
+    // Transparent offline fallback for master data GET queries when network is down
+    const isNetworkError = !error.response || error.code === 'ERR_NETWORK' || error.message?.includes('Network');
+    const isGet = error.config?.method?.toLowerCase() === 'get';
+    if (isNetworkError && isGet) {
+      const url = error.config?.url || '';
+      try {
+        if (url.includes('/settings')) {
+          const cached = await getMasterCache('settings');
+          if (cached) return { data: cached, status: 200, fromOfflineCache: true, headers: {}, config: error.config };
+        } else if (url.includes('/bills/customers/list') || url.includes('/customers')) {
+          const cached = await getMasterCache('customers');
+          if (cached) return { data: cached, status: 200, fromOfflineCache: true, headers: {}, config: error.config };
+        } else if (url.includes('/staff/names')) {
+          const cached = await getMasterCache('staffNames');
+          if (cached) return { data: cached, status: 200, fromOfflineCache: true, headers: {}, config: error.config };
+        } else if (url.includes('/staff/summary')) {
+          const cached = await getMasterCache('staffSummary');
+          if (cached) return { data: cached, status: 200, fromOfflineCache: true, headers: {}, config: error.config };
+        }
+      } catch (cacheErr) {}
+    }
+
     return Promise.reject(error);
   }
 );

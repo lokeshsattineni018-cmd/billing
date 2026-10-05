@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { staffAPI } from '../services/api';
-import { formatCurrency, formatDate, numberToWords, useToast, Toast } from '../utils/helpers';
+import { formatCurrency, formatDate, numberToWords, useToast, Toast, playSuccessSound } from '../utils/helpers';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import VoucherBillModal from '../components/VoucherBillModal';
 import WorkerPaymentModal from '../components/WorkerPaymentModal';
+import { saveOfflineStaff, getAllOfflineStaff, getMasterCache } from '../utils/offlineDb';
+import { enqueueShedAction } from '../services/syncManager';
 import {
   StaffIcon,
   PlusIcon,
@@ -161,9 +163,20 @@ export default function Staff() {
       if (statusFilter) params.paymentStatus = statusFilter;
       if (workTypeFilter) params.workType = workTypeFilter;
 
+      const offlineStaff = await getAllOfflineStaff().catch(() => []);
+      const pendingOffline = offlineStaff.filter((e) => e.isOffline && !e.synced);
+
       const res = await staffAPI.getAll(params);
-      setEntries(res.data.entries || []);
+      const serverEntries = res.data.entries || [];
+      setEntries([...pendingOffline, ...serverEntries]);
     } catch (err) {
+      try {
+        const offlineStaff = await getAllOfflineStaff().catch(() => []);
+        if (offlineStaff.length > 0) {
+          setEntries(offlineStaff);
+          return;
+        }
+      } catch (e) {}
       showToast('Failed to load work entries', 'error');
     }
   };
@@ -365,12 +378,79 @@ export default function Staff() {
         await staffAPI.update(editingEntry._id, formData);
         showToast(`Updated entry for ${formData.staffName}`, 'success');
       } else {
+        // Direct Zero-Network Shed Mode entry creation
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          const tempId = `offline_staff_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+          const totalAmt = Math.round(qty * price * 100) / 100;
+          const offlineEntry = {
+            ...formData,
+            _id: tempId,
+            quantity: qty,
+            price,
+            totalAmount: totalAmt,
+            amountPaid: formData.paymentStatus === 'Paid' ? totalAmt : 0,
+            balanceDue: formData.paymentStatus === 'Paid' ? 0 : totalAmt,
+            isOffline: true,
+            synced: false,
+            createdAt: new Date().toISOString(),
+          };
+
+          await saveOfflineStaff(offlineEntry);
+          await enqueueShedAction({
+            type: 'CREATE_STAFF',
+            endpoint: '/staff',
+            payload: formData,
+            clientRefId: tempId,
+            label: `Labor: ${formData.staffName} (${qty} kg)`,
+          });
+
+          setEntries((prev) => [offlineEntry, ...prev]);
+          playSuccessSound();
+          showToast(`⚡ Shed Mode: Recorded ${formData.staffName}'s peeling labor offline!`, 'info');
+          setModalOpen(false);
+          return;
+        }
+
         await staffAPI.create(formData);
         showToast(`Added work for ${formData.staffName}: ${qty} kg @ ₹${price}`, 'success');
       }
       setModalOpen(false);
       await loadAllData();
     } catch (err) {
+      const isNetworkErr = !err.response || err.code === 'ERR_NETWORK' || err.message?.includes('Network');
+      if (isNetworkErr && !editingEntry) {
+        try {
+          const tempId = `offline_staff_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+          const totalAmt = Math.round(qty * price * 100) / 100;
+          const offlineEntry = {
+            ...formData,
+            _id: tempId,
+            quantity: qty,
+            price,
+            totalAmount: totalAmt,
+            amountPaid: formData.paymentStatus === 'Paid' ? totalAmt : 0,
+            balanceDue: formData.paymentStatus === 'Paid' ? 0 : totalAmt,
+            isOffline: true,
+            synced: false,
+            createdAt: new Date().toISOString(),
+          };
+
+          await saveOfflineStaff(offlineEntry);
+          await enqueueShedAction({
+            type: 'CREATE_STAFF',
+            endpoint: '/staff',
+            payload: formData,
+            clientRefId: tempId,
+            label: `Labor: ${formData.staffName} (${qty} kg)`,
+          });
+
+          setEntries((prev) => [offlineEntry, ...prev]);
+          playSuccessSound();
+          showToast(`⚡ Shed Mode: Recorded ${formData.staffName}'s peeling labor offline!`, 'info');
+          setModalOpen(false);
+          return;
+        } catch (offlineErr) {}
+      }
       showToast(err.response?.data?.message || 'Failed to save entry', 'error');
     } finally {
       setSaving(false);
@@ -564,6 +644,49 @@ export default function Staff() {
 
     setSavingBulk(true);
     try {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        await enqueueShedAction({
+          type: 'CREATE_STAFF_BULK',
+          endpoint: '/staff/bulk',
+          payload: { date: bulkDate, entries: validRows },
+          label: `Bulk Peeling (${validRows.length} workers)`,
+        });
+
+        const newOfflineEntries = [];
+        for (const row of validRows) {
+          const q = parseFloat(row.quantity) || 0;
+          const p = parseFloat(row.price) || 0;
+          const entryTotal = Math.round(q * p * 100) / 100;
+          const entry = {
+            ...row,
+            _id: `offline_staff_bulk_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+            date: bulkDate,
+            quantity: q,
+            price: p,
+            totalAmount: entryTotal,
+            amountPaid: row.paymentStatus === 'Paid' ? entryTotal : 0,
+            balanceDue: row.paymentStatus === 'Paid' ? 0 : entryTotal,
+            isOffline: true,
+            synced: false,
+            createdAt: new Date().toISOString(),
+          };
+          await saveOfflineStaff(entry);
+          newOfflineEntries.push(entry);
+        }
+
+        setEntries((prev) => [...newOfflineEntries, ...prev]);
+        playSuccessSound();
+        showToast(`⚡ Shed Mode: Saved ${validRows.length} peeling entries offline!`, 'info');
+        localStorage.removeItem(BULK_DRAFT_KEY);
+        setBulkModalOpen(false);
+        setBulkRows([
+          { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
+          { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
+          { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
+        ]);
+        return;
+      }
+
       const res = await staffAPI.createBulk({
         date: bulkDate,
         entries: validRows,
@@ -578,6 +701,51 @@ export default function Staff() {
       ]);
       await loadAllData();
     } catch (err) {
+      const isNetworkErr = !err.response || err.code === 'ERR_NETWORK' || err.message?.includes('Network');
+      if (isNetworkErr) {
+        try {
+          await enqueueShedAction({
+            type: 'CREATE_STAFF_BULK',
+            endpoint: '/staff/bulk',
+            payload: { date: bulkDate, entries: validRows },
+            label: `Bulk Peeling (${validRows.length} workers)`,
+          });
+
+          const newOfflineEntries = [];
+          for (const row of validRows) {
+            const q = parseFloat(row.quantity) || 0;
+            const p = parseFloat(row.price) || 0;
+            const entryTotal = Math.round(q * p * 100) / 100;
+            const entry = {
+              ...row,
+              _id: `offline_staff_bulk_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+              date: bulkDate,
+              quantity: q,
+              price: p,
+              totalAmount: entryTotal,
+              amountPaid: row.paymentStatus === 'Paid' ? entryTotal : 0,
+              balanceDue: row.paymentStatus === 'Paid' ? 0 : entryTotal,
+              isOffline: true,
+              synced: false,
+              createdAt: new Date().toISOString(),
+            };
+            await saveOfflineStaff(entry);
+            newOfflineEntries.push(entry);
+          }
+
+          setEntries((prev) => [...newOfflineEntries, ...prev]);
+          playSuccessSound();
+          showToast(`⚡ Shed Mode: Saved ${validRows.length} peeling entries offline!`, 'info');
+          localStorage.removeItem(BULK_DRAFT_KEY);
+          setBulkModalOpen(false);
+          setBulkRows([
+            { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
+            { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
+            { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
+          ]);
+          return;
+        } catch (offlineErr) {}
+      }
       showToast(err.response?.data?.message || 'Failed to save bulk entries', 'error');
     } finally {
       setSavingBulk(false);
@@ -1348,6 +1516,11 @@ export default function Staff() {
                           <span style={{ fontWeight: 800, fontSize: '0.98rem', color: '#0b5394' }}>
                             {entry.staffName}
                           </span>
+                          {entry.isOffline && (
+                            <span style={{ fontSize: '0.68rem', background: '#fef3c7', color: '#92400e', padding: '2px 5px', borderRadius: '4px', fontWeight: 800 }}>
+                              ⚡ Offline
+                            </span>
+                          )}
                           <span
                             style={{
                               fontSize: '0.72rem',
@@ -1518,6 +1691,11 @@ export default function Staff() {
                             >
                               {entry.staffName}
                             </strong>
+                            {entry.isOffline && (
+                              <span style={{ fontSize: '0.68rem', background: '#fef3c7', color: '#92400e', padding: '1px 5px', borderRadius: '4px', fontWeight: 800, marginLeft: '6px' }}>
+                                ⚡ Offline
+                              </span>
+                            )}
                             {entry.staffPhone && (
                               <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{entry.staffPhone}</div>
                             )}

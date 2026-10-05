@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { staffAPI } from '../../services/api';
-import { formatCurrency, formatDate, numberToWords, useToast, Toast } from '../../utils/helpers';
+import { formatCurrency, formatDate, numberToWords, useToast, Toast, playSuccessSound } from '../../utils/helpers';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import { enqueueShedAction } from '../../services/syncManager';
 import VoucherBillModal from '../VoucherBillModal';
 import {
   PlusIcon,
@@ -204,6 +205,31 @@ export default function IceTracker() {
         await staffAPI.updateIce(editingEntry._id, payload);
         showToast('Ice record updated successfully!', 'success');
       } else {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          const tempId = `offline_ice_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+          const offlineIce = {
+            ...payload,
+            _id: tempId,
+            voucherNo: `ICE-OFFLINE-${Date.now().toString().slice(-4)}`,
+            isOffline: true,
+            createdAt: new Date().toISOString(),
+          };
+
+          await enqueueShedAction({
+            type: 'CREATE_ICE',
+            endpoint: '/staff/ice',
+            payload,
+            clientRefId: tempId,
+            label: `Ice Usage (${payload.blocks} blocks)`,
+          });
+
+          setEntries((prev) => [offlineIce, ...prev]);
+          playSuccessSound();
+          showToast(`⚡ Shed Mode: Recorded ${payload.blocks} ice blocks offline!`, 'info');
+          setModalOpen(false);
+          return;
+        }
+
         await staffAPI.createIce(payload);
         showToast('Ice usage record saved successfully!', 'success');
       }
@@ -211,6 +237,33 @@ export default function IceTracker() {
       setModalOpen(false);
       await loadData();
     } catch (err) {
+      const isNetworkErr = !err.response || err.code === 'ERR_NETWORK' || err.message?.includes('Network');
+      if (isNetworkErr && !editingEntry) {
+        try {
+          const tempId = `offline_ice_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+          const offlineIce = {
+            ...payload,
+            _id: tempId,
+            voucherNo: `ICE-OFFLINE-${Date.now().toString().slice(-4)}`,
+            isOffline: true,
+            createdAt: new Date().toISOString(),
+          };
+
+          await enqueueShedAction({
+            type: 'CREATE_ICE',
+            endpoint: '/staff/ice',
+            payload,
+            clientRefId: tempId,
+            label: `Ice Usage (${payload.blocks} blocks)`,
+          });
+
+          setEntries((prev) => [offlineIce, ...prev]);
+          playSuccessSound();
+          showToast(`⚡ Shed Mode: Recorded ${payload.blocks} ice blocks offline!`, 'info');
+          setModalOpen(false);
+          return;
+        } catch (e) {}
+      }
       showToast(err.response?.data?.message || 'Failed to save ice record', 'error');
     } finally {
       setSaving(false);
