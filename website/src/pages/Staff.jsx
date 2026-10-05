@@ -1268,6 +1268,7 @@ export default function Staff() {
                 <option value="">{lang === 'te' ? 'అన్ని రకాలు' : 'All Statuses'}</option>
                 <option value="Paid">{lang === 'te' ? 'చెల్లించినవి' : 'Paid'}</option>
                 <option value="Pending">{lang === 'te' ? 'బాకీ ఉన్నవి' : 'Pending'}</option>
+                <option value="Partial">{lang === 'te' ? 'కొంత భాగం బాకీ' : 'Partial'}</option>
               </select>
             </div>
 
@@ -1288,7 +1289,8 @@ export default function Staff() {
                 onClick={() => setBulkModalOpen(!bulkModalOpen)}
                 style={{ fontWeight: 700, border: '1.5px solid #0b5394', color: '#0b5394', height: '34px', display: 'flex', alignItems: 'center', gap: '5px' }}
               >
-                ⚡ {bulkModalOpen ? (t('hideBulkEntry') || 'Hide Bulk') : (t('bulkAttendance') || 'Bulk Attendance')}
+                <span>⚡</span>
+                <span>{bulkModalOpen ? (t('hideBulkEntry') || 'Hide Bulk').replace(/^⚡\s*/, '') : (t('bulkAttendance') || 'Bulk Attendance').replace(/^⚡\s*/, '')}</span>
               </button>
 
               <button
@@ -1306,7 +1308,7 @@ export default function Staff() {
                 }}
               >
                 <PlusIcon size={16} color="#ffffff" />
-                <span>{t('addWorkEntry') || 'Add Work Entry'}</span>
+                <span>{(t('addWorkEntry') || 'Add Work Entry').replace(/^\+\s*/, '')}</span>
               </button>
             </div>
           </div>
@@ -1364,10 +1366,18 @@ export default function Staff() {
                             {formatDate(entry.date)}
                           </span>
                           <span
-                            className={`badge ${entry.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}
+                            className={`badge ${
+                              entry.paymentStatus === 'Paid'
+                                ? 'badge-green'
+                                : entry.paymentStatus === 'Partial'
+                                ? 'badge-blue'
+                                : 'badge-amber'
+                            }`}
                             style={{ fontSize: '0.7rem', fontWeight: 800, padding: '2px 8px' }}
                           >
-                            {entry.paymentStatus}
+                            {entry.paymentStatus === 'Partial'
+                              ? `Partial (₹${entry.amountPaid || 0})`
+                              : (entry.paymentStatus || 'Pending')}
                           </span>
                         </div>
                       </div>
@@ -1535,14 +1545,14 @@ export default function Staff() {
                                 entry.paymentStatus === 'Paid'
                                   ? 'badge-green'
                                   : entry.paymentStatus === 'Partial'
-                                  ? 'badge-amber'
+                                  ? 'badge-blue'
                                   : 'badge-amber'
                               }`}
-                              style={{ cursor: 'pointer' }}
+                              style={{ cursor: 'pointer', fontWeight: 800, fontSize: '0.75rem' }}
                               onClick={() => setPayingEntry(entry)}
                               title="Click to record or adjust wage payment"
                             >
-                              {entry.paymentStatus === 'Partial' ? `Partial (₹${entry.amountPaid})` : entry.paymentStatus}
+                              {entry.paymentStatus === 'Partial' ? `Partial (₹${entry.amountPaid || 0})` : (entry.paymentStatus || 'Pending')}
                             </span>
                           </td>
                           <td className="text-center">
@@ -1711,6 +1721,7 @@ export default function Staff() {
                       <th className="text-right">Total Wages Earned</th>
                       <th className="text-right">Amount Paid</th>
                       <th className="text-right">Pending Balance</th>
+                      <th className="text-center">Status</th>
                       <th className="text-center" style={{ width: '220px' }}>Action</th>
                     </tr>
                   </thead>
@@ -1753,6 +1764,14 @@ export default function Staff() {
                           >
                             {formatCurrency(acc.pendingBalance)}
                           </strong>
+                        </td>
+                        <td className="text-center">
+                          <span
+                            className={`badge ${acc.pendingBalance > 0 ? 'badge-amber' : 'badge-green'}`}
+                            style={{ fontWeight: 800, fontSize: '0.72rem' }}
+                          >
+                            {acc.pendingBalance > 0 ? `Due: ${formatCurrency(acc.pendingBalance)}` : 'Settled ✓'}
+                          </span>
                         </td>
                         <td className="text-center">
                           <div style={{ display: 'inline-flex', gap: '6px' }}>
@@ -2079,8 +2098,8 @@ export default function Staff() {
               </div>
               <div style={{ padding: '5px 10px' }}>
                 <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Payment Status: </span>
-                <span style={{ fontWeight: 'bold', color: activeBillEntry.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>
-                  {activeBillEntry.paymentStatus || 'Pending'}
+                <span style={{ fontWeight: 'bold', color: activeBillEntry.paymentStatus === 'Paid' ? '#16a34a' : activeBillEntry.paymentStatus === 'Partial' ? '#0284c7' : '#d97706' }}>
+                  {activeBillEntry.paymentStatus === 'Partial' ? `Partial (₹${activeBillEntry.amountPaid || 0})` : (activeBillEntry.paymentStatus || 'Pending')}
                 </span>
               </div>
             </div>
@@ -2266,7 +2285,9 @@ export default function Staff() {
                     <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', paddingRight: '6px', fontWeight: 'bold' }}>{row.quantity} kg</td>
                     <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', paddingRight: '6px' }}>₹{Number(row.price).toFixed(2)}</td>
                     <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', paddingRight: '6px', fontWeight: 'bold' }}>₹{Number(row.totalAmount).toFixed(2)}</td>
-                    <td style={{ textAlign: 'center', fontWeight: 'bold', color: row.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>{row.paymentStatus}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 'bold', color: row.paymentStatus === 'Paid' ? '#16a34a' : row.paymentStatus === 'Partial' ? '#0284c7' : '#d97706' }}>
+                      {row.paymentStatus === 'Partial' ? `Partial (₹${row.amountPaid || 0})` : (row.paymentStatus || 'Pending')}
+                    </td>
                   </tr>
                 ))}
               </tbody>

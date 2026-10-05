@@ -89,6 +89,8 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
           totalEarnings += e.totalAmount || 0;
           if (e.paymentStatus === 'Paid') {
             totalPaid += e.totalAmount || 0;
+          } else if (e.paymentStatus === 'Partial') {
+            totalPaid += e.amountPaid || 0;
           }
         });
       }

@@ -482,8 +482,8 @@ export default function WastageTracker() {
                       </strong>
                     </td>
                     <td>
-                      <span className={`badge ${entry.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}>
-                        {entry.paymentStatus}
+                      <span className={`badge ${(entry.paymentStatus || 'Paid') === 'Paid' ? 'badge-green' : 'badge-amber'}`}>
+                        {entry.paymentStatus || 'Paid'}
                       </span>
                     </td>
                     <td style={{ fontSize: '0.8rem', color: '#64748b' }}>

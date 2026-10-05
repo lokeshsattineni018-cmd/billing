@@ -41,7 +41,19 @@ router.get('/', protect, async (req, res) => {
     }
 
     if (paymentStatus && ['Pending', 'Paid', 'Partial'].includes(paymentStatus)) {
-      filter.paymentStatus = paymentStatus;
+      if (paymentStatus === 'Pending') {
+        filter.$or = [
+          { paymentStatus: 'Pending' },
+          { paymentStatus: 'Partial' },
+          { paymentStatus: { $exists: false } },
+          { paymentStatus: null },
+          { paymentStatus: '' },
+        ];
+      } else if (paymentStatus === 'Partial') {
+        filter.paymentStatus = 'Partial';
+      } else if (paymentStatus === 'Paid') {
+        filter.paymentStatus = 'Paid';
+      }
     }
 
     if (workType) {
@@ -493,7 +505,16 @@ router.get('/ice', protect, async (req, res) => {
     }
 
     if (paymentStatus && ['Paid', 'Pending'].includes(paymentStatus)) {
-      filter.paymentStatus = paymentStatus;
+      if (paymentStatus === 'Paid') {
+        filter.$or = [
+          { paymentStatus: 'Paid' },
+          { paymentStatus: { $exists: false } },
+          { paymentStatus: null },
+          { paymentStatus: '' },
+        ];
+      } else {
+        filter.paymentStatus = 'Pending';
+      }
     }
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
@@ -696,7 +717,16 @@ router.get('/ice/export', protect, async (req, res) => {
       }
     }
     if (paymentStatus) {
-      filter.paymentStatus = paymentStatus;
+      if (paymentStatus === 'Paid') {
+        filter.$or = [
+          { paymentStatus: 'Paid' },
+          { paymentStatus: { $exists: false } },
+          { paymentStatus: null },
+          { paymentStatus: '' },
+        ];
+      } else {
+        filter.paymentStatus = 'Pending';
+      }
     }
 
     const records = await DailyIce.find(filter).sort({ date: -1 }).lean();
@@ -829,7 +859,16 @@ router.get('/wastage', protect, async (req, res) => {
     }
 
     if (paymentStatus && ['Paid', 'Pending'].includes(paymentStatus)) {
-      filter.paymentStatus = paymentStatus;
+      if (paymentStatus === 'Paid') {
+        filter.$or = [
+          { paymentStatus: 'Paid' },
+          { paymentStatus: { $exists: false } },
+          { paymentStatus: null },
+          { paymentStatus: '' },
+        ];
+      } else {
+        filter.paymentStatus = 'Pending';
+      }
     }
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
@@ -1024,7 +1063,16 @@ router.get('/wastage/export', protect, async (req, res) => {
       }
     }
     if (paymentStatus) {
-      filter.paymentStatus = paymentStatus;
+      if (paymentStatus === 'Paid') {
+        filter.$or = [
+          { paymentStatus: 'Paid' },
+          { paymentStatus: { $exists: false } },
+          { paymentStatus: null },
+          { paymentStatus: '' },
+        ];
+      } else {
+        filter.paymentStatus = 'Pending';
+      }
     }
 
     const records = await DailyWastage.find(filter).sort({ date: -1 }).lean();
@@ -1382,8 +1430,20 @@ router.get('/export', protect, async (req, res) => {
         filter.date.$lte = d;
       }
     }
-    if (paymentStatus) {
-      filter.paymentStatus = paymentStatus;
+    if (paymentStatus && ['Pending', 'Paid', 'Partial'].includes(paymentStatus)) {
+      if (paymentStatus === 'Pending') {
+        filter.$or = [
+          { paymentStatus: 'Pending' },
+          { paymentStatus: 'Partial' },
+          { paymentStatus: { $exists: false } },
+          { paymentStatus: null },
+          { paymentStatus: '' },
+        ];
+      } else if (paymentStatus === 'Partial') {
+        filter.paymentStatus = 'Partial';
+      } else if (paymentStatus === 'Paid') {
+        filter.paymentStatus = 'Paid';
+      }
     }
 
     const entries = await StaffWork.find(filter).sort({ date: -1, staffName: 1 }).lean();
