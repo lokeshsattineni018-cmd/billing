@@ -1453,22 +1453,23 @@ a:hover {
     gap: 10px !important;
   }
 
-  /* Bottom Navigation Bar */
+  /* Bottom Navigation Bar — Clean 3-Tab Layout */
   .mobile-bottom-nav {
     display: flex;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 60px;
+    height: 64px;
     background: #ffffff;
     border-top: 1px solid #e2e8f0;
-    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
     z-index: 1000;
     align-items: center;
     justify-content: space-around;
-    padding: 0 4px;
+    padding: 0 16px;
     width: 100%;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .mobile-bottom-tab {
@@ -1478,28 +1479,36 @@ a:hover {
     justify-content: center;
     flex: 1;
     height: 100%;
-    color: #64748b;
+    color: #94a3b8;
     text-decoration: none;
     font-size: 0.72rem;
-    font-weight: 600;
-    gap: 2px;
+    font-weight: 700;
+    gap: 3px;
+    transition: color 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .mobile-bottom-tab.active {
     color: #0b5394;
-    font-weight: 700;
+    font-weight: 800;
   }
 
   .mobile-add-btn {
     background: linear-gradient(135deg, #0b5394, #2563eb);
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 10px rgba(11, 83, 148, 0.35);
-    margin-top: -10px;
+    box-shadow: 0 4px 14px rgba(11, 83, 148, 0.4);
+    margin-top: -18px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .mobile-bottom-tab:active .mobile-add-btn {
+    transform: scale(0.92);
+    box-shadow: 0 2px 8px rgba(11, 83, 148, 0.3);
   }
 
   /* Mobile Toast Positioning */

@@ -303,15 +303,7 @@ function AppLayout() {
             {lang === 'en' ? 'తెలుగు' : 'English'}
           </button>
 
-          <button
-            className="btn btn-secondary btn-sm"
-            style={{ padding: '5px 8px', fontSize: '0.74rem', display: 'flex', alignItems: 'center', gap: '4px', background: '#ffffff', border: '1px solid #0b5394', color: '#0b5394', borderRadius: '6px', fontWeight: 700 }}
-            onClick={handleInstallApp}
-          >
-            <DownloadIcon size={13} color="#0b5394" /> {t('installApp')}
-          </button>
-
-          {/* Menu bar button replaces settings logo to show all available features */}
+          {/* Hamburger menu — all features & options live inside the drawer */}
           <button
             type="button"
             className="btn btn-ghost btn-sm"
@@ -328,15 +320,6 @@ function AppLayout() {
             aria-label="Open navigation menu"
           >
             <MenuIcon size={20} color="#0b5394" />
-          </button>
-
-          <button
-            className="btn btn-ghost btn-sm"
-            style={{ padding: '6px', color: '#ef4444' }}
-            onClick={() => setShowLogoutModal(true)}
-            title={t('signOut')}
-          >
-            <LogoutIcon size={17} color="#ef4444" />
           </button>
         </div>
       </header>
@@ -507,32 +490,22 @@ function AppLayout() {
         </ErrorBoundary>
       </main>
 
-      {/* Clean Mobile Bottom Navigation Bar */}
+      {/* Clean Mobile Bottom Navigation Bar — Only 3 core tabs */}
       <nav className="mobile-bottom-nav">
         <NavLink to="/" end className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
-          <DashboardIcon size={19} />
+          <DashboardIcon size={20} />
           <span>{t('dashboard')}</span>
         </NavLink>
         <NavLink to="/new-bill" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
           <div className="mobile-add-btn">
-            <PlusIcon size={20} color="#ffffff" />
+            <PlusIcon size={22} color="#ffffff" />
           </div>
           <span>{t('newInvoice')}</span>
         </NavLink>
         <NavLink to="/bills" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
-          <InvoiceIcon size={19} />
+          <InvoiceIcon size={20} />
           <span>{t('invoiceHistory')}</span>
         </NavLink>
-        <NavLink to="/staff" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
-          <StaffIcon size={19} />
-          <span>{t('staff') || 'Staff'}</span>
-        </NavLink>
-        {isAdmin && (
-          <NavLink to="/customers" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
-            <TrendingUpIcon size={19} />
-            <span>{t('customers')}</span>
-          </NavLink>
-        )}
       </nav>
 
       {/* Install App Helper Modal */}
