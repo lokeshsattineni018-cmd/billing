@@ -358,6 +358,11 @@ router.get('/profit-loss', protect, restrictTo('owner', 'admin'), async (req, re
       filterStart = startOfDay;
       filterEnd = endOfDay;
       periodLabel = 'Today';
+    } else if (period === 'yesterday') {
+      const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+      filterStart = y;
+      filterEnd = startOfDay;
+      periodLabel = 'Yesterday';
     } else if (period === 'this_week') {
       const day = now.getDay();
       const diff = now.getDate() - day + (day === 0 ? -6 : 1);
@@ -369,12 +374,23 @@ router.get('/profit-loss', protect, restrictTo('owner', 'admin'), async (req, re
       filterStart = startOfMonth;
       filterEnd = endOfMonth;
       periodLabel = 'This Month';
-    } else if (period === 'custom' && startDate && endDate) {
-      filterStart = new Date(startDate);
-      filterStart.setHours(0, 0, 0, 0);
-      filterEnd = new Date(endDate);
-      filterEnd.setHours(23, 59, 59, 999);
-      periodLabel = 'Custom Range';
+    } else if ((period === 'single_day' || period === 'single') && (startDate || req.query.date)) {
+      const dStr = (startDate || req.query.date).trim();
+      const [y, m, d] = dStr.split('-').map(Number);
+      filterStart = new Date(y, m - 1, d, 0, 0, 0, 0);
+      filterEnd = new Date(y, m - 1, d + 1, 0, 0, 0, 0);
+      periodLabel = dStr;
+    } else if ((period === 'custom' || startDate) && startDate) {
+      const startParts = startDate.trim().split('-').map(Number);
+      filterStart = new Date(startParts[0], startParts[1] - 1, startParts[2], 0, 0, 0, 0);
+      if (endDate && endDate.trim()) {
+        const endParts = endDate.trim().split('-').map(Number);
+        filterEnd = new Date(endParts[0], endParts[1] - 1, endParts[2] + 1, 0, 0, 0, 0);
+        periodLabel = startDate === endDate ? startDate : `${startDate} to ${endDate}`;
+      } else {
+        filterEnd = new Date(startParts[0], startParts[1] - 1, startParts[2] + 1, 0, 0, 0, 0);
+        periodLabel = startDate;
+      }
     } else {
       filterStart = startOfMonth;
       filterEnd = endOfMonth;
