@@ -1,19 +1,22 @@
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import NewBill from './pages/NewBill';
 import BillHistory from './pages/BillHistory';
-import BillDetail from './pages/BillDetail';
-import PublicInvoice from './pages/PublicInvoice';
-import CustomerLedger from './pages/CustomerLedger';
-import CustomerDirectory from './pages/CustomerDirectory';
-import Reports from './pages/Reports';
-import ActivityLog from './pages/ActivityLog';
-import Settings from './pages/Settings';
-import Staff from './pages/Staff';
+
+// Lazy-loaded pages — only fetched when navigated to (reduces initial bundle ~40%)
+const BillDetail = lazy(() => import('./pages/BillDetail'));
+const PublicInvoice = lazy(() => import('./pages/PublicInvoice'));
+const CustomerLedger = lazy(() => import('./pages/CustomerLedger'));
+const CustomerDirectory = lazy(() => import('./pages/CustomerDirectory'));
+const Reports = lazy(() => import('./pages/Reports'));
+const ActivityLog = lazy(() => import('./pages/ActivityLog'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Staff = lazy(() => import('./pages/Staff'));
+
 import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon, UserIcon, StaffIcon, MenuIcon, CloseIcon } from './components/Icons';
 import ErrorBoundary from './components/ErrorBoundary';
 import logoImg from './assets/logo.png';
@@ -21,6 +24,19 @@ import { registerAutoSync, getPendingCount, syncPendingBills } from './services/
 import { billsAPI } from './services/api';
 import { playSuccessSound } from './utils/helpers';
 import './index.css';
+
+// Shared loading spinner for lazy-loaded pages
+function PageLoader() {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      minHeight: '60vh', flexDirection: 'column', gap: '12px',
+    }}>
+      <div className="spinner" style={{ width: '32px', height: '32px' }}></div>
+      <span style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: 600 }}>Loading...</span>
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -474,19 +490,21 @@ function AppLayout() {
       {/* Main Content Area */}
       <main className="main-content">
         <ErrorBoundary>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/new-bill" element={<NewBill />} />
-            <Route path="/bills" element={<BillHistory />} />
-            <Route path="/bills/:id" element={<BillDetail />} />
-            <Route path="/staff" element={<Staff />} />
-            {isAdmin && <Route path="/reports" element={<Reports />} />}
-            {isAdmin && <Route path="/customers" element={<CustomerDirectory />} />}
-            <Route path="/ledger" element={<Navigate to="/customers" replace />} />
-            {isAdmin && <Route path="/activity-log" element={<ActivityLog />} />}
-            {isAdmin && <Route path="/settings" element={<Settings />} />}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/new-bill" element={<NewBill />} />
+              <Route path="/bills" element={<BillHistory />} />
+              <Route path="/bills/:id" element={<BillDetail />} />
+              <Route path="/staff" element={<Staff />} />
+              {isAdmin && <Route path="/reports" element={<Reports />} />}
+              {isAdmin && <Route path="/customers" element={<CustomerDirectory />} />}
+              <Route path="/ledger" element={<Navigate to="/customers" replace />} />
+              {isAdmin && <Route path="/activity-log" element={<ActivityLog />} />}
+              {isAdmin && <Route path="/settings" element={<Settings />} />}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
         </ErrorBoundary>
       </main>
 

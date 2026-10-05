@@ -81,6 +81,10 @@ export default function Staff() {
   // In-app Voucher Viewer Modal State (Like normal bill page with WhatsApp & Print)
   const [viewingVoucher, setViewingVoucher] = useState(null);
   const [payingEntry, setPayingEntry] = useState(null);
+  const [selectedEntryIds, setSelectedEntryIds] = useState([]);
+  const [batchPaying, setBatchPaying] = useState(false);
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [batchPayMode, setBatchPayMode] = useState('Cash');
 
   // Single Worker Entry Bill Print State
   const [activeBillEntry, setActiveBillEntry] = useState(null);
@@ -397,6 +401,56 @@ export default function Staff() {
       loadSummary();
     } catch (err) {
       showToast('Failed to update payment status', 'error');
+    }
+  };
+
+  // Batch Payment Calculations & Handlers
+  const pendingEntries = entries.filter((e) => e.paymentStatus !== 'Paid');
+  const pendingTotalWage = pendingEntries.reduce(
+    (sum, e) => sum + (Number(e.totalAmount) - (Number(e.amountPaid) || 0)),
+    0
+  );
+
+  const selectedPendingEntries = entries.filter(
+    (e) => selectedEntryIds.includes(e._id) && e.paymentStatus !== 'Paid'
+  );
+  const selectedPendingTotal = selectedPendingEntries.reduce(
+    (sum, e) => sum + (Number(e.totalAmount) - (Number(e.amountPaid) || 0)),
+    0
+  );
+
+  const handleSelectAllPending = () => {
+    if (selectedEntryIds.length === pendingEntries.length && pendingEntries.length > 0) {
+      setSelectedEntryIds([]);
+    } else {
+      setSelectedEntryIds(pendingEntries.map((e) => e._id));
+    }
+  };
+
+  const handleToggleSelectEntry = (id) => {
+    setSelectedEntryIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleExecuteBatchPay = async () => {
+    const idsToPay = selectedEntryIds.length > 0 ? selectedEntryIds : pendingEntries.map((e) => e._id);
+    if (idsToPay.length === 0) return;
+    setBatchPaying(true);
+    try {
+      const res = await staffAPI.batchPay({
+        ids: idsToPay,
+        paymentMode: batchPayMode,
+        paymentDate: new Date().toISOString(),
+      });
+      showToast(res.data.message || 'Batch payment recorded', 'success');
+      setSelectedEntryIds([]);
+      setShowBatchModal(false);
+      await loadAllData();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to process batch payment', 'error');
+    } finally {
+      setBatchPaying(false);
     }
   };
 
@@ -1282,6 +1336,64 @@ export default function Staff() {
             </form>
           </div>
 
+          {/* Batch Pay Banner Bar for Pending Worker Wages */}
+          {pendingEntries.length > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '10px',
+                padding: '12px 16px',
+                background: 'linear-gradient(90deg, #eff6ff 0%, #f0fdf4 100%)',
+                border: '1px solid #bfdbfe',
+                borderRadius: '10px',
+                marginBottom: '14px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.2rem' }}>⚡</span>
+                <div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>
+                    {pendingEntries.length} Pending Worker {pendingEntries.length === 1 ? 'Wage' : 'Wages'}
+                    <span style={{ color: '#0b5394', marginLeft: '6px' }}>• {formatCurrency(pendingTotalWage)}</span>
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                    {selectedEntryIds.length > 0
+                      ? `${selectedEntryIds.length} worker(s) selected (${formatCurrency(selectedPendingTotal)})`
+                      : 'Select workers or pay all at once with one click'}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={handleSelectAllPending}
+                  className="btn btn-secondary btn-sm"
+                  style={{ fontSize: '0.78rem', fontWeight: 700 }}
+                >
+                  {selectedEntryIds.length === pendingEntries.length && pendingEntries.length > 0 ? 'Deselect All' : 'Select All'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBatchModal(true)}
+                  className="btn btn-primary btn-sm"
+                  style={{
+                    background: '#16a34a',
+                    border: 'none',
+                    fontWeight: 800,
+                    fontSize: '0.78rem',
+                    boxShadow: '0 2px 8px rgba(22, 163, 74, 0.25)',
+                  }}
+                >
+                  ✓ Pay {selectedEntryIds.length > 0 ? `Selected (${selectedEntryIds.length})` : `All Pending (${pendingEntries.length})`}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Entries Content */}
           <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
             {loading ? (
@@ -1305,6 +1417,14 @@ export default function Staff() {
                       {/* Header */}
                       <div className="mobile-bill-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {entry.paymentStatus !== 'Paid' && (
+                            <input
+                              type="checkbox"
+                              checked={selectedEntryIds.includes(entry._id)}
+                              onChange={() => handleToggleSelectEntry(entry._id)}
+                              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                            />
+                          )}
                           <span style={{ fontWeight: 800, fontSize: '0.98rem', color: '#0b5394' }}>
                             {entry.staffName}
                           </span>
@@ -1427,6 +1547,15 @@ export default function Staff() {
                   <table className="table">
                     <thead>
                       <tr>
+                        <th style={{ width: '38px', textAlign: 'center' }}>
+                          <input
+                            type="checkbox"
+                            checked={pendingEntries.length > 0 && selectedEntryIds.length === pendingEntries.length}
+                            onChange={handleSelectAllPending}
+                            title="Select all pending"
+                            style={{ cursor: 'pointer' }}
+                          />
+                        </th>
                         <th>Date</th>
                         <th>Worker Name</th>
                         <th>Work Category</th>
@@ -1440,6 +1569,18 @@ export default function Staff() {
                     <tbody>
                       {entries.map((entry, index) => (
                         <tr key={entry._id}>
+                          <td style={{ textAlign: 'center' }}>
+                            {entry.paymentStatus !== 'Paid' ? (
+                              <input
+                                type="checkbox"
+                                checked={selectedEntryIds.includes(entry._id)}
+                                onChange={() => handleToggleSelectEntry(entry._id)}
+                                style={{ cursor: 'pointer' }}
+                              />
+                            ) : (
+                              <span style={{ color: '#10b981', fontSize: '0.8rem', fontWeight: 800 }}>✓</span>
+                            )}
+                          </td>
                           <td>{formatDate(entry.date)}</td>
                           <td>
                             <strong
@@ -2296,6 +2437,74 @@ export default function Staff() {
             loadSummary();
           }}
         />
+      )}
+      {/* ── BATCH WORKER PAYMENT CONFIRMATION MODAL ── */}
+      {showBatchModal && (
+        <div className="modal-backdrop" onClick={() => setShowBatchModal(false)}>
+          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.2rem' }}>⚡</span>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>Batch Worker Payment</h3>
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowBatchModal(false)}>✕</button>
+            </div>
+
+            <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Workers to Pay:</span>
+                <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>
+                  {selectedEntryIds.length > 0 ? selectedPendingEntries.length : pendingEntries.length} workers
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Total Wage Amount:</span>
+                <span style={{ fontSize: '1.1rem', fontWeight: 900, color: '#16a34a' }}>
+                  {formatCurrency(selectedEntryIds.length > 0 ? selectedPendingTotal : pendingTotalWage)}
+                </span>
+              </div>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem' }}>Payment Mode</label>
+              <select
+                className="form-input"
+                value={batchPayMode}
+                onChange={(e) => setBatchPayMode(e.target.value)}
+                style={{ fontWeight: 700 }}
+              >
+                <option value="Cash">Cash / నగదు</option>
+                <option value="UPI">UPI / PhonePe / GPay</option>
+                <option value="Bank Transfer">Bank Transfer / NEFT</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowBatchModal(false)}
+                disabled={batchPaying}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleExecuteBatchPay}
+                disabled={batchPaying}
+                style={{
+                  background: '#16a34a',
+                  border: 'none',
+                  fontWeight: 800,
+                  boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)',
+                }}
+              >
+                {batchPaying ? 'Processing...' : `Confirm Pay ${formatCurrency(selectedEntryIds.length > 0 ? selectedPendingTotal : pendingTotalWage)}`}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -168,14 +168,22 @@ router.get('/customers/list', protect, async (req, res) => {
           isVoided: { $ne: true },
         },
       },
+      { $sort: { date: 1, createdAt: 1 } },
       {
         $group: {
           _id: '$companyName',
-          companyName: { $first: '$companyName' },
+          companyName: { $last: '$companyName' },
           customerPhone: { $last: '$customerPhone' },
+          vehicleNo: { $last: '$vehicleNo' },
+          companyGstin: { $last: '$companyGstin' },
+          cgstRate: { $last: '$cgstRate' },
+          sgstRate: { $last: '$sgstRate' },
+          lastItems: { $last: '$items' },
+          lastIce: { $last: '$ice' },
+          lastBillDate: { $last: '$date' },
         },
       },
-      { $sort: { companyName: 1 } },
+      { $sort: { lastBillDate: -1, companyName: 1 } },
       { $limit: 250 },
     ]);
     res.json({ customers });

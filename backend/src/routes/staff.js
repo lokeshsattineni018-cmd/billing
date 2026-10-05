@@ -405,6 +405,55 @@ router.post('/bulk', protect, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/staff/batch-pay
+ * Mark multiple worker entries as Paid in a single operation
+ */
+router.post('/batch-pay', protect, async (req, res) => {
+  try {
+    const { ids, paymentMode = 'Cash', paymentDate } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'No entry IDs provided' });
+    }
+
+    const payDate = paymentDate ? new Date(paymentDate) : new Date();
+
+    const pendingEntries = await StaffWork.find({
+      _id: { $in: ids },
+      paymentStatus: { $ne: 'Paid' },
+    });
+
+    if (pendingEntries.length === 0) {
+      return res.json({ message: 'No pending entries found to pay', modifiedCount: 0 });
+    }
+
+    let totalPaid = 0;
+    for (const entry of pendingEntries) {
+      entry.paymentStatus = 'Paid';
+      entry.amountPaid = entry.totalAmount;
+      entry.paymentDate = payDate;
+      entry.paymentMode = paymentMode;
+      totalPaid += entry.totalAmount;
+      await entry.save();
+    }
+
+    await logActivity(req, 'STAFF_WORK_BATCH_PAID', '', {
+      count: pendingEntries.length,
+      totalAmount: totalPaid,
+      paymentMode,
+    });
+
+    return res.json({
+      message: `Successfully marked ${pendingEntries.length} workers as Paid (₹${totalPaid.toFixed(2)})`,
+      modifiedCount: pendingEntries.length,
+      totalPaid,
+    });
+  } catch (error) {
+    return handleServerError(res, error, 'Failed to process batch worker payment', req);
+  }
+});
+
 // ==========================================
 // DAILY ICE USAGE TRACKER
 // ==========================================

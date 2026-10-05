@@ -48,6 +48,7 @@ export default function NewBill() {
   const [igstAmount, setIgstAmount] = useState('0');
 
   const [customersList, setCustomersList] = useState([]);
+  const [customerLastItems, setCustomerLastItems] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [saving, setSaving] = useState(false);
   const [hasDraftNotice, setHasDraftNotice] = useState(false);
@@ -247,6 +248,47 @@ export default function NewBill() {
     if (customer.customerPhone) {
       setCustomerPhone(customer.customerPhone.replace(/\D/g, '').slice(0, 10));
     }
+    if (customer.vehicleNo && !vehicleNo) {
+      setVehicleNo(customer.vehicleNo);
+    }
+    if (customer.companyGstin && !companyGstin) {
+      setCompanyGstin(customer.companyGstin);
+    }
+    if (customer.cgstRate && cgstRate === '0') {
+      setCgstRate(String(customer.cgstRate));
+    }
+    if (customer.sgstRate && sgstRate === '0') {
+      setSgstRate(String(customer.sgstRate));
+    }
+    if (customer.lastIce && customer.lastIce.rate && !ice.rate) {
+      setIce((prev) => ({
+        ...prev,
+        rate: String(customer.lastIce.rate || ''),
+      }));
+    }
+    if (customer.lastItems && customer.lastItems.length > 0) {
+      setCustomerLastItems(customer.lastItems);
+      if (items.length === 1 && !items[0].quantity && !items[0].rate) {
+        const first = customer.lastItems[0];
+        setItems([
+          {
+            sno: 1,
+            count: first.count || '',
+            particulars: first.particulars || 'HEAD-ON',
+            hsn: first.hsn || '0306',
+            quantity: '',
+            rate: first.rate ? String(first.rate) : '',
+            taxRate: first.taxRate || '0',
+            amount: 0,
+          },
+        ]);
+        showToast(`Auto-filled ${customer.companyName} details & last rate`, 'success');
+      } else {
+        showToast(`Auto-filled ${customer.companyName} details`, 'success');
+      }
+    } else {
+      showToast(`Auto-filled ${customer.companyName} details`, 'success');
+    }
     setShowSuggestions(false);
   };
 
@@ -259,9 +301,19 @@ export default function NewBill() {
     const updated = [...items];
     updated[index][field] = value;
 
-    if (field === 'quantity' || field === 'rate') {
-      const q = parseFloat(field === 'quantity' ? value : updated[index].quantity) || 0;
-      const r = parseFloat(field === 'rate' ? value : updated[index].rate) || 0;
+    // Rate Memory: if count changed and rate is empty, lookup past rate for this customer
+    if (field === 'count' && value && !updated[index].rate && customerLastItems.length > 0) {
+      const match = customerLastItems.find(
+        (it) => it.count && it.count.trim().toLowerCase() === value.trim().toLowerCase()
+      );
+      if (match && match.rate) {
+        updated[index].rate = String(match.rate);
+      }
+    }
+
+    if (field === 'quantity' || field === 'rate' || field === 'count') {
+      const q = parseFloat(updated[index].quantity) || 0;
+      const r = parseFloat(updated[index].rate) || 0;
       updated[index].amount = Math.round(q * r * 100) / 100;
     }
 
@@ -579,9 +631,43 @@ export default function NewBill() {
                             Cell: {c.customerPhone}
                           </span>
                         )}
+                        {c.vehicleNo && (
+                          <span style={{ fontSize: '0.72rem', color: '#059669', marginLeft: '6px', background: '#ecfdf5', padding: '1px 5px', borderRadius: '4px' }}>
+                            {c.vehicleNo}
+                          </span>
+                        )}
                       </div>
                       <span className="badge badge-blue" style={{ fontSize: '0.72rem' }}>Select</span>
                     </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Quick Customer Selection Pills */}
+              {!companyName && customersList.length > 0 && (
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '7px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>Recent:</span>
+                  {customersList.slice(0, 4).map((c) => (
+                    <button
+                      key={c._id}
+                      type="button"
+                      onClick={() => handleSelectCustomer(c)}
+                      style={{
+                        background: '#eff6ff',
+                        border: '1px solid #bfdbfe',
+                        color: '#0b5394',
+                        borderRadius: '6px',
+                        padding: '3px 8px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                      }}
+                    >
+                      <span style={{ color: '#2563eb' }}>+</span> {c.companyName}
+                    </button>
                   ))}
                 </div>
               )}

@@ -141,6 +141,7 @@ export const staffAPI = {
   update: (id, data) => api.put(`/staff/${id}`, data),
   delete: (id) => api.delete(`/staff/${id}`),
   togglePayment: (id, data) => api.patch(`/staff/${id}/pay`, data || {}),
+  batchPay: (data) => api.post('/staff/batch-pay', data),
   exportCSVUrl: (params) => {
     const query = new URLSearchParams(params || {}).toString();
     return `${API_BASE_URL}/staff/export?${query}&token=${localStorage.getItem('srsf_token')}`;
