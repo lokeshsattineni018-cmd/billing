@@ -173,7 +173,11 @@ export function numberToWords(num) {
 export async function shareInvoicePDFOnWhatsApp(bill, showToast) {
   if (!bill) return;
 
-  const pdfUrl = `${window.location.origin}/api/bills/${bill._id}/pdf?token=${localStorage.getItem('srsf_token')}`;
+  const token = localStorage.getItem('srsf_token');
+  const pdfUrl = bill.shareToken
+    ? `${window.location.origin}/api/bills/public/${bill.shareToken}/pdf`
+    : `${window.location.origin}/api/bills/${bill._id}/pdf`;
+  const fetchHeaders = token ? { Authorization: `Bearer ${token}` } : {};
   const formattedDate = new Date(bill.date).toLocaleDateString('en-IN');
   const amountStr = formatCurrency(bill.grandTotal || bill.total);
   const rawPhone = bill.customerPhone ? bill.customerPhone.replace(/[^0-9]/g, '') : '';
@@ -189,7 +193,7 @@ Thank you for your business!`;
   if (showToast) showToast('Preparing Invoice PDF for WhatsApp...');
 
   try {
-    const response = await fetch(pdfUrl);
+    const response = await fetch(pdfUrl, { headers: fetchHeaders });
     if (!response.ok) throw new Error('PDF fetch failed');
     const blob = await response.blob();
     const fileName = `Invoice-${bill.billNo}.pdf`;
@@ -213,7 +217,7 @@ Thank you for your business!`;
   // Fallback for Desktop browsers / Direct WhatsApp:
   // 1. Download the PDF file to user's computer
   try {
-    const response = await fetch(pdfUrl);
+    const response = await fetch(pdfUrl, { headers: fetchHeaders });
     const blob = await response.blob();
     const fileBlobUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');

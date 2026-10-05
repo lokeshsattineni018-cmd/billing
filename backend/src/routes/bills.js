@@ -534,30 +534,19 @@ router.post('/:id/duplicate', protect, restrictTo('owner', 'admin'), async (req,
 });
 
 /**
- * Helper to locate bill securely by shareToken (or backward compatible ObjectId)
+ * Helper to locate bill securely by 128-bit cryptographic shareToken
+ * Rejects sequential IDs and raw ObjectIds to prevent IDOR / enumeration attacks
  */
 async function findBillByPublicToken(token) {
   if (!token || typeof token !== 'string') return null;
 
-  // Strict check: Block any integer/sequential ID enumeration attempts (e.g., '1', '2', '3')
-  if (/^\d+$/.test(token)) {
+  const cleanToken = token.trim();
+  // Cryptographic shareTokens are exactly 32 lowercase hex characters (128-bit)
+  if (!/^[a-f0-9]{32}$/i.test(cleanToken)) {
     return null;
   }
 
-  // 1. Primary secure lookup: Match 128-bit cryptographic shareToken
-  let bill = await Bill.findOne({ shareToken: token });
-  if (bill) return bill;
-
-  // 2. Backward compatibility fallback for legacy bills saved before shareToken migration
-  if (mongoose.Types.ObjectId.isValid(token)) {
-    bill = await Bill.findById(token);
-    if (bill && !bill.shareToken) {
-      bill.shareToken = crypto.randomBytes(16).toString('hex');
-      await bill.save();
-    }
-  }
-
-  return bill;
+  return Bill.findOne({ shareToken: cleanToken });
 }
 
 /**

@@ -37,6 +37,10 @@ router.get('/:id/pdf', generalLimiter, async (req, res) => {
       return res.status(401).send('User not found. Please log in again.');
     }
 
+    if (decoded.tokenVersion !== undefined && decoded.tokenVersion !== user.tokenVersion) {
+      return res.status(401).send('Session expired or logged out. Please log in again.');
+    }
+
     const bill = await Bill.findById(req.params.id);
     if (!bill) {
       return res.status(404).send('Invoice not found');

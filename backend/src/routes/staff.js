@@ -421,7 +421,7 @@ router.post('/bulk', protect, async (req, res) => {
  * POST /api/staff/batch-pay
  * Mark multiple worker entries as Paid in a single operation
  */
-router.post('/batch-pay', protect, async (req, res) => {
+router.post('/batch-pay', protect, restrictTo('admin', 'owner'), async (req, res) => {
   try {
     const { ids, paymentMode = 'Cash', paymentDate } = req.body;
 
@@ -1316,7 +1316,7 @@ router.put('/:id', protect, restrictTo('admin', 'owner'), async (req, res) => {
  * PATCH /api/staff/:id/pay
  * Toggle or mark an entry as Paid / Pending
  */
-router.patch('/:id/pay', protect, async (req, res) => {
+router.patch('/:id/pay', protect, restrictTo('admin', 'owner'), async (req, res) => {
   try {
     const { status, amountPaid, paymentMode, paymentDate, notes } = req.body;
     const entry = await StaffWork.findById(req.params.id);

@@ -44,7 +44,7 @@ const { Counter, resetSequence } = require('../models/Counter');
  * PUT /api/settings
  * Update business settings (Admin only)
  */
-router.put('/', protect, restrictTo('admin'), async (req, res) => {
+router.put('/', protect, restrictTo('admin', 'owner'), async (req, res) => {
   try {
     const { businessName, legalName, address, phone, gstin, bankName, accountNo, ifsc, branch, backupEmail, backupEnabled, smtpUser, smtpPass, smtpHost, smtpPort, invoicePrefix } = req.body;
 
@@ -87,7 +87,7 @@ router.put('/', protect, restrictTo('admin'), async (req, res) => {
  * GET /api/settings/counter-status
  * Get current invoice counter status (Admin only)
  */
-router.get('/counter-status', protect, restrictTo('admin'), async (req, res) => {
+router.get('/counter-status', protect, restrictTo('admin', 'owner'), async (req, res) => {
   try {
     const counter = await Counter.findOne({ _id: 'billNo' });
     const currentNumber = counter ? counter.seq : 0;
@@ -104,7 +104,7 @@ router.get('/counter-status', protect, restrictTo('admin'), async (req, res) => 
  * POST /api/settings/reset-counter
  * Reset or set the next invoice sequence number (Admin only)
  */
-router.post('/reset-counter', protect, restrictTo('admin'), async (req, res) => {
+router.post('/reset-counter', protect, restrictTo('admin', 'owner'), async (req, res) => {
   try {
     const { nextNumber } = req.body;
     const targetNum = parseInt(nextNumber, 10);

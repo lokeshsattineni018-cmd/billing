@@ -67,9 +67,9 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    // Match Vercel preview deployment domains for this project
+    // Match Vercel preview deployment domains for this project strictly
     if (/^https:\/\/billing-[a-z0-9-]+-lokeshsattinenis-projects\.vercel\.app$/.test(origin) ||
-        /^https:\/\/billing-snowy-three.*\.vercel\.app$/.test(origin)) {
+        /^https:\/\/billing-snowy-three(-[a-z0-9-]+)?\.vercel\.app$/.test(origin)) {
       return callback(null, true);
     }
 
@@ -146,8 +146,77 @@ routeMappings.forEach(([path, handler]) => {
 app.get(['/api/health', '/health'], async (req, res) => {
   const dbState = mongoose.connection.readyState;
   const isDbConnected = dbState === 1;
-  let dbPingMs = null;
 
+  // Authorization check for detailed infrastructure diagnostics
+  const expectedSecret = process.env.HEALTH_SECRET || process.env.CRON_SECRET;
+  let isAuthorized = false;
+
+  const headerSecret = req.headers['x-health-secret'] || req.headers['x-cron-secret'];
+  if (expectedSecret && headerSecret && headerSecret === expectedSecret) {
+    isAuthorized = true;
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!isAuthorized && authHeader) {
+    if (authHeader.startsWith('Bearer ')) {
+      try {
+        const { getJwtSecret } = require('./middleware/security');
+        const jwt = require('jsonwebtoken');
+        const User = require('./models/User');
+        const decoded = jwt.verify(authHeader.split(' ')[1], getJwtSecret());
+        const user = await User.findById(decoded.id);
+        if (user && ['owner', 'admin'].includes(user.role)) {
+          isAuthorized = true;
+        }
+      } catch (e) {}
+    } else if (authHeader.startsWith('Basic ') && expectedSecret) {
+      try {
+        const credentials = Buffer.from(authHeader.split(' ')[1], 'base64').toString('utf8');
+        const [user, pass] = credentials.split(':');
+        if (pass === expectedSecret || user === expectedSecret) {
+          isAuthorized = true;
+        }
+      } catch (e) {}
+    }
+  }
+
+  if (!isAuthorized && expectedSecret && req.query.secret && req.query.secret === expectedSecret) {
+    isAuthorized = true;
+  }
+
+  // Unauthenticated callers receive only a minimal high-level status check
+  if (!isAuthorized) {
+    if (req.query.format === 'html') {
+      res.setHeader('WWW-Authenticate', 'Basic realm="SRSF Health Dashboard"');
+      return res.status(401).type('html').send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>401 Unauthorized — SRSF Health</title>
+  <style>
+    body { background: #0f172a; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+    .box { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 28px; max-width: 420px; text-align: center; }
+    h2 { color: #f87171; margin-top: 0; font-size: 1.25rem; }
+    p { color: #94a3b8; font-size: 0.88rem; line-height: 1.6; margin-bottom: 0; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>🔒 Protected Dashboard</h2>
+    <p>Authentication required to view system diagnostics. Provide valid credentials or X-Health-Secret header.</p>
+  </div>
+</body>
+</html>`);
+    }
+
+    return res.status(isDbConnected ? 200 : 503).json({
+      status: isDbConnected ? 'ok' : 'degraded',
+      service: 'srsf-billing-backend',
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  let dbPingMs = null;
   if (isDbConnected && mongoose.connection.db) {
     try {
       const pingStart = Date.now();
@@ -182,59 +251,7 @@ app.get(['/api/health', '/health'], async (req, res) => {
     version: '1.0.0',
   };
 
-  // If HTML format explicitly requested, require lightweight secret or Basic Auth
   if (req.query.format === 'html') {
-    const expectedSecret = process.env.HEALTH_SECRET || process.env.CRON_SECRET || 'srsf-health-key';
-    let isHtmlAuthorized = false;
-
-    // 1. Header check (X-Health-Secret or X-Cron-Secret)
-    const headerSecret = req.headers['x-health-secret'] || req.headers['x-cron-secret'];
-    if (headerSecret && headerSecret === expectedSecret) {
-      isHtmlAuthorized = true;
-    }
-
-    // 2. HTTP Basic Auth check
-    const authHeader = req.headers.authorization;
-    if (!isHtmlAuthorized && authHeader && authHeader.startsWith('Basic ')) {
-      try {
-        const credentials = Buffer.from(authHeader.split(' ')[1], 'base64').toString('utf8');
-        const [user, pass] = credentials.split(':');
-        if (pass === expectedSecret || user === expectedSecret) {
-          isHtmlAuthorized = true;
-        }
-      } catch (e) {
-        // Invalid basic auth header format
-      }
-    }
-
-    // 3. Lightweight query secret check fallback (?secret=)
-    if (!isHtmlAuthorized && req.query.secret && req.query.secret === expectedSecret) {
-      isHtmlAuthorized = true;
-    }
-
-    if (!isHtmlAuthorized) {
-      res.setHeader('WWW-Authenticate', 'Basic realm="SRSF Health Dashboard"');
-      return res.status(401).type('html').send(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>401 Unauthorized — SRSF Health</title>
-  <style>
-    body { background: #0f172a; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-    .box { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 28px; max-width: 420px; text-align: center; }
-    h2 { color: #f87171; margin-top: 0; font-size: 1.25rem; }
-    p { color: #94a3b8; font-size: 0.88rem; line-height: 1.6; margin-bottom: 0; }
-  </style>
-</head>
-<body>
-  <div class="box">
-    <h2>🔒 Protected Dashboard</h2>
-    <p>Authentication required to view the visual health monitor. Provide HTTP Basic Auth credentials or X-Health-Secret header.</p>
-  </div>
-</body>
-</html>`);
-    }
-
     const statusColor = isDbConnected ? '#10b981' : '#ef4444';
     const statusBadge = isDbConnected ? 'HEALTHY' : 'DEGRADED';
     const html = `<!DOCTYPE html>

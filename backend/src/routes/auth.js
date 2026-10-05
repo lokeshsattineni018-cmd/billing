@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
@@ -30,14 +31,23 @@ async function autoSeedUsers() {
   const userCount = await User.countDocuments();
   if (userCount > 0) return; // Do not recreate accounts once any users exist in MongoDB
 
+  const adminPass = process.env.DEFAULT_ADMIN_PASSWORD || crypto.randomBytes(8).toString('hex');
+  const staffPass = process.env.DEFAULT_STAFF_PASSWORD || crypto.randomBytes(8).toString('hex');
+
   const defaultUsers = [
-    { name: 'Lokesh', username: 'lokesh18', email: 'lokesh18@vijayadurgagencies.local', password: process.env.DEFAULT_ADMIN_PASSWORD || 'Lokesh@01825', role: 'admin' },
-    { name: 'Staff', username: 'staff', email: 'staff@vijayadurgagencies.com', password: process.env.DEFAULT_STAFF_PASSWORD || 'staff123', role: 'staff' },
+    { name: 'Lokesh', username: 'lokesh18', email: 'lokesh18@vijayadurgagencies.local', password: adminPass, role: 'admin' },
+    { name: 'Staff', username: 'staff', email: 'staff@vijayadurgagencies.com', password: staffPass, role: 'staff' },
   ];
 
   for (const u of defaultUsers) {
     await User.create(u);
     console.log(`Default user initialized: ${u.username || u.email} (${u.role})`);
+    if (!process.env.DEFAULT_ADMIN_PASSWORD && u.role === 'admin') {
+      console.log(`[SECURITY NOTICE] Auto-generated temporary admin password: ${adminPass}`);
+    }
+    if (!process.env.DEFAULT_STAFF_PASSWORD && u.role === 'staff') {
+      console.log(`[SECURITY NOTICE] Auto-generated temporary staff password: ${staffPass}`);
+    }
   }
 }
 
