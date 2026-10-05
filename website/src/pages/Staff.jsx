@@ -149,10 +149,11 @@ export default function Staff() {
     setLoading(false);
   };
 
-  const loadEntries = async () => {
+  const loadEntries = async (overrideSearch) => {
     try {
       const params = {};
-      if (search.trim()) params.search = search.trim();
+      const s = overrideSearch !== undefined ? overrideSearch : search;
+      if (s.trim()) params.search = s.trim();
       else if (selectedWorkerFilter) params.search = selectedWorkerFilter;
 
       if (dateFrom) params.dateFrom = dateFrom;
@@ -295,11 +296,6 @@ export default function Staff() {
     }
   };
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    setSelectedWorkerFilter('');
-    loadEntries();
-  };
 
   const handleClearFilters = () => {
     setSearch('');
@@ -676,33 +672,6 @@ export default function Staff() {
             <span>{lang === 'te' ? 'రిఫ్రెష్' : 'Refresh'}</span>
           </button>
 
-          {activeTab === 'entries' && (
-            <>
-              <button
-                className="btn btn-secondary"
-                onClick={() => setBulkModalOpen(!bulkModalOpen)}
-                style={{ fontWeight: 700, border: '1.5px solid #0b5394', color: '#0b5394' }}
-              >
-                ⚡ {bulkModalOpen ? (t('hideBulkEntry') || 'Hide Bulk Entry') : (t('bulkAttendance') || 'Bulk Attendance')}
-              </button>
-
-              <button
-                className="btn btn-primary"
-                onClick={handleOpenCreate}
-                style={{
-                  background: 'linear-gradient(135deg, #0b5394, #2563eb)',
-                  color: '#ffffff',
-                  fontWeight: 800,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                <PlusIcon size={16} color="#ffffff" />
-                <span>{t('addWorkEntry') || 'Add Work Entry'}</span>
-              </button>
-            </>
-          )}
         </div>
       </div>
 
@@ -1205,135 +1174,141 @@ export default function Staff() {
             </div>
           )}
 
-          {/* Search & Filter Card */}
-          <div className="card" style={{ padding: '14px 16px', marginBottom: '16px' }}>
-            <form onSubmit={handleSearchSubmit}>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                  gap: '12px',
-                  alignItems: 'flex-end',
-                }}
-              >
-                {/* Search Worker Name */}
-                <div>
-                  <label className="filter-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>
-                    {t('workerName') || 'Worker Name'}
-                  </label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder={lang === 'te' ? 'కార్మికుని పేరు వెతకండి...' : 'Search name...'}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                </div>
-
-                {/* Quick Date Presets */}
-                <div>
-                  <label className="filter-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>
-                    {lang === 'te' ? 'కాల పరిమితి' : 'Period Preset'}
-                  </label>
-                  <select
-                    className="form-select"
-                    value={dateFilter}
-                    onChange={(e) => handleDatePreset(e.target.value)}
-                  >
-                    <option value="all">{lang === 'te' ? 'అన్ని తేదీలు' : 'All Dates'}</option>
-                    <option value="today">{t('today') || 'Today'}</option>
-                    <option value="yesterday">{t('yesterday') || 'Yesterday'}</option>
-                    <option value="week">{lang === 'te' ? 'గత 7 రోజులు' : 'Past 7 Days'}</option>
-                    <option value="month">{t('thisMonth') || 'This Month'}</option>
-                  </select>
-                </div>
-
-                {/* Date From */}
-                <div>
-                  <label className="filter-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>
-                    {lang === 'te' ? 'ప్రారంభ తేదీ' : 'From Date'}
-                  </label>
-                  <input
-                    type="date"
-                    className="form-input"
-                    value={dateFrom}
-                    onChange={(e) => {
-                      setDateFrom(e.target.value);
-                      setDateFilter('custom');
-                    }}
-                  />
-                </div>
-
-                {/* Date To */}
-                <div>
-                  <label className="filter-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>
-                    {lang === 'te' ? 'ముగింపు తేదీ' : 'To Date'}
-                  </label>
-                  <input
-                    type="date"
-                    className="form-input"
-                    value={dateTo}
-                    onChange={(e) => {
-                      setDateTo(e.target.value);
-                      setDateFilter('custom');
-                    }}
-                  />
-                </div>
-
-                {/* Payment Status Filter */}
-                <div>
-                  <label className="filter-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>
-                    {t('paymentStatus') || 'Payment Status'}
-                  </label>
-                  <select
-                    className="form-select"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                  >
-                    <option value="">{lang === 'te' ? 'అన్ని రకాలు' : 'All Statuses'}</option>
-                    <option value="Pending">{lang === 'te' ? 'బాకీ ఉన్నవి మాత్రమే' : 'Pending Only'}</option>
-                    <option value="Paid">{lang === 'te' ? 'చెల్లించినవి మాత్రమే' : 'Paid Only'}</option>
-                  </select>
-                </div>
-
-                {/* Action Buttons */}
-                <div style={{ display: 'flex', gap: '8px' }}>
+          {/* Control Bar & Action Buttons (Identical to Ice and Wastage trackers) */}
+          <div
+            className="card"
+            style={{
+              padding: '14px 18px',
+              marginBottom: '18px',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '12px',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', flex: 1, minWidth: '280px' }}>
+              {/* Quick Date Pills */}
+              <div style={{ display: 'flex', gap: '4px', background: '#f1f5f9', padding: '3px', borderRadius: '8px' }}>
+                {[
+                  { id: 'all', label: lang === 'te' ? 'అన్నీ' : 'All' },
+                  { id: 'today', label: lang === 'te' ? 'ఈరోజు' : 'Today' },
+                  { id: 'yesterday', label: lang === 'te' ? 'నిన్న' : 'Yesterday' },
+                  { id: 'week', label: lang === 'te' ? '7 రోజులు' : '7 Days' },
+                  { id: 'month', label: lang === 'te' ? 'ఈ నెల' : 'This Month' },
+                ].map((p) => (
                   <button
-                    type="submit"
-                    className="btn btn-primary"
+                    key={p.id}
+                    type="button"
+                    onClick={() => handleDatePreset(p.id)}
                     style={{
-                      flex: 1,
-                      height: '42px',
-                      background: '#0b5394',
-                      color: '#ffffff',
+                      padding: '4px 10px',
+                      fontSize: '0.78rem',
                       fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: dateFilter === p.id ? '#0b5394' : 'transparent',
+                      color: dateFilter === p.id ? '#ffffff' : '#64748b',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
                     }}
                   >
-                    <SearchIcon size={15} color="#ffffff" />
-                    <span>{lang === 'te' ? 'వెతకండి' : 'Filter'}</span>
+                    {p.label}
                   </button>
+                ))}
+              </div>
+
+              {/* Search Box */}
+              <div style={{ position: 'relative', minWidth: '180px', flex: 1 }}>
+                <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
+                  <SearchIcon size={14} />
+                </span>
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ paddingLeft: '32px', paddingRight: search ? '28px' : '10px', height: '34px', fontSize: '0.82rem' }}
+                  placeholder={lang === 'te' ? 'కార్మికుని పేరు వెతకండి...' : 'Search worker, notes...'}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && loadEntries()}
+                />
+                {search && (
                   <button
                     type="button"
-                    className="btn btn-secondary"
-                    onClick={handleClearFilters}
-                    style={{
-                      height: '42px',
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                    onClick={() => {
+                      setSearch('');
+                      loadEntries('');
                     }}
-                    title="Clear all filters"
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem',
+                      padding: '2px',
+                    }}
+                    title="Clear search"
                   >
-                    <span>{lang === 'te' ? 'రీసెట్' : 'Reset'}</span>
+                    ✕
                   </button>
-                </div>
+                )}
               </div>
-            </form>
+
+              {/* Payment Status Filter */}
+              <select
+                className="form-input"
+                style={{ width: 'auto', height: '34px', fontSize: '0.82rem' }}
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="">{lang === 'te' ? 'అన్ని రకాలు' : 'All Statuses'}</option>
+                <option value="Paid">{lang === 'te' ? 'చెల్లించినవి' : 'Paid'}</option>
+                <option value="Pending">{lang === 'te' ? 'బాకీ ఉన్నవి' : 'Pending'}</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={handleRefresh}
+                disabled={refreshing}
+                title="Refresh staff records"
+              >
+                <RefreshIcon size={14} spinning={refreshing} />
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setBulkModalOpen(!bulkModalOpen)}
+                style={{ fontWeight: 700, border: '1.5px solid #0b5394', color: '#0b5394', height: '34px', display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
+                ⚡ {bulkModalOpen ? (t('hideBulkEntry') || 'Hide Bulk') : (t('bulkAttendance') || 'Bulk Attendance')}
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleOpenCreate}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontWeight: 800,
+                  height: '34px',
+                  fontSize: '0.82rem',
+                  background: 'linear-gradient(135deg, #0b5394, #2563eb)',
+                }}
+              >
+                <PlusIcon size={16} color="#ffffff" />
+                <span>{t('addWorkEntry') || 'Add Work Entry'}</span>
+              </button>
+            </div>
           </div>
 
 
