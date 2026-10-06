@@ -226,6 +226,7 @@ export default function BillDetail() {
 
   const itemsList = bill.items && bill.items.length > 0 ? bill.items : [{
     sno: 1,
+    count: bill.count || '',
     particulars: bill.particulars || 'Fresh Seafood / Prawns Supply',
     hsn: bill.hsn || '0306',
     quantity: bill.quantity,
@@ -582,7 +583,7 @@ export default function BillDetail() {
               <tr style={{ backgroundColor: 'var(--bg-secondary)' }}>
                 <th style={{ width: '50px', textAlign: 'center' }}>S.No</th>
                 <th style={{ minWidth: '130px' }}>PARTICULARS</th>
-                <th style={{ width: '80px', textAlign: 'center' }}>HSN</th>
+                <th style={{ width: '90px', textAlign: 'center' }}>COUNT</th>
                 <th style={{ width: '110px', textAlign: 'right' }}>QTY (KG)</th>
                 <th style={{ width: '110px', textAlign: 'right' }}>PRICE (₹)</th>
                 {canSeeSales && <th style={{ width: '120px', textAlign: 'right' }}>AMOUNT (₹)</th>}
@@ -593,7 +594,7 @@ export default function BillDetail() {
                 <tr key={index}>
                   <td style={{ textAlign: 'center', fontWeight: 600 }}>{item.sno || index + 1}</td>
                   <td style={{ fontWeight: 600 }}>{item.particulars}</td>
-                  <td style={{ textAlign: 'center' }}>{item.hsn || '0306'}</td>
+                  <td style={{ textAlign: 'center', fontWeight: 600 }}>{item.count ? String(item.count) : (item.particulars === 'Ice' ? 'Ice' : '—')}</td>
                   <td className="text-right" style={{ fontWeight: 600 }}>{item.quantity} kg</td>
                   <td className="text-right">{formatCurrency(item.rate)}</td>
                   {canSeeSales && (
