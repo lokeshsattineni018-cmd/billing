@@ -552,31 +552,11 @@ export default function Reports() {
       </div>
 
       {/* Multi-Stream View Tabs */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '8px',
-          marginBottom: '16px',
-          borderBottom: '2px solid #e2e8f0',
-          paddingBottom: '2px',
-          overflowX: 'auto',
-          whiteSpace: 'nowrap',
-        }}
-      >
+      <div className="report-tabs-container">
         <button
           type="button"
           onClick={() => setActiveTab('sales')}
-          style={{
-            background: 'none',
-            border: 'none',
-            borderBottom: activeTab === 'sales' ? '3px solid #0b5394' : '3px solid transparent',
-            padding: '8px 16px',
-            fontSize: '0.92rem',
-            fontWeight: 800,
-            color: activeTab === 'sales' ? '#0b5394' : '#64748b',
-            cursor: 'pointer',
-            marginBottom: '-2px',
-          }}
+          className={`report-tab-btn ${activeTab === 'sales' ? 'active' : ''}`}
         >
           🧾 {t('salesAndInvoices') || 'Normal Bills (Sales)'}
         </button>
@@ -584,17 +564,7 @@ export default function Reports() {
         <button
           type="button"
           onClick={() => setActiveTab('ice')}
-          style={{
-            background: 'none',
-            border: 'none',
-            borderBottom: activeTab === 'ice' ? '3px solid #0284c7' : '3px solid transparent',
-            padding: '8px 16px',
-            fontSize: '0.92rem',
-            fontWeight: 800,
-            color: activeTab === 'ice' ? '#0284c7' : '#64748b',
-            cursor: 'pointer',
-            marginBottom: '-2px',
-          }}
+          className={`report-tab-btn ${activeTab === 'ice' ? 'active' : ''}`}
         >
           🧊 {t('iceBills') || 'Ice Bills'}
         </button>
@@ -602,17 +572,7 @@ export default function Reports() {
         <button
           type="button"
           onClick={() => setActiveTab('workers')}
-          style={{
-            background: 'none',
-            border: 'none',
-            borderBottom: activeTab === 'workers' ? '3px solid #0b5394' : '3px solid transparent',
-            padding: '8px 16px',
-            fontSize: '0.92rem',
-            fontWeight: 800,
-            color: activeTab === 'workers' ? '#0b5394' : '#64748b',
-            cursor: 'pointer',
-            marginBottom: '-2px',
-          }}
+          className={`report-tab-btn ${activeTab === 'workers' ? 'active' : ''}`}
         >
           👷 {t('workerSalaries') || 'Worker Salary'}
         </button>
@@ -620,17 +580,7 @@ export default function Reports() {
         <button
           type="button"
           onClick={() => setActiveTab('wastage')}
-          style={{
-            background: 'none',
-            border: 'none',
-            borderBottom: activeTab === 'wastage' ? '3px solid #16a34a' : '3px solid transparent',
-            padding: '8px 16px',
-            fontSize: '0.92rem',
-            fontWeight: 800,
-            color: activeTab === 'wastage' ? '#16a34a' : '#64748b',
-            cursor: 'pointer',
-            marginBottom: '-2px',
-          }}
+          className={`report-tab-btn ${activeTab === 'wastage' ? 'active' : ''}`}
         >
           🦐 {t('wastageIncome') || 'Wastage Income'}
         </button>
@@ -638,17 +588,7 @@ export default function Reports() {
         <button
           type="button"
           onClick={() => setActiveTab('net')}
-          style={{
-            background: 'none',
-            border: 'none',
-            borderBottom: activeTab === 'net' ? '3px solid #7c3aed' : '3px solid transparent',
-            padding: '8px 16px',
-            fontSize: '0.92rem',
-            fontWeight: 800,
-            color: activeTab === 'net' ? '#7c3aed' : '#64748b',
-            cursor: 'pointer',
-            marginBottom: '-2px',
-          }}
+          className={`report-tab-btn ${activeTab === 'net' ? 'active' : ''}`}
         >
           ⚖️ {t('netOperationsSummary') || 'Net Operations & Profit'}
         </button>
@@ -656,17 +596,7 @@ export default function Reports() {
         <button
           type="button"
           onClick={() => setActiveTab('outstanding')}
-          style={{
-            background: 'none',
-            border: 'none',
-            borderBottom: activeTab === 'outstanding' ? '3px solid #d97706' : '3px solid transparent',
-            padding: '8px 16px',
-            fontSize: '0.92rem',
-            fontWeight: 800,
-            color: activeTab === 'outstanding' ? '#d97706' : '#64748b',
-            cursor: 'pointer',
-            marginBottom: '-2px',
-          }}
+          className={`report-tab-btn ${activeTab === 'outstanding' ? 'active' : ''}`}
         >
           ⚠️ {t('customerOutstanding') || 'Customer Outstanding'}
         </button>
@@ -674,9 +604,9 @@ export default function Reports() {
 
       {/* Date Range Selector Bar (for all periodic tabs) */}
       {activeTab !== 'outstanding' && (
-        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', marginBottom: range === 'custom' ? '12px' : '0' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b', marginRight: '4px' }}>
+        <div className="report-range-bar">
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#64748b', marginRight: '6px' }}>
               {lang === 'te' ? 'కాల పరిమితి:' : 'Range:'}
             </span>
             {[
@@ -691,8 +621,7 @@ export default function Reports() {
               <button
                 key={tab.id}
                 type="button"
-                className={`btn btn-sm ${range === tab.id ? 'btn-primary' : 'btn-secondary'}`}
-                style={range === tab.id ? { background: '#0b5394', color: '#ffffff' } : {}}
+                className={`report-pill-btn ${range === tab.id ? 'active' : ''}`}
                 onClick={() => setRange(tab.id)}
               >
                 {tab.label}
@@ -701,9 +630,9 @@ export default function Reports() {
           </div>
 
           {range === 'custom' && (
-            <form onSubmit={handleApplyCustomDate} style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', flexWrap: 'wrap', marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed #e2e8f0' }}>
+            <form onSubmit={handleApplyCustomDate} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap', marginTop: '14px', paddingTop: '14px', borderTop: '1px dashed #e2e8f0' }}>
               <div>
-                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '3px' }}>
+                <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '4px' }}>
                   {lang === 'te' ? 'ప్రారంభ తేదీ' : 'Start Date'}
                 </label>
                 <input
@@ -711,10 +640,11 @@ export default function Reports() {
                   className="form-input"
                   value={customStart}
                   onChange={(e) => setCustomStart(e.target.value)}
+                  style={{ height: '38px' }}
                 />
               </div>
               <div>
-                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '3px' }}>
+                <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '4px' }}>
                   {lang === 'te' ? 'ముగింపు తేదీ' : 'End Date'}
                 </label>
                 <input
@@ -722,9 +652,10 @@ export default function Reports() {
                   className="form-input"
                   value={customEnd}
                   onChange={(e) => setCustomEnd(e.target.value)}
+                  style={{ height: '38px' }}
                 />
               </div>
-              <button type="submit" className="btn btn-primary" style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, padding: '10px 16px' }}>
+              <button type="submit" className="btn btn-primary" style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, padding: '9px 18px', height: '38px' }}>
                 {lang === 'te' ? 'వర్తింపజేయి' : 'Apply'}
               </button>
             </form>
@@ -809,26 +740,57 @@ export default function Reports() {
               )}
 
               {/* Sales KPI Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '20px' }}>
-                <div className="stat-card" style={{ borderLeft: '4px solid #0b5394' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>{t('grossRevenue')}</div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>{formatCurrency(summary.grossRevenue || 0)}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>{summary.totalBills || 0} {t('invoicesListSubtitle')}</div>
+              <div className="reports-kpi-grid">
+                <div className="report-metric-card" style={{ borderTop: '4px solid #0b5394' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">{t('grossRevenue')}</span>
+                    <span className="badge badge-blue">Sales</span>
+                  </div>
+                  <div className="report-metric-value" style={{ color: '#0b5394' }}>
+                    {formatCurrency(summary.grossRevenue || 0)}
+                  </div>
+                  <div className="report-metric-footer">
+                    🧾 {summary.totalBills || 0} {t('invoicesListSubtitle')}
+                  </div>
                 </div>
-                <div className="stat-card" style={{ borderLeft: '4px solid #16a34a' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>{t('collectedPaid')}</div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>{formatCurrency(summary.paidRevenue || 0)}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>{summary.paidBills || 0} {t('paid')}</div>
+
+                <div className="report-metric-card" style={{ borderTop: '4px solid #16a34a' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">{t('collectedPaid')}</span>
+                    <span className="badge badge-green">Paid</span>
+                  </div>
+                  <div className="report-metric-value" style={{ color: '#16a34a' }}>
+                    {formatCurrency(summary.paidRevenue || 0)}
+                  </div>
+                  <div className="report-metric-footer">
+                    ✓ {summary.paidBills || 0} {t('paid')}
+                  </div>
                 </div>
-                <div className="stat-card" style={{ borderLeft: '4px solid #ea580c' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>{t('pendingReceivablesTitle')}</div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '6px' }}>{formatCurrency(summary.pendingRevenue || 0)}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>{summary.pendingBills || 0} {t('pending')}</div>
+
+                <div className="report-metric-card" style={{ borderTop: '4px solid #ea580c' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">{t('pendingReceivablesTitle')}</span>
+                    <span className="badge badge-amber">Receivable</span>
+                  </div>
+                  <div className="report-metric-value" style={{ color: '#ea580c' }}>
+                    {formatCurrency(summary.pendingRevenue || 0)}
+                  </div>
+                  <div className="report-metric-footer">
+                    ⚠️ {summary.pendingBills || 0} {t('pending')}
+                  </div>
                 </div>
-                <div className="stat-card" style={{ borderLeft: '4px solid #7c3aed' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>{t('avgTicketSize')}</div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#7c3aed', marginTop: '6px' }}>{formatCurrency(summary.avgBillValue || 0)}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>Per bill average</div>
+
+                <div className="report-metric-card" style={{ borderTop: '4px solid #7c3aed' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">{t('avgTicketSize')}</span>
+                    <span className="badge" style={{ background: '#f5f3ff', color: '#7c3aed' }}>Average</span>
+                  </div>
+                  <div className="report-metric-value" style={{ color: '#7c3aed' }}>
+                    {formatCurrency(summary.avgBillValue || 0)}
+                  </div>
+                  <div className="report-metric-footer">
+                    📊 Per bill average
+                  </div>
                 </div>
               </div>
 
@@ -929,50 +891,64 @@ export default function Reports() {
           ) : (
             <div>
               {/* Ice KPI Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '20px' }}>
-                <div className="stat-card" style={{ borderLeft: '4px solid #0284c7' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    {lang === 'te' ? 'మొత్తం ఐస్ బ్లాకులు' : 'Total Ice Blocks'}
+              <div className="reports-kpi-grid">
+                <div className="report-metric-card" style={{ borderTop: '4px solid #0284c7' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">
+                      {lang === 'te' ? 'మొత్తం ఐస్ బ్లాకులు' : 'Total Ice Blocks'}
+                    </span>
+                    <span className="badge badge-blue">Volume</span>
                   </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0284c7', marginTop: '6px' }}>
+                  <div className="report-metric-value" style={{ color: '#0284c7' }}>
                     {totalIceBlocks}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                    {iceData.entries.length} {lang === 'te' ? 'కొనుగోళ్లు' : 'purchases'}
+                  <div className="report-metric-footer">
+                    🧊 {iceData.entries.length} {lang === 'te' ? 'కొనుగోళ్లు' : 'purchases'}
                   </div>
                 </div>
 
-                <div className="stat-card" style={{ borderLeft: '4px solid #ea580c' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    {lang === 'te' ? 'మొత్తం ఐస్ ఖర్చు' : 'Total Ice Cost'}
+                <div className="report-metric-card" style={{ borderTop: '4px solid #ea580c' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">
+                      {lang === 'te' ? 'మొత్తం ఐస్ ఖర్చు' : 'Total Ice Cost'}
+                    </span>
+                    <span className="badge badge-amber">Expense</span>
                   </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '6px' }}>
+                  <div className="report-metric-value" style={{ color: '#ea580c' }}>
                     {formatCurrency(totalIceCost)}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                    {lang === 'te' ? 'కూలింగ్ ఖర్చులు' : 'Cooling expenses'}
+                  <div className="report-metric-footer">
+                    ❄️ {lang === 'te' ? 'కూలింగ్ ఖర్చులు' : 'Cooling expenses'}
                   </div>
                 </div>
 
-                <div className="stat-card" style={{ borderLeft: '4px solid #16a34a' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    {lang === 'te' ? 'సగటు రేటు / బ్లాక్' : 'Average Rate / Block'}
+                <div className="report-metric-card" style={{ borderTop: '4px solid #16a34a' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">
+                      {lang === 'te' ? 'సగటు రేటు / బ్లాక్' : 'Average Rate / Block'}
+                    </span>
+                    <span className="badge badge-green">Unit Rate</span>
                   </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
+                  <div className="report-metric-value" style={{ color: '#16a34a' }}>
                     ₹{avgIceRate}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>Per block average</div>
+                  <div className="report-metric-footer">
+                    📊 Per block average
+                  </div>
                 </div>
 
-                <div className="stat-card" style={{ borderLeft: '4px solid #7c3aed' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    {lang === 'te' ? 'ప్లాంట్ చెల్లింపుల బాకీ' : 'Pending to Plants'}
+                <div className="report-metric-card" style={{ borderTop: '4px solid #7c3aed' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">
+                      {lang === 'te' ? 'ప్లాంట్ చెల్లింపుల బాకీ' : 'Pending to Plants'}
+                    </span>
+                    <span className="badge badge-red">Payable</span>
                   </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#7c3aed', marginTop: '6px' }}>
+                  <div className="report-metric-value" style={{ color: '#7c3aed' }}>
                     {formatCurrency(pendingIceToPlants)}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                    {lang === 'te' ? 'చెల్లించాల్సినది' : 'Unpaid invoices'}
+                  <div className="report-metric-footer">
+                    ⚠️ {lang === 'te' ? 'చెల్లించాల్సినది' : 'Unpaid invoices'}
                   </div>
                 </div>
               </div>
@@ -1041,50 +1017,64 @@ export default function Reports() {
           ) : (
             <div>
               {/* Workers KPI Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '20px' }}>
-                <div className="stat-card" style={{ borderLeft: '4px solid #0b5394' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    {lang === 'te' ? 'మొత్తం కూలీ వేతనాలు' : 'Total Labor Wages'}
+              <div className="reports-kpi-grid">
+                <div className="report-metric-card" style={{ borderTop: '4px solid #0b5394' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">
+                      {lang === 'te' ? 'మొత్తం కూలీ వేతనాలు' : 'Total Labor Wages'}
+                    </span>
+                    <span className="badge badge-blue">Wages</span>
                   </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
+                  <div className="report-metric-value" style={{ color: '#0b5394' }}>
                     {formatCurrency(totalWorkerWages)}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                    {staffData.entries.length} {lang === 'te' ? 'పని షిఫ్ట్‌లు' : 'work entries'}
+                  <div className="report-metric-footer">
+                    👷 {staffData.entries.length} {lang === 'te' ? 'పని షిఫ్ట్‌లు' : 'work entries'}
                   </div>
                 </div>
 
-                <div className="stat-card" style={{ borderLeft: '4px solid #16a34a' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    {lang === 'te' ? 'ప్రాసెస్ చేసిన తూకం' : 'Processed Weight'}
+                <div className="report-metric-card" style={{ borderTop: '4px solid #16a34a' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">
+                      {lang === 'te' ? 'ప్రాసెస్ చేసిన తూకం' : 'Processed Weight'}
+                    </span>
+                    <span className="badge badge-green">Production</span>
                   </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
+                  <div className="report-metric-value" style={{ color: '#16a34a' }}>
                     {totalWorkerKg.toFixed(1)} kg
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                    {lang === 'te' ? 'పీలింగ్ పరిమాణం' : 'Peeling production'}
+                  <div className="report-metric-footer">
+                    ⚖️ {lang === 'te' ? 'పీలింగ్ పరిమాణం' : 'Peeling production'}
                   </div>
                 </div>
 
-                <div className="stat-card" style={{ borderLeft: '4px solid #7c3aed' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    {lang === 'te' ? 'కార్మికుల సంఖ్య' : 'Active Workers'}
+                <div className="report-metric-card" style={{ borderTop: '4px solid #7c3aed' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">
+                      {lang === 'te' ? 'కార్మికుల సంఖ్య' : 'Active Workers'}
+                    </span>
+                    <span className="badge" style={{ background: '#f5f3ff', color: '#7c3aed' }}>Team</span>
                   </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#7c3aed', marginTop: '6px' }}>
+                  <div className="report-metric-value" style={{ color: '#7c3aed' }}>
                     {staffData.summary?.staffAccounts?.length || staffData.summary?.overall?.activeWorkers || new Set(staffData.entries.map(e => e.staffName)).size}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>Registered team</div>
+                  <div className="report-metric-footer">
+                    👥 Registered team
+                  </div>
                 </div>
 
-                <div className="stat-card" style={{ borderLeft: '4px solid #ea580c' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    {lang === 'te' ? 'చెల్లించాల్సిన బాకీ కూలీ' : 'Unpaid Wages Pending'}
+                <div className="report-metric-card" style={{ borderTop: '4px solid #ea580c' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">
+                      {lang === 'te' ? 'చెల్లించాల్సిన బాకీ కూలీ' : 'Unpaid Wages Pending'}
+                    </span>
+                    <span className="badge badge-amber">Due</span>
                   </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '6px' }}>
+                  <div className="report-metric-value" style={{ color: '#ea580c' }}>
                     {formatCurrency(totalWorkerPending)}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                    {lang === 'te' ? 'చెల్లించినది: ' : 'Paid: '}{formatCurrency(totalWorkerPaid)}
+                  <div className="report-metric-footer">
+                    ✓ {lang === 'te' ? 'చెల్లించినది: ' : 'Paid: '}{formatCurrency(totalWorkerPaid)}
                   </div>
                 </div>
               </div>
@@ -1190,50 +1180,64 @@ export default function Reports() {
           ) : (
             <div>
               {/* Wastage KPI Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '20px' }}>
-                <div className="stat-card" style={{ borderLeft: '4px solid #16a34a' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    {lang === 'te' ? 'మొత్తం వేస్టేజ్ ఆదాయం' : 'Total Wastage Revenue'}
+              <div className="reports-kpi-grid">
+                <div className="report-metric-card" style={{ borderTop: '4px solid #16a34a' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">
+                      {lang === 'te' ? 'మొత్తం వేస్టేజ్ ఆదాయం' : 'Total Wastage Revenue'}
+                    </span>
+                    <span className="badge badge-green">Inflow</span>
                   </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
+                  <div className="report-metric-value" style={{ color: '#16a34a' }}>
                     {formatCurrency(totalWastageRevenue)}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                    {wastageData.entries.length} {lang === 'te' ? 'అమ్మకాలు' : 'sales shipments'}
+                  <div className="report-metric-footer">
+                    🦐 {wastageData.entries.length} {lang === 'te' ? 'అమ్మకాలు' : 'sales shipments'}
                   </div>
                 </div>
 
-                <div className="stat-card" style={{ borderLeft: '4px solid #0b5394' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    {lang === 'te' ? 'అమ్మిన వేస్టేజ్ తూకం' : 'Total Wastage Sold'}
+                <div className="report-metric-card" style={{ borderTop: '4px solid #0b5394' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">
+                      {lang === 'te' ? 'అమ్మిన వేస్టేజ్ తూకం' : 'Total Wastage Sold'}
+                    </span>
+                    <span className="badge badge-blue">Volume</span>
                   </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
+                  <div className="report-metric-value" style={{ color: '#0b5394' }}>
                     {totalWastageKg.toFixed(1)} kg
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                    {lang === 'te' ? 'రొయ్య తలల ఉప-ఉత్పత్తి' : 'Prawn head byproduct'}
+                  <div className="report-metric-footer">
+                    📦 {lang === 'te' ? 'రొయ్య తలల ఉప-ఉత్పత్తి' : 'Prawn head byproduct'}
                   </div>
                 </div>
 
-                <div className="stat-card" style={{ borderLeft: '4px solid #7c3aed' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    {lang === 'te' ? 'సగటు అమ్మకం ధర' : 'Average Selling Rate'}
+                <div className="report-metric-card" style={{ borderTop: '4px solid #7c3aed' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">
+                      {lang === 'te' ? 'సగటు అమ్మకం ధర' : 'Average Selling Rate'}
+                    </span>
+                    <span className="badge" style={{ background: '#f5f3ff', color: '#7c3aed' }}>Rate</span>
                   </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#7c3aed', marginTop: '6px' }}>
+                  <div className="report-metric-value" style={{ color: '#7c3aed' }}>
                     ₹{avgWastageRate}/kg
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>Per KG market recovery</div>
+                  <div className="report-metric-footer">
+                    📊 Per KG market recovery
+                  </div>
                 </div>
 
-                <div className="stat-card" style={{ borderLeft: '4px solid #ea580c' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    {lang === 'te' ? 'కొనుగోలుదారుల బాకీ' : 'Pending From Buyers'}
+                <div className="report-metric-card" style={{ borderTop: '4px solid #ea580c' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">
+                      {lang === 'te' ? 'కొనుగోలుదారుల బాకీ' : 'Pending From Buyers'}
+                    </span>
+                    <span className="badge badge-amber">Receivable</span>
                   </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '6px' }}>
+                  <div className="report-metric-value" style={{ color: '#ea580c' }}>
                     {formatCurrency(pendingWastageReceivables)}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                    {lang === 'te' ? 'వసూలు కావాల్సినది' : 'Receivables'}
+                  <div className="report-metric-footer">
+                    ⚠️ {lang === 'te' ? 'వసూలు కావాల్సినది' : 'Receivables'}
                   </div>
                 </div>
               </div>
@@ -1298,155 +1302,165 @@ export default function Reports() {
       {activeTab === 'net' && (
         <div>
           {/* Master Net Margin Hero Card */}
-          <div
-            style={{
-              background: isNetSurplus ? 'linear-gradient(135deg, #064e3b, #047857)' : 'linear-gradient(135deg, #7c2d12, #c2410c)',
-              color: '#ffffff',
-              borderRadius: '16px',
-              padding: '28px 24px',
-              marginBottom: '24px',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
-              <div>
-                <span style={{ fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.85 }}>
-                  {lang === 'te' ? 'నికర వ్యాపార నిర్వహణ బ్యాలెన్స్' : 'Comprehensive Net Financial Margin'}
-                </span>
-                <div style={{ fontSize: '2.5rem', fontWeight: 900, marginTop: '4px', letterSpacing: '-0.02em' }}>
-                  {isNetSurplus ? '+' : ''}{formatCurrency(netOperationalMargin)}
-                </div>
-                <div style={{ marginTop: '8px', fontSize: '0.88rem', opacity: 0.9 }}>
-                  {isNetSurplus
-                    ? (lang === 'te' ? '✓ అమ్మకాలు మరియు వేస్టేజ్ ఆదాయం ఫ్యాక్టరీ ఖర్చులను అధిగమించి లాభంలో ఉంది.' : '✓ Direct revenues (Invoices + Wastage) fully exceed all factory expenses.')
-                    : (lang === 'te' ? '⚠️ ఈ కాలంలో ఫ్యాక్టరీ ఖర్చులు ఆదాయం కంటే ఎక్కువగా ఉన్నాయి.' : '⚠️ Factory operational costs exceeded direct period revenue.')}
-                </div>
+          <div className={`report-hero-card ${isNetSurplus ? 'surplus' : 'deficit'}`}>
+            <div className="report-hero-glow"></div>
+            <div>
+              <div className="report-hero-tag">
+                <span>{isNetSurplus ? '🟢' : '⚠️'}</span>
+                <span>{lang === 'te' ? 'నికర వ్యాపార నిర్వహణ బ్యాలెన్స్' : 'Comprehensive Net Financial Margin'}</span>
               </div>
+              <div className="report-hero-amount">
+                {isNetSurplus ? '+' : ''}{formatCurrency(netOperationalMargin)}
+              </div>
+              <div className="report-hero-desc">
+                {isNetSurplus
+                  ? (lang === 'te' ? '✓ అమ్మకాలు మరియు వేస్టేజ్ ఆదాయం ఫ్యాక్టరీ ఖర్చులను అధిగమించి లాభంలో ఉంది.' : '✓ Direct revenues (Invoices + Wastage) fully exceed all factory expenses.')
+                  : (lang === 'te' ? '⚠️ ఈ కాలంలో ఫ్యాక్టరీ ఖర్చులు ఆదాయం కంటే ఎక్కువగా ఉన్నాయి.' : '⚠️ Factory operational costs exceeded direct period revenue.')}
+              </div>
+            </div>
 
-              <div style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', padding: '12px 18px', borderRadius: '12px', minWidth: '220px' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 800, opacity: 0.85 }}>{t('totalDirectIncome')}</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#a7f3d0' }}>+{formatCurrency(totalDirectInflow)}</div>
-                <div style={{ height: '1px', background: 'rgba(255,255,255,0.2)', margin: '8px 0' }}></div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 800, opacity: 0.85 }}>{t('totalFactoryCost')}</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#fecaca' }}>-{formatCurrency(totalFactoryOutflow)}</div>
+            <div className="report-hero-summary-box">
+              <div className="report-hero-row">
+                <span className="report-hero-row-label">{t('totalDirectIncome')}</span>
+                <span className="report-hero-row-val" style={{ color: '#a7f3d0' }}>+{formatCurrency(totalDirectInflow)}</span>
+              </div>
+              <div className="report-hero-divider"></div>
+              <div className="report-hero-row">
+                <span className="report-hero-row-label">{t('totalFactoryCost')}</span>
+                <span className="report-hero-row-val" style={{ color: '#fecaca' }}>-{formatCurrency(totalFactoryOutflow)}</span>
               </div>
             </div>
           </div>
 
           {/* 4-Stream Comparison Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '24px' }}>
+          <div className="reports-kpi-grid">
             {/* 1. Sales */}
-            <div className="stat-card" style={{ borderLeft: '4px solid #0b5394' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+            <div className="report-metric-card" style={{ borderTop: '4px solid #0b5394' }}>
+              <div className="report-metric-header">
+                <span className="report-metric-title">
                   {lang === 'te' ? '1. ఇన్వాయిస్ అమ్మకాలు' : '1. Invoiced Sales'}
                 </span>
                 <span className="badge badge-blue">Income</span>
               </div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
+              <div className="report-metric-value" style={{ color: '#0b5394' }}>
                 +{formatCurrency(grossSales)}
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                {summary.totalBills || 0} bills issued
+              <div className="report-metric-footer">
+                🧾 {summary.totalBills || 0} bills issued
               </div>
             </div>
 
             {/* 2. Wastage */}
-            <div className="stat-card" style={{ borderLeft: '4px solid #16a34a' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+            <div className="report-metric-card" style={{ borderTop: '4px solid #16a34a' }}>
+              <div className="report-metric-header">
+                <span className="report-metric-title">
                   {lang === 'te' ? '2. వేస్టేజ్ అమ్మకాలు' : '2. Wastage Sales'}
                 </span>
                 <span className="badge badge-green">Extra Income</span>
               </div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
+              <div className="report-metric-value" style={{ color: '#16a34a' }}>
                 +{formatCurrency(wastageRev)}
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                {totalWastageKg.toFixed(0)} kg byproduct
+              <div className="report-metric-footer">
+                🦐 {totalWastageKg.toFixed(0)} kg byproduct
               </div>
             </div>
 
             {/* 3. Ice Cost */}
-            <div className="stat-card" style={{ borderLeft: '4px solid #0284c7' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+            <div className="report-metric-card" style={{ borderTop: '4px solid #0284c7' }}>
+              <div className="report-metric-header">
+                <span className="report-metric-title">
                   {lang === 'te' ? '3. ఐస్ కొనుగోలు' : '3. Ice Expenses'}
                 </span>
                 <span className="badge badge-amber">Cost</span>
               </div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0284c7', marginTop: '6px' }}>
+              <div className="report-metric-value" style={{ color: '#0284c7' }}>
                 -{formatCurrency(iceCost)}
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                {totalIceBlocks} blocks consumed
+              <div className="report-metric-footer">
+                🧊 {totalIceBlocks} blocks consumed
               </div>
             </div>
 
             {/* 4. Worker Labor */}
-            <div className="stat-card" style={{ borderLeft: '4px solid #ea580c' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+            <div className="report-metric-card" style={{ borderTop: '4px solid #ea580c' }}>
+              <div className="report-metric-header">
+                <span className="report-metric-title">
                   {lang === 'te' ? '4. కూలీల వేతనాలు' : '4. Worker Labor'}
                 </span>
                 <span className="badge badge-red">Cost</span>
               </div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#ea580c', marginTop: '6px' }}>
+              <div className="report-metric-value" style={{ color: '#ea580c' }}>
                 -{formatCurrency(workerWages)}
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                {totalWorkerKg.toFixed(0)} kg peeled
+              <div className="report-metric-footer">
+                👷 {totalWorkerKg.toFixed(0)} kg peeled
               </div>
             </div>
           </div>
 
           {/* Full Itemized 4-Stream Reconciliation Statement */}
-          <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
-              <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: '#0f172a' }}>
-                {lang === 'te' ? 'ఆర్థిక సంతులన పట్టిక (4 వ్యాపార విభాగాలు)' : 'Financial Stream Reconciliation (4 Core Channels)'}
+          <div className="card" style={{ padding: '0', overflow: 'hidden', border: '1px solid #e2e8f0', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>⚖️</span> {lang === 'te' ? 'ఆర్థిక సంతులన పట్టిక (4 వ్యాపార విభాగాలు)' : 'Financial Stream Reconciliation (4 Core Channels)'}
               </h4>
+              <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>
+                {range === 'all' ? (lang === 'te' ? 'మొత్తం రికార్డులు' : 'Lifetime Summary') : (lang === 'te' ? 'ఎంపిక చేసిన కాలం' : 'Selected Period')}
+              </span>
             </div>
             <div className="table-responsive">
               <table className="table" style={{ margin: 0 }}>
                 <thead>
-                  <tr>
-                    <th>{lang === 'te' ? 'విభాగం' : 'Financial Stream'}</th>
-                    <th>{lang === 'te' ? 'వివరణ' : 'Description'}</th>
-                    <th className="text-right">{lang === 'te' ? 'పరిమాణం' : 'Volume / Count'}</th>
-                    <th className="text-right">{lang === 'te' ? 'మొత్తం ప్రభావం (₹)' : 'Net Impact (₹)'}</th>
+                  <tr style={{ background: '#f8fafc' }}>
+                    <th style={{ padding: '12px 18px', fontSize: '0.76rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>{lang === 'te' ? 'విభాగం' : 'Financial Stream'}</th>
+                    <th style={{ padding: '12px 18px', fontSize: '0.76rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>{lang === 'te' ? 'వివరణ' : 'Description'}</th>
+                    <th className="text-right" style={{ padding: '12px 18px', fontSize: '0.76rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>{lang === 'te' ? 'పరిమాణం' : 'Volume / Count'}</th>
+                    <th className="text-right" style={{ padding: '12px 18px', fontSize: '0.76rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>{lang === 'te' ? 'మొత్తం ప్రభావం (₹)' : 'Net Impact (₹)'}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr style={{ background: '#f0fdf4' }}>
-                    <td style={{ fontWeight: 800, color: '#16a34a' }}>(+) Normal Invoiced Sales</td>
+                    <td style={{ fontWeight: 800, color: '#16a34a' }}>
+                      <span className="badge badge-green" style={{ marginRight: '8px', fontSize: '0.68rem' }}>+ Inflow</span>
+                      Normal Invoiced Sales
+                    </td>
                     <td style={{ color: '#475569' }}>Customer seafood supply invoices & GST billings</td>
-                    <td className="text-right font-mono">{summary.totalBills || 0} bills</td>
-                    <td className="text-right font-mono" style={{ fontWeight: 900, color: '#16a34a' }}>+{formatCurrency(grossSales)}</td>
+                    <td className="text-right font-mono" style={{ fontWeight: 600 }}>{summary.totalBills || 0} bills</td>
+                    <td className="text-right font-mono" style={{ fontWeight: 900, color: '#16a34a', fontSize: '1rem' }}>+{formatCurrency(grossSales)}</td>
                   </tr>
                   <tr style={{ background: '#f0fdf4' }}>
-                    <td style={{ fontWeight: 800, color: '#16a34a' }}>(+) Prawn Head Wastage Revenue</td>
+                    <td style={{ fontWeight: 800, color: '#16a34a' }}>
+                      <span className="badge badge-green" style={{ marginRight: '8px', fontSize: '0.68rem' }}>+ Inflow</span>
+                      Prawn Head Wastage Revenue
+                    </td>
                     <td style={{ color: '#475569' }}>Feed plant byproduct sales & shell waste recoveries</td>
-                    <td className="text-right font-mono">{totalWastageKg.toFixed(1)} kg</td>
-                    <td className="text-right font-mono" style={{ fontWeight: 900, color: '#16a34a' }}>+{formatCurrency(wastageRev)}</td>
+                    <td className="text-right font-mono" style={{ fontWeight: 600 }}>{totalWastageKg.toFixed(1)} kg</td>
+                    <td className="text-right font-mono" style={{ fontWeight: 900, color: '#16a34a', fontSize: '1rem' }}>+{formatCurrency(wastageRev)}</td>
                   </tr>
                   <tr style={{ background: '#fff7ed' }}>
-                    <td style={{ fontWeight: 800, color: '#ea580c' }}>(-) Worker Peeling Labor Wages</td>
+                    <td style={{ fontWeight: 800, color: '#ea580c' }}>
+                      <span className="badge badge-red" style={{ marginRight: '8px', fontSize: '0.68rem' }}>- Outflow</span>
+                      Worker Peeling Labor Wages
+                    </td>
                     <td style={{ color: '#475569' }}>Daily labor attendance wages (weight * piece rate)</td>
-                    <td className="text-right font-mono">{totalWorkerKg.toFixed(1)} kg</td>
-                    <td className="text-right font-mono" style={{ fontWeight: 900, color: '#dc2626' }}>-{formatCurrency(workerWages)}</td>
+                    <td className="text-right font-mono" style={{ fontWeight: 600 }}>{totalWorkerKg.toFixed(1)} kg</td>
+                    <td className="text-right font-mono" style={{ fontWeight: 900, color: '#dc2626', fontSize: '1rem' }}>-{formatCurrency(workerWages)}</td>
                   </tr>
                   <tr style={{ background: '#f0f9ff' }}>
-                    <td style={{ fontWeight: 800, color: '#0284c7' }}>(-) Ice Blocks Procurement</td>
+                    <td style={{ fontWeight: 800, color: '#0284c7' }}>
+                      <span className="badge badge-amber" style={{ marginRight: '8px', fontSize: '0.68rem' }}>- Outflow</span>
+                      Ice Blocks Procurement
+                    </td>
                     <td style={{ color: '#475569' }}>Factory preservation ice blocks supplied by ice plants</td>
-                    <td className="text-right font-mono">{totalIceBlocks} blocks</td>
-                    <td className="text-right font-mono" style={{ fontWeight: 900, color: '#dc2626' }}>-{formatCurrency(iceCost)}</td>
+                    <td className="text-right font-mono" style={{ fontWeight: 600 }}>{totalIceBlocks} blocks</td>
+                    <td className="text-right font-mono" style={{ fontWeight: 900, color: '#dc2626', fontSize: '1rem' }}>-{formatCurrency(iceCost)}</td>
                   </tr>
-                  <tr style={{ background: isNetSurplus ? '#ecfdf5' : '#fef2f2', borderTop: '2px solid #0f172a' }}>
-                    <td colSpan={3} style={{ fontWeight: 900, fontSize: '1.05rem', color: isNetSurplus ? '#047857' : '#991b1b' }}>
+                  <tr style={{ background: isNetSurplus ? '#ecfdf5' : '#fef2f2', borderTop: '2px solid #cbd5e1' }}>
+                    <td colSpan={3} style={{ fontWeight: 900, fontSize: '1rem', color: isNetSurplus ? '#047857' : '#991b1b', padding: '16px 18px' }}>
                       {lang === 'te' ? 'నికర వ్యాపార లాభం / మిగులు' : 'TOTAL NET OPERATIONAL PROFIT / (LOSS)'}
                     </td>
-                    <td className="text-right font-mono" style={{ fontWeight: 900, fontSize: '1.25rem', color: isNetSurplus ? '#047857' : '#991b1b' }}>
+                    <td className="text-right font-mono" style={{ fontWeight: 900, fontSize: '1.35rem', color: isNetSurplus ? '#047857' : '#991b1b', padding: '16px 18px' }}>
                       {isNetSurplus ? '+' : ''}{formatCurrency(netOperationalMargin)}
                     </td>
                   </tr>
@@ -1467,38 +1481,49 @@ export default function Reports() {
           ) : outstandingData ? (
             <div>
               {/* Outstanding Summary Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '20px' }}>
-                <div className="stat-card" style={{ borderLeft: '4px solid #ea580c' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    {lang === 'te' ? 'మొత్తం రావలసిన బాకీ' : 'Total Outstanding Receivables'}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                <div className="report-metric-card" style={{ borderTop: '4px solid #ea580c' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">
+                      {lang === 'te' ? 'మొత్తం రావలసిన బాకీ' : 'Total Outstanding Receivables'}
+                    </span>
+                    <span className="badge badge-amber">Receivable</span>
                   </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '6px' }}>
+                  <div className="report-metric-value" style={{ color: '#ea580c' }}>
                     {formatCurrency(outstandingData.summary?.totalOutstandingBalance || 0)}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                    {outstandingData.summary?.customersWithBalance || 0} {lang === 'te' ? 'ఖాతాదారుల వద్ద బాకీ' : 'customers with dues'}
+                  <div className="report-metric-footer">
+                    👥 {outstandingData.summary?.customersWithBalance || 0} {lang === 'te' ? 'ఖాతాదారుల వద్ద బాకీ' : 'customers with dues'}
                   </div>
                 </div>
 
-                <div className="stat-card" style={{ borderLeft: '4px solid #dc2626' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    {lang === 'te' ? 'మొత్తం బాకీ ఉన్న బిల్లులు' : 'Total Unpaid Invoices'}
+                <div className="report-metric-card" style={{ borderTop: '4px solid #dc2626' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">
+                      {lang === 'te' ? 'మొత్తం బాకీ ఉన్న బిల్లులు' : 'Total Unpaid Invoices'}
+                    </span>
+                    <span className="badge badge-red">Unsettled</span>
                   </div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#dc2626', marginTop: '6px' }}>
+                  <div className="report-metric-value" style={{ color: '#dc2626' }}>
                     {outstandingData.summary?.totalUnpaidBills || 0}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>Pending payment settlement</div>
+                  <div className="report-metric-footer">
+                    📄 Pending payment settlement
+                  </div>
                 </div>
 
-                <div className="stat-card" style={{ borderLeft: '4px solid #7c3aed' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    {lang === 'te' ? 'అత్యధిక బాకీ ఖాతాదారు' : 'Top Customer Exposure'}
+                <div className="report-metric-card" style={{ borderTop: '4px solid #7c3aed' }}>
+                  <div className="report-metric-header">
+                    <span className="report-metric-title">
+                      {lang === 'te' ? 'అత్యధిక బాకీ ఖాతాదారు' : 'Top Customer Exposure'}
+                    </span>
+                    <span className="badge" style={{ background: '#f5f3ff', color: '#7c3aed' }}>Largest Due</span>
                   </div>
-                  <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#7c3aed', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div className="report-metric-value" style={{ color: '#7c3aed', fontSize: '1.35rem' }}>
                     {filteredOutstanding[0]?.companyName || 'None'}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                    {filteredOutstanding[0] ? formatCurrency(filteredOutstanding[0].outstandingBalance) : '₹0'}
+                  <div className="report-metric-footer">
+                    ⚠️ {filteredOutstanding[0] ? formatCurrency(filteredOutstanding[0].outstandingBalance) : '₹0'}
                   </div>
                 </div>
               </div>
