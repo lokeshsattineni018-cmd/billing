@@ -13,6 +13,7 @@ import {
   CheckIcon,
   RefreshIcon,
 } from '../Icons';
+import ConfirmModal from '../ConfirmModal';
 
 export default function WastageTracker() {
   const { t } = useLanguage();
@@ -24,6 +25,9 @@ export default function WastageTracker() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -256,17 +260,25 @@ export default function WastageTracker() {
     }
   };
 
-  const handleDelete = async (entry) => {
-    if (!window.confirm(`Delete wastage record for ${entry.quantityKg} kg of ${entry.category}?`)) {
-      return;
-    }
+  const handlePromptDelete = (entry) => {
+    setEntryToDelete(entry);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!entryToDelete) return;
+    setDeleting(true);
     try {
-      await staffAPI.deleteWastage(entry._id);
+      await staffAPI.deleteWastage(entryToDelete._id);
       showToast('Wastage record deleted', 'success');
-      setEntries((prev) => prev.filter((it) => it._id !== entry._id));
+      setEntries((prev) => prev.filter((it) => it._id !== entryToDelete._id));
+      setDeleteModalOpen(false);
+      setEntryToDelete(null);
       loadSummary();
     } catch (err) {
       showToast('Failed to delete wastage record', 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -557,7 +569,7 @@ export default function WastageTracker() {
                           <button
                             type="button"
                             className="btn btn-ghost btn-sm"
-                            onClick={() => handleDelete(entry)}
+                            onClick={() => handlePromptDelete(entry)}
                             title="Delete"
                             style={{ padding: '4px 6px' }}
                           >
@@ -728,6 +740,37 @@ export default function WastageTracker() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteModalOpen}
+        title="Delete Wastage Record?"
+        message="Are you sure you want to permanently delete this prawn wastage sales record? This action cannot be undone."
+        itemDetails={
+          entryToDelete
+            ? [
+                { label: 'Date', value: formatDate(entryToDelete.date) },
+                { label: 'Category', value: entryToDelete.category },
+                { label: 'Weight', value: `${entryToDelete.quantityKg} kg`, isMono: true },
+                { label: 'Rate / kg', value: `₹${entryToDelete.rate}` },
+                { label: 'Total Amount', value: formatCurrency(entryToDelete.totalAmount), isMono: true },
+                { label: 'Buyer', value: entryToDelete.buyerName || '—' },
+                { label: 'Status', value: entryToDelete.paymentStatus },
+              ]
+            : null
+        }
+        confirmText="Yes, Delete Record"
+        cancelText="Cancel"
+        confirmType="danger"
+        loading={deleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => {
+          if (!deleting) {
+            setDeleteModalOpen(false);
+            setEntryToDelete(null);
+          }
+        }}
+      />
     </div>
   );
 }

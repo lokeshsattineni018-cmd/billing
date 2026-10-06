@@ -27,6 +27,7 @@ import { SkeletonTable } from '../components/Skeleton';
 import ganeshaImg from '../assets/ganesha.jpg';
 import durgaImg from '../assets/durga.jpg';
 import ramDarbarImg from '../assets/ram_darbar.jpg';
+import ConfirmModal from '../components/ConfirmModal';
 
 const BULK_DRAFT_KEY = 'srsf_bulk_worker_draft';
 
@@ -87,6 +88,9 @@ export default function Staff() {
   const [batchPaying, setBatchPaying] = useState(false);
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [batchPayMode, setBatchPayMode] = useState('Cash');
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Single Worker Entry Bill Print State
   const [activeBillEntry, setActiveBillEntry] = useState(null);
@@ -530,19 +534,28 @@ export default function Staff() {
     }
   };
 
-  // Delete Entry
-  const handleDeleteEntry = async (entry) => {
-    if (!window.confirm(`Delete work entry for ${entry.staffName} (${entry.quantity} kg)?`)) {
-      return;
-    }
+  // Prompt Delete Entry (Opens In-App Confirmation Modal)
+  const handlePromptDelete = (entry) => {
+    setEntryToDelete(entry);
+    setDeleteModalOpen(true);
+  };
+
+  // Confirm and Execute Delete Entry
+  const handleConfirmDelete = async () => {
+    if (!entryToDelete) return;
+    setDeleting(true);
     try {
-      await staffAPI.delete(entry._id);
-      showToast(`Entry deleted for ${entry.staffName}`, 'success');
-      setEntries((prev) => prev.filter((it) => it._id !== entry._id));
+      await staffAPI.delete(entryToDelete._id);
+      showToast(lang === 'te' ? `${entryToDelete.staffName} పని రికార్డు తొలగించబడింది` : `Entry deleted for ${entryToDelete.staffName}`, 'success');
+      setEntries((prev) => prev.filter((it) => it._id !== entryToDelete._id));
+      setDeleteModalOpen(false);
+      setEntryToDelete(null);
       loadSummary();
       loadNames();
     } catch (err) {
-      showToast('Failed to delete entry', 'error');
+      showToast(lang === 'te' ? 'రికార్డును తొలగించడం విఫలమైంది' : 'Failed to delete entry', 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -1631,7 +1644,7 @@ export default function Staff() {
                             <button
                               className="btn btn-ghost btn-sm"
                               style={{ color: '#ef4444' }}
-                              onClick={() => handleDeleteEntry(entry)}
+                              onClick={() => handlePromptDelete(entry)}
                             >
                               <TrashIcon size={14} color="#ef4444" />
                               <span>Delete</span>
@@ -1781,7 +1794,7 @@ export default function Staff() {
                                   <button
                                     className="btn btn-ghost btn-sm"
                                     style={{ padding: '4px 8px', color: '#ef4444' }}
-                                    onClick={() => handleDeleteEntry(entry)}
+                                    onClick={() => handlePromptDelete(entry)}
                                     title="Delete entry"
                                   >
                                     <TrashIcon size={13} color="#ef4444" />
@@ -2623,6 +2636,40 @@ export default function Staff() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteModalOpen}
+        title={lang === 'te' ? 'కూలీ రికార్డును తొలగించాలా?' : 'Delete Work Entry?'}
+        message={
+          lang === 'te'
+            ? 'ఈ కూలీ రికార్డును ఖచ్చితంగా తొలగించాలనుకుంటున్నారా? ఈ చర్యను రద్దు చేయడం సాధ్యం కాదు.'
+            : 'Are you sure you want to permanently delete this work entry? This action cannot be undone.'
+        }
+        itemDetails={
+          entryToDelete
+            ? [
+                { label: lang === 'te' ? 'కార్మికుడు' : 'Worker Name', value: entryToDelete.staffName },
+                { label: lang === 'te' ? 'తేదీ' : 'Work Date', value: formatDate(entryToDelete.date) },
+                { label: lang === 'te' ? 'తూకం' : 'Quantity', value: `${entryToDelete.quantity} kg`, isMono: true },
+                { label: lang === 'te' ? 'రేటు' : 'Rate', value: `₹${entryToDelete.price} / kg` },
+                { label: lang === 'te' ? 'మొత్తం వేతనం' : 'Total Wages', value: formatCurrency(entryToDelete.totalAmount), isMono: true },
+                { label: lang === 'te' ? 'చెల్లింపు స్థితి' : 'Payment Status', value: entryToDelete.paymentStatus },
+              ]
+            : null
+        }
+        confirmText={lang === 'te' ? 'అవును, తొలగించు' : 'Yes, Delete Entry'}
+        cancelText={lang === 'te' ? 'రద్దు చేయి' : 'Cancel'}
+        confirmType="danger"
+        loading={deleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => {
+          if (!deleting) {
+            setDeleteModalOpen(false);
+            setEntryToDelete(null);
+          }
+        }}
+      />
     </div>
   );
 }

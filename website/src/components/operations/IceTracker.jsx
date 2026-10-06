@@ -18,6 +18,7 @@ import {
 import ganeshaImg from '../../assets/ganesha.jpg';
 import durgaImg from '../../assets/durga.jpg';
 import ramDarbarImg from '../../assets/ram_darbar.jpg';
+import ConfirmModal from '../ConfirmModal';
 
 export default function IceTracker() {
   const { t } = useLanguage();
@@ -29,6 +30,9 @@ export default function IceTracker() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -270,17 +274,25 @@ export default function IceTracker() {
     }
   };
 
-  const handleDelete = async (entry) => {
-    if (!window.confirm(`Delete ice record for ${entry.blocks} blocks on ${formatDate(entry.date)}?`)) {
-      return;
-    }
+  const handlePromptDelete = (entry) => {
+    setEntryToDelete(entry);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!entryToDelete) return;
+    setDeleting(true);
     try {
-      await staffAPI.deleteIce(entry._id);
+      await staffAPI.deleteIce(entryToDelete._id);
       showToast('Ice record deleted', 'success');
-      setEntries((prev) => prev.filter((it) => it._id !== entry._id));
+      setEntries((prev) => prev.filter((it) => it._id !== entryToDelete._id));
+      setDeleteModalOpen(false);
+      setEntryToDelete(null);
       loadSummary();
     } catch (err) {
       showToast('Failed to delete ice record', 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -587,7 +599,7 @@ export default function IceTracker() {
                             <button
                               type="button"
                               className="btn btn-ghost btn-sm"
-                              onClick={() => handleDelete(entry)}
+                              onClick={() => handlePromptDelete(entry)}
                               title="Delete"
                               style={{ padding: '4px 6px' }}
                             >
@@ -925,6 +937,36 @@ export default function IceTracker() {
           voucherNo={viewingBill.voucherNo}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteModalOpen}
+        title="Delete Ice Record?"
+        message="Are you sure you want to permanently delete this ice procurement record? This action cannot be undone."
+        itemDetails={
+          entryToDelete
+            ? [
+                { label: 'Date', value: formatDate(entryToDelete.date) },
+                { label: 'Ice Blocks', value: `${entryToDelete.blocks} blocks`, isMono: true },
+                { label: 'Rate / Block', value: `₹${entryToDelete.rate}` },
+                { label: 'Total Amount', value: formatCurrency(entryToDelete.totalAmount), isMono: true },
+                { label: 'Supplier / Plant', value: entryToDelete.iceFrom || entryToDelete.supplierName || '—' },
+                { label: 'Status', value: entryToDelete.paymentStatus },
+              ]
+            : null
+        }
+        confirmText="Yes, Delete Record"
+        cancelText="Cancel"
+        confirmType="danger"
+        loading={deleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => {
+          if (!deleting) {
+            setDeleteModalOpen(false);
+            setEntryToDelete(null);
+          }
+        }}
+      />
     </div>
   );
 }
