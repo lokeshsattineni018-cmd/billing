@@ -36,5 +36,15 @@
       "source": "/((?!api|assets|icons|favicon.svg|manifest.json|sw.js|logo.png|.*\\..*).*)",
       "destination": "/index.html"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/health",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/backup/daily-summary",
+      "schedule": "30 18 * * *"
+    }
   ]
 }

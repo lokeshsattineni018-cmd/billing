@@ -73,10 +73,20 @@ router.get('/summary', protect, restrictTo('owner', 'admin', 'staff'), async (re
         { $match: { date: { $gte: filterStart, $lte: filterEnd }, isVoided: { $ne: true } } },
         { $group: { _id: null, totalSales: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
       ]),
-      // Total Outstanding Receivables (excluding voided bills)
+      // Total Outstanding Receivables (excluding voided bills, accounting for partial payments)
       Bill.aggregate([
         { $match: { paymentStatus: { $ne: 'Paid' }, isVoided: { $ne: true } } },
-        { $group: { _id: null, totalPending: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, pendingCount: { $sum: 1 } } },
+        {
+          $group: {
+            _id: null,
+            totalPending: {
+              $sum: {
+                $max: [0, { $subtract: [{ $ifNull: ['$grandTotal', '$total'] }, { $ifNull: ['$paidAmount', 0] }] }],
+              },
+            },
+            pendingCount: { $sum: 1 },
+          },
+        },
       ]),
       // Recent invoices (last 10)
       Bill.find()
@@ -138,28 +148,38 @@ router.get('/daily-summary', protect, restrictTo('owner', 'admin', 'staff'), asy
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
     const [todayBills, monthStats, receivablesStats, topBuyerToday, topBuyerMonth] = await Promise.all([
-      // All today's bills
-      Bill.find({ date: { $gte: startOfDay, $lt: endOfDay } }).lean(),
-      // Month stats
+      // All today's bills (excluding voided bills)
+      Bill.find({ date: { $gte: startOfDay, $lt: endOfDay }, isVoided: { $ne: true } }).lean(),
+      // Month stats (excluding voided bills)
       Bill.aggregate([
-        { $match: { date: { $gte: startOfMonth, $lt: endOfMonth } } },
+        { $match: { date: { $gte: startOfMonth, $lt: endOfMonth }, isVoided: { $ne: true } } },
         { $group: { _id: null, totalSales: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
       ]),
-      // Outstanding receivables
+      // Outstanding receivables (excluding voided bills, accounting for partial payments)
       Bill.aggregate([
-        { $match: { paymentStatus: { $ne: 'Paid' } } },
-        { $group: { _id: null, totalPending: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, pendingCount: { $sum: 1 } } },
+        { $match: { paymentStatus: { $ne: 'Paid' }, isVoided: { $ne: true } } },
+        {
+          $group: {
+            _id: null,
+            totalPending: {
+              $sum: {
+                $max: [0, { $subtract: [{ $ifNull: ['$grandTotal', '$total'] }, { $ifNull: ['$paidAmount', 0] }] }],
+              },
+            },
+            pendingCount: { $sum: 1 },
+          },
+        },
       ]),
-      // Top buyer today
+      // Top buyer today (excluding voided bills)
       Bill.aggregate([
-        { $match: { date: { $gte: startOfDay, $lt: endOfDay } } },
+        { $match: { date: { $gte: startOfDay, $lt: endOfDay }, isVoided: { $ne: true } } },
         { $group: { _id: '$companyName', totalAmount: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
         { $sort: { totalAmount: -1 } },
         { $limit: 1 },
       ]),
-      // Top buyer this month
+      // Top buyer this month (excluding voided bills)
       Bill.aggregate([
-        { $match: { date: { $gte: startOfMonth, $lt: endOfMonth } } },
+        { $match: { date: { $gte: startOfMonth, $lt: endOfMonth }, isVoided: { $ne: true } } },
         { $group: { _id: '$companyName', totalAmount: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
         { $sort: { totalAmount: -1 } },
         { $limit: 1 },

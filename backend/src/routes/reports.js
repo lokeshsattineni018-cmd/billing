@@ -165,8 +165,24 @@ router.get('/sales', protect, restrictTo('owner', 'admin', 'staff'), async (req,
     const totalIGST = bills.reduce((acc, b) => acc + (b.igstAmount || 0), 0);
     const totalTax = totalCGST + totalSGST + totalIGST;
 
-    const paidData = statusAgg.find((s) => s._id === 'Paid') || { totalAmount: 0, count: 0 };
-    const pendingData = statusAgg.find((s) => s._id !== 'Paid') || { totalAmount: 0, count: 0 };
+    const totalCollected = bills.reduce((acc, b) => {
+      if (b.paymentStatus === 'Paid') return acc + (b.grandTotal || b.total || 0);
+      return acc + (b.paidAmount || 0);
+    }, 0);
+    const totalPending = bills.reduce((acc, b) => {
+      if (b.paymentStatus === 'Paid') return acc;
+      const bTotal = b.grandTotal || b.total || 0;
+      return acc + Math.max(0, bTotal - (b.paidAmount || 0));
+    }, 0);
+
+    const paidData = {
+      totalAmount: Math.round(totalCollected * 100) / 100,
+      count: bills.filter((b) => b.paymentStatus === 'Paid').length,
+    };
+    const pendingData = {
+      totalAmount: Math.round(totalPending * 100) / 100,
+      count: bills.filter((b) => b.paymentStatus !== 'Paid').length,
+    };
 
     const avgTicketSize = bills.length > 0 ? Math.round(totalRevenue / bills.length) : 0;
 

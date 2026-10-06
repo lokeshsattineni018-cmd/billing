@@ -14,9 +14,12 @@ const router = express.Router();
  */
 router.get('/daily-summary', async (req, res) => {
   try {
-    // Enforce header-only secret key (X-Cron-Secret) to prevent URL query string logging
+    // Enforce secret key (X-Cron-Secret or Vercel Cron Bearer token) to prevent URL query string logging
     const cronSecret = req.headers['x-cron-secret'];
-    const isAuthorizedCron = Boolean(process.env.CRON_SECRET && cronSecret === process.env.CRON_SECRET);
+    const bearerSecret = req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null;
+    const isAuthorizedCron = Boolean(
+      process.env.CRON_SECRET && (cronSecret === process.env.CRON_SECRET || bearerSecret === process.env.CRON_SECRET)
+    );
 
     if (!isAuthorizedCron) {
       // Fall back to JWT Bearer token auth for admin/owner
@@ -59,17 +62,22 @@ router.get('/daily-summary', async (req, res) => {
 
     const bills = await Bill.find({
       createdAt: { $gte: startOfDay, $lt: endOfDay },
+      isVoided: { $ne: true },
     }).sort({ billNo: 1 }).lean();
 
     const totalRevenue = bills.reduce((sum, b) => sum + (b.grandTotal || b.total || 0), 0);
+    const paidBills = bills.filter((b) => b.paymentStatus === 'Paid');
     const pendingBills = bills.filter((b) => b.paymentStatus !== 'Paid');
-    const pendingAmount = pendingBills.reduce((sum, b) => sum + (b.grandTotal || b.total || 0), 0);
+    const pendingAmount = pendingBills.reduce((sum, b) => {
+      const bTotal = b.grandTotal || b.total || 0;
+      return sum + Math.max(0, bTotal - (b.paidAmount || 0));
+    }, 0);
 
     const summary = {
       totalBills: bills.length,
       totalRevenue,
       pendingAmount,
-      paidCount: bills.length - pendingBills.length,
+      paidCount: paidBills.length,
       pendingCount: pendingBills.length,
     };
 
@@ -106,17 +114,22 @@ router.post('/send-now', protect, restrictTo('admin', 'owner'), async (req, res)
 
     const bills = await Bill.find({
       createdAt: { $gte: startOfDay, $lt: endOfDay },
+      isVoided: { $ne: true },
     }).sort({ billNo: 1 }).lean();
 
     const totalRevenue = bills.reduce((sum, b) => sum + (b.grandTotal || b.total || 0), 0);
+    const paidBills = bills.filter((b) => b.paymentStatus === 'Paid');
     const pendingBills = bills.filter((b) => b.paymentStatus !== 'Paid');
-    const pendingAmount = pendingBills.reduce((sum, b) => sum + (b.grandTotal || b.total || 0), 0);
+    const pendingAmount = pendingBills.reduce((sum, b) => {
+      const bTotal = b.grandTotal || b.total || 0;
+      return sum + Math.max(0, bTotal - (b.paidAmount || 0));
+    }, 0);
 
     const summary = {
       totalBills: bills.length,
       totalRevenue,
       pendingAmount,
-      paidCount: bills.length - pendingBills.length,
+      paidCount: paidBills.length,
       pendingCount: pendingBills.length,
     };
 
