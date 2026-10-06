@@ -12,6 +12,8 @@ import durgaImg from '../assets/durga.jpg';
 import ramDarbarImg from '../assets/ram_darbar.jpg';
 import { getOfflineBill, saveOfflineBill, getMasterCache } from '../utils/offlineDb';
 import { flushSyncQueue } from '../services/syncManager';
+import { useLanguage } from '../context/LanguageContext';
+import ConfirmModal from '../components/ConfirmModal';
 
 export default function BillDetail() {
   const { id } = useParams();
@@ -37,8 +39,10 @@ export default function BillDetail() {
   const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const isAdmin = user?.role === 'admin';
+  const canVoidBill = user?.role === 'admin' || user?.role === 'owner';
   const canSeeSales = user?.role === 'owner' || user?.role === 'admin';
   const canUpdateStatus = user?.role === 'owner' || user?.role === 'admin';
+  const { lang, t } = useLanguage();
 
   useEffect(() => {
     loadBill();
@@ -199,9 +203,14 @@ export default function BillDetail() {
       const res = await billsAPI.void(id, voidReason);
       setBill(res.data.bill);
       setShowVoidModal(false);
-      showToast(`Invoice #${bill.billNo} marked as VOIDED`, 'success');
+      showToast(
+        lang === 'te'
+          ? `ఇన్‌వాయిస్ #${bill.billNo} రద్దు చేయబడింది`
+          : `Invoice #${bill.billNo} marked as VOIDED`,
+        'success'
+      );
     } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to void invoice', 'error');
+      showToast(err.response?.data?.message || (lang === 'te' ? 'ఇన్‌వాయిస్ రద్దు విఫలమైంది' : 'Failed to void invoice'), 'error');
     } finally {
       setVoiding(false);
     }
@@ -332,15 +341,15 @@ export default function BillDetail() {
             </button>
           )}
 
-          {/* Admin Only: Void Invoice Button */}
-          {isAdmin && !bill.isVoided && (
+          {/* Admin / Owner Only: Void Invoice Button */}
+          {canVoidBill && !bill.isVoided && (
             <button
               className="btn btn-secondary"
               style={{ padding: '10px 14px', color: '#ef4444', border: '1px solid #fecaca', background: '#fff5f5', fontWeight: 700 }}
               onClick={() => setShowVoidModal(true)}
-              title="Mark this bill as voided (Admin exclusive)"
+              title={lang === 'te' ? 'ఈ బిల్లును రద్దు చేయండి (అడ్మిన్/యజమాని ప్రత్యేకం)' : 'Mark this bill as voided (Admin exclusive)'}
             >
-              Void Bill
+              {lang === 'te' ? 'బిల్లు రద్దు చేయి' : 'Void Bill'}
             </button>
           )}
 
@@ -1039,55 +1048,58 @@ export default function BillDetail() {
 
 
       {/* ── MODAL: VOID INVOICE CONFIRMATION ── */}
-      {showVoidModal && (
-        <div className="modal-backdrop" onClick={() => setShowVoidModal(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-              <div style={{ background: '#fee2e2', color: '#dc2626', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
-                ⛔
-              </div>
-              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#991b1b' }}>
-                Void Invoice #{bill.billNo}?
-              </h3>
-            </div>
-
-            <p style={{ fontSize: '0.88rem', color: '#475569', lineHeight: '1.5' }}>
-              Voiding this invoice will remove it from total sales and receivables. The bill number will remain in the database with a <strong>VOIDED</strong> audit record.
-            </p>
-
-            <div className="form-group" style={{ marginTop: '12px', marginBottom: '16px' }}>
-              <label className="form-label" style={{ fontWeight: 700 }}>Reason for Voiding (Optional):</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="e.g. Duplicate entry, customer cancelled, wrong rate"
-                value={voidReason}
-                onChange={(e) => setVoidReason(e.target.value)}
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ flex: 1, padding: '12px', background: '#dc2626', color: '#ffffff', border: 'none', fontWeight: 700 }}
-                onClick={handleVoidInvoice}
-                disabled={voiding}
-              >
-                {voiding ? 'Voiding...' : 'Yes, Void This Invoice'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ padding: '12px 18px' }}
-                onClick={() => setShowVoidModal(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+      <ConfirmModal
+        isOpen={showVoidModal}
+        customIcon={<span style={{ fontSize: '1.3rem', lineHeight: 1 }}>⛔</span>}
+        title={lang === 'te' ? `ఇన్‌వాయిస్ #${bill.billNo} రద్దు చేయాలా?` : `Void Invoice #${bill.billNo}?`}
+        subtitle={lang === 'te' ? 'నిర్ధారణ అవసరం' : 'Confirmation Required'}
+        message={
+          lang === 'te'
+            ? 'ఈ ఇన్‌వాయిస్‌ను ఖచ్చితంగా రద్దు చేయాలనుకుంటున్నారా? ఇది వ్యాపార విక్రయాల గణాంకాలు మరియు కస్టమర్ బ్యాలెన్స్ నుండి తొలగించబడుతుంది.'
+            : 'Are you sure you want to void this invoice? Voiding will permanently cancel the bill and adjust customer receivables.'
+        }
+        itemDetails={[
+          { label: lang === 'te' ? 'ఇన్‌వాయిస్ నం' : 'Invoice #', value: `#${bill.billNo}`, isMono: true },
+          { label: lang === 'te' ? 'కస్టమర్ పేరు' : 'Customer', value: bill.customerName || '—' },
+          { label: lang === 'te' ? 'తేదీ' : 'Date', value: formatDateTime(bill.date) },
+          { label: lang === 'te' ? 'మొత్తం బిల్లు' : 'Total Amount', value: formatCurrency(bill.total), isMono: true },
+          { label: lang === 'te' ? 'చెల్లింపు స్థితి' : 'Status', value: bill.paymentStatus || 'Pending' },
+        ]}
+        warningText={
+          lang === 'te'
+            ? 'ఈ చర్య శాశ్వతమైనది. ఆడిట్ రికార్డుల కోసం బిల్లు సంఖ్య డేటాబేస్‌లో VOIDED స్థితితో భద్రపరచబడుతుంది మరియు మార్చలేరు.'
+            : 'This action is permanent. The bill number will remain in the system with an immutable VOIDED audit record.'
+        }
+        confirmText={lang === 'te' ? 'అవును, బిల్లు రద్దు చేయి' : 'Yes, Void Invoice'}
+        cancelText={lang === 'te' ? 'రద్దు చేయి' : 'Cancel'}
+        confirmType="danger"
+        loading={voiding}
+        confirmLoadingText={lang === 'te' ? 'రద్దు చేస్తోంది...' : 'Voiding...'}
+        onConfirm={handleVoidInvoice}
+        onClose={() => {
+          if (!voiding) {
+            setShowVoidModal(false);
+          }
+        }}
+      >
+        <div className="form-group" style={{ marginTop: '4px' }}>
+          <label className="form-label" style={{ fontWeight: 700, fontSize: '0.85rem' }}>
+            {lang === 'te' ? 'రద్దు చేయడానికి కారణం (ఐచ్ఛికం):' : 'Reason for Voiding (Optional):'}
+          </label>
+          <input
+            type="text"
+            className="form-input"
+            placeholder={
+              lang === 'te'
+                ? 'ఉదా. తప్పుడు ఎంట్రీ, కస్టమర్ రద్దు చేశారు...'
+                : 'e.g. Duplicate entry, customer cancelled, wrong rate'
+            }
+            value={voidReason}
+            onChange={(e) => setVoidReason(e.target.value)}
+            style={{ fontSize: '0.85rem' }}
+          />
         </div>
-      )}
+      </ConfirmModal>
 
       {/* Record Payment Modal */}
       {showPaymentModal && (

@@ -4,12 +4,17 @@ import { TrashIcon } from './Icons';
 export default function ConfirmModal({
   isOpen,
   title = 'Delete Entry?',
+  subtitle = 'Confirmation Required',
   message = 'Are you sure you want to delete this record? This action cannot be undone.',
   itemDetails = null,
   confirmText = 'Yes, Delete',
   cancelText = 'Cancel',
   confirmType = 'danger', // 'danger' | 'warning' | 'primary'
   loading = false,
+  confirmLoadingText = 'Processing...',
+  customIcon = null,
+  warningText = 'This action is permanent and will update all corresponding accounts and balances immediately.',
+  children = null,
   onConfirm,
   onClose,
 }) {
@@ -39,16 +44,17 @@ export default function ConfirmModal({
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
+              fontSize: '1.25rem',
             }}
           >
-            <TrashIcon size={22} color={iconColor} />
+            {customIcon || <TrashIcon size={22} color={iconColor} />}
           </div>
           <div>
             <h3 style={{ margin: 0, fontSize: '1.18rem', fontWeight: 800, color: '#0f172a' }}>
               {title}
             </h3>
             <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
-              Confirmation Required
+              {subtitle}
             </span>
           </div>
         </div>
@@ -91,25 +97,34 @@ export default function ConfirmModal({
           </div>
         )}
 
+        {/* Optional Custom Children (e.g. input fields, reason for voiding, notes) */}
+        {children && (
+          <div style={{ marginBottom: '16px' }}>
+            {children}
+          </div>
+        )}
+
         {/* Warning Banner */}
-        <div
-          style={{
-            background: isDanger ? '#fff5f5' : '#fffbeb',
-            border: `1px solid ${isDanger ? '#fecaca' : '#fde68a'}`,
-            borderRadius: '8px',
-            padding: '10px 12px',
-            marginBottom: '20px',
-            fontSize: '0.8rem',
-            color: isDanger ? '#991b1b' : '#92400e',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '8px',
-            lineHeight: '1.4',
-          }}
-        >
-          <span>⚠️</span>
-          <span>This action is permanent and will update all corresponding accounts and balances immediately.</span>
-        </div>
+        {warningText && (
+          <div
+            style={{
+              background: isDanger ? '#fff5f5' : '#fffbeb',
+              border: `1px solid ${isDanger ? '#fecaca' : '#fde68a'}`,
+              borderRadius: '8px',
+              padding: '10px 12px',
+              marginBottom: '20px',
+              fontSize: '0.8rem',
+              color: isDanger ? '#991b1b' : '#92400e',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '8px',
+              lineHeight: '1.4',
+            }}
+          >
+            <span>⚠️</span>
+            <span>{warningText}</span>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
@@ -145,7 +160,7 @@ export default function ConfirmModal({
             {loading ? (
               <>
                 <span className="btn-spinner" style={{ width: '14px', height: '14px' }}></span>
-                <span>Deleting...</span>
+                <span>{confirmLoadingText}</span>
               </>
             ) : (
               confirmText
