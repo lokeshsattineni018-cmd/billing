@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { staffAPI } from '../../services/api';
 import { formatCurrency, formatDate, useToast, Toast, playSuccessSound } from '../../utils/helpers';
 import { useLanguage } from '../../context/LanguageContext';
@@ -12,7 +12,9 @@ import {
   ScaleIcon,
   CheckIcon,
   RefreshIcon,
+  PrintIcon,
 } from '../Icons';
+import VoucherBillModal from '../VoucherBillModal';
 import ConfirmModal from '../ConfirmModal';
 
 export default function WastageTracker() {
@@ -50,6 +52,9 @@ export default function WastageTracker() {
     notes: '',
   });
   const [saving, setSaving] = useState(false);
+
+  // Bill Preview State (In-app modal with WhatsApp & Print)
+  const [viewingBill, setViewingBill] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -280,6 +285,12 @@ export default function WastageTracker() {
     } finally {
       setDeleting(false);
     }
+  };
+
+  // Generate & View Bill for a single wastage entry
+  const handleGenerateBill = (entry, index = 0) => {
+    const vNo = entry.voucherNo || (entries.length > 0 ? `WASTE-${entries.length - index}` : 'WASTE-1');
+    setViewingBill({ entry, voucherNo: vNo });
   };
 
   const liveKg = parseFloat(formData.quantityKg) || 0;
@@ -555,17 +566,27 @@ export default function WastageTracker() {
                       {entry.notes || '—'}
                     </td>
                     <td className="text-center">
-                      {canEditDelete ? (
-                        <div style={{ display: 'inline-flex', gap: '4px' }}>
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            onClick={() => handleOpenEditModal(entry)}
-                            title="Edit"
-                            style={{ padding: '4px 6px' }}
-                          >
-                            <EditIcon size={14} color="#0b5394" />
-                          </button>
+                      <div style={{ display: 'inline-flex', gap: '4px' }}>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => handleGenerateBill(entry, entries.indexOf(entry))}
+                          title="Generate & View Bill"
+                          style={{ padding: '4px 6px' }}
+                        >
+                          <PrintIcon size={14} color="#7c3aed" />
+                        </button>
+                        {canEditDelete ? (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => handleOpenEditModal(entry)}
+                              title="Edit"
+                              style={{ padding: '4px 6px' }}
+                            >
+                              <EditIcon size={14} color="#0b5394" />
+                            </button>
                           <button
                             type="button"
                             className="btn btn-ghost btn-sm"
@@ -575,10 +596,9 @@ export default function WastageTracker() {
                           >
                             <TrashIcon size={14} color="#ef4444" />
                           </button>
-                        </div>
-                      ) : (
-                        <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>—</span>
-                      )}
+                          </>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -771,6 +791,17 @@ export default function WastageTracker() {
           }
         }}
       />
+
+      {/* IN-APP VOUCHER BILL VIEWER MODAL (With WhatsApp & Print) */}
+      {viewingBill && (
+        <VoucherBillModal
+          isOpen={Boolean(viewingBill)}
+          onClose={() => setViewingBill(null)}
+          type="wastage"
+          data={viewingBill.entry}
+          voucherNo={viewingBill.voucherNo}
+        />
+      )}
     </div>
   );
 }

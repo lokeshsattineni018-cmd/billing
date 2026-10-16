@@ -555,10 +555,20 @@ a:hover {
 }
 
 /* ── Tables (Sleek Clean Style) ── */
-.table-container {
-  overflow-x: auto;
+.table-container,
+.table-responsive {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  touch-action: pan-x pan-y !important;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
+}
+
+.table-container .table,
+.table-responsive .table {
+  min-width: 720px !important;
 }
 
 .table {
@@ -1376,6 +1386,17 @@ a:hover {
     flex-direction: column;
     gap: 8px;
     width: 100%;
+  }
+
+  .mobile-only-toggle {
+    display: flex !important;
+  }
+
+  .mobile-visible-table {
+    display: block !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
   }
 
   .desktop-only-table {

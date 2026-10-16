@@ -9,7 +9,7 @@ import ramDarbarImg from '../assets/ram_darbar.jpg';
 export default function VoucherBillModal({
   isOpen,
   onClose,
-  type = 'worker', // 'worker' | 'ice' | 'statement'
+  type = 'worker', // 'worker' | 'ice' | 'wastage' | 'statement'
   data,
   voucherNo,
 }) {
@@ -40,6 +40,8 @@ export default function VoucherBillModal({
     data.voucherNo ||
     (type === 'ice'
       ? 'ICE-1'
+      : type === 'wastage'
+      ? 'WASTE-1'
       : type === 'worker'
       ? 'WB-1'
       : `STMT-${data.workerName || 'ALL'}`);
@@ -64,6 +66,8 @@ export default function VoucherBillModal({
     const title =
       type === 'ice'
         ? `Ice Bill ${resolvedVoucherNo}`
+        : type === 'wastage'
+        ? `Wastage Sale Bill ${resolvedVoucherNo}`
         : type === 'worker'
         ? `Worker Bill ${resolvedVoucherNo}`
         : `Worker Statement - ${data.workerName || 'Worker'}`;
@@ -92,7 +96,7 @@ export default function VoucherBillModal({
     if (downloadingPdf) return;
     setDownloadingPdf(true);
     const cleanNo = resolvedVoucherNo.replace(/[^a-zA-Z0-9_-]/g, '');
-    const fileName = `${type === 'ice' ? 'IceBill' : type === 'worker' ? 'WorkerBill' : 'WorkerStatement'}-${cleanNo}.pdf`;
+    const fileName = `${type === 'ice' ? 'IceBill' : type === 'wastage' ? 'WastageBill' : type === 'worker' ? 'WorkerBill' : 'WorkerStatement'}-${cleanNo}.pdf`;
     try {
       const res = await staffAPI.getVoucherPDF({
         type,
@@ -122,7 +126,7 @@ export default function VoucherBillModal({
     setSharingPdf(true);
 
     const cleanNo = resolvedVoucherNo.replace(/[^a-zA-Z0-9_-]/g, '');
-    const fileName = `${type === 'ice' ? 'IceBill' : type === 'worker' ? 'WorkerBill' : 'WorkerStatement'}-${cleanNo}.pdf`;
+    const fileName = `${type === 'ice' ? 'IceBill' : type === 'wastage' ? 'WastageBill' : type === 'worker' ? 'WorkerBill' : 'WorkerStatement'}-${cleanNo}.pdf`;
 
     let caption = '';
     let cleanPhone = '';
@@ -139,6 +143,19 @@ export default function VoucherBillModal({
 🧊 *Item:* ICE
 📦 *Quantity:* ${data.blocks} blocks
 💵 *Rate:* ₹${Number(data.rate).toFixed(2)} / block
+💰 *TOTAL AMOUNT:* ₹${Number(data.totalAmount).toFixed(2)}
+🏷️ *Payment Status:* ${data.paymentStatus || 'Paid'}
+
+Thank you!`;
+    } else if (type === 'wastage') {
+      const dateStr = formatDate(data.date);
+      caption = `*VIJAYA DURGA SEA FOODS*
+*PRAWN WASTAGE SALE BILL: ${resolvedVoucherNo}*
+📅 *Date:* ${dateStr}
+🏷️ *Category:* ${data.category || 'Prawn Head'}
+👤 *Buyer:* ${data.buyerName || '—'}
+⚖️ *Quantity Sold:* ${data.quantityKg} kg
+💵 *Rate:* ₹${Number(data.rate).toFixed(2)} / kg
 💰 *TOTAL AMOUNT:* ₹${Number(data.totalAmount).toFixed(2)}
 🏷️ *Payment Status:* ${data.paymentStatus || 'Paid'}
 
@@ -233,7 +250,7 @@ Thank you!`;
   };
 
   const modalTitle =
-    type === 'ice' ? 'Ice Bill' : type === 'worker' ? 'Worker Bill' : 'Worker Wage Statement';
+    type === 'ice' ? 'Ice Bill' : type === 'wastage' ? 'Wastage Sale Bill' : type === 'worker' ? 'Worker Bill' : 'Worker Wage Statement';
   const paymentStatus = data.paymentStatus || (type === 'statement' ? (data.summary?.pendingBalance > 0 ? 'Pending' : 'Settled') : 'Paid');
   const isPaid = paymentStatus === 'Paid' || paymentStatus === 'Settled';
 
@@ -424,6 +441,8 @@ Thank you!`;
             <div style={{ letterSpacing: '0.5px' }}>
               {type === 'ice'
                 ? 'ICE BILL'
+                : type === 'wastage'
+                ? 'PRAWN WASTAGE SALE BILL'
                 : type === 'worker'
                 ? 'WORKER BILL'
                 : 'WORKER WAGE STATEMENT & SETTLEMENT BILL'}
@@ -592,6 +611,126 @@ Thank you!`;
               </table>
 
               {/* Amount in Words (NO Notes / Remarks row as requested) */}
+              <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
+                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Amount in Words: </span>
+                <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(data.totalAmount)}</span>
+              </div>
+            </>
+          )}
+
+          {type === 'wastage' && (
+            <>
+              {/* Voucher No & Date */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  borderBottom: '1.5px solid #0b5394',
+                  fontSize: '0.85rem',
+                }}
+              >
+                <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
+                  <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                    {resolvedVoucherNo}
+                  </span>
+                </div>
+                <div style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
+                  <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(data.date)}</span>
+                </div>
+              </div>
+
+              {/* Buyer & Category */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  borderBottom: '1.5px solid #0b5394',
+                  fontSize: '0.85rem',
+                }}
+              >
+                <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394' }}>
+                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Buyer Name: </span>
+                  <strong style={{ color: '#000000' }}>{data.buyerName || '—'}</strong>
+                </div>
+                <div style={{ padding: '6px 10px' }}>
+                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Category: </span>
+                  <strong style={{ color: '#000000' }}>{data.category || 'Prawn Head'}</strong>
+                </div>
+              </div>
+
+              {/* Vehicle & Payment Status */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  borderBottom: '1.5px solid #0b5394',
+                  fontSize: '0.82rem',
+                }}
+              >
+                <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394' }}>
+                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Vehicle No: </span>
+                  <span style={{ fontWeight: 'bold' }}>{data.vehicleNo || '—'}</span>
+                </div>
+                <div style={{ padding: '5px 10px' }}>
+                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Payment Status: </span>
+                  <span style={{ fontWeight: 'bold', color: data.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>
+                    {data.paymentStatus || 'Paid'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Items Table */}
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                <thead>
+                  <tr style={{ background: '#f0f5fa', color: '#0b5394', fontWeight: 'bold', textAlign: 'center' }}>
+                    <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '6px 4px', width: '45px' }}>S.No.</th>
+                    <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '6px 8px', textAlign: 'left' }}>Description of Sale</th>
+                    <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '6px', width: '120px' }}>Quantity (kg)</th>
+                    <th style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '6px', width: '110px' }}>Rate (₹/kg)</th>
+                    <th style={{ borderBottom: '1.5px solid #0b5394', padding: '6px', width: '130px', textAlign: 'right' }}>Amount (₹)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ height: '32px', borderBottom: '1px solid #c8d9e8' }}>
+                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>1</td>
+                    <td style={{ borderRight: '1.5px solid #0b5394', padding: '6px 8px', fontWeight: 'bold' }}>
+                      {data.category || 'Prawn Head'} Wastage
+                    </td>
+                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>
+                      {data.quantityKg} kg
+                    </td>
+                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', paddingRight: '8px' }}>
+                      ₹{Number(data.rate).toFixed(2)}
+                    </td>
+                    <td style={{ textAlign: 'right', paddingRight: '8px', fontWeight: 'bold' }}>
+                      ₹{Number(data.totalAmount).toFixed(2)}
+                    </td>
+                  </tr>
+                  {[1, 2].map((i) => (
+                    <tr key={i} style={{ height: '22px', borderBottom: '1px solid #c8d9e8' }}>
+                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                      <td></td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr style={{ background: '#e8f1f8', borderTop: '1.5px solid #0b5394', fontWeight: 'bold' }}>
+                    <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 900 }}>
+                      TOTAL SALE AMOUNT:
+                    </td>
+                    <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 900, color: '#000000' }}>
+                      ₹{Number(data.totalAmount).toFixed(2)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+
+              {/* Amount in Words */}
               <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
                 <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Amount in Words: </span>
                 <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(data.totalAmount)}</span>

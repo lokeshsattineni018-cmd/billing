@@ -3,6 +3,8 @@ import { authAPI } from '../services/api';
 
 const AuthContext = createContext(null);
 
+const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -10,13 +12,27 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const token = localStorage.getItem('srsf_token');
     const savedUser = localStorage.getItem('srsf_user');
+    const loginTime = localStorage.getItem('srsf_login_time');
 
     if (token && savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch {
+      if (!loginTime) {
+        localStorage.setItem('srsf_login_time', String(Date.now()));
+      }
+      // Check if session is still within 7-day window
+      const elapsed = loginTime ? Date.now() - Number(loginTime) : 0;
+      if (loginTime && elapsed > SESSION_DURATION_MS) {
+        // Session expired — clear everything
         localStorage.removeItem('srsf_token');
         localStorage.removeItem('srsf_user');
+        localStorage.removeItem('srsf_login_time');
+      } else {
+        try {
+          setUser(JSON.parse(savedUser));
+        } catch {
+          localStorage.removeItem('srsf_token');
+          localStorage.removeItem('srsf_user');
+          localStorage.removeItem('srsf_login_time');
+        }
       }
     }
     setLoading(false);
@@ -28,6 +44,7 @@ export function AuthProvider({ children }) {
 
     localStorage.setItem('srsf_token', token);
     localStorage.setItem('srsf_user', JSON.stringify(userData));
+    localStorage.setItem('srsf_login_time', String(Date.now()));
     setUser(userData);
 
     return userData;
@@ -41,6 +58,7 @@ export function AuthProvider({ children }) {
     }
     localStorage.removeItem('srsf_token');
     localStorage.removeItem('srsf_user');
+    localStorage.removeItem('srsf_login_time');
     setUser(null);
     return true;
   };

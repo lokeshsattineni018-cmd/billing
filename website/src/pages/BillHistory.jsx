@@ -22,6 +22,7 @@ export default function BillHistory() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [displayMode, setDisplayMode] = useState('scroll'); // 'scroll' | 'pages'
+  const [viewFormat, setViewFormat] = useState('cards'); // 'cards' | 'table'
   const [search, setSearch] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -330,11 +331,32 @@ export default function BillHistory() {
           <SkeletonTable rows={8} cols={6} hasHeader={false} />
         ) : bills.length > 0 ? (
           <>
+            {/* Mobile View Toggle */}
+            <div className="mobile-only-toggle" style={{ display: 'none', justifyContent: 'flex-end', gap: '8px', marginBottom: '12px' }}>
+              <button
+                type="button"
+                className={`btn btn-sm ${viewFormat === 'cards' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setViewFormat('cards')}
+                style={{ fontSize: '0.78rem', padding: '4px 10px', borderRadius: '6px' }}
+              >
+                🗂️ Cards View
+              </button>
+              <button
+                type="button"
+                className={`btn btn-sm ${viewFormat === 'table' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setViewFormat('table')}
+                style={{ fontSize: '0.78rem', padding: '4px 10px', borderRadius: '6px' }}
+              >
+                📊 Table View (Scroll ↔)
+              </button>
+            </div>
+
             {/* Mobile Cards View (Visible on Phones & Tablets) */}
-            <div className="mobile-bills-list">
-              <div style={{ fontSize: '0.72rem', color: '#94a3b8', textAlign: 'right', padding: '0 4px 6px 0', fontWeight: 600 }}>
-                👈 Swipe card left for quick actions
-              </div>
+            {viewFormat === 'cards' && (
+              <div className="mobile-bills-list">
+                <div style={{ fontSize: '0.72rem', color: '#94a3b8', textAlign: 'right', padding: '0 4px 6px 0', fontWeight: 600 }}>
+                  👈 Swipe card left for quick actions
+                </div>
               {bills.map((bill) => {
                 const totalQty = getTotalQuantity(bill);
                 return (
@@ -515,9 +537,10 @@ export default function BillHistory() {
               </SwipeableItem>
               )})}
             </div>
+            )}
 
-            {/* Desktop Table View (Visible on Laptop & Desktop) */}
-            <div className="table-container desktop-only-table">
+            {/* Table View (Scrollable on Mobile, Native on Desktop) */}
+            <div className={`table-container ${viewFormat === 'table' ? 'mobile-visible-table' : 'desktop-only-table'}`}>
               <table className="table">
                 <thead>
                   <tr>
