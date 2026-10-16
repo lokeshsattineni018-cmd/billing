@@ -39,10 +39,6 @@
   ],
   "crons": [
     {
-      "path": "/api/health",
-      "schedule": "*/10 * * * *"
-    },
-    {
       "path": "/api/backup/daily-summary",
       "schedule": "30 18 * * *"
     }

@@ -26,3 +26,5 @@ yarn-error.log*
 *.local
 *.log
 backend/data/
+.vercel
+.env*
