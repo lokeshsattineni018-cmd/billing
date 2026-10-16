@@ -12,9 +12,7 @@ import {
   ScaleIcon,
   CheckIcon,
   RefreshIcon,
-  PrintIcon,
 } from '../Icons';
-import VoucherBillModal from '../VoucherBillModal';
 import ConfirmModal from '../ConfirmModal';
 
 export default function WastageTracker() {
@@ -52,9 +50,6 @@ export default function WastageTracker() {
     notes: '',
   });
   const [saving, setSaving] = useState(false);
-
-  // Bill Preview State (In-app modal with WhatsApp & Print)
-  const [viewingBill, setViewingBill] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -175,11 +170,11 @@ export default function WastageTracker() {
     const numRate = parseFloat(formData.rate);
 
     if (!numKg || numKg <= 0) {
-      showToast('Please enter a valid weight in KG for prawn head wastage', 'error');
+      showToast('Please enter a valid quantity in boxes for prawn head wastage', 'error');
       return;
     }
     if (isNaN(numRate) || numRate < 0) {
-      showToast('Please enter a valid rate per KG', 'error');
+      showToast('Please enter a valid rate per box', 'error');
       return;
     }
 
@@ -215,12 +210,12 @@ export default function WastageTracker() {
             endpoint: '/staff/wastage',
             payload,
             clientRefId: tempId,
-            label: `Wastage: ${payload.quantityKg} kg (${payload.buyerName || 'Buyer'})`,
+            label: `Wastage: ${payload.quantityKg} boxes (${payload.buyerName || 'Buyer'})`,
           });
 
           setEntries((prev) => [offlineWastage, ...prev]);
           playSuccessSound();
-          showToast(`⚡ Shed Mode: Recorded ${payload.quantityKg} kg wastage sales offline!`, 'info');
+          showToast(`⚡ Shed Mode: Recorded ${payload.quantityKg} boxes wastage sales offline!`, 'info');
           setModalOpen(false);
           return;
         }
@@ -249,12 +244,12 @@ export default function WastageTracker() {
             endpoint: '/staff/wastage',
             payload,
             clientRefId: tempId,
-            label: `Wastage: ${payload.quantityKg} kg (${payload.buyerName || 'Buyer'})`,
+            label: `Wastage: ${payload.quantityKg} boxes (${payload.buyerName || 'Buyer'})`,
           });
 
           setEntries((prev) => [offlineWastage, ...prev]);
           playSuccessSound();
-          showToast(`⚡ Shed Mode: Recorded ${payload.quantityKg} kg wastage sales offline!`, 'info');
+          showToast(`⚡ Shed Mode: Recorded ${payload.quantityKg} boxes wastage sales offline!`, 'info');
           setModalOpen(false);
           return;
         } catch (e) {}
@@ -287,15 +282,9 @@ export default function WastageTracker() {
     }
   };
 
-  // Generate & View Bill for a single wastage entry
-  const handleGenerateBill = (entry, index = 0) => {
-    const vNo = entry.voucherNo || (entries.length > 0 ? `WASTE-${entries.length - index}` : 'WASTE-1');
-    setViewingBill({ entry, voucherNo: vNo });
-  };
-
-  const liveKg = parseFloat(formData.quantityKg) || 0;
+  const liveBoxes = parseFloat(formData.quantityKg) || 0;
   const liveRate = parseFloat(formData.rate) || 0;
-  const liveTotal = Math.round(liveKg * liveRate * 100) / 100;
+  const liveTotal = Math.round(liveBoxes * liveRate * 100) / 100;
 
   return (
     <div>
@@ -307,7 +296,7 @@ export default function WastageTracker() {
         const badgeLabel = dateFilter === 'today' || (dateFilter === 'all' && !dateFrom) ? 'Today' : dateFilter === 'yesterday' ? 'Yesterday' : dateFilter === 'week' ? '7 Days' : dateFilter === 'month' ? 'Month' : 'Custom';
         return (
       <div className="dashboard-stats-grid" style={{ marginBottom: '20px' }}>
-        {/* Period Wastage Sold (KG) */}
+        {/* Period Wastage Sold (Boxes) */}
         <div className="stat-card-compact" style={{ borderLeft: '4px solid #16a34a' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
@@ -317,10 +306,10 @@ export default function WastageTracker() {
           </div>
           <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
             {(summary?.todayKg || 0).toLocaleString('en-IN')}
-            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b', marginLeft: '6px' }}>kg</span>
+            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b', marginLeft: '6px' }}>boxes</span>
           </div>
           <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            All-time: {(summary?.totalKg || 0).toLocaleString('en-IN')} kg sold
+            All-time: {(summary?.totalKg || 0).toLocaleString('en-IN')} boxes sold
           </div>
         </div>
 
@@ -336,23 +325,23 @@ export default function WastageTracker() {
             {formatCurrency(summary?.todayAmount || 0)}
           </div>
           <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            Formula: Prawn Head (KG) × Rate = Total
+            Formula: Prawn Head (Boxes) × Rate = Total
           </div>
         </div>
 
-        {/* Average Rate / KG */}
+        {/* Average Rate / Box */}
         <div className="stat-card-compact" style={{ borderLeft: '4px solid #0b5394' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
               {periodLabel} Selling Rate
             </span>
-            <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>₹ / KG</span>
+            <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>₹ / BOX</span>
           </div>
           <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
             ₹{summary?.todayAvgRate?.toFixed(2) || '0.00'}
           </div>
           <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            Average selling price per KG in period
+            Average selling price per box in period
           </div>
         </div>
 
@@ -505,7 +494,7 @@ export default function WastageTracker() {
             No Prawn Head Wastage Sales Records Found
           </h3>
           <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem' }}>
-            Track total prawn head and shell wastage sold (KG), selling rate per KG, and total revenue earned.
+            Track total prawn head and shell wastage sold (boxes), selling rate per box, and total revenue earned.
           </p>
           <button
             type="button"
@@ -524,12 +513,12 @@ export default function WastageTracker() {
                 <tr>
                   <th style={{ width: '120px' }}>Date</th>
                   <th>Category</th>
-                  <th className="text-right" style={{ width: '140px' }}>Quantity Sold (KG)</th>
-                  <th className="text-right" style={{ width: '120px' }}>Rate / KG</th>
+                  <th className="text-right" style={{ width: '140px' }}>Boxes Sold</th>
+                  <th className="text-right" style={{ width: '120px' }}>Rate / Box</th>
                   <th className="text-right" style={{ width: '150px' }}>Total Amount</th>
                   <th style={{ width: '110px' }}>Status</th>
                   <th>Notes</th>
-                  <th className="text-center" style={{ width: '100px' }}>Actions</th>
+                  <th className="text-center" style={{ width: '90px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -547,7 +536,7 @@ export default function WastageTracker() {
                       <span style={{ fontWeight: 900, color: '#16a34a', fontSize: '0.98rem' }}>
                         {entry.quantityKg}
                       </span>
-                      <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '4px' }}>kg</span>
+                      <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '4px' }}>boxes</span>
                     </td>
                     <td className="text-right" style={{ fontWeight: 600 }}>
                       ₹{entry.rate?.toFixed(2)}
@@ -567,15 +556,6 @@ export default function WastageTracker() {
                     </td>
                     <td className="text-center">
                       <div style={{ display: 'inline-flex', gap: '4px' }}>
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => handleGenerateBill(entry, entries.indexOf(entry))}
-                          title="Generate & View Bill"
-                          style={{ padding: '4px 6px' }}
-                        >
-                          <PrintIcon size={14} color="#7c3aed" />
-                        </button>
                         {canEditDelete ? (
                           <>
                             <button
@@ -587,15 +567,15 @@ export default function WastageTracker() {
                             >
                               <EditIcon size={14} color="#0b5394" />
                             </button>
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            onClick={() => handlePromptDelete(entry)}
-                            title="Delete"
-                            style={{ padding: '4px 6px' }}
-                          >
-                            <TrashIcon size={14} color="#ef4444" />
-                          </button>
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => handlePromptDelete(entry)}
+                              title="Delete"
+                              style={{ padding: '4px 6px' }}
+                            >
+                              <TrashIcon size={14} color="#ef4444" />
+                            </button>
                           </>
                         ) : null}
                       </div>
@@ -653,14 +633,14 @@ export default function WastageTracker() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="form-group">
                   <label className="form-label" style={{ fontWeight: 700 }}>
-                    Prawn Head Sold (KG) <span style={{ color: '#ef4444' }}>*</span>
+                    Prawn Head Sold (Boxes) <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
                     className="form-input"
-                    placeholder="e.g. 350"
+                    placeholder="e.g. 50"
                     value={formData.quantityKg}
                     onChange={(e) => setFormData({ ...formData, quantityKg: e.target.value })}
                     required
@@ -670,14 +650,14 @@ export default function WastageTracker() {
 
                 <div className="form-group">
                   <label className="form-label" style={{ fontWeight: 700 }}>
-                    Rate per KG (₹) <span style={{ color: '#ef4444' }}>*</span>
+                    Rate per Box (₹) <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
                     className="form-input"
-                    placeholder="e.g. 12"
+                    placeholder="e.g. 550"
                     value={formData.rate}
                     onChange={(e) => setFormData({ ...formData, rate: e.target.value })}
                     required
@@ -703,7 +683,7 @@ export default function WastageTracker() {
                     Total Wastage Revenue (Prawn Head × Rate)
                   </div>
                   <div style={{ fontSize: '0.76rem', color: '#15803d', marginTop: '2px' }}>
-                    {liveKg} kg × ₹{liveRate.toFixed(2)}
+                    {liveBoxes} boxes × ₹{liveRate.toFixed(2)}
                   </div>
                 </div>
                 <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#15803d' }}>
@@ -771,8 +751,8 @@ export default function WastageTracker() {
             ? [
                 { label: 'Date', value: formatDate(entryToDelete.date) },
                 { label: 'Category', value: entryToDelete.category },
-                { label: 'Weight', value: `${entryToDelete.quantityKg} kg`, isMono: true },
-                { label: 'Rate / kg', value: `₹${entryToDelete.rate}` },
+                { label: 'Boxes', value: `${entryToDelete.quantityKg} boxes`, isMono: true },
+                { label: 'Rate / Box', value: `₹${entryToDelete.rate}` },
                 { label: 'Total Amount', value: formatCurrency(entryToDelete.totalAmount), isMono: true },
                 { label: 'Buyer', value: entryToDelete.buyerName || '—' },
                 { label: 'Status', value: entryToDelete.paymentStatus },
@@ -791,17 +771,6 @@ export default function WastageTracker() {
           }
         }}
       />
-
-      {/* IN-APP VOUCHER BILL VIEWER MODAL (With WhatsApp & Print) */}
-      {viewingBill && (
-        <VoucherBillModal
-          isOpen={Boolean(viewingBill)}
-          onClose={() => setViewingBill(null)}
-          type="wastage"
-          data={viewingBill.entry}
-          voucherNo={viewingBill.voucherNo}
-        />
-      )}
     </div>
   );
 }

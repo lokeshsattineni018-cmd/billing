@@ -1,3 +1,5 @@
+const path = require('path');
+const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const Settings = require('../models/Settings');
 const mongoose = require('mongoose');
@@ -12,6 +14,8 @@ const ganeshaBuffer = Buffer.from(ganeshaBase64, 'base64');
 const durgaBuffer = Buffer.from(durgaBase64, 'base64');
 const ramDarbarBuffer = Buffer.from(ramDarbarBase64, 'base64');
 const teluguJaiShreeRamBuffer = Buffer.from(teluguJaiShreeRamBase64, 'base64');
+
+const teluguFontPath = path.join(__dirname, '../assets/NotoSansTelugu-Bold.ttf');
 
 function numberToWords(num) {
   if (!num || num === 0) return 'Zero Rupees Only';
@@ -55,6 +59,7 @@ function formatDateStr(d) {
 
 /**
  * Generate Voucher PDF Buffer (Ice Bill, Worker Bill, Worker Statement)
+ * Designed to exactly mirror the official in-app document layout.
  */
 async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo = '' }) {
   return new Promise(async (resolve, reject) => {
@@ -75,6 +80,12 @@ async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo 
           gstin: '37KATPS1500Q1ZR',
           address: 'D.No. 2-41A, SATTINENI SRINIVASA TATAJI, Near Ramalayam, KOTHOTA - 534 281, Mutyalapalli, West Godavari Dist., A.P.',
           phone: '9441429745',
+          bankDetails: {
+            bankName: 'KARUR VYSYA BANK',
+            accountNo: '4805135000002964',
+            ifsc: 'KVBL0004815',
+            branch: 'Narasapur',
+          },
         };
       }
 
@@ -100,6 +111,14 @@ async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo 
         },
       });
 
+      if (fs.existsSync(teluguFontPath)) {
+        try {
+          doc.registerFont('TeluguFont', teluguFontPath);
+        } catch (e) {
+          console.warn('Could not register TeluguFont:', e.message);
+        }
+      }
+
       const buffers = [];
       doc.on('data', (chunk) => buffers.push(chunk));
       doc.on('end', () => resolve(Buffer.concat(buffers)));
@@ -113,6 +132,45 @@ async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo 
       const textDark = '#000000';
       const lineW = 0.85;
 
+      // Helper to render table headers with currency symbols cleanly without broken glyphs
+      function renderHeaderWithRupee(text, x, y, width, align = 'center') {
+        if (!text.includes('₹') || !doc._fontFamilies?.['TeluguFont']) {
+          doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue).text(text.replace('₹', 'Rs.'), x, y, { width, align });
+          return;
+        }
+        const parts = text.split('₹');
+        const before = parts[0];
+        const after = parts[1];
+        doc.font('Helvetica-Bold').fontSize(8.5);
+        const w1 = doc.widthOfString(before);
+        doc.font('TeluguFont').fontSize(8.5);
+        const wRupee = doc.widthOfString('₹');
+        doc.font('Helvetica-Bold').fontSize(8.5);
+        const w2 = doc.widthOfString(after);
+        const totalW = w1 + wRupee + w2;
+
+        let startX = x;
+        if (align === 'center') {
+          startX = x + (width - totalW) / 2;
+        } else if (align === 'right') {
+          startX = x + width - totalW;
+        }
+
+        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue).text(before, startX, y, { continued: true });
+        doc.font('TeluguFont').fontSize(8.5).fillColor(primaryBlue).text('₹', { continued: true });
+        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue).text(after);
+      }
+
+      // Helper to render formatted currency amounts cleanly
+      function renderAmount(num, x, y, width, align = 'right', fontSize = 9, isBold = false, color = '#000000') {
+        const valStr = `₹${Number(num || 0).toFixed(2)}`;
+        if (doc._fontFamilies?.['TeluguFont']) {
+          doc.font('TeluguFont').fontSize(fontSize).fillColor(color).text(valStr, x, y, { width, align });
+        } else {
+          doc.font(isBold ? 'Helvetica-Bold' : 'Helvetica').fontSize(fontSize).fillColor(color).text(`Rs. ${Number(num || 0).toFixed(2)}`, x, y, { width, align });
+        }
+      }
+
       let y = 28;
 
       // 1. TOP BAR
@@ -122,11 +180,11 @@ async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo 
 
       const topTitle =
         type === 'ice'
-          ? 'ICE BILL / EXPENSE VOUCHER'
+          ? 'ICE BILL'
           : type === 'wastage'
-          ? 'PRAWN WASTAGE SALE VOUCHER'
+          ? 'PRAWN WASTAGE SALE BILL'
           : type === 'worker'
-          ? 'WORKER LABOR WAGE VOUCHER'
+          ? 'WORKER BILL'
           : 'WORKER WAGE STATEMENT & SETTLEMENT BILL';
 
       doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
@@ -190,7 +248,7 @@ async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo 
         .fontSize(7.5)
         .fillColor(textDark)
         .text(
-          `Prop: ${settings.legalName || 'SATTINENI VENKATA DHANA LAXMI'}   |   GSTIN: ${settings.gstin || '37KATPS1500Q1ZR'}`,
+          `Prop: ${settings.legalName || settings.proprietor || 'SATTINENI VENKATA DHANA LAXMI'}   |   GSTIN: ${settings.gstin || '37KATPS1500Q1ZR'}`,
           centerX,
           y + 54.5,
           { width: centerW, align: 'center' }
@@ -216,47 +274,58 @@ async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo 
       doc.rect(L + halfW, y, halfW, row3H).stroke();
 
       const labelNo = type === 'statement' ? 'Statement No.' : 'Voucher No.';
-      doc.font('Helvetica-Bold').fontSize(9.5).fillColor(primaryBlue);
-      doc.text(labelNo, L + 8, y + 5);
-      doc.font('Helvetica-Bold').fontSize(11).fillColor('#b12704');
-      doc.text(` ${resolvedVoucherNo}`, L + 85, y + 4.5);
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(primaryBlue);
+      doc.text(labelNo, L + 8, y + 5.5);
+      doc.font('Helvetica-Bold').fontSize(10.5).fillColor('#b12704');
+      doc.text(` ${resolvedVoucherNo}`, L + 80, y + 5);
 
-      doc.font('Helvetica-Bold').fontSize(9.5).fillColor(primaryBlue);
-      doc.text('Date: ', L + halfW + 8, y + 5);
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(primaryBlue);
+      doc.text('Date: ', L + halfW + 8, y + 5.5);
       doc.font('Helvetica-Bold').fontSize(9.5).fillColor(textDark);
-      doc.text(`${formatDateStr(data.date || new Date())}`, L + halfW + 40, y + 5);
+      doc.text(`${formatDateStr(data.date || new Date())}`, L + halfW + 42, y + 5);
 
       y += row3H;
 
-      // 4. PARTY / DETAILS ROW
+      // 4. PARTY / DETAILS ROWS
       if (type === 'ice') {
         const row4H = 20;
         doc.rect(L, y, halfW, row4H).stroke();
         doc.rect(L + halfW, y, halfW, row4H).stroke();
 
         doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
-        doc.text('From (Supplier): ', L + 8, y + 5);
+        doc.text('Ice From (Supplier): ', L + 8, y + 5.5);
         doc.font('Helvetica-Bold').fontSize(9).fillColor(textDark);
-        doc.text(data.iceFrom || data.supplierName || 'Sri Rama Ice Plant', L + 85, y + 5);
+        doc.text(data.iceFrom || data.supplierName || 'Sri Rama Ice Plant', L + 105, y + 5);
 
         doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
-        doc.text('To (Receiver): ', L + halfW + 8, y + 5);
+        doc.text('Ice To (Receiver): ', L + halfW + 8, y + 5.5);
         doc.font('Helvetica-Bold').fontSize(9).fillColor(textDark);
-        doc.text(data.iceTo || 'Factory / Cold Storage', L + halfW + 75, y + 5);
+        doc.text(data.iceTo || 'Factory / Cold Storage', L + halfW + 95, y + 5);
 
         y += row4H;
+
+        // Payment Status full-width row matching Screenshot 2
+        const row5H = 20;
+        doc.rect(L, y, W, row5H).stroke();
+        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
+        doc.text('Payment Status: ', L + 8, y + 5.5);
+        const pStatus = data.paymentStatus || 'Pending';
+        doc.font('Helvetica-Bold').fontSize(9).fillColor(pStatus === 'Paid' ? '#16a34a' : '#d97706');
+        doc.text(pStatus, L + 88, y + 5);
+
+        y += row5H;
       } else if (type === 'wastage') {
         const row4H = 20;
         doc.rect(L, y, halfW, row4H).stroke();
         doc.rect(L + halfW, y, halfW, row4H).stroke();
 
         doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
-        doc.text('Buyer Name: ', L + 8, y + 5);
+        doc.text('Buyer Name: ', L + 8, y + 5.5);
         doc.font('Helvetica-Bold').fontSize(9).fillColor(textDark);
         doc.text(data.buyerName || '—', L + 75, y + 5);
 
         doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
-        doc.text('Category: ', L + halfW + 8, y + 5);
+        doc.text('Category: ', L + halfW + 8, y + 5.5);
         doc.font('Helvetica-Bold').fontSize(9).fillColor(textDark);
         doc.text(data.category || 'Prawn Head', L + halfW + 65, y + 5);
 
@@ -267,18 +336,17 @@ async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo 
         doc.rect(L + halfW, y, halfW, row5H).stroke();
 
         doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
-        doc.text('Vehicle No: ', L + 8, y + 5);
+        doc.text('Vehicle No: ', L + 8, y + 5.5);
         doc.font('Helvetica-Bold').fontSize(8.5).fillColor(textDark);
-        doc.text(data.vehicleNo || '—', L + 70, y + 5);
+        doc.text(data.vehicleNo || '—', L + 70, y + 5.5);
 
         doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
-        doc.text('Payment Status: ', L + halfW + 8, y + 5);
-        doc.font('Helvetica-Bold').fontSize(9).fillColor(data.paymentStatus === 'Paid' ? '#16a34a' : '#ea580c');
+        doc.text('Payment Status: ', L + halfW + 8, y + 5.5);
+        doc.font('Helvetica-Bold').fontSize(9).fillColor(data.paymentStatus === 'Paid' ? '#16a34a' : '#d97706');
         doc.text(data.paymentStatus || 'Paid', L + halfW + 85, y + 5);
 
         y += row5H;
       } else if (type === 'worker') {
-        // Worker Name row
         const row4H = 22;
         doc.rect(L, y, W, row4H).stroke();
         doc.font('Helvetica-Bold').fontSize(9).fillColor(primaryBlue);
@@ -292,24 +360,22 @@ async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo 
         }
         y += row4H;
 
-        // Shift & Status row
         const row5H = 20;
         doc.rect(L, y, halfW, row5H).stroke();
         doc.rect(L + halfW, y, halfW, row5H).stroke();
 
         doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
-        doc.text('Work Category & Shift: ', L + 8, y + 5);
+        doc.text('Work Category & Shift: ', L + 8, y + 5.5);
         doc.font('Helvetica-Bold').fontSize(8.5).fillColor(textDark);
-        doc.text(`${data.workType || 'Processing'} (${data.shift || 'Full Day'})`, L + 115, y + 5);
+        doc.text(`${data.workType || 'Processing'} (${data.shift || 'Full Day'})`, L + 115, y + 5.5);
 
         doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
-        doc.text('Payment Status: ', L + halfW + 8, y + 5);
-        doc.font('Helvetica-Bold').fontSize(9).fillColor(data.paymentStatus === 'Paid' ? '#16a34a' : '#ea580c');
+        doc.text('Payment Status: ', L + halfW + 8, y + 5.5);
+        doc.font('Helvetica-Bold').fontSize(9).fillColor(data.paymentStatus === 'Paid' ? '#16a34a' : '#d97706');
         doc.text(data.paymentStatus || 'Pending', L + halfW + 85, y + 5);
 
         y += row5H;
       } else if (type === 'statement') {
-        // Worker Name row
         const row4H = 22;
         doc.rect(L, y, W, row4H).stroke();
         doc.font('Helvetica-Bold').fontSize(9).fillColor(primaryBlue);
@@ -323,125 +389,172 @@ async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo 
         }
         y += row4H;
 
-        // Days & Weight row
         const row5H = 20;
         doc.rect(L, y, halfW, row5H).stroke();
         doc.rect(L + halfW, y, halfW, row5H).stroke();
 
         doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
-        doc.text('Days Worked: ', L + 8, y + 5);
+        doc.text('Days Worked: ', L + 8, y + 5.5);
         doc.font('Helvetica-Bold').fontSize(8.5).fillColor(textDark);
-        doc.text(`${data.summary?.daysWorkedCount || data.entries?.length || 0} days`, L + 80, y + 5);
+        doc.text(`${data.summary?.daysWorkedCount || data.entries?.length || 0} days`, L + 80, y + 5.5);
 
         doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
-        doc.text('Total Weight Processed: ', L + halfW + 8, y + 5);
+        doc.text('Total Weight Processed: ', L + halfW + 8, y + 5.5);
         doc.font('Helvetica-Bold').fontSize(9).fillColor(textDark);
-        doc.text(`${data.summary?.totalKg || 0} kg`, L + halfW + 125, y + 5);
+        doc.text(`${data.summary?.totalKg || 0} kg`, L + halfW + 125, y + 5.5);
 
         y += row5H;
       }
 
       // 5. TABLE SECTION
       if (type === 'ice') {
-        const colSNo = 40;
-        const colDesc = 240;
-        const colQty = 80;
-        const colRate = 80;
-        const colTotal = W - colSNo - colDesc - colQty - colRate;
+        const colSNo = 45;
+        const colQty = 115;
+        const colRate = 105;
+        const colAmt = 125;
+        const colDesc = W - colSNo - colQty - colRate - colAmt; // ~149.28 pt
+
+        const xSNo = L;
+        const xDesc = L + colSNo;
+        const xQty = xDesc + colDesc;
+        const xRate = xQty + colQty;
+        const xAmt = xRate + colRate;
 
         // Table Header
         const thH = 22;
-        doc.rect(L, y, W, thH).fillAndStroke('#f0f5fa', borderBlue);
-        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
+        doc.rect(xSNo, y, colSNo, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xDesc, y, colDesc, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xQty, y, colQty, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xRate, y, colRate, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xAmt, y, colAmt, thH).fillAndStroke('#f0f5fa', borderBlue);
 
-        doc.text('S.No.', L, y + 6, { width: colSNo, align: 'center' });
-        doc.text('Item Description / Particulars', L + colSNo + 8, y + 6, { width: colDesc });
-        doc.text('Blocks', L + colSNo + colDesc, y + 6, { width: colQty, align: 'center' });
-        doc.text('Rate (₹)', L + colSNo + colDesc + colQty, y + 6, { width: colRate, align: 'right' });
-        doc.text('Amount (₹)', L + colSNo + colDesc + colQty + colRate - 8, y + 6, { width: colTotal, align: 'right' });
+        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
+        doc.text('S.No.', xSNo, y + 6.5, { width: colSNo, align: 'center' });
+        doc.text('Description of Supply', xDesc + 8, y + 6.5, { width: colDesc - 16, align: 'left' });
+        doc.text('Quantity', xQty, y + 6.5, { width: colQty, align: 'center' });
+        renderHeaderWithRupee('Rate (₹)', xRate, y + 6.5, colRate, 'center');
+        renderHeaderWithRupee('Amount (₹)', xAmt, y + 6.5, colAmt - 8, 'right');
 
         y += thH;
 
-        // Row 1
-        const rowH = 24;
-        doc.rect(L, y, W, rowH).stroke();
-        doc.font('Helvetica').fontSize(8.5).fillColor(textDark);
-        doc.text('1', L, y + 7, { width: colSNo, align: 'center' });
-        doc.font('Helvetica-Bold').text('ICE', L + colSNo + 8, y + 7, { width: colDesc });
-        doc.font('Helvetica-Bold').text(String(data.blocks || 0), L + colSNo + colDesc, y + 7, { width: colQty, align: 'center' });
-        doc.font('Helvetica').text(Number(data.rate || 0).toFixed(2), L + colSNo + colDesc + colQty, y + 7, { width: colRate, align: 'right' });
-        doc.font('Helvetica-Bold').fillColor(primaryBlue).text(Number(data.totalAmount || 0).toFixed(2), L + colSNo + colDesc + colQty + colRate - 8, y + 7, { width: colTotal, align: 'right' });
+        // Row 1 (ICE)
+        const rowH = 26;
+        doc.rect(xSNo, y, colSNo, rowH).stroke();
+        doc.rect(xDesc, y, colDesc, rowH).stroke();
+        doc.rect(xQty, y, colQty, rowH).stroke();
+        doc.rect(xRate, y, colRate, rowH).stroke();
+        doc.rect(xAmt, y, colAmt, rowH).stroke();
+
+        doc.font('Helvetica-Bold').fontSize(9).fillColor(textDark);
+        doc.text('1', xSNo, y + 8, { width: colSNo, align: 'center' });
+        doc.text('ICE', xDesc + 8, y + 8, { width: colDesc - 16, align: 'left' });
+        doc.text(`${data.blocks || 0} blocks`, xQty, y + 8, { width: colQty, align: 'center' });
+
+        renderAmount(data.rate, xRate, y + 8, colRate - 8, 'right', 9, false, textDark);
+        renderAmount(data.totalAmount, xAmt, y + 8, colAmt - 8, 'right', 9.5, true, textDark);
 
         y += rowH;
 
-        // Gap row
-        const gapH = 45;
-        doc.rect(L, y, W, gapH).stroke();
-        y += gapH;
+        // Spacer rows with column dividers matching receipt format
+        const emptyRowH = 22;
+        for (let i = 0; i < 2; i++) {
+          doc.rect(xSNo, y, colSNo, emptyRowH).stroke();
+          doc.rect(xDesc, y, colDesc, emptyRowH).stroke();
+          doc.rect(xQty, y, colQty, emptyRowH).stroke();
+          doc.rect(xRate, y, colRate, emptyRowH).stroke();
+          doc.rect(xAmt, y, colAmt, emptyRowH).stroke();
+          y += emptyRowH;
+        }
 
-        // Total Row
-        const totH = 24;
-        doc.rect(L, y, W, totH).fillAndStroke('#f0f5fa', borderBlue);
+        // Total Amount Row (background #e8f1f8)
+        const totH = 26;
+        doc.rect(L, y, W - colAmt, totH).fillAndStroke('#e8f1f8', borderBlue);
+        doc.rect(xAmt, y, colAmt, totH).fillAndStroke('#e8f1f8', borderBlue);
+
         doc.font('Helvetica-Bold').fontSize(9.5).fillColor(primaryBlue);
-        doc.text('TOTAL AMOUNT', L, y + 7, { width: W - colTotal - 16, align: 'right' });
-        doc.font('Helvetica-Bold').fontSize(11).fillColor('#000000');
-        doc.text(`₹${Number(data.totalAmount || 0).toFixed(2)}`, L + W - colTotal - 8, y + 6, { width: colTotal, align: 'right' });
+        doc.text('TOTAL AMOUNT:', L, y + 7.5, { width: W - colAmt - 12, align: 'right' });
+
+        renderAmount(data.totalAmount, xAmt, y + 6.5, colAmt - 8, 'right', 11, true, '#000000');
 
         y += totH;
 
-        // Words row
+        // Amount in Words Row
         const wordsH = 20;
         doc.rect(L, y, W, wordsH).stroke();
         doc.font('Helvetica-Bold').fontSize(8).fillColor(primaryBlue);
         doc.text('Amount in Words: ', L + 8, y + 5.5);
-        doc.font('Helvetica-Bold').fontSize(8).fillColor(textDark);
-        doc.text(numberToWords(data.totalAmount || 0), L + 85, y + 5.5);
+        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(textDark);
+        doc.text(numberToWords(data.totalAmount || 0), L + 88, y + 5.5);
 
         y += wordsH;
       } else if (type === 'wastage') {
-        const colSNo = 40;
-        const colDesc = 240;
-        const colQty = 80;
-        const colRate = 80;
-        const colTotal = W - colSNo - colDesc - colQty - colRate;
+        const colSNo = 45;
+        const colQty = 115;
+        const colRate = 105;
+        const colAmt = 125;
+        const colDesc = W - colSNo - colQty - colRate - colAmt;
+
+        const xSNo = L;
+        const xDesc = L + colSNo;
+        const xQty = xDesc + colDesc;
+        const xRate = xQty + colQty;
+        const xAmt = xRate + colRate;
 
         // Table Header
         const thH = 22;
-        doc.rect(L, y, W, thH).fillAndStroke('#f0f5fa', borderBlue);
-        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
+        doc.rect(xSNo, y, colSNo, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xDesc, y, colDesc, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xQty, y, colQty, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xRate, y, colRate, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xAmt, y, colAmt, thH).fillAndStroke('#f0f5fa', borderBlue);
 
-        doc.text('S.No.', L, y + 6, { width: colSNo, align: 'center' });
-        doc.text('Item Description / Particulars', L + colSNo + 8, y + 6, { width: colDesc });
-        doc.text('Quantity (KG)', L + colSNo + colDesc, y + 6, { width: colQty, align: 'center' });
-        doc.text('Rate (₹/KG)', L + colSNo + colDesc + colQty, y + 6, { width: colRate, align: 'right' });
-        doc.text('Amount (₹)', L + colSNo + colDesc + colQty + colRate - 8, y + 6, { width: colTotal, align: 'right' });
+        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
+        doc.text('S.No.', xSNo, y + 6.5, { width: colSNo, align: 'center' });
+        doc.text('Description of Sale', xDesc + 8, y + 6.5, { width: colDesc - 16, align: 'left' });
+        doc.text('Quantity (boxes)', xQty, y + 6.5, { width: colQty, align: 'center' });
+        renderHeaderWithRupee('Rate (₹/box)', xRate, y + 6.5, colRate, 'center');
+        renderHeaderWithRupee('Amount (₹)', xAmt, y + 6.5, colAmt - 8, 'right');
 
         y += thH;
 
         // Row 1
-        const rowH = 24;
-        doc.rect(L, y, W, rowH).stroke();
-        doc.font('Helvetica').fontSize(8.5).fillColor(textDark);
-        doc.text('1', L, y + 7, { width: colSNo, align: 'center' });
-        doc.font('Helvetica-Bold').text(`${data.category || 'Prawn Head'} Wastage`, L + colSNo + 8, y + 7, { width: colDesc });
-        doc.font('Helvetica-Bold').text(`${data.quantityKg || 0} kg`, L + colSNo + colDesc, y + 7, { width: colQty, align: 'center' });
-        doc.font('Helvetica').text(Number(data.rate || 0).toFixed(2), L + colSNo + colDesc + colQty, y + 7, { width: colRate, align: 'right' });
-        doc.font('Helvetica-Bold').fillColor(primaryBlue).text(Number(data.totalAmount || 0).toFixed(2), L + colSNo + colDesc + colQty + colRate - 8, y + 7, { width: colTotal, align: 'right' });
+        const rowH = 26;
+        doc.rect(xSNo, y, colSNo, rowH).stroke();
+        doc.rect(xDesc, y, colDesc, rowH).stroke();
+        doc.rect(xQty, y, colQty, rowH).stroke();
+        doc.rect(xRate, y, colRate, rowH).stroke();
+        doc.rect(xAmt, y, colAmt, rowH).stroke();
+
+        doc.font('Helvetica-Bold').fontSize(9).fillColor(textDark);
+        doc.text('1', xSNo, y + 8, { width: colSNo, align: 'center' });
+        doc.text(`${data.category || 'Prawn Head'} Wastage`, xDesc + 8, y + 8, { width: colDesc - 16, align: 'left' });
+        doc.text(`${data.quantityKg || data.quantity || 0} boxes`, xQty, y + 8, { width: colQty, align: 'center' });
+
+        renderAmount(data.rate, xRate, y + 8, colRate - 8, 'right', 9, false, textDark);
+        renderAmount(data.totalAmount, xAmt, y + 8, colAmt - 8, 'right', 9.5, true, textDark);
 
         y += rowH;
 
-        // Gap row
-        const gapH = 45;
-        doc.rect(L, y, W, gapH).stroke();
-        y += gapH;
+        // Spacer rows
+        const emptyRowH = 22;
+        for (let i = 0; i < 2; i++) {
+          doc.rect(xSNo, y, colSNo, emptyRowH).stroke();
+          doc.rect(xDesc, y, colDesc, emptyRowH).stroke();
+          doc.rect(xQty, y, colQty, emptyRowH).stroke();
+          doc.rect(xRate, y, colRate, emptyRowH).stroke();
+          doc.rect(xAmt, y, colAmt, emptyRowH).stroke();
+          y += emptyRowH;
+        }
 
         // Total Row
-        const totH = 24;
-        doc.rect(L, y, W, totH).fillAndStroke('#f0f5fa', borderBlue);
+        const totH = 26;
+        doc.rect(L, y, W - colAmt, totH).fillAndStroke('#e8f1f8', borderBlue);
+        doc.rect(xAmt, y, colAmt, totH).fillAndStroke('#e8f1f8', borderBlue);
+
         doc.font('Helvetica-Bold').fontSize(9.5).fillColor(primaryBlue);
-        doc.text('TOTAL SALE AMOUNT', L, y + 7, { width: W - colTotal - 16, align: 'right' });
-        doc.font('Helvetica-Bold').fontSize(11).fillColor('#000000');
-        doc.text(`₹${Number(data.totalAmount || 0).toFixed(2)}`, L + W - colTotal - 8, y + 6, { width: colTotal, align: 'right' });
+        doc.text('TOTAL SALE AMOUNT:', L, y + 7.5, { width: W - colAmt - 12, align: 'right' });
+
+        renderAmount(data.totalAmount, xAmt, y + 6.5, colAmt - 8, 'right', 11, true, '#000000');
 
         y += totH;
 
@@ -450,54 +563,78 @@ async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo 
         doc.rect(L, y, W, wordsH).stroke();
         doc.font('Helvetica-Bold').fontSize(8).fillColor(primaryBlue);
         doc.text('Amount in Words: ', L + 8, y + 5.5);
-        doc.font('Helvetica-Bold').fontSize(8).fillColor(textDark);
-        doc.text(numberToWords(data.totalAmount || 0), L + 85, y + 5.5);
+        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(textDark);
+        doc.text(numberToWords(data.totalAmount || 0), L + 88, y + 5.5);
 
         y += wordsH;
       } else if (type === 'worker') {
-        const colSNo = 40;
-        const colDesc = 240;
-        const colQty = 80;
-        const colRate = 80;
-        const colTotal = W - colSNo - colDesc - colQty - colRate;
+        const colSNo = 45;
+        const colQty = 115;
+        const colRate = 105;
+        const colAmt = 125;
+        const colDesc = W - colSNo - colQty - colRate - colAmt;
+
+        const xSNo = L;
+        const xDesc = L + colSNo;
+        const xQty = xDesc + colDesc;
+        const xRate = xQty + colQty;
+        const xAmt = xRate + colRate;
 
         // Table Header
         const thH = 22;
-        doc.rect(L, y, W, thH).fillAndStroke('#f0f5fa', borderBlue);
-        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
+        doc.rect(xSNo, y, colSNo, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xDesc, y, colDesc, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xQty, y, colQty, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xRate, y, colRate, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xAmt, y, colAmt, thH).fillAndStroke('#f0f5fa', borderBlue);
 
-        doc.text('S.No.', L, y + 6, { width: colSNo, align: 'center' });
-        doc.text('Work Description / Service', L + colSNo + 8, y + 6, { width: colDesc });
-        doc.text('Weight (kg)', L + colSNo + colDesc, y + 6, { width: colQty, align: 'center' });
-        doc.text('Rate (₹/kg)', L + colSNo + colDesc + colQty, y + 6, { width: colRate, align: 'right' });
-        doc.text('Total Wages (₹)', L + colSNo + colDesc + colQty + colRate - 8, y + 6, { width: colTotal, align: 'right' });
+        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
+        doc.text('S.No.', xSNo, y + 6.5, { width: colSNo, align: 'center' });
+        doc.text('Work Description / Service', xDesc + 8, y + 6.5, { width: colDesc - 16, align: 'left' });
+        doc.text('Weight (kg)', xQty, y + 6.5, { width: colQty, align: 'center' });
+        renderHeaderWithRupee('Rate (₹/kg)', xRate, y + 6.5, colRate, 'center');
+        renderHeaderWithRupee('Total Wages (₹)', xAmt, y + 6.5, colAmt - 8, 'right');
 
         y += thH;
 
         // Row 1
-        const rowH = 24;
-        doc.rect(L, y, W, rowH).stroke();
-        doc.font('Helvetica').fontSize(8.5).fillColor(textDark);
-        doc.text('1', L, y + 7, { width: colSNo, align: 'center' });
-        doc.font('Helvetica-Bold').text(data.workType || 'Peeling / Seafood Processing', L + colSNo + 8, y + 7, { width: colDesc });
-        doc.font('Helvetica-Bold').text(`${data.quantity || 0} kg`, L + colSNo + colDesc, y + 7, { width: colQty, align: 'center' });
-        doc.font('Helvetica').text(Number(data.price || 0).toFixed(2), L + colSNo + colDesc + colQty, y + 7, { width: colRate, align: 'right' });
-        doc.font('Helvetica-Bold').fillColor(primaryBlue).text(Number(data.totalAmount || 0).toFixed(2), L + colSNo + colDesc + colQty + colRate - 8, y + 7, { width: colTotal, align: 'right' });
+        const rowH = 26;
+        doc.rect(xSNo, y, colSNo, rowH).stroke();
+        doc.rect(xDesc, y, colDesc, rowH).stroke();
+        doc.rect(xQty, y, colQty, rowH).stroke();
+        doc.rect(xRate, y, colRate, rowH).stroke();
+        doc.rect(xAmt, y, colAmt, rowH).stroke();
+
+        doc.font('Helvetica-Bold').fontSize(9).fillColor(textDark);
+        doc.text('1', xSNo, y + 8, { width: colSNo, align: 'center' });
+        doc.text(data.workType || 'Peeling / Seafood Processing', xDesc + 8, y + 8, { width: colDesc - 16, align: 'left' });
+        doc.text(`${data.quantity || 0} kg`, xQty, y + 8, { width: colQty, align: 'center' });
+
+        renderAmount(data.price, xRate, y + 8, colRate - 8, 'right', 9, false, textDark);
+        renderAmount(data.totalAmount, xAmt, y + 8, colAmt - 8, 'right', 9.5, true, textDark);
 
         y += rowH;
 
-        // Gap row
-        const gapH = 45;
-        doc.rect(L, y, W, gapH).stroke();
-        y += gapH;
+        // Spacer rows
+        const emptyRowH = 22;
+        for (let i = 0; i < 2; i++) {
+          doc.rect(xSNo, y, colSNo, emptyRowH).stroke();
+          doc.rect(xDesc, y, colDesc, emptyRowH).stroke();
+          doc.rect(xQty, y, colQty, emptyRowH).stroke();
+          doc.rect(xRate, y, colRate, emptyRowH).stroke();
+          doc.rect(xAmt, y, colAmt, emptyRowH).stroke();
+          y += emptyRowH;
+        }
 
         // Total Row
-        const totH = 24;
-        doc.rect(L, y, W, totH).fillAndStroke('#f0f5fa', borderBlue);
+        const totH = 26;
+        doc.rect(L, y, W - colAmt, totH).fillAndStroke('#e8f1f8', borderBlue);
+        doc.rect(xAmt, y, colAmt, totH).fillAndStroke('#e8f1f8', borderBlue);
+
         doc.font('Helvetica-Bold').fontSize(9.5).fillColor(primaryBlue);
-        doc.text('TOTAL WAGE AMOUNT', L, y + 7, { width: W - colTotal - 16, align: 'right' });
-        doc.font('Helvetica-Bold').fontSize(11).fillColor('#000000');
-        doc.text(`₹${Number(data.totalAmount || 0).toFixed(2)}`, L + W - colTotal - 8, y + 6, { width: colTotal, align: 'right' });
+        doc.text('TOTAL WAGE AMOUNT:', L, y + 7.5, { width: W - colAmt - 12, align: 'right' });
+
+        renderAmount(data.totalAmount, xAmt, y + 6.5, colAmt - 8, 'right', 11, true, '#000000');
 
         y += totH;
 
@@ -506,8 +643,8 @@ async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo 
         doc.rect(L, y, W, wordsH).stroke();
         doc.font('Helvetica-Bold').fontSize(8).fillColor(primaryBlue);
         doc.text('Amount in Words: ', L + 8, y + 5.5);
-        doc.font('Helvetica-Bold').fontSize(8).fillColor(textDark);
-        doc.text(numberToWords(data.totalAmount || 0), L + 85, y + 5.5);
+        doc.font('Helvetica-Bold').fontSize(8.5).fillColor(textDark);
+        doc.text(numberToWords(data.totalAmount || 0), L + 88, y + 5.5);
 
         y += wordsH;
       } else if (type === 'statement') {
@@ -519,34 +656,58 @@ async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo 
         const colStatus = 55;
         const colTotal = W - colSNo - colDate - colWork - colQty - colRate - colStatus;
 
+        const xSNo = L;
+        const xDate = xSNo + colSNo;
+        const xWork = xDate + colDate;
+        const xQty = xWork + colWork;
+        const xRate = xQty + colQty;
+        const xStatus = xRate + colRate;
+        const xTotal = xStatus + colStatus;
+
         // Header
         const thH = 20;
-        doc.rect(L, y, W, thH).fillAndStroke('#f0f5fa', borderBlue);
-        doc.font('Helvetica-Bold').fontSize(8).fillColor(primaryBlue);
+        doc.rect(xSNo, y, colSNo, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xDate, y, colDate, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xWork, y, colWork, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xQty, y, colQty, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xRate, y, colRate, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xStatus, y, colStatus, thH).fillAndStroke('#f0f5fa', borderBlue);
+        doc.rect(xTotal, y, colTotal, thH).fillAndStroke('#f0f5fa', borderBlue);
 
-        doc.text('#', L, y + 5.5, { width: colSNo, align: 'center' });
-        doc.text('Date', L + colSNo + 4, y + 5.5, { width: colDate });
-        doc.text('Work Category & Shift', L + colSNo + colDate + 4, y + 5.5, { width: colWork });
-        doc.text('Weight', L + colSNo + colDate + colWork, y + 5.5, { width: colQty, align: 'center' });
-        doc.text('Rate', L + colSNo + colDate + colWork + colQty, y + 5.5, { width: colRate, align: 'right' });
-        doc.text('Status', L + colSNo + colDate + colWork + colQty + colRate, y + 5.5, { width: colStatus, align: 'center' });
-        doc.text('Total (₹)', L + colSNo + colDate + colWork + colQty + colRate + colStatus - 4, y + 5.5, { width: colTotal, align: 'right' });
+        doc.font('Helvetica-Bold').fontSize(8).fillColor(primaryBlue);
+        doc.text('#', xSNo, y + 5.5, { width: colSNo, align: 'center' });
+        doc.text('Date', xDate + 4, y + 5.5, { width: colDate });
+        doc.text('Work Category & Shift', xWork + 4, y + 5.5, { width: colWork });
+        doc.text('Weight', xQty, y + 5.5, { width: colQty, align: 'center' });
+        doc.text('Rate', xRate, y + 5.5, { width: colRate, align: 'right' });
+        doc.text('Status', xStatus, y + 5.5, { width: colStatus, align: 'center' });
+        renderHeaderWithRupee('Total (₹)', xTotal, y + 5.5, colTotal - 4, 'right');
 
         y += thH;
 
         const entriesList = data.entries || [];
         entriesList.forEach((e, idx) => {
           const rowH = 18;
-          doc.rect(L, y, W, rowH).stroke();
-          doc.font('Helvetica').fontSize(7.8).fillColor(textDark);
+          doc.rect(xSNo, y, colSNo, rowH).stroke();
+          doc.rect(xDate, y, colDate, rowH).stroke();
+          doc.rect(xWork, y, colWork, rowH).stroke();
+          doc.rect(xQty, y, colQty, rowH).stroke();
+          doc.rect(xRate, y, colRate, rowH).stroke();
+          doc.rect(xStatus, y, colStatus, rowH).stroke();
+          doc.rect(xTotal, y, colTotal, rowH).stroke();
 
-          doc.text(String(idx + 1), L, y + 4.5, { width: colSNo, align: 'center' });
-          doc.text(formatDateStr(e.date), L + colSNo + 4, y + 4.5, { width: colDate });
-          doc.text(`${e.workType || 'Processing'} (${e.shift || 'Full Day'})`, L + colSNo + colDate + 4, y + 4.5, { width: colWork });
-          doc.font('Helvetica-Bold').text(`${e.quantity} kg`, L + colSNo + colDate + colWork, y + 4.5, { width: colQty, align: 'center' });
-          doc.font('Helvetica').text(`₹${Number(e.price).toFixed(2)}`, L + colSNo + colDate + colWork + colQty, y + 4.5, { width: colRate, align: 'right' });
-          doc.font('Helvetica-Bold').fillColor(e.paymentStatus === 'Paid' ? '#16a34a' : '#ea580c').text(e.paymentStatus || 'Pending', L + colSNo + colDate + colWork + colQty + colRate, y + 4.5, { width: colStatus, align: 'center' });
-          doc.font('Helvetica-Bold').fillColor(primaryBlue).text(Number(e.totalAmount).toFixed(2), L + colSNo + colDate + colWork + colQty + colRate + colStatus - 4, y + 4.5, { width: colTotal, align: 'right' });
+          doc.font('Helvetica').fontSize(7.8).fillColor(textDark);
+          doc.text(String(idx + 1), xSNo, y + 4.5, { width: colSNo, align: 'center' });
+          doc.text(formatDateStr(e.date), xDate + 4, y + 4.5, { width: colDate });
+          doc.text(`${e.workType || 'Processing'} (${e.shift || 'Full Day'})`, xWork + 4, y + 4.5, { width: colWork });
+          doc.font('Helvetica-Bold').text(`${e.quantity} kg`, xQty, y + 4.5, { width: colQty, align: 'center' });
+
+          renderAmount(e.price, xRate, y + 4.5, colRate - 4, 'right', 7.8, false, textDark);
+
+          doc.font('Helvetica-Bold').fontSize(7.8).fillColor(e.paymentStatus === 'Paid' ? '#16a34a' : '#d97706');
+          doc.text(e.paymentStatus || 'Pending', xStatus, y + 4.5, { width: colStatus, align: 'center' });
+
+          renderAmount(e.totalAmount, xTotal, y + 4.5, colTotal - 4, 'right', 8, true, primaryBlue);
 
           y += rowH;
         });
@@ -555,52 +716,62 @@ async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo 
         const summaryH = 18;
 
         // Earned
-        doc.rect(L, y, W, summaryH).stroke();
+        doc.rect(L, y, W - colTotal, summaryH).stroke();
+        doc.rect(xTotal, y, colTotal, summaryH).stroke();
         doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
-        doc.text('TOTAL EARNED:', L, y + 4.5, { width: W - colTotal - 16, align: 'right' });
-        doc.font('Helvetica-Bold').fontSize(9).fillColor(primaryBlue);
-        doc.text(`₹${Number(data.summary?.totalEarned || 0).toFixed(2)}`, L + W - colTotal - 4, y + 4.5, { width: colTotal, align: 'right' });
+        doc.text('TOTAL EARNED:', L, y + 4.5, { width: W - colTotal - 12, align: 'right' });
+        renderAmount(data.summary?.totalEarned, xTotal, y + 4.5, colTotal - 4, 'right', 9, true, primaryBlue);
         y += summaryH;
 
         // Paid
-        doc.rect(L, y, W, summaryH).stroke();
+        doc.rect(L, y, W - colTotal, summaryH).stroke();
+        doc.rect(xTotal, y, colTotal, summaryH).stroke();
         doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
-        doc.text('TOTAL PAID:', L, y + 4.5, { width: W - colTotal - 16, align: 'right' });
-        doc.font('Helvetica-Bold').fontSize(9).fillColor('#16a34a');
-        doc.text(`₹${Number(data.summary?.totalPaid || 0).toFixed(2)}`, L + W - colTotal - 4, y + 4.5, { width: colTotal, align: 'right' });
+        doc.text('TOTAL PAID:', L, y + 4.5, { width: W - colTotal - 12, align: 'right' });
+        renderAmount(data.summary?.totalPaid, xTotal, y + 4.5, colTotal - 4, 'right', 9, true, '#16a34a');
         y += summaryH;
 
         // Balance Due
-        doc.rect(L, y, W, 22).fillAndStroke('#fef3c7', borderBlue);
+        doc.rect(L, y, W - colTotal, 22).fillAndStroke('#fef3c7', borderBlue);
+        doc.rect(xTotal, y, colTotal, 22).fillAndStroke('#fef3c7', borderBlue);
         doc.font('Helvetica-Bold').fontSize(9.5).fillColor('#92400e');
-        doc.text('PENDING BALANCE DUE:', L, y + 5.5, { width: W - colTotal - 16, align: 'right' });
-        doc.font('Helvetica-Bold').fontSize(11).fillColor('#b45309');
-        doc.text(`₹${Number(data.summary?.pendingBalance || 0).toFixed(2)}`, L + W - colTotal - 4, y + 5, { width: colTotal, align: 'right' });
+        doc.text('PENDING BALANCE DUE:', L, y + 5.5, { width: W - colTotal - 12, align: 'right' });
+        renderAmount(data.summary?.pendingBalance, xTotal, y + 5, colTotal - 4, 'right', 11, true, '#b45309');
         y += 22;
       }
 
       // 6. BANK PAYMENT DETAILS & SIGNATURE (Identical to Bill)
-      const footerH = 50;
-      doc.rect(L, y, W, footerH).strokeColor(borderBlue).lineWidth(lineW).stroke();
-      doc.rect(L, y, halfW + 40, footerH).stroke();
+      const footerH = 52;
+      const leftFooterW = Math.round(W * 0.58);
+      const rightFooterW = W - leftFooterW;
+
+      doc.rect(L, y, leftFooterW, footerH).fillAndStroke('#fafafa', borderBlue);
+      doc.rect(L + leftFooterW, y, rightFooterW, footerH).fillAndStroke('#ffffff', borderBlue);
 
       // Bank Details Left Box
-      doc.font('Helvetica-Bold').fontSize(7.5).fillColor(primaryBlue);
-      doc.text('Bank Account Details:', L + 8, y + 6);
+      doc.font('Helvetica-Bold').fontSize(7.6).fillColor(primaryBlue);
+      doc.text('Bank Account Details:', L + 10, y + 6);
+
       doc.font('Helvetica-Bold').fontSize(7.8).fillColor(textDark);
-      doc.text('BANK : KARUR VYSYA BANK', L + 8, y + 16);
-      doc.text('A/c. NO : 4805135000002964', L + 8, y + 26);
-      doc.text('IFSC : KVBL0004815   |   Branch : Narasapur', L + 8, y + 36);
+      doc.text('Bank: ', L + 10, y + 17, { continued: true });
+      doc.font('Helvetica-Bold').text(settings.bankDetails?.bankName || 'KARUR VYSYA BANK');
+
+      doc.font('Helvetica-Bold').text('A/C No: ', L + 10, y + 27, { continued: true });
+      doc.font('Helvetica-Bold').text(settings.bankDetails?.accountNo || '4805135000002964');
+
+      doc.font('Helvetica-Bold').text('IFSC: ', L + 10, y + 37, { continued: true });
+      doc.font('Helvetica-Bold').text(`${settings.bankDetails?.ifsc || 'KVBL0004815'}   |   `, { continued: true });
+      doc.font('Helvetica-Bold').text('Branch: ', { continued: true });
+      doc.font('Helvetica-Bold').text(settings.bankDetails?.branch || 'Narasapur');
 
       // Signature Right Box
-      const sigX = L + halfW + 40;
-      const sigW = W - (halfW + 40);
+      const sigX = L + leftFooterW;
       doc.font('Helvetica-Bold').fontSize(8.5).fillColor(primaryBlue);
-      doc.text('For VIJAYA DURGA SEA FOODS', sigX, y + 6, { width: sigW, align: 'center' });
+      doc.text('For VIJAYA DURGA SEA FOODS', sigX, y + 7, { width: rightFooterW, align: 'center' });
 
-      doc.lineWidth(0.5).strokeColor(textDark).moveTo(sigX + 25, y + 36).lineTo(sigX + sigW - 25, y + 36).stroke();
+      doc.lineWidth(0.5).strokeColor(textDark).moveTo(sigX + 25, y + 36).lineTo(sigX + rightFooterW - 25, y + 36).stroke();
       doc.font('Helvetica-Bold').fontSize(7.5).fillColor(primaryBlue);
-      doc.text('Proprietor / Authorized Signature', sigX, y + 38, { width: sigW, align: 'center' });
+      doc.text('Proprietor / Authorized Signature', sigX, y + 39, { width: rightFooterW, align: 'center' });
 
       doc.end();
     } catch (error) {
