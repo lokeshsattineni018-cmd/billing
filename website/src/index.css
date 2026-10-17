@@ -1839,22 +1839,27 @@ a:hover {
 /* ── Staff Specific KPI Cards (Scope only to Staff subpages) ── */
 .staff-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .staff-kpi-card {
   background: #ffffff;
-  border-radius: 16px;
-  padding: 18px 20px;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.05);
+  border-radius: 14px;
+  padding: 16px 18px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: relative;
   overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.staff-kpi-card:hover {
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07);
 }
 
 @media (max-width: 768px) {
@@ -2348,64 +2353,172 @@ a:hover {
   box-shadow: 0 2px 6px rgba(11, 83, 148, 0.25);
 }
 
-/* ── Staff & Operations Mobile Optimization ── */
+/* ── Staff & Operations Modern Navigation & Control System ── */
 .staff-tabs-nav {
-  display: flex;
-  gap: 8px;
-  border-bottom: 2px solid #e2e8f0;
+  display: inline-flex;
+  gap: 6px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
   margin-bottom: 20px;
   overflow-x: auto;
   white-space: nowrap;
-  padding-bottom: 4px;
+  max-width: 100%;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
 
 .staff-tabs-nav::-webkit-scrollbar {
-  height: 4px;
-}
-
-.staff-tabs-nav::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  display: none;
 }
 
 .staff-tab-btn {
-  padding: 10px 16px;
-  font-size: 0.9rem;
-  font-weight: 800;
-  background: none;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 9px;
   border: none;
+  color: #64748b;
+  background: transparent;
   cursor: pointer;
-  margin-bottom: -2px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.staff-tab-btn:hover {
+  color: #0f172a;
+}
+
+.staff-tab-btn.active {
+  background: #ffffff;
+  color: #0b5394;
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+.staff-tab-badge {
+  background: #e2e8f0;
+  color: #475569;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
   transition: all 0.15s ease;
 }
 
-/* Staff Control Bar */
+.staff-tab-btn.active .staff-tab-badge {
+  background: #eff6ff;
+  color: #0b5394;
+}
+
+/* Staff Control Bar (Laptop, Tab & Desktop) */
 .staff-control-bar {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   justify-content: space-between;
   align-items: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
 }
 
 .staff-control-left {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 12px;
   align-items: center;
   flex: 1;
-  min-width: 280px;
+  min-width: 300px;
 }
 
 .staff-control-right {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-shrink: 0;
+}
+
+/* Quick Date Filter Pills (Laptop, Tablet & Desktop) */
+.staff-date-pills {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 9px;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.staff-date-pills button {
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-radius: 7px;
+  border: none;
+  color: #64748b;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.staff-date-pills button:hover {
+  color: #0f172a;
+}
+
+.staff-date-pills button.active {
+  background: #0b5394 !important;
+  color: #ffffff !important;
+  font-weight: 800;
+  box-shadow: 0 1px 3px rgba(11, 83, 148, 0.25);
+}
+
+/* Search & Status Filter Row */
+.staff-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 260px;
+}
+
+.staff-search-input {
+  height: 38px;
+  font-size: 0.85rem;
+  border-radius: 8px;
+}
+
+/* Tablet Layout (769px to 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .staff-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .staff-control-bar {
+    gap: 12px !important;
+    padding: 14px 16px !important;
+  }
+
+  .staff-control-left {
+    min-width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .staff-control-right {
+    min-width: 100% !important;
+    justify-content: flex-end !important;
+  }
 }
 
 /* Bulk Entry Grid */

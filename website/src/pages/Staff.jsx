@@ -962,21 +962,9 @@ export default function Staff() {
           type="button"
           className={`staff-tab-btn ${activeTab === 'entries' ? 'active' : ''}`}
           onClick={() => setActiveTab('entries')}
-          style={{
-            borderBottom: activeTab === 'entries' ? '3px solid #0b5394' : '3px solid transparent',
-            color: activeTab === 'entries' ? '#0b5394' : '#64748b',
-          }}
         >
           <span>👥 {t('workerLaborTitle') || 'Workers Labor'}</span>
-          <span
-            style={{
-              background: activeTab === 'entries' ? '#eff6ff' : '#f1f5f9',
-              color: activeTab === 'entries' ? '#0b5394' : '#64748b',
-              padding: '2px 8px',
-              borderRadius: '12px',
-              fontSize: '0.75rem',
-            }}
-          >
+          <span className="staff-tab-badge">
             {entries.length}
           </span>
         </button>
@@ -985,10 +973,6 @@ export default function Staff() {
           type="button"
           className={`staff-tab-btn ${activeTab === 'ice' ? 'active' : ''}`}
           onClick={() => setActiveTab('ice')}
-          style={{
-            borderBottom: activeTab === 'ice' ? '3px solid #0284c7' : '3px solid transparent',
-            color: activeTab === 'ice' ? '#0284c7' : '#64748b',
-          }}
         >
           <span>🧊 {t('iceBlocks') || 'Ice Blocks'}</span>
         </button>
@@ -997,10 +981,6 @@ export default function Staff() {
           type="button"
           className={`staff-tab-btn ${activeTab === 'wastage' ? 'active' : ''}`}
           onClick={() => setActiveTab('wastage')}
-          style={{
-            borderBottom: activeTab === 'wastage' ? '3px solid #16a34a' : '3px solid transparent',
-            color: activeTab === 'wastage' ? '#16a34a' : '#64748b',
-          }}
         >
           <span>🦐 {t('prawnHeadWastage') || 'Wastage'}</span>
         </button>
@@ -1009,21 +989,9 @@ export default function Staff() {
           type="button"
           className={`staff-tab-btn ${activeTab === 'accounts' ? 'active' : ''}`}
           onClick={() => setActiveTab('accounts')}
-          style={{
-            borderBottom: activeTab === 'accounts' ? '3px solid #0b5394' : '3px solid transparent',
-            color: activeTab === 'accounts' ? '#0b5394' : '#64748b',
-          }}
         >
           <span>📒 {t('workerAccounts') || 'Accounts'}</span>
-          <span
-            style={{
-              background: activeTab === 'accounts' ? '#eff6ff' : '#f1f5f9',
-              color: activeTab === 'accounts' ? '#0b5394' : '#64748b',
-              padding: '2px 8px',
-              borderRadius: '12px',
-              fontSize: '0.75rem',
-            }}
-          >
+          <span className="staff-tab-badge">
             {summary?.staffAccounts?.length || 0}
           </span>
         </button>
@@ -1032,10 +1000,6 @@ export default function Staff() {
           type="button"
           className={`staff-tab-btn ${activeTab === 'net' ? 'active' : ''}`}
           onClick={() => setActiveTab('net')}
-          style={{
-            borderBottom: activeTab === 'net' ? '3px solid #7c3aed' : '3px solid transparent',
-            color: activeTab === 'net' ? '#7c3aed' : '#64748b',
-          }}
         >
           <span>📊 {t('dailyOperations') || 'Net Summary'}</span>
         </button>
@@ -1044,10 +1008,6 @@ export default function Staff() {
           type="button"
           className={`staff-tab-btn ${activeTab === 'calendar' ? 'active' : ''}`}
           onClick={() => setActiveTab('calendar')}
-          style={{
-            borderBottom: activeTab === 'calendar' ? '3px solid #16a34a' : '3px solid transparent',
-            color: activeTab === 'calendar' ? '#16a34a' : '#64748b',
-          }}
         >
           <span>📅 {t('attendanceCalendar') || 'Calendar'}</span>
         </button>
@@ -1430,15 +1390,8 @@ export default function Staff() {
                   <button
                     key={p.id}
                     type="button"
+                    className={dateFilter === p.id ? 'active' : ''}
                     onClick={() => handleDatePreset(p.id)}
-                    style={{
-                      borderRadius: '6px',
-                      border: 'none',
-                      background: dateFilter === p.id ? '#0b5394' : 'transparent',
-                      color: dateFilter === p.id ? '#ffffff' : '#64748b',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
                   >
                     {p.label}
                   </button>

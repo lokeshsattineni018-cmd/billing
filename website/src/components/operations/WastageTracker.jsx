@@ -440,15 +440,8 @@ export default function WastageTracker() {
               <button
                 key={p.id}
                 type="button"
+                className={dateFilter === p.id ? 'active' : ''}
                 onClick={() => handleDateFilterChange(p.id)}
-                style={{
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: dateFilter === p.id ? '#0b5394' : 'transparent',
-                  color: dateFilter === p.id ? '#ffffff' : '#64748b',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
               >
                 {p.label}
               </button>
