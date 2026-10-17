@@ -27,6 +27,7 @@ export default function BillHistory() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({});
   const [exporting, setExporting] = useState(false);
@@ -247,7 +248,57 @@ export default function BillHistory() {
 
       {/* Search & Filters */}
       <form className="invoice-filter-card" onSubmit={handleSearch}>
-        <div className="invoice-filter-grid">
+        {/* Mobile Filter Header & Search Bar */}
+        <div className="filter-search-mobile-bar" style={{ display: 'none' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Search customer or invoice #..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ width: '100%', height: '44px', paddingRight: '40px', borderRadius: '10px' }}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => { setSearch(''); setTimeout(() => loadBills(true), 0); }}
+                style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#94a3b8', fontSize: '1rem', cursor: 'pointer', padding: '4px' }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            className="btn btn-secondary filter-toggle-btn"
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            style={{
+              height: '44px',
+              padding: '0 14px',
+              borderRadius: '10px',
+              fontWeight: 700,
+              fontSize: '0.84rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              border: (dateFrom || dateTo || statusFilter) ? '1.5px solid #0b5394' : '1.5px solid #cbd5e1',
+              background: (dateFrom || dateTo || statusFilter) ? '#eff6ff' : '#f8fafc',
+              color: (dateFrom || dateTo || statusFilter) ? '#0b5394' : '#475569',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <span>⚙️ Filters</span>
+            {(dateFrom || dateTo || statusFilter) && (
+              <span style={{ background: '#0b5394', color: '#fff', fontSize: '0.68rem', borderRadius: '999px', padding: '1px 6px', fontWeight: 800 }}>
+                {Boolean(dateFrom) + Boolean(dateTo) + Boolean(statusFilter)}
+              </span>
+            )}
+            <span style={{ fontSize: '0.72rem' }}>{showMobileFilters ? '▲' : '▼'}</span>
+          </button>
+        </div>
+
+        <div className={`invoice-filter-grid ${showMobileFilters ? 'mobile-filters-expanded' : ''}`}>
           <div className="filter-group filter-search-group">
             <label className="filter-label">Search Customer / Invoice #</label>
             <input

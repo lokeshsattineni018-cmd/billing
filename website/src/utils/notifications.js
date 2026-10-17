@@ -72,29 +72,3 @@ export function notifyPaymentReceived(customerName, amount) {
   });
 }
 
-/**
- * Triggered when a new invoice is generated
- */
-export function notifyInvoiceCreated(billNo, customerName, total) {
-  sendBrowserNotification(`🧾 Invoice #${billNo} Created`, {
-    body: `Total: ₹${Number(total).toLocaleString('en-IN')} for ${customerName || 'Customer'}.`,
-    tag: `bill-${billNo}`,
-    url: '/bills',
-  });
-}
-
-/**
- * Check for overdue bills and show reminder alert
- */
-export function notifyOverdueBills(overdueBills = []) {
-  if (!overdueBills || overdueBills.length === 0) return;
-
-  const count = overdueBills.length;
-  const totalAmount = overdueBills.reduce((sum, b) => sum + (b.grandTotal || b.total || 0), 0);
-
-  sendBrowserNotification(`⚠️ ${count} Overdue Invoice${count > 1 ? 's' : ''}`, {
-    body: `Total pending: ₹${totalAmount.toLocaleString('en-IN')}. Tap to view outstanding list.`,
-    tag: 'overdue-bills-alert',
-    url: '/bills',
-  });
-}

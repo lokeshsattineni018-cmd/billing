@@ -400,7 +400,7 @@ export default function Dashboard() {
         <>
           <div className="dashboard-stats-grid">
             {/* Today's Sales Card */}
-            <div className="stat-card-compact">
+            <div className="stat-card-compact stat-hero">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -440,7 +440,7 @@ export default function Dashboard() {
             </div>
 
           {/* This Month's Sales Card */}
-          <div className="stat-card-compact">
+          <div className="stat-card-compact stat-hero">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>

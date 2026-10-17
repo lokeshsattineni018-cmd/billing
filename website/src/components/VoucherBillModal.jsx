@@ -256,6 +256,7 @@ Thank you!`;
 
   return (
     <div
+      className="modal-backdrop"
       style={{
         position: 'fixed',
         top: 0,
@@ -274,6 +275,7 @@ Thank you!`;
       onClick={onClose}
     >
       <div
+        className="modal-content"
         style={{
           width: '100%',
           maxWidth: '860px',

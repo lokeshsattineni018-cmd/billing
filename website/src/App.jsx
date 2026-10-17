@@ -10,7 +10,7 @@ import BillHistory from './pages/BillHistory';
 // Lazy-loaded pages — only fetched when navigated to (reduces initial bundle ~40%)
 const BillDetail = lazy(() => import('./pages/BillDetail'));
 const PublicInvoice = lazy(() => import('./pages/PublicInvoice'));
-const CustomerLedger = lazy(() => import('./pages/CustomerLedger'));
+
 const CustomerDirectory = lazy(() => import('./pages/CustomerDirectory'));
 const Reports = lazy(() => import('./pages/Reports'));
 const ActivityLog = lazy(() => import('./pages/ActivityLog'));
@@ -255,41 +255,22 @@ function AppLayout() {
           <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0b5394' }}>VIJAYA DURGA</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          {/* Mobile Language Switcher */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
           <button
             type="button"
             onClick={toggleLang}
             style={{
-              padding: '5px 8px',
+              padding: '8px 12px',
               fontSize: '0.74rem',
               fontWeight: 800,
               background: '#f1f5f9',
               border: '1px solid #cbd5e1',
-              borderRadius: '6px',
+              borderRadius: '8px',
               color: '#0b5394',
+              minHeight: '36px',
             }}
           >
-            {lang === 'en' ? 'తెలుగు' : 'English'}
-          </button>
-
-          {/* Hamburger menu — all features & options live inside the drawer */}
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            style={{
-              padding: '6px 8px',
-              color: '#0b5394',
-              display: 'flex',
-              alignItems: 'center',
-              background: mobileDrawerOpen ? '#eff6ff' : 'transparent',
-              borderRadius: '6px',
-            }}
-            onClick={() => setMobileDrawerOpen(true)}
-            title={t('menu') || 'Menu Options'}
-            aria-label="Open navigation menu"
-          >
-            <MenuIcon size={20} color="#0b5394" />
+            {lang === 'en' ? 'తెలుగు' : 'EN'}
           </button>
         </div>
       </header>
@@ -387,29 +368,6 @@ function AppLayout() {
 
             {/* Drawer Footer Actions */}
             <div className="mobile-drawer-footer">
-              <button
-                type="button"
-                onClick={toggleLang}
-                style={{
-                  width: '100%',
-                  padding: '9px 12px',
-                  fontSize: '0.8rem',
-                  fontWeight: 800,
-                  background: '#ffffff',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  color: '#0b5394',
-                }}
-              >
-                <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 700 }}>Language / భాష</span>
-                <span style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '2px 8px', borderRadius: '6px', color: '#0b5394' }}>
-                  {lang === 'en' ? 'తెలుగు' : 'English'}
-                </span>
-              </button>
 
               <button
                 type="button"
@@ -453,7 +411,7 @@ function AppLayout() {
               <Route path="/staff" element={<Staff />} />
               {isAdmin && <Route path="/reports" element={<Reports />} />}
               {isAdmin && <Route path="/customers" element={<CustomerDirectory />} />}
-              <Route path="/ledger" element={<Navigate to="/customers" replace />} />
+
               {isAdmin && <Route path="/activity-log" element={<ActivityLog />} />}
               {isAdmin && <Route path="/settings" element={<Settings />} />}
               <Route path="*" element={<Navigate to="/" replace />} />
@@ -462,22 +420,35 @@ function AppLayout() {
         </ErrorBoundary>
       </main>
 
-      {/* Clean Mobile Bottom Navigation Bar — Only 3 core tabs */}
+      {/* Mobile Bottom Navigation Bar — 5-Tab Layout */}
       <nav className="mobile-bottom-nav">
         <NavLink to="/" end className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
-          <DashboardIcon size={20} />
-          <span>{t('dashboard')}</span>
-        </NavLink>
-        <NavLink to="/new-bill" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
-          <div className="mobile-add-btn">
-            <PlusIcon size={22} color="#ffffff" />
-          </div>
-          <span>{t('newInvoice')}</span>
+          <DashboardIcon size={18} />
+          <span>Home</span>
         </NavLink>
         <NavLink to="/bills" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
-          <InvoiceIcon size={20} />
-          <span>{t('invoiceHistory')}</span>
+          <InvoiceIcon size={18} />
+          <span>Bills</span>
         </NavLink>
+        <NavLink to="/new-bill" className={({ isActive }) => `mobile-bottom-tab mobile-bottom-tab-center ${isActive ? 'active' : ''}`}>
+          <div className="mobile-add-btn">
+            <PlusIcon size={20} color="#ffffff" />
+          </div>
+          <span>New</span>
+        </NavLink>
+        <NavLink to="/staff" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
+          <StaffIcon size={18} />
+          <span>Staff</span>
+        </NavLink>
+        <button
+          type="button"
+          className="mobile-bottom-tab"
+          onClick={() => setMobileDrawerOpen(true)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+        >
+          <MenuIcon size={18} />
+          <span>More</span>
+        </button>
       </nav>
 
       {/* Install App Helper Modal */}
