@@ -384,16 +384,10 @@ export default function IceTracker() {
       </div>
 
       {/* Control Bar & Action Buttons */}
-      <div
-        className="card staff-control-bar"
-        style={{
-          padding: '14px 18px',
-          marginBottom: '18px',
-        }}
-      >
+      <div className="card staff-control-bar">
         <div className="staff-control-left">
           {/* Quick Date Pills */}
-          <div style={{ display: 'flex', gap: '4px', background: '#f1f5f9', padding: '3px', borderRadius: '8px' }}>
+          <div className="staff-date-pills">
             {[
               { id: 'all', label: 'All' },
               { id: 'today', label: 'Today' },
@@ -406,9 +400,6 @@ export default function IceTracker() {
                 type="button"
                 onClick={() => handleDateFilterChange(p.id)}
                 style={{
-                  padding: '4px 10px',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
                   borderRadius: '6px',
                   border: 'none',
                   background: dateFilter === p.id ? '#0b5394' : 'transparent',
@@ -422,51 +413,52 @@ export default function IceTracker() {
             ))}
           </div>
 
-          {/* Search Box */}
-          <div style={{ position: 'relative', minWidth: '180px', flex: 1 }}>
-            <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
-              <SearchIcon size={14} />
-            </span>
-            <input
-              type="text"
-              className="form-input"
-              style={{ paddingLeft: '32px', height: '34px', fontSize: '0.82rem' }}
-              placeholder="Search supplier, from, to..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && loadEntries()}
-            />
-          </div>
+          {/* Search & Status Filter Row Side-by-Side */}
+          <div className="staff-filter-row">
+            <div style={{ position: 'relative', flex: 1.4 }}>
+              <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
+                <SearchIcon size={14} />
+              </span>
+              <input
+                type="text"
+                className="form-input"
+                style={{ paddingLeft: '32px' }}
+                placeholder="Search supplier, from, to..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && loadEntries()}
+              />
+            </div>
 
-          {/* Payment Status Filter */}
-          <select
-            className="form-input"
-            style={{ width: 'auto', height: '34px', fontSize: '0.82rem' }}
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">All Statuses</option>
-            <option value="Paid">Paid</option>
-            <option value="Pending">Pending</option>
-          </select>
+            <select
+              className="form-select"
+              style={{ flex: 1 }}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">All Statuses</option>
+              <option value="Paid">Paid</option>
+              <option value="Pending">Pending</option>
+            </select>
+          </div>
         </div>
 
         <div className="staff-control-right">
           <button
             type="button"
-            className="btn btn-secondary btn-sm"
+            className="btn btn-secondary btn-refresh"
             onClick={handleRefresh}
             disabled={refreshing}
             title="Refresh Ice records"
           >
-            <RefreshIcon size={14} />
+            <RefreshIcon size={15} />
           </button>
 
           <button
             type="button"
-            className="btn btn-primary"
+            className="btn btn-primary btn-action"
             onClick={handleOpenAddModal}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800 }}
+            style={{ fontWeight: 800 }}
           >
             <PlusIcon size={16} />
             <span>Record Ice Blocks</span>

@@ -1280,17 +1280,10 @@ export default function Staff() {
           )}
 
           {/* Control Bar & Action Buttons (Identical to Ice and Wastage trackers) */}
-          {/* Control Bar & Action Buttons (Identical to Ice and Wastage trackers) */}
-          <div
-            className="card staff-control-bar"
-            style={{
-              padding: '14px 18px',
-              marginBottom: '18px',
-            }}
-          >
+          <div className="card staff-control-bar">
             <div className="staff-control-left">
               {/* Quick Date Pills */}
-              <div style={{ display: 'flex', gap: '4px', background: '#f1f5f9', padding: '3px', borderRadius: '8px' }}>
+              <div className="staff-date-pills">
                 {[
                   { id: 'all', label: lang === 'te' ? 'అన్నీ' : 'All' },
                   { id: 'today', label: lang === 'te' ? 'ఈరోజు' : 'Today' },
@@ -1303,9 +1296,6 @@ export default function Staff() {
                     type="button"
                     onClick={() => handleDatePreset(p.id)}
                     style={{
-                      padding: '4px 10px',
-                      fontSize: '0.78rem',
-                      fontWeight: 700,
                       borderRadius: '6px',
                       border: 'none',
                       background: dateFilter === p.id ? '#0b5394' : 'transparent',
@@ -1319,76 +1309,77 @@ export default function Staff() {
                 ))}
               </div>
 
-              {/* Search Box */}
-              <div style={{ position: 'relative', minWidth: '180px', flex: 1 }}>
-                <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
-                  <SearchIcon size={14} />
-                </span>
-                <input
-                  type="text"
-                  className="form-input"
-                  style={{ paddingLeft: '32px', paddingRight: search ? '28px' : '10px', height: '34px', fontSize: '0.82rem' }}
-                  placeholder={lang === 'te' ? 'కార్మికుని పేరు వెతకండి...' : 'Search worker, notes...'}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && loadEntries()}
-                />
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearch('');
-                      loadEntries('');
-                    }}
-                    style={{
-                      position: 'absolute',
-                      right: '8px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      color: '#94a3b8',
-                      cursor: 'pointer',
-                      fontSize: '0.8rem',
-                      padding: '2px',
-                    }}
-                    title="Clear search"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
+              {/* Search & Status Filter Row Side-by-Side */}
+              <div className="staff-filter-row">
+                <div style={{ position: 'relative', flex: 1.4 }}>
+                  <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
+                    <SearchIcon size={14} />
+                  </span>
+                  <input
+                    type="text"
+                    className="form-input"
+                    style={{ paddingLeft: '32px', paddingRight: search ? '28px' : '10px' }}
+                    placeholder={lang === 'te' ? 'కార్మికుని పేరు...' : 'Search worker, notes...'}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && loadEntries()}
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearch('');
+                        loadEntries('');
+                      }}
+                      style={{
+                        position: 'absolute',
+                        right: '8px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem',
+                        padding: '2px',
+                      }}
+                      title="Clear search"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
 
-              {/* Payment Status Filter */}
-              <select
-                className="form-input"
-                style={{ width: 'auto', height: '34px', fontSize: '0.82rem' }}
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="">{lang === 'te' ? 'అన్ని రకాలు' : 'All Statuses'}</option>
-                <option value="Paid">{lang === 'te' ? 'చెల్లించినవి' : 'Paid'}</option>
-                <option value="Pending">{lang === 'te' ? 'బాకీ ఉన్నవి' : 'Pending'}</option>
-                <option value="Partial">{lang === 'te' ? 'కొంత భాగం బాకీ' : 'Partial'}</option>
-              </select>
+                <select
+                  className="form-select"
+                  style={{ flex: 1 }}
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="">{lang === 'te' ? 'అన్నీ' : 'All Statuses'}</option>
+                  <option value="Paid">{lang === 'te' ? 'చెల్లించినవి' : 'Paid'}</option>
+                  <option value="Pending">{lang === 'te' ? 'బాకీ' : 'Pending'}</option>
+                  <option value="Partial">{lang === 'te' ? 'కొంత భాగం' : 'Partial'}</option>
+                </select>
+              </div>
             </div>
 
             <div className="staff-control-right">
               <button
                 type="button"
-                className="btn btn-secondary btn-sm"
+                className="btn btn-secondary btn-refresh"
                 onClick={handleRefresh}
                 disabled={refreshing}
                 title="Refresh staff records"
               >
-                <RefreshIcon size={14} spinning={refreshing} />
+                <RefreshIcon size={15} spinning={refreshing} />
               </button>
 
               <button
                 type="button"
-                className="btn btn-secondary btn-sm"
+                className="btn btn-secondary btn-action"
                 onClick={() => setBulkModalOpen(!bulkModalOpen)}
-                style={{ fontWeight: 700, border: '1.5px solid #0b5394', color: '#0b5394', height: '34px', display: 'flex', alignItems: 'center', gap: '5px' }}
+                style={{ border: '1.5px solid #0b5394', color: '#0b5394' }}
               >
                 <span>⚡</span>
                 <span>{bulkModalOpen ? (t('hideBulkEntry') || 'Hide Bulk').replace(/^⚡\s*/, '') : (t('bulkAttendance') || 'Bulk Attendance').replace(/^⚡\s*/, '')}</span>
@@ -1396,15 +1387,9 @@ export default function Staff() {
 
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-primary btn-action"
                 onClick={handleOpenCreate}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontWeight: 800,
-                  height: '34px',
-                  fontSize: '0.82rem',
                   background: 'linear-gradient(135deg, #0b5394, #2563eb)',
                 }}
               >
