@@ -159,7 +159,24 @@ export default function Staff() {
         const type = (e.workType || '').toLowerCase();
         const notes = (e.notes || '').toLowerCase();
         const voucher = (e.voucherNo || '').toLowerCase();
-        return name.includes(q) || type.includes(q) || notes.includes(q) || voucher.includes(q);
+        const phone = (e.staffPhone || '').toLowerCase();
+        const dateStr = formatDate(e.date).toLowerCase();
+        const status = (e.paymentStatus || '').toLowerCase();
+        const qtyStr = String(e.quantity || '');
+        const priceStr = String(e.price || '');
+        const totalStr = String(e.totalAmount || '');
+        return (
+          name.includes(q) ||
+          type.includes(q) ||
+          notes.includes(q) ||
+          voucher.includes(q) ||
+          phone.includes(q) ||
+          dateStr.includes(q) ||
+          status.includes(q) ||
+          qtyStr.includes(q) ||
+          priceStr.includes(q) ||
+          totalStr.includes(q)
+        );
       });
     }
     if (statusFilter) {

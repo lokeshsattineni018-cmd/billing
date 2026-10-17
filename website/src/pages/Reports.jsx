@@ -47,6 +47,7 @@ export default function Reports() {
   const [loadingOutstanding, setLoadingOutstanding] = useState(false);
   const [outstandingSearch, setOutstandingSearch] = useState('');
   const [outstandingSort, setOutstandingSort] = useState('balance_desc');
+  const [mobileExportsOpen, setMobileExportsOpen] = useState(false);
 
   const getDates = () => {
     const now = new Date();
@@ -448,60 +449,141 @@ export default function Reports() {
         </div>
 
         {/* Global / Tab-Aware Export Toolbar */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div>
           {activeTab === 'sales' && (
             <>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleDownloadPDF}
-                style={{ fontWeight: 800, padding: '9px 15px', display: 'flex', alignItems: 'center', gap: '6px', background: '#0b5394', boxShadow: '0 2px 8px rgba(11, 83, 148, 0.25)' }}
-                title="Download Official Branded PDF Financial Audit Statement"
-              >
-                <DownloadIcon size={16} color="#ffffff" /> 📄 Export CA Audit PDF
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleDownloadGSTPDF}
-                style={{ fontWeight: 800, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #0b5394', color: '#0b5394', background: '#f0f7ff' }}
-                title="Download Official Government GSTR-1 PDF Statement"
-              >
-                <FileCheckIcon size={16} /> GSTR-1 PDF
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleExportGST}
-                style={{ fontWeight: 800, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #10b981', color: '#047857', background: '#ecfdf5' }}
-                title="Export GSTR-1 Format (B2B, B2C, HSN)"
-              >
-                <FileCheckIcon size={16} /> GSTR-1 CSV
-              </button>
-              <button
-                type="button"
-                className="btn btn-whatsapp"
-                onClick={handleShareWhatsApp}
-                style={{ fontWeight: 700, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <WhatsAppIcon size={16} color="#ffffff" /> {t('shareWhatsApp')}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleExportCSV}
-                style={{ fontWeight: 700, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <DownloadIcon size={16} /> {t('exportExcel')}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleExportTally}
-                style={{ fontWeight: 700, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #0b5394', color: '#0b5394' }}
-              >
-                {t('tallyXml')}
-              </button>
+              {/* Desktop Full Actions Bar */}
+              <div className="reports-desktop-actions" style={{ gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleDownloadPDF}
+                  style={{ fontWeight: 800, padding: '9px 15px', display: 'flex', alignItems: 'center', gap: '6px', background: '#0b5394', boxShadow: '0 2px 8px rgba(11, 83, 148, 0.25)' }}
+                  title="Download Official Branded PDF Financial Audit Statement"
+                >
+                  <DownloadIcon size={16} color="#ffffff" /> 📄 Export CA Audit PDF
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleDownloadGSTPDF}
+                  style={{ fontWeight: 800, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #0b5394', color: '#0b5394', background: '#f0f7ff' }}
+                  title="Download Official Government GSTR-1 PDF Statement"
+                >
+                  <FileCheckIcon size={16} /> GSTR-1 PDF
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleExportGST}
+                  style={{ fontWeight: 800, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #10b981', color: '#047857', background: '#ecfdf5' }}
+                  title="Export GSTR-1 Format (B2B, B2C, HSN)"
+                >
+                  <FileCheckIcon size={16} /> GSTR-1 CSV
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-whatsapp"
+                  onClick={handleShareWhatsApp}
+                  style={{ fontWeight: 700, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <WhatsAppIcon size={16} color="#ffffff" /> {t('shareWhatsApp')}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleExportCSV}
+                  style={{ fontWeight: 700, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <DownloadIcon size={16} /> {t('exportExcel')}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleExportTally}
+                  style={{ fontWeight: 700, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #0b5394', color: '#0b5394' }}
+                >
+                  {t('tallyXml')}
+                </button>
+              </div>
+
+              {/* Mobile Phone Compact Actions Drawer */}
+              <div className="reports-mobile-actions" style={{ width: '100%', marginTop: '4px' }}>
+                <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleDownloadPDF}
+                    style={{ flex: 1.3, fontWeight: 800, padding: '7px 10px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', background: '#0b5394' }}
+                  >
+                    <DownloadIcon size={14} color="#ffffff" /> 📄 CA PDF
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-whatsapp"
+                    onClick={handleShareWhatsApp}
+                    style={{ fontWeight: 700, padding: '7px 10px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <WhatsAppIcon size={14} color="#ffffff" /> Share
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setMobileExportsOpen(!mobileExportsOpen)}
+                    style={{ fontWeight: 700, padding: '7px 10px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '3px' }}
+                  >
+                    ⚡ More {mobileExportsOpen ? '▲' : '▼'}
+                  </button>
+                </div>
+
+                {mobileExportsOpen && (
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, 1fr)',
+                      gap: '6px',
+                      marginTop: '8px',
+                      padding: '8px',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '10px',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={handleDownloadGSTPDF}
+                      style={{ fontWeight: 700, fontSize: '0.74rem', padding: '6px 8px', justifyContent: 'center' }}
+                    >
+                      <FileCheckIcon size={13} /> GSTR-1 PDF
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={handleExportGST}
+                      style={{ fontWeight: 700, fontSize: '0.74rem', padding: '6px 8px', justifyContent: 'center', color: '#047857' }}
+                    >
+                      <FileCheckIcon size={13} /> GSTR-1 CSV
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={handleExportCSV}
+                      style={{ fontWeight: 700, fontSize: '0.74rem', padding: '6px 8px', justifyContent: 'center' }}
+                    >
+                      <DownloadIcon size={13} /> Excel Sheet
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={handleExportTally}
+                      style={{ fontWeight: 700, fontSize: '0.74rem', padding: '6px 8px', justifyContent: 'center' }}
+                    >
+                      Tally XML
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           )}
 
@@ -672,209 +754,437 @@ export default function Reports() {
             <div className="spinner" style={{ minHeight: '300px' }}></div>
           ) : report ? (
             <div>
-              {/* MoM Engine */}
-              {report.monthOverMonth && (
-                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '20px', marginBottom: '24px', boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-                          {lang === 'te' ? 'నెలవారీ అమ్మకాల వృద్ధి విశ్లేషణ' : 'Month-over-Month Performance'}
-                        </h3>
-                        <span style={{ background: '#eff6ff', color: '#0b5394', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
-                          MoM Velocity
-                        </span>
-                      </div>
-                      <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-                        Side-by-side growth: <strong>{report.monthOverMonth.thisMonth.name}</strong> vs <strong>{report.monthOverMonth.lastMonth.name}</strong>
-                      </p>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '14px' }}>
-                    {/* Revenue MoM Card */}
-                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                          {lang === 'te' ? 'మొత్తం టర్నోవర్' : 'Gross Turnover'}
-                        </span>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: report.monthOverMonth.diff.revenue >= 0 ? '#ecfdf5' : '#fef2f2', color: report.monthOverMonth.diff.revenue >= 0 ? '#047857' : '#b91c1c' }}>
-                          {report.monthOverMonth.diff.revenue >= 0 ? '+' : ''}{report.monthOverMonth.diff.revenuePct}%
-                        </span>
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                        <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', display: 'block' }}>{lang === 'te' ? 'ఈ నెల' : 'This Month'}</span>
-                          <span style={{ fontSize: '1.02rem', fontWeight: 900, color: '#0b5394' }}>{formatCurrency(report.monthOverMonth.thisMonth.totalRevenue)}</span>
+              {/* DESKTOP VIEW: Untouched full grid, MoM engine, and table */}
+              <div className="reports-desktop-view">
+                {/* MoM Engine */}
+                {report.monthOverMonth && (
+                  <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '20px', marginBottom: '24px', boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+                            {lang === 'te' ? 'నెలవారీ అమ్మకాల వృద్ధి విశ్లేషణ' : 'Month-over-Month Performance'}
+                          </h3>
+                          <span style={{ background: '#eff6ff', color: '#0b5394', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
+                            MoM Velocity
+                          </span>
                         </div>
-                        <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block' }}>{lang === 'te' ? 'గత నెల' : 'Last Month'}</span>
-                          <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#64748b' }}>{formatCurrency(report.monthOverMonth.lastMonth.totalRevenue)}</span>
-                        </div>
+                        <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                          Side-by-side growth: <strong>{report.monthOverMonth.thisMonth.name}</strong> vs <strong>{report.monthOverMonth.lastMonth.name}</strong>
+                        </p>
                       </div>
                     </div>
 
-                    {/* Invoice Volume MoM */}
-                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                          {lang === 'te' ? 'ఇన్వాయిస్‌ల సంఖ్య' : 'Invoice Volume'}
-                        </span>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: report.monthOverMonth.diff.bills >= 0 ? '#ecfdf5' : '#fef2f2', color: report.monthOverMonth.diff.bills >= 0 ? '#047857' : '#b91c1c' }}>
-                          {report.monthOverMonth.diff.bills >= 0 ? '+' : ''}{report.monthOverMonth.diff.bills} bills
-                        </span>
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                        <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', display: 'block' }}>{lang === 'te' ? 'ఈ నెల' : 'This Month'}</span>
-                          <span style={{ fontSize: '1.02rem', fontWeight: 900, color: '#0b5394' }}>{report.monthOverMonth.thisMonth.billCount} bills</span>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '14px' }}>
+                      {/* Revenue MoM Card */}
+                      <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+                            {lang === 'te' ? 'మొత్తం టర్నోవర్' : 'Gross Turnover'}
+                          </span>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: report.monthOverMonth.diff.revenue >= 0 ? '#ecfdf5' : '#fef2f2', color: report.monthOverMonth.diff.revenue >= 0 ? '#047857' : '#b91c1c' }}>
+                            {report.monthOverMonth.diff.revenue >= 0 ? '+' : ''}{report.monthOverMonth.diff.revenuePct}%
+                          </span>
                         </div>
-                        <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block' }}>{lang === 'te' ? 'గత నెల' : 'Last Month'}</span>
-                          <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#64748b' }}>{report.monthOverMonth.lastMonth.billCount} bills</span>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                          <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', display: 'block' }}>{lang === 'te' ? 'ఈ నెల' : 'This Month'}</span>
+                            <span style={{ fontSize: '1.02rem', fontWeight: 900, color: '#0b5394' }}>{formatCurrency(report.monthOverMonth.thisMonth.totalRevenue)}</span>
+                          </div>
+                          <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block' }}>{lang === 'te' ? 'గత నెల' : 'Last Month'}</span>
+                            <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#64748b' }}>{formatCurrency(report.monthOverMonth.lastMonth.totalRevenue)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Invoice Volume MoM */}
+                      <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+                            {lang === 'te' ? 'ఇన్వాయిస్‌ల సంఖ్య' : 'Invoice Volume'}
+                          </span>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: report.monthOverMonth.diff.bills >= 0 ? '#ecfdf5' : '#fef2f2', color: report.monthOverMonth.diff.bills >= 0 ? '#047857' : '#b91c1c' }}>
+                            {report.monthOverMonth.diff.bills >= 0 ? '+' : ''}{report.monthOverMonth.diff.bills} bills
+                          </span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                          <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', display: 'block' }}>{lang === 'te' ? 'ఈ నెల' : 'This Month'}</span>
+                            <span style={{ fontSize: '1.02rem', fontWeight: 900, color: '#0b5394' }}>{report.monthOverMonth.thisMonth.billCount} bills</span>
+                          </div>
+                          <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block' }}>{lang === 'te' ? 'గత నెల' : 'Last Month'}</span>
+                            <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#64748b' }}>{report.monthOverMonth.lastMonth.billCount} bills</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Sales KPI Cards */}
-              <div className="reports-kpi-grid">
-                <div className="report-metric-card" style={{ borderTop: '4px solid #0b5394' }}>
-                  <div className="report-metric-header">
-                    <span className="report-metric-title">{t('grossRevenue')}</span>
-                    <span className="badge badge-blue">Sales</span>
+                {/* Sales KPI Cards */}
+                <div className="reports-kpi-grid">
+                  <div className="report-metric-card" style={{ borderTop: '4px solid #0b5394' }}>
+                    <div className="report-metric-header">
+                      <span className="report-metric-title">{t('grossRevenue')}</span>
+                      <span className="badge badge-blue">Sales</span>
+                    </div>
+                    <div className="report-metric-value" style={{ color: '#0b5394' }}>
+                      {formatCurrency(summary.grossRevenue || 0)}
+                    </div>
+                    <div className="report-metric-footer">
+                      🧾 {summary.totalBills || 0} {t('invoicesListSubtitle')}
+                    </div>
                   </div>
-                  <div className="report-metric-value" style={{ color: '#0b5394' }}>
-                    {formatCurrency(summary.grossRevenue || 0)}
+
+                  <div className="report-metric-card" style={{ borderTop: '4px solid #16a34a' }}>
+                    <div className="report-metric-header">
+                      <span className="report-metric-title">{t('collectedPaid')}</span>
+                      <span className="badge badge-green">Paid</span>
+                    </div>
+                    <div className="report-metric-value" style={{ color: '#16a34a' }}>
+                      {formatCurrency(summary.paidRevenue || 0)}
+                    </div>
+                    <div className="report-metric-footer">
+                      ✓ {summary.paidBills || 0} {t('paid')}
+                    </div>
                   </div>
-                  <div className="report-metric-footer">
-                    🧾 {summary.totalBills || 0} {t('invoicesListSubtitle')}
+
+                  <div className="report-metric-card" style={{ borderTop: '4px solid #ea580c' }}>
+                    <div className="report-metric-header">
+                      <span className="report-metric-title">{t('pendingReceivablesTitle')}</span>
+                      <span className="badge badge-amber">Receivable</span>
+                    </div>
+                    <div className="report-metric-value" style={{ color: '#ea580c' }}>
+                      {formatCurrency(summary.pendingRevenue || 0)}
+                    </div>
+                    <div className="report-metric-footer">
+                      ⚠️ {summary.pendingBills || 0} {t('pending')}
+                    </div>
+                  </div>
+
+                  <div className="report-metric-card" style={{ borderTop: '4px solid #7c3aed' }}>
+                    <div className="report-metric-header">
+                      <span className="report-metric-title">{t('avgTicketSize')}</span>
+                      <span className="badge" style={{ background: '#f5f3ff', color: '#7c3aed' }}>Average</span>
+                    </div>
+                    <div className="report-metric-value" style={{ color: '#7c3aed' }}>
+                      {formatCurrency(summary.avgBillValue || 0)}
+                    </div>
+                    <div className="report-metric-footer">
+                      📊 Per bill average
+                    </div>
                   </div>
                 </div>
 
-                <div className="report-metric-card" style={{ borderTop: '4px solid #16a34a' }}>
-                  <div className="report-metric-header">
-                    <span className="report-metric-title">{t('collectedPaid')}</span>
-                    <span className="badge badge-green">Paid</span>
+                {/* GST Breakdown */}
+                {summary.taxBreakdown && (
+                  <div className="card" style={{ padding: '18px', marginBottom: '20px' }}>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>
+                      📊 {t('taxCollectionBreakdown')}
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+                      <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', fontWeight: 700 }}>{t('taxableValue')}</span>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>{formatCurrency(summary.taxBreakdown.taxableAmount || 0)}</span>
+                      </div>
+                      <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', fontWeight: 700 }}>{t('cgstCollected')}</span>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b5394' }}>{formatCurrency(summary.taxBreakdown.cgst || 0)}</span>
+                      </div>
+                      <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', fontWeight: 700 }}>{t('sgstCollected')}</span>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b5394' }}>{formatCurrency(summary.taxBreakdown.sgst || 0)}</span>
+                      </div>
+                      <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', fontWeight: 700 }}>{t('igstCollected')}</span>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#7c3aed' }}>{formatCurrency(summary.taxBreakdown.igst || 0)}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="report-metric-value" style={{ color: '#16a34a' }}>
-                    {formatCurrency(summary.paidRevenue || 0)}
-                  </div>
-                  <div className="report-metric-footer">
-                    ✓ {summary.paidBills || 0} {t('paid')}
-                  </div>
-                </div>
+                )}
 
-                <div className="report-metric-card" style={{ borderTop: '4px solid #ea580c' }}>
-                  <div className="report-metric-header">
-                    <span className="report-metric-title">{t('pendingReceivablesTitle')}</span>
-                    <span className="badge badge-amber">Receivable</span>
+                {/* Bills Listing */}
+                <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800 }}>
+                      {t('invoicesForSelectedPeriod')} ({(report.bills || []).length})
+                    </h4>
                   </div>
-                  <div className="report-metric-value" style={{ color: '#ea580c' }}>
-                    {formatCurrency(summary.pendingRevenue || 0)}
-                  </div>
-                  <div className="report-metric-footer">
-                    ⚠️ {summary.pendingBills || 0} {t('pending')}
-                  </div>
-                </div>
-
-                <div className="report-metric-card" style={{ borderTop: '4px solid #7c3aed' }}>
-                  <div className="report-metric-header">
-                    <span className="report-metric-title">{t('avgTicketSize')}</span>
-                    <span className="badge" style={{ background: '#f5f3ff', color: '#7c3aed' }}>Average</span>
-                  </div>
-                  <div className="report-metric-value" style={{ color: '#7c3aed' }}>
-                    {formatCurrency(summary.avgBillValue || 0)}
-                  </div>
-                  <div className="report-metric-footer">
-                    📊 Per bill average
-                  </div>
+                  {(report.bills || []).length === 0 ? (
+                    <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                      {t('noInvoicesFound')}
+                    </div>
+                  ) : (
+                    <div className="table-responsive">
+                      <table className="table" style={{ margin: 0 }}>
+                        <thead>
+                          <tr>
+                            <th>{t('invoiceNo')}</th>
+                            <th>{t('date')}</th>
+                            <th>{t('companyName')}</th>
+                            <th className="text-right">{t('qtyKg')}</th>
+                            <th className="text-right">{t('totalAmount')}</th>
+                            <th>{t('status')}</th>
+                            <th className="text-right">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(report.bills || []).map((bill) => (
+                            <tr key={bill._id}>
+                              <td style={{ fontWeight: 800, color: '#0b5394' }}>#{bill.billNo}</td>
+                              <td>{formatDate(bill.date)}</td>
+                              <td style={{ fontWeight: 700 }}>{bill.companyName}</td>
+                              <td className="text-right font-mono">{bill.totalQuantity || bill.quantity || 0} kg</td>
+                              <td className="text-right font-mono" style={{ fontWeight: 800 }}>{formatCurrency(bill.grandTotal || bill.total)}</td>
+                              <td>
+                                <span className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}>
+                                  {bill.paymentStatus}
+                                </span>
+                              </td>
+                              <td className="text-right">
+                                <button
+                                  type="button"
+                                  className="btn btn-ghost btn-sm"
+                                  onClick={() => navigate(`/bills/${bill._id}`)}
+                                  style={{ color: '#0b5394', fontWeight: 700 }}
+                                >
+                                  {t('viewInvoiceBtn')}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* GST Breakdown */}
-              {summary.taxBreakdown && (
-                <div className="card" style={{ padding: '18px', marginBottom: '20px' }}>
-                  <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>
-                    📊 {t('taxCollectionBreakdown')}
-                  </h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
-                    <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
-                      <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', fontWeight: 700 }}>{t('taxableValue')}</span>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>{formatCurrency(summary.taxBreakdown.taxableAmount || 0)}</span>
+              {/* MOBILE-ONLY VIEW: Clean Hero Glance, MoM strip, GST breakdown & individual invoice cards */}
+              <div className="reports-mobile-view">
+                {/* 1. Executive Hero Glance Card */}
+                <div className="report-glance-hero" style={{ borderLeft: '4px solid #0b5394' }}>
+                  <div className="report-glance-top">
+                    <div>
+                      <div className="report-glance-title">Gross Sales Revenue</div>
+                      <div className="report-glance-metric-lg" style={{ color: '#0b5394' }}>
+                        {formatCurrency(summary.grossRevenue || 0)}
+                      </div>
                     </div>
-                    <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
-                      <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', fontWeight: 700 }}>{t('cgstCollected')}</span>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b5394' }}>{formatCurrency(summary.taxBreakdown.cgst || 0)}</span>
-                    </div>
-                    <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
-                      <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', fontWeight: 700 }}>{t('sgstCollected')}</span>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b5394' }}>{formatCurrency(summary.taxBreakdown.sgst || 0)}</span>
-                    </div>
-                    <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px' }}>
-                      <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', fontWeight: 700 }}>{t('igstCollected')}</span>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#7c3aed' }}>{formatCurrency(summary.taxBreakdown.igst || 0)}</span>
-                    </div>
+                    <span className="report-glance-pill">
+                      {summary.totalBills || 0} Invoices
+                    </span>
                   </div>
-                </div>
-              )}
 
-              {/* Bills Listing */}
-              <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800 }}>
-                    {t('invoicesForSelectedPeriod')} ({(report.bills || []).length})
-                  </h4>
-                </div>
-                {(report.bills || []).length === 0 ? (
-                  <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                    {t('noInvoicesFound')}
+                  {/* Progress Bar of Collection */}
+                  {summary.grossRevenue > 0 && (
+                    <div style={{ marginTop: '4px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', fontWeight: 700, marginBottom: '4px' }}>
+                        <span style={{ color: '#16a34a' }}>
+                          Collected: {Math.round(((summary.paidRevenue || 0) / summary.grossRevenue) * 100)}%
+                        </span>
+                        <span style={{ color: '#ea580c' }}>
+                          Pending: {Math.round(((summary.pendingRevenue || 0) / summary.grossRevenue) * 100)}%
+                        </span>
+                      </div>
+                      <div style={{ height: '6px', background: '#ffedd5', borderRadius: '4px', overflow: 'hidden', display: 'flex' }}>
+                        <div
+                          style={{
+                            width: `${Math.min(100, Math.round(((summary.paidRevenue || 0) / summary.grossRevenue) * 100))}%`,
+                            background: '#16a34a',
+                            borderRadius: '4px',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="report-glance-grid">
+                    <div className="report-glance-subcol">
+                      <span className="report-glance-subcol-label">Collected</span>
+                      <span className="report-glance-subcol-val" style={{ color: '#16a34a' }}>
+                        {formatCurrency(summary.paidRevenue || 0)}
+                      </span>
+                      <span style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '1px' }}>
+                        {summary.paidBills || 0} Paid
+                      </span>
+                    </div>
+                    <div className="report-glance-subcol">
+                      <span className="report-glance-subcol-label">Receivable</span>
+                      <span className="report-glance-subcol-val" style={{ color: '#ea580c' }}>
+                        {formatCurrency(summary.pendingRevenue || 0)}
+                      </span>
+                      <span style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '1px' }}>
+                        {summary.pendingBills || 0} Due
+                      </span>
+                    </div>
+                    <div className="report-glance-subcol" style={{ textAlign: 'right' }}>
+                      <span className="report-glance-subcol-label">Avg Ticket</span>
+                      <span className="report-glance-subcol-val" style={{ color: '#7c3aed' }}>
+                        {formatCurrency(summary.avgBillValue || 0)}
+                      </span>
+                      <span style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '1px' }}>
+                        Per Bill
+                      </span>
+                    </div>
                   </div>
-                ) : (
-                  <div className="table-responsive">
-                    <table className="table" style={{ margin: 0 }}>
-                      <thead>
-                        <tr>
-                          <th>{t('invoiceNo')}</th>
-                          <th>{t('date')}</th>
-                          <th>{t('companyName')}</th>
-                          <th className="text-right">{t('qtyKg')}</th>
-                          <th className="text-right">{t('totalAmount')}</th>
-                          <th>{t('status')}</th>
-                          <th className="text-right">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(report.bills || []).map((bill) => (
-                          <tr key={bill._id}>
-                            <td style={{ fontWeight: 800, color: '#0b5394' }}>#{bill.billNo}</td>
-                            <td>{formatDate(bill.date)}</td>
-                            <td style={{ fontWeight: 700 }}>{bill.companyName}</td>
-                            <td className="text-right font-mono">{bill.totalQuantity || bill.quantity || 0} kg</td>
-                            <td className="text-right font-mono" style={{ fontWeight: 800 }}>{formatCurrency(bill.grandTotal || bill.total)}</td>
-                            <td>
-                              <span className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}>
-                                {bill.paymentStatus}
-                              </span>
-                            </td>
-                            <td className="text-right">
-                              <button
-                                type="button"
-                                className="btn btn-ghost btn-sm"
-                                onClick={() => navigate(`/bills/${bill._id}`)}
-                                style={{ color: '#0b5394', fontWeight: 700 }}
-                              >
-                                {t('viewInvoiceBtn')}
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                </div>
+
+                {/* 2. Compact MoM Strip on Phone */}
+                {report.monthOverMonth && (
+                  <div
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      padding: '10px 12px',
+                      marginBottom: '12px',
+                      boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0f172a' }}>
+                        📈 MoM vs {report.monthOverMonth.lastMonth.name}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '0.68rem',
+                          fontWeight: 800,
+                          padding: '2px 7px',
+                          borderRadius: '10px',
+                          background: report.monthOverMonth.diff.revenue >= 0 ? '#ecfdf5' : '#fef2f2',
+                          color: report.monthOverMonth.diff.revenue >= 0 ? '#047857' : '#b91c1c',
+                        }}
+                      >
+                        {report.monthOverMonth.diff.revenue >= 0 ? '+' : ''}{report.monthOverMonth.diff.revenuePct}% Rev
+                      </span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                      <div style={{ background: '#f8fafc', padding: '6px 8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <div style={{ fontSize: '0.62rem', color: '#64748b', fontWeight: 700 }}>This Month</div>
+                        <div style={{ fontSize: '0.86rem', fontWeight: 900, color: '#0b5394' }}>
+                          {formatCurrency(report.monthOverMonth.thisMonth.totalRevenue)}
+                        </div>
+                        <div style={{ fontSize: '0.65rem', color: '#64748b' }}>
+                          {report.monthOverMonth.thisMonth.billCount} bills
+                        </div>
+                      </div>
+                      <div style={{ background: '#f8fafc', padding: '6px 8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <div style={{ fontSize: '0.62rem', color: '#64748b', fontWeight: 700 }}>Last Month</div>
+                        <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#64748b' }}>
+                          {formatCurrency(report.monthOverMonth.lastMonth.totalRevenue)}
+                        </div>
+                        <div style={{ fontSize: '0.65rem', color: '#64748b' }}>
+                          {report.monthOverMonth.lastMonth.billCount} bills
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
+
+                {/* 3. GST Tax Collection Breakdown Card */}
+                {summary.taxBreakdown && (
+                  <div
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderLeft: '4px solid #7c3aed',
+                      borderRadius: '12px',
+                      padding: '10px 12px',
+                      marginBottom: '12px',
+                      boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0f172a' }}>
+                        🏛️ GST Tax Collection
+                      </span>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 900, color: '#7c3aed' }}>
+                        Total: {formatCurrency((summary.taxBreakdown.cgst || 0) + (summary.taxBreakdown.sgst || 0) + (summary.taxBreakdown.igst || 0))}
+                      </span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
+                      <div style={{ background: '#f8fafc', padding: '6px 8px', borderRadius: '6px' }}>
+                        <div style={{ fontSize: '0.62rem', color: '#64748b', fontWeight: 700 }}>Taxable Value</div>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a' }}>{formatCurrency(summary.taxBreakdown.taxableAmount || 0)}</div>
+                      </div>
+                      <div style={{ background: '#f8fafc', padding: '6px 8px', borderRadius: '6px' }}>
+                        <div style={{ fontSize: '0.62rem', color: '#64748b', fontWeight: 700 }}>CGST</div>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0b5394' }}>{formatCurrency(summary.taxBreakdown.cgst || 0)}</div>
+                      </div>
+                      <div style={{ background: '#f8fafc', padding: '6px 8px', borderRadius: '6px' }}>
+                        <div style={{ fontSize: '0.62rem', color: '#64748b', fontWeight: 700 }}>SGST</div>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0b5394' }}>{formatCurrency(summary.taxBreakdown.sgst || 0)}</div>
+                      </div>
+                      <div style={{ background: '#f8fafc', padding: '6px 8px', borderRadius: '6px' }}>
+                        <div style={{ fontSize: '0.62rem', color: '#64748b', fontWeight: 700 }}>IGST</div>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#7c3aed' }}>{formatCurrency(summary.taxBreakdown.igst || 0)}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. Mobile Invoice Cards (Zero horizontal scroll on phone) */}
+                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '0', overflow: 'hidden', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
+                  <div style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 800, color: '#0f172a' }}>
+                      Invoices ({(report.bills || []).length})
+                    </h4>
+                  </div>
+                  {(report.bills || []).length === 0 ? (
+                    <div style={{ padding: '30px 14px', textAlign: 'center', color: '#64748b', fontSize: '0.82rem' }}>
+                      {t('noInvoicesFound') || 'No invoices found for this period'}
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px' }}>
+                      {(report.bills || []).map((bill) => (
+                        <div
+                          key={bill._id}
+                          onClick={() => navigate(`/bills/${bill._id}`)}
+                          style={{
+                            background: '#ffffff',
+                            border: '1px solid #e2e8f0',
+                            borderLeft: `4px solid ${bill.paymentStatus === 'Paid' ? '#16a34a' : '#ea580c'}`,
+                            borderRadius: '10px',
+                            padding: '10px 12px',
+                            boxShadow: '0 1px 2px rgba(15, 23, 42, 0.03)',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontWeight: 900, color: '#0b5394', fontSize: '0.86rem' }}>
+                                #{bill.billNo}
+                              </span>
+                              <span style={{ fontWeight: 700, fontSize: '0.84rem', color: '#0f172a', maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {bill.companyName}
+                              </span>
+                            </div>
+                            <span
+                              className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}
+                              style={{ fontSize: '0.68rem', fontWeight: 800, padding: '2px 7px' }}
+                            >
+                              {bill.paymentStatus}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '6px', borderTop: '1px solid #f1f5f9' }}>
+                            <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span>📅 {formatDate(bill.date)}</span>
+                              <span>•</span>
+                              <span>{bill.totalQuantity || bill.quantity || 0} kg</span>
+                            </div>
+                            <div style={{ fontWeight: 900, fontSize: '0.94rem', color: '#0f172a' }}>
+                              {formatCurrency(bill.grandTotal || bill.total)}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ) : null}

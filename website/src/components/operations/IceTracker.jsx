@@ -63,7 +63,24 @@ export default function IceTracker() {
         const veh = (e.vehicleNo || '').toLowerCase();
         const notes = (e.notes || '').toLowerCase();
         const voucher = (e.voucherNo || '').toLowerCase();
-        return supp.includes(q) || from.includes(q) || to.includes(q) || veh.includes(q) || notes.includes(q) || voucher.includes(q);
+        const status = (e.paymentStatus || '').toLowerCase();
+        const dateStr = formatDate(e.date).toLowerCase();
+        const blocksStr = String(e.blocks || '');
+        const rateStr = String(e.rate || '');
+        const totalStr = String(e.totalAmount || '');
+        return (
+          supp.includes(q) ||
+          from.includes(q) ||
+          to.includes(q) ||
+          veh.includes(q) ||
+          notes.includes(q) ||
+          voucher.includes(q) ||
+          status.includes(q) ||
+          dateStr.includes(q) ||
+          blocksStr.includes(q) ||
+          rateStr.includes(q) ||
+          totalStr.includes(q)
+        );
       });
     }
     if (statusFilter) {
@@ -109,10 +126,11 @@ export default function IceTracker() {
     setLoading(false);
   };
 
-  const loadEntries = async () => {
+  const loadEntries = async (overrideSearch) => {
     try {
       const params = {};
-      if (search.trim()) params.search = search.trim();
+      const s = typeof overrideSearch === 'string' ? overrideSearch : search;
+      if (s && s.trim()) params.search = s.trim();
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
       if (statusFilter) params.paymentStatus = statusFilter;
@@ -479,6 +497,30 @@ export default function IceTracker() {
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch('');
+                    loadEntries('');
+                  }}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                    padding: '2px',
+                  }}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
             </div>
 
             <select

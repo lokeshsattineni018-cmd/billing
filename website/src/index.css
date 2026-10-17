@@ -2353,6 +2353,132 @@ a:hover {
   box-shadow: 0 2px 6px rgba(11, 83, 148, 0.25);
 }
 
+/* ── Reports Mobile-Only Redesign ── */
+.reports-mobile-view,
+.reports-mobile-actions {
+  display: none;
+}
+.reports-desktop-view,
+.reports-desktop-actions {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .reports-mobile-view {
+    display: block !important;
+  }
+  .reports-desktop-view {
+    display: none !important;
+  }
+  .reports-mobile-actions {
+    display: block !important;
+  }
+  .reports-desktop-actions {
+    display: none !important;
+  }
+
+  /* Compact tabs on mobile */
+  .report-tabs-container {
+    padding: 4px !important;
+    gap: 4px !important;
+    margin-bottom: 12px !important;
+    border-radius: 10px !important;
+  }
+
+  .report-tab-btn {
+    padding: 6px 12px !important;
+    font-size: 0.76rem !important;
+    border-radius: 7px !important;
+  }
+
+  /* Compact date range bar on mobile */
+  .report-range-bar {
+    padding: 8px 10px !important;
+    margin-bottom: 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .report-pill-btn {
+    padding: 4px 10px !important;
+    font-size: 0.72rem !important;
+    border-radius: 6px !important;
+  }
+
+  /* Hero Glance Card for Sales on Phone */
+  .report-glance-hero {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-left: 4px solid #0b5394 !important;
+    border-radius: 14px !important;
+    padding: 14px 16px !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04) !important;
+    margin-bottom: 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .report-glance-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .report-glance-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+  }
+
+  .report-glance-metric-lg {
+    font-size: 1.55rem;
+    font-weight: 900;
+    line-height: 1.1;
+    margin-top: 3px;
+    color: #0b5394;
+  }
+
+  .report-glance-pill {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border: 1px solid #e2e8f0;
+  }
+
+  .report-glance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .report-glance-subcol {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .report-glance-subcol-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+  }
+
+  .report-glance-subcol-val {
+    font-size: 0.92rem;
+    font-weight: 800;
+    margin-top: 2px;
+    color: #0f172a;
+  }
+}
+
 /* ── Staff & Operations Modern Navigation & Control System ── */
 .staff-tabs-nav {
   display: inline-flex;

@@ -506,12 +506,7 @@ router.get('/ice', protect, async (req, res) => {
 
     if (paymentStatus && ['Paid', 'Pending'].includes(paymentStatus)) {
       if (paymentStatus === 'Paid') {
-        filter.$or = [
-          { paymentStatus: 'Paid' },
-          { paymentStatus: { $exists: false } },
-          { paymentStatus: null },
-          { paymentStatus: '' },
-        ];
+        filter.paymentStatus = { $ne: 'Pending' };
       } else {
         filter.paymentStatus = 'Pending';
       }
@@ -860,12 +855,7 @@ router.get('/wastage', protect, async (req, res) => {
 
     if (paymentStatus && ['Paid', 'Pending'].includes(paymentStatus)) {
       if (paymentStatus === 'Paid') {
-        filter.$or = [
-          { paymentStatus: 'Paid' },
-          { paymentStatus: { $exists: false } },
-          { paymentStatus: null },
-          { paymentStatus: '' },
-        ];
+        filter.paymentStatus = { $ne: 'Pending' };
       } else {
         filter.paymentStatus = 'Pending';
       }
