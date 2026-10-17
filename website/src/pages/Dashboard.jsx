@@ -317,10 +317,11 @@ export default function Dashboard() {
             {/* Smart Outstanding Alert Pill */}
             {(data?.receivables?.pendingCount > 0 || data?.receivables?.totalPending > 0) && (
               <div
+                className="dashboard-awaiting-banner"
                 onClick={() => navigate('/bills')}
                 style={{
-                  marginTop: '14px',
-                  padding: '10px 14px',
+                  marginTop: '12px',
+                  padding: '8px 12px',
                   background: '#fffbeb',
                   border: '1px solid #fde68a',
                   borderRadius: '10px',
@@ -328,20 +329,20 @@ export default function Dashboard() {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   cursor: 'pointer',
-                  fontSize: '0.82rem',
+                  fontSize: '0.8rem',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '1rem' }}>⚠️</span>
-                  <span style={{ color: '#92400e', fontWeight: 800 }}>
-                    {data.receivables.pendingCount} Invoices Awaiting Payment
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, overflow: 'hidden' }}>
+                  <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>⚠️</span>
+                  <span style={{ color: '#92400e', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {data.receivables.pendingCount} Invoices Pending
                   </span>
-                  <span style={{ color: '#b45309', fontWeight: 700 }}>
+                  <span style={{ color: '#b45309', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>
                     ({formatCurrency(data.receivables.totalPending)})
                   </span>
                 </div>
-                <span style={{ color: '#b45309', fontWeight: 800, fontSize: '0.78rem' }}>
-                  Review Invoices →
+                <span style={{ color: '#b45309', fontWeight: 800, fontSize: '0.74rem', whiteSpace: 'nowrap', marginLeft: '8px', flexShrink: 0 }}>
+                  Review →
                 </span>
               </div>
             )}

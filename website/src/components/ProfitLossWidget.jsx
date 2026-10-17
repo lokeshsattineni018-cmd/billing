@@ -126,7 +126,7 @@ export default function ProfitLossWidget() {
 
   return (
     <div
-      className="card fade-in"
+      className="card fade-in pnl-widget-card"
       style={{
         background: '#ffffff',
         borderRadius: '16px',
@@ -194,7 +194,7 @@ export default function ProfitLossWidget() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <button
             type="button"
-            className="btn btn-secondary btn-sm"
+            className="btn btn-secondary btn-sm btn-refresh"
             onClick={handleRefresh}
             disabled={refreshing || loading}
             title="Refresh P&L calculation"
@@ -204,6 +204,7 @@ export default function ProfitLossWidget() {
           </button>
 
           <div
+            className="pnl-filter-pills"
             style={{
               display: 'flex',
               background: '#f1f5f9',
@@ -365,8 +366,90 @@ export default function ProfitLossWidget() {
         </div>
       ) : (
         <>
-          {/* Bento KPI Grid (Matching stat-card-compact of Dashboard) */}
-          <div className="dashboard-stats-grid" style={{ marginBottom: '20px' }}>
+          {/* Mobile Clean Hero Glance Card (Matching Staff & Daily Net format with accent border) */}
+          <div
+            className="staff-mobile-glance staff-glance-hero"
+            style={{
+              borderLeft: `4px solid ${isProfit ? '#16a34a' : '#dc2626'}`,
+              marginBottom: '16px',
+            }}
+          >
+            <div className="staff-glance-top">
+              <div>
+                <div className="staff-glance-title">
+                  {isProfit ? 'Net Operating Profit' : 'Net Operating Loss'}
+                </div>
+                <div
+                  className="staff-glance-metric-lg"
+                  style={{ color: isProfit ? '#16a34a' : '#dc2626' }}
+                >
+                  <CountUp value={Math.abs(pnl.netProfit)} isCurrency prefix={isProfit ? '+ ' : '- '} />
+                </div>
+              </div>
+              <span
+                className="staff-glance-pill"
+                style={{
+                  background: isProfit ? '#f0fdf4' : '#fef2f2',
+                  color: isProfit ? '#16a34a' : '#dc2626',
+                  borderColor: isProfit ? '#bbf7d0' : '#fecaca',
+                }}
+              >
+                {isProfit ? 'Surplus' : 'Deficit'} • {pnl.marginPercent}%
+              </span>
+            </div>
+
+            <div className="staff-glance-grid">
+              <div className="staff-glance-subcol">
+                <span className="staff-glance-subcol-label">Revenue</span>
+                <span className="staff-glance-subcol-val" style={{ color: '#16a34a' }}>
+                  {formatCurrency(revenue.totalRevenue)}
+                </span>
+                <span style={{ fontSize: '0.66rem', color: '#64748b', marginTop: '2px' }}>
+                  {revenue.invoiceCount || 0} Bills
+                </span>
+              </div>
+              <div className="staff-glance-subcol">
+                <span className="staff-glance-subcol-label">Expenses</span>
+                <span className="staff-glance-subcol-val" style={{ color: '#dc2626' }}>
+                  {formatCurrency(expenses.totalExpenses)}
+                </span>
+                <span style={{ fontSize: '0.66rem', color: '#64748b', marginTop: '2px' }}>
+                  {expenses.iceBlocks || 0} Blocks
+                </span>
+              </div>
+              <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
+                <span className="staff-glance-subcol-label">Margin</span>
+                <span className="staff-glance-subcol-val" style={{ color: '#0b5394' }}>
+                  {pnl.marginPercent}%
+                </span>
+                <span style={{ fontSize: '0.66rem', color: '#64748b', marginTop: '2px' }}>
+                  {pnl.marginPercent >= 20 ? 'Healthy' : 'Low'}
+                </span>
+              </div>
+            </div>
+
+            {/* Quick mini breakdown tags */}
+            <div
+              style={{
+                marginTop: '8px',
+                paddingTop: '8px',
+                borderTop: '1px solid #f1f5f9',
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: '0.68rem',
+                color: '#64748b',
+                flexWrap: 'wrap',
+                gap: '4px',
+              }}
+            >
+              <span>Bills: <strong>{formatCurrency(revenue.invoiceSales)}</strong> • Waste: <strong>{formatCurrency(revenue.wastageSales)}</strong></span>
+              <span>Wages: <strong>{formatCurrency(expenses.staffWages)}</strong> • Ice: <strong>{formatCurrency(expenses.iceExpenses)}</strong></span>
+            </div>
+          </div>
+
+          {/* Desktop Detailed Bento KPI Grid */}
+          <div className="staff-desktop-stats">
+            <div className="dashboard-stats-grid" style={{ marginBottom: '20px' }}>
             {/* 1. Total Revenue Card */}
             <div className="stat-card-compact">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -554,6 +637,7 @@ export default function ProfitLossWidget() {
               </div>
             </div>
           </div>
+        </div>
 
           {/* 5. Breakdown Section: Single Day vs Multi-Day */}
           {period === 'single_day' ? (
@@ -659,15 +743,149 @@ export default function ProfitLossWidget() {
               </div>
             </div>
           ) : (
-            /* Multi-Day Performance Breakdown Table */
-            <div
-              style={{
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
-                borderRadius: '12px',
-                overflow: 'hidden',
-              }}
-            >
+            <>
+              {/* Mobile Optimized Daily Timeline Cards */}
+              <div className="staff-mobile-glance" style={{ marginBottom: '16px' }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e293b', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Daily Timeline ({data?.timeline?.length || 0} active days)</span>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>Tap to inspect</span>
+                </div>
+
+                {!data?.timeline || data.timeline.length === 0 ? (
+                  <div style={{ padding: '24px 16px', textAlign: 'center', color: '#64748b', background: '#f8fafc', borderRadius: '10px' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>No recorded operations for this period</div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {data.timeline.map((day) => {
+                      const dayProfit = day.netProfit >= 0;
+                      let formattedDate = day.date;
+                      try {
+                        formattedDate = new Date(day.date).toLocaleDateString('en-IN', {
+                          weekday: 'short',
+                          day: 'numeric',
+                          month: 'short',
+                        });
+                      } catch (e) {}
+
+                      return (
+                        <div
+                          key={day.date}
+                          style={{
+                            background: '#ffffff',
+                            border: '1px solid #e2e8f0',
+                            borderLeft: `4px solid ${dayProfit ? '#16a34a' : '#dc2626'}`,
+                            borderRadius: '12px',
+                            padding: '10px 12px',
+                            boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
+                          }}
+                        >
+                          {/* Top Row: Date + Net Profit + Margin */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <div style={{ fontWeight: 800, fontSize: '0.84rem', color: '#0f172a' }}>
+                              {formattedDate}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span
+                                style={{
+                                  fontWeight: 900,
+                                  fontSize: '0.92rem',
+                                  color: dayProfit ? '#16a34a' : '#dc2626',
+                                }}
+                              >
+                                {dayProfit ? '+' : ''}{formatCurrency(day.netProfit)}
+                              </span>
+                              <span
+                                style={{
+                                  background: dayProfit ? '#f0fdf4' : '#fef2f2',
+                                  color: dayProfit ? '#16a34a' : '#dc2626',
+                                  padding: '1px 6px',
+                                  borderRadius: '5px',
+                                  fontWeight: 800,
+                                  fontSize: '0.66rem',
+                                }}
+                              >
+                                {day.marginPercent || 0}%
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Middle Breakdown: Revenue vs Costs */}
+                          <div
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 1fr',
+                              gap: '6px',
+                              padding: '6px 8px',
+                              background: '#f8fafc',
+                              borderRadius: '8px',
+                              fontSize: '0.72rem',
+                              marginBottom: '6px',
+                            }}
+                          >
+                            <div>
+                              <div style={{ color: '#64748b', fontSize: '0.64rem', fontWeight: 700, textTransform: 'uppercase' }}>
+                                Revenue (Inflow)
+                              </div>
+                              <div style={{ fontWeight: 800, color: '#16a34a', marginTop: '1px' }}>
+                                {formatCurrency(day.revenue)}
+                              </div>
+                              <div style={{ color: '#94a3b8', fontSize: '0.62rem', marginTop: '1px' }}>
+                                Bills: {formatCurrency(day.invoiceSales)} • Waste: {formatCurrency(day.wastageSales)}
+                              </div>
+                            </div>
+                            <div>
+                              <div style={{ color: '#64748b', fontSize: '0.64rem', fontWeight: 700, textTransform: 'uppercase' }}>
+                                Operating Costs
+                              </div>
+                              <div style={{ fontWeight: 800, color: '#dc2626', marginTop: '1px' }}>
+                                {formatCurrency(day.expenses)}
+                              </div>
+                              <div style={{ color: '#94a3b8', fontSize: '0.62rem', marginTop: '1px' }}>
+                                Wages: {formatCurrency(day.staffWages)} • Ice: {formatCurrency(day.iceExpenses)}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Bottom Action: Inspect Button */}
+                          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleDrilldownDay(day.date)}
+                              style={{
+                                background: '#eff6ff',
+                                border: '1px solid #bfdbfe',
+                                color: '#0b5394',
+                                borderRadius: '6px',
+                                padding: '3px 8px',
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              Inspect Day Breakdown ↗
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="staff-desktop-stats">
+                <div
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                  }}
+                >
               <div
                 style={{
                   padding: '12px 16px',
@@ -786,9 +1004,11 @@ export default function ProfitLossWidget() {
                 </div>
               )}
             </div>
-          )}
+          </div>
         </>
       )}
+    </>
+  )}
     </div>
   );
 }
