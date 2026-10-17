@@ -245,15 +245,59 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
         </div>
       </div>
 
-      {/* Worker Monthly Summary KPIs */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '14px',
-          marginBottom: '20px',
-        }}
-      >
+      {/* Clean Mobile Glance Hero (Compact like 2nd SS with accent border like 3rd SS) */}
+      <div className="staff-mobile-glance staff-glance-hero" style={{ borderLeft: '4px solid #0b5394' }}>
+        <div className="staff-glance-top">
+          <div>
+            <div className="staff-glance-title">
+              {activeWorker ? `${activeWorker}'s Wages` : 'Monthly Wages Earned'}
+            </div>
+            <div className="staff-glance-metric-lg" style={{ color: '#0b5394' }}>
+              {formatCurrency(monthlyStats.totalEarnings)}
+            </div>
+          </div>
+          <span className="staff-glance-pill" style={{ background: '#f0f7ff', color: '#0b5394', borderColor: '#bae6fd' }}>
+            {monthNames[currentMonth]?.slice(0, 3)} {currentYear}
+          </span>
+        </div>
+
+        <div className="staff-glance-grid">
+          <div className="staff-glance-subcol">
+            <span className="staff-glance-subcol-label">Days</span>
+            <span className="staff-glance-subcol-val">
+              {monthlyStats.daysPresent}{' '}
+              <span style={{ fontSize: '0.72rem', fontWeight: 600, opacity: 0.8 }}>/ {daysInMonth} d</span>
+            </span>
+          </div>
+          <div className="staff-glance-subcol">
+            <span className="staff-glance-subcol-label">Processed</span>
+            <span className="staff-glance-subcol-val">
+              {monthlyStats.totalKg.toLocaleString('en-IN')}{' '}
+              <span style={{ fontSize: '0.72rem', fontWeight: 600, opacity: 0.8 }}>kg</span>
+            </span>
+          </div>
+          <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
+            <span className="staff-glance-subcol-label">Pending</span>
+            <span
+              className="staff-glance-subcol-val"
+              style={{ color: monthlyStats.unpaidAmount > 0 ? '#dc2626' : '#16a34a' }}
+            >
+              {monthlyStats.unpaidAmount > 0 ? formatCurrency(monthlyStats.unpaidAmount) : 'Cleared ✓'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Detailed KPI Cards */}
+      <div className="staff-desktop-stats">
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '14px',
+            marginBottom: '20px',
+          }}
+        >
         <div
           className="card"
           style={{
@@ -347,6 +391,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
             {monthlyStats.unpaidAmount > 0 ? formatCurrency(monthlyStats.unpaidAmount) : '✓ Cleared'}
           </div>
         </div>
+      </div>
       </div>
 
       {/* Calendar Grid Container */}
