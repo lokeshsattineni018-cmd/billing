@@ -297,7 +297,23 @@ export default function Reports() {
     showToast(`Payment reminder copied for ${customer.companyName}!`, 'success');
   };
 
-  const summary = report?.summary || {};
+  const rawSummary = report?.summary || {};
+  const summary = {
+    ...rawSummary,
+    grossRevenue: rawSummary.grossRevenue ?? rawSummary.totalRevenue ?? 0,
+    paidRevenue: rawSummary.paidRevenue ?? rawSummary.paidAmount ?? 0,
+    pendingRevenue: rawSummary.pendingRevenue ?? rawSummary.pendingAmount ?? 0,
+    paidBills: rawSummary.paidBills ?? rawSummary.paidCount ?? 0,
+    pendingBills: rawSummary.pendingBills ?? rawSummary.pendingCount ?? 0,
+    avgBillValue: rawSummary.avgBillValue ?? rawSummary.avgTicketSize ?? 0,
+    totalBills: rawSummary.totalBills ?? (report?.bills ? report.bills.length : 0),
+    taxBreakdown: rawSummary.taxBreakdown || {
+      taxableAmount: rawSummary.totalTaxable || 0,
+      cgst: rawSummary.totalCGST || 0,
+      sgst: rawSummary.totalSGST || 0,
+      igst: rawSummary.totalIGST || 0,
+    },
+  };
 
   // Dynamic fallback calculation for Ice from entries if summary is 0 or missing
   const iceEntries = iceData.entries || [];
@@ -449,7 +465,7 @@ export default function Reports() {
         </div>
 
         {/* Global / Tab-Aware Export Toolbar */}
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
           {activeTab === 'sales' && (
             <>
               {/* Desktop Full Actions Bar */}
@@ -811,11 +827,11 @@ export default function Reports() {
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                           <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
                             <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', display: 'block' }}>{lang === 'te' ? 'ఈ నెల' : 'This Month'}</span>
-                            <span style={{ fontSize: '1.02rem', fontWeight: 900, color: '#0b5394' }}>{report.monthOverMonth.thisMonth.billCount} bills</span>
+                            <span style={{ fontSize: '1.02rem', fontWeight: 900, color: '#0b5394' }}>{report.monthOverMonth.thisMonth.totalBills ?? report.monthOverMonth.thisMonth.billCount ?? 0} bills</span>
                           </div>
                           <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                             <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block' }}>{lang === 'te' ? 'గత నెల' : 'Last Month'}</span>
-                            <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#64748b' }}>{report.monthOverMonth.lastMonth.billCount} bills</span>
+                            <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#64748b' }}>{report.monthOverMonth.lastMonth.totalBills ?? report.monthOverMonth.lastMonth.billCount ?? 0} bills</span>
                           </div>
                         </div>
                       </div>
@@ -834,7 +850,7 @@ export default function Reports() {
                       {formatCurrency(summary.grossRevenue || 0)}
                     </div>
                     <div className="report-metric-footer">
-                      🧾 {summary.totalBills || 0} {t('invoicesListSubtitle')}
+                      🧾 {summary.totalBills || 0} {summary.totalBills === 1 ? 'Invoice' : 'Invoices'}
                     </div>
                   </div>
 
@@ -1068,7 +1084,7 @@ export default function Reports() {
                           {formatCurrency(report.monthOverMonth.thisMonth.totalRevenue)}
                         </div>
                         <div style={{ fontSize: '0.65rem', color: '#64748b' }}>
-                          {report.monthOverMonth.thisMonth.billCount} bills
+                          {report.monthOverMonth.thisMonth.totalBills ?? report.monthOverMonth.thisMonth.billCount ?? 0} bills
                         </div>
                       </div>
                       <div style={{ background: '#f8fafc', padding: '6px 8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
@@ -1077,7 +1093,7 @@ export default function Reports() {
                           {formatCurrency(report.monthOverMonth.lastMonth.totalRevenue)}
                         </div>
                         <div style={{ fontSize: '0.65rem', color: '#64748b' }}>
-                          {report.monthOverMonth.lastMonth.billCount} bills
+                          {report.monthOverMonth.lastMonth.totalBills ?? report.monthOverMonth.lastMonth.billCount ?? 0} bills
                         </div>
                       </div>
                     </div>

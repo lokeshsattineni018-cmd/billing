@@ -2358,9 +2358,15 @@ a:hover {
 .reports-mobile-actions {
   display: none;
 }
-.reports-desktop-view,
-.reports-desktop-actions {
+.reports-desktop-view {
   display: block;
+}
+.reports-desktop-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 @media (max-width: 768px) {
