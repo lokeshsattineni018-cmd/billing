@@ -346,70 +346,98 @@ export default function IceTracker() {
     <div>
       <Toast toast={toast} />
 
-      {/* KPI Summary Cards */}
-      <div className="staff-kpi-grid" style={{ marginBottom: '20px' }}>
-        {/* Period Ice Blocks */}
-        <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0284c7' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              {periodLabel} Ice Blocks
-            </span>
-            <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{badgeLabel}</span>
+      {/* Clean Mobile Glance Hero (Compact like 2nd SS with accent border like 3rd SS) */}
+      <div className="staff-mobile-glance staff-glance-hero" style={{ borderLeft: '4px solid #0284c7' }}>
+        <div className="staff-glance-top">
+          <div>
+            <div className="staff-glance-title">{periodLabel} Ice Expense</div>
+            <div className="staff-glance-metric-lg" style={{ color: '#0284c7' }}>{formatCurrency(summary?.todayAmount || 0)}</div>
           </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0284c7', marginTop: '6px' }}>
-            {summary?.todayBlocks || 0}
-            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b', marginLeft: '6px' }}>blocks</span>
-          </div>
-          <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            All-time: {(summary?.totalBlocks || 0).toLocaleString('en-IN')} blocks used
-          </div>
+          <span className="staff-glance-pill" style={{ background: '#f0f9ff', color: '#0284c7', borderColor: '#bae6fd' }}>{badgeLabel}</span>
         </div>
 
-        {/* Period Ice Cost */}
-        <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0891b2' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              {periodLabel} Ice Cost
-            </span>
-            <IceIcon size={16} color="#0891b2" />
+        <div className="staff-glance-grid">
+          <div className="staff-glance-subcol">
+            <span className="staff-glance-subcol-label">Blocks</span>
+            <span className="staff-glance-subcol-val">{summary?.todayBlocks || 0} <span style={{ fontSize: '0.72rem', fontWeight: 600, opacity: 0.8 }}>blocks</span></span>
           </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0891b2', marginTop: '6px' }}>
-            {formatCurrency(summary?.todayAmount || 0)}
+          <div className="staff-glance-subcol">
+            <span className="staff-glance-subcol-label">Avg Rate</span>
+            <span className="staff-glance-subcol-val">₹{summary?.todayAvgRate?.toFixed(2) || '0.00'}</span>
           </div>
-          <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            Formula: Blocks × Rate = Total Cost
-          </div>
-        </div>
-
-        {/* Average Rate / Block */}
-        <div className="staff-kpi-card" style={{ borderLeft: '4px solid #6366f1' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              {periodLabel} Rate / Block
-            </span>
-            <span className="badge badge-purple" style={{ fontSize: '0.7rem' }}>₹ / Block</span>
-          </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#6366f1', marginTop: '6px' }}>
-            ₹{summary?.todayAvgRate?.toFixed(2) || '0.00'}
-          </div>
-          <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            Average cost per block in period
+          <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
+            <span className="staff-glance-subcol-label">All-Time</span>
+            <span className="staff-glance-subcol-val" style={{ color: '#0284c7' }}>{formatCurrency(summary?.totalAmount || 0)}</span>
           </div>
         </div>
+      </div>
 
-        {/* Total Historical Ice Spend */}
-        <div className="staff-kpi-card" style={{ borderLeft: '4px solid #d97706' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              Total Ice Expense
-            </span>
-            <span className="badge badge-amber" style={{ fontSize: '0.7rem' }}>Lifetime</span>
+      {/* Desktop Detailed KPI Grid */}
+      <div className="staff-desktop-stats">
+        <div className="staff-kpi-grid" style={{ marginBottom: '20px' }}>
+          {/* Period Ice Blocks */}
+          <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0284c7' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                {periodLabel} Ice Blocks
+              </span>
+              <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{badgeLabel}</span>
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0284c7', marginTop: '6px' }}>
+              {summary?.todayBlocks || 0}
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b', marginLeft: '6px' }}>blocks</span>
+            </div>
+            <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+              All-time: {(summary?.totalBlocks || 0).toLocaleString('en-IN')} blocks used
+            </div>
           </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#d97706', marginTop: '6px' }}>
-            {formatCurrency(summary?.totalAmount || 0)}
+
+          {/* Period Ice Cost */}
+          <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0891b2' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                {periodLabel} Ice Cost
+              </span>
+              <IceIcon size={16} color="#0891b2" />
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0891b2', marginTop: '6px' }}>
+              {formatCurrency(summary?.todayAmount || 0)}
+            </div>
+            <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+              Formula: Blocks × Rate = Total Cost
+            </div>
           </div>
-          <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            From {summary?.totalEntries || 0} recorded batches
+
+          {/* Average Rate / Block */}
+          <div className="staff-kpi-card" style={{ borderLeft: '4px solid #6366f1' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                {periodLabel} Rate / Block
+              </span>
+              <span className="badge badge-purple" style={{ fontSize: '0.7rem' }}>₹ / Block</span>
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#6366f1', marginTop: '6px' }}>
+              ₹{summary?.todayAvgRate?.toFixed(2) || '0.00'}
+            </div>
+            <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+              Average cost per block in period
+            </div>
+          </div>
+
+          {/* Total Historical Ice Spend */}
+          <div className="staff-kpi-card" style={{ borderLeft: '4px solid #d97706' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                Total Ice Expense
+              </span>
+              <span className="badge badge-amber" style={{ fontSize: '0.7rem' }}>Lifetime</span>
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#d97706', marginTop: '6px' }}>
+              {formatCurrency(summary?.totalAmount || 0)}
+            </div>
+            <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+              From {summary?.totalEntries || 0} recorded batches
+            </div>
           </div>
         </div>
       </div>

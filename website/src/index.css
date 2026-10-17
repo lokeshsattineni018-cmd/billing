@@ -2451,10 +2451,11 @@ a:hover {
     box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08) !important;
   }
 
-  /* Clean White Staff Hero Glance Card */
+  /* Clean White Staff Hero Glance Card with accent border */
   .staff-glance-hero {
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
+    border-left: 4px solid #0b5394;
     border-radius: 14px !important;
     padding: 14px 16px !important;
     color: #0f172a !important;
@@ -2535,7 +2536,6 @@ a:hover {
   .staff-kpi-card {
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
-    border-left: 1px solid #e2e8f0 !important;
     border-radius: 12px !important;
     padding: 12px 14px !important;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;

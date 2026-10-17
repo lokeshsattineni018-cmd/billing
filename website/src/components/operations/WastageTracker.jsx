@@ -325,72 +325,103 @@ export default function WastageTracker() {
         const periodLabel = dateFilter === 'today' || (dateFilter === 'all' && !dateFrom) ? "Today's" : dateFilter === 'yesterday' ? "Yesterday's" : dateFilter === 'week' ? '7-Day' : dateFilter === 'month' ? "This Month's" : 'Filtered';
         const badgeLabel = dateFilter === 'today' || (dateFilter === 'all' && !dateFrom) ? 'Today' : dateFilter === 'yesterday' ? 'Yesterday' : dateFilter === 'week' ? '7 Days' : dateFilter === 'month' ? 'Month' : 'Custom';
         return (
-      <div className="staff-kpi-grid" style={{ marginBottom: '20px' }}>
-        {/* Period Wastage Sold (Boxes) */}
-        <div className="staff-kpi-card" style={{ borderLeft: '4px solid #16a34a' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              {periodLabel} Prawn Head Sold
-            </span>
-            <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>{badgeLabel}</span>
+          <>
+            {/* Clean Mobile Glance Hero (Compact like 2nd SS with accent border like 3rd SS) */}
+            <div className="staff-mobile-glance staff-glance-hero" style={{ borderLeft: '4px solid #16a34a' }}>
+        <div className="staff-glance-top">
+          <div>
+            <div className="staff-glance-title">{periodLabel} Wastage Revenue</div>
+            <div className="staff-glance-metric-lg" style={{ color: '#16a34a' }}>{formatCurrency(summary?.todayAmount || 0)}</div>
           </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
-            {(summary?.todayKg || 0).toLocaleString('en-IN')}
-            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b', marginLeft: '6px' }}>boxes</span>
-          </div>
-          <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            All-time: {(summary?.totalKg || 0).toLocaleString('en-IN')} boxes sold
-          </div>
+          <span className="staff-glance-pill" style={{ background: '#f0fdf4', color: '#16a34a', borderColor: '#bbf7d0' }}>{badgeLabel}</span>
         </div>
 
-        {/* Period Wastage Revenue */}
-        <div className="staff-kpi-card" style={{ borderLeft: '4px solid #059669' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              {periodLabel} Revenue
-            </span>
-            <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>Income</span>
+        <div className="staff-glance-grid">
+          <div className="staff-glance-subcol">
+            <span className="staff-glance-subcol-label">Sold</span>
+            <span className="staff-glance-subcol-val">{(summary?.todayKg || 0).toLocaleString('en-IN')} <span style={{ fontSize: '0.72rem', fontWeight: 600, opacity: 0.8 }}>boxes</span></span>
           </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#059669', marginTop: '6px' }}>
-            {formatCurrency(summary?.todayAmount || 0)}
+          <div className="staff-glance-subcol">
+            <span className="staff-glance-subcol-label">Avg Rate</span>
+            <span className="staff-glance-subcol-val">₹{summary?.todayAvgRate?.toFixed(2) || '0.00'}</span>
           </div>
-          <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            Formula: Prawn Head (Boxes) × Rate = Total
-          </div>
-        </div>
-
-        {/* Average Rate / Box */}
-        <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0b5394' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              {periodLabel} Selling Rate
-            </span>
-            <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>₹ / BOX</span>
-          </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
-            ₹{summary?.todayAvgRate?.toFixed(2) || '0.00'}
-          </div>
-          <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            Average selling price per box in period
-          </div>
-        </div>
-
-        {/* Total Wastage Sales Income */}
-        <div className="staff-kpi-card" style={{ borderLeft: '4px solid #8b5cf6' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              Total Wastage Sales
-            </span>
-            <span className="badge badge-purple" style={{ fontSize: '0.7rem' }}>Lifetime</span>
-          </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#8b5cf6', marginTop: '6px' }}>
-            {formatCurrency(summary?.totalAmount || 0)}
-          </div>
-          <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-            From {summary?.totalEntries || 0} recorded sales batches
+          <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
+            <span className="staff-glance-subcol-label">All-Time</span>
+            <span className="staff-glance-subcol-val" style={{ color: '#16a34a' }}>{formatCurrency(summary?.totalAmount || 0)}</span>
           </div>
         </div>
       </div>
+
+      {/* Desktop Detailed KPI Grid */}
+      <div className="staff-desktop-stats">
+        <div className="staff-kpi-grid" style={{ marginBottom: '20px' }}>
+          {/* Period Wastage Sold (Boxes) */}
+          <div className="staff-kpi-card" style={{ borderLeft: '4px solid #16a34a' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                {periodLabel} Prawn Head Sold
+              </span>
+              <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>{badgeLabel}</span>
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
+              {(summary?.todayKg || 0).toLocaleString('en-IN')}
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b', marginLeft: '6px' }}>boxes</span>
+            </div>
+            <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+              All-time: {(summary?.totalKg || 0).toLocaleString('en-IN')} boxes sold
+            </div>
+          </div>
+
+          {/* Period Wastage Revenue */}
+          <div className="staff-kpi-card" style={{ borderLeft: '4px solid #059669' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                {periodLabel} Revenue
+              </span>
+              <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>Income</span>
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#059669', marginTop: '6px' }}>
+              {formatCurrency(summary?.todayAmount || 0)}
+            </div>
+            <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+              Formula: Prawn Head (Boxes) × Rate = Total
+            </div>
+          </div>
+
+          {/* Average Rate / Box */}
+          <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0b5394' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                {periodLabel} Selling Rate
+              </span>
+              <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>₹ / BOX</span>
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
+              ₹{summary?.todayAvgRate?.toFixed(2) || '0.00'}
+            </div>
+            <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+              Average selling price per box in period
+            </div>
+          </div>
+
+          {/* Total Wastage Sales Income */}
+          <div className="staff-kpi-card" style={{ borderLeft: '4px solid #8b5cf6' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                Total Wastage Sales
+              </span>
+              <span className="badge badge-purple" style={{ fontSize: '0.7rem' }}>Lifetime</span>
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#8b5cf6', marginTop: '6px' }}>
+              {formatCurrency(summary?.totalAmount || 0)}
+            </div>
+            <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+              From {summary?.totalEntries || 0} recorded sales batches
+            </div>
+          </div>
+        </div>
+      </div>
+          </>
         );
       })()}
 

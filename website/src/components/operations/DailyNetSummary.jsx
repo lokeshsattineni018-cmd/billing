@@ -95,6 +95,7 @@ export default function DailyNetSummary() {
               marginBottom: '20px',
               background: '#ffffff',
               border: '1px solid #e2e8f0',
+              borderLeft: `5px solid ${isProfit ? '#16a34a' : isLoss ? '#dc2626' : '#0b5394'}`,
               color: '#0f172a',
               borderRadius: '14px',
               boxShadow: '0 1px 4px rgba(15, 23, 42, 0.04)',
@@ -197,10 +198,10 @@ export default function DailyNetSummary() {
             </div>
           </div>
 
-          {/* Three Component Breakdown Grid (Clean White) */}
+          {/* Three Component Breakdown Grid (Clean White with Accent Borders) */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
             {/* 1. Worker Labor Wages */}
-            <div className="card" style={{ padding: '16px', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
+            <div className="card" style={{ padding: '16px', border: '1px solid #e2e8f0', borderLeft: '4px solid #0b5394', borderRadius: '12px', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ background: '#f1f5f9', padding: '6px', borderRadius: '8px', color: '#0b5394' }}>
@@ -228,7 +229,7 @@ export default function DailyNetSummary() {
             </div>
 
             {/* 2. Ice Blocks Used */}
-            <div className="card" style={{ padding: '16px', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
+            <div className="card" style={{ padding: '16px', border: '1px solid #e2e8f0', borderLeft: '4px solid #0284c7', borderRadius: '12px', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ background: '#f1f5f9', padding: '6px', borderRadius: '8px', color: '#0284c7' }}>
@@ -260,7 +261,7 @@ export default function DailyNetSummary() {
             </div>
 
             {/* 3. Prawn Head Wastage Sold */}
-            <div className="card" style={{ padding: '16px', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
+            <div className="card" style={{ padding: '16px', border: '1px solid #e2e8f0', borderLeft: '4px solid #16a34a', borderRadius: '12px', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ background: '#f1f5f9', padding: '6px', borderRadius: '8px', color: '#16a34a' }}>

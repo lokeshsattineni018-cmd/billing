@@ -1067,14 +1067,14 @@ export default function Staff() {
 
             return (
               <>
-                {/* Clean Mobile Glance Hero */}
-                <div className="staff-mobile-glance staff-glance-hero">
+                {/* Clean Mobile Glance Hero with Left Accent Border */}
+                <div className="staff-mobile-glance staff-glance-hero" style={{ borderLeft: '4px solid #0b5394' }}>
                   <div className="staff-glance-top">
                     <div>
                       <div className="staff-glance-title">{periodLabel} Total Wages</div>
                       <div className="staff-glance-metric-lg">{formatCurrency(totalWages)}</div>
                     </div>
-                    <span className="staff-glance-pill">{badgeLabel}</span>
+                    <span className="staff-glance-pill" style={{ background: '#f0f7ff', color: '#0b5394', borderColor: '#bae6fd' }}>{badgeLabel}</span>
                   </div>
 
                   <div className="staff-glance-grid">
@@ -1088,7 +1088,7 @@ export default function Staff() {
                     </div>
                     <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
                       <span className="staff-glance-subcol-label">To Pay</span>
-                      <span className="staff-glance-subcol-val" style={{ color: '#fed7aa' }}>{formatCurrency(pendingWages)}</span>
+                      <span className="staff-glance-subcol-val" style={{ color: '#ea580c' }}>{formatCurrency(pendingWages)}</span>
                     </div>
                   </div>
                 </div>
