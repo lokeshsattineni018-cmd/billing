@@ -27,6 +27,7 @@ export default function ProfitLossWidget() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [timelineOpen, setTimelineOpen] = useState(false);
 
   const loadPnl = async (overrideParams) => {
     setLoading(true);
@@ -107,8 +108,8 @@ export default function ProfitLossWidget() {
 
   // Active period display label
   const displayPeriodLabel = () => {
+    if (period === 'all') return 'All Time';
     if (period === 'today') return 'Today';
-    if (period === 'yesterday') return 'Yesterday';
     if (period === 'this_week') return 'This Week';
     if (period === 'this_month') return 'This Month';
     if (period === 'single_day') {
@@ -184,9 +185,6 @@ export default function ProfitLossWidget() {
                 {displayPeriodLabel()}
               </span>
             </div>
-            <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-              Real-time margins: Seafood Sales + Wastage vs Worker Wages + Ice Procurement
-            </p>
           </div>
         </div>
 
@@ -216,8 +214,8 @@ export default function ProfitLossWidget() {
             }}
           >
             {[
+              { id: 'all', label: 'All' },
               { id: 'today', label: 'Today' },
-              { id: 'yesterday', label: 'Yesterday' },
               { id: 'this_week', label: 'This Week' },
               { id: 'this_month', label: 'This Month' },
               { id: 'single_day', label: '📅 Single Day' },
@@ -744,134 +742,174 @@ export default function ProfitLossWidget() {
             </div>
           ) : (
             <>
-              {/* Mobile Optimized Daily Timeline Cards */}
+              {/* Mobile Collapsible Daily Timeline Accordion Dropdown */}
               <div className="staff-mobile-glance" style={{ marginBottom: '16px' }}>
-                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e293b', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>Daily Timeline ({data?.timeline?.length || 0} active days)</span>
-                  <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>Tap to inspect</span>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setTimelineOpen(!timelineOpen)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderLeft: '4px solid #0b5394',
+                    borderRadius: timelineOpen ? '12px 12px 0 0' : '12px',
+                    padding: '12px 14px',
+                    cursor: 'pointer',
+                    color: '#0f172a',
+                    fontWeight: 800,
+                    fontSize: '0.86rem',
+                    boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>📅 Daily Timeline</span>
+                    <span style={{ fontSize: '0.7rem', background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                      {data?.timeline?.length || 0} active days
+                    </span>
+                  </span>
+                  <span style={{ fontSize: '0.8rem', color: '#0b5394', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {timelineOpen ? 'Hide ▲' : 'Show Breakdown ▼'}
+                  </span>
+                </button>
 
-                {!data?.timeline || data.timeline.length === 0 ? (
-                  <div style={{ padding: '24px 16px', textAlign: 'center', color: '#64748b', background: '#f8fafc', borderRadius: '10px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>No recorded operations for this period</div>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {data.timeline.map((day) => {
-                      const dayProfit = day.netProfit >= 0;
-                      let formattedDate = day.date;
-                      try {
-                        formattedDate = new Date(day.date).toLocaleDateString('en-IN', {
-                          weekday: 'short',
-                          day: 'numeric',
-                          month: 'short',
-                        });
-                      } catch (e) {}
+                {timelineOpen && (
+                  <div
+                    style={{
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderTop: 'none',
+                      borderRadius: '0 0 12px 12px',
+                      padding: '10px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                    }}
+                  >
+                    {!data?.timeline || data.timeline.length === 0 ? (
+                      <div style={{ padding: '20px 14px', textAlign: 'center', color: '#64748b' }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.82rem' }}>No recorded operations for this period</div>
+                      </div>
+                    ) : (
+                      data.timeline.map((day) => {
+                        const dayProfit = day.netProfit >= 0;
+                        let formattedDate = day.date;
+                        try {
+                          formattedDate = new Date(day.date).toLocaleDateString('en-IN', {
+                            weekday: 'short',
+                            day: 'numeric',
+                            month: 'short',
+                          });
+                        } catch (e) {}
 
-                      return (
-                        <div
-                          key={day.date}
-                          style={{
-                            background: '#ffffff',
-                            border: '1px solid #e2e8f0',
-                            borderLeft: `4px solid ${dayProfit ? '#16a34a' : '#dc2626'}`,
-                            borderRadius: '12px',
-                            padding: '10px 12px',
-                            boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
-                          }}
-                        >
-                          {/* Top Row: Date + Net Profit + Margin */}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                            <div style={{ fontWeight: 800, fontSize: '0.84rem', color: '#0f172a' }}>
-                              {formattedDate}
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span
-                                style={{
-                                  fontWeight: 900,
-                                  fontSize: '0.92rem',
-                                  color: dayProfit ? '#16a34a' : '#dc2626',
-                                }}
-                              >
-                                {dayProfit ? '+' : ''}{formatCurrency(day.netProfit)}
-                              </span>
-                              <span
-                                style={{
-                                  background: dayProfit ? '#f0fdf4' : '#fef2f2',
-                                  color: dayProfit ? '#16a34a' : '#dc2626',
-                                  padding: '1px 6px',
-                                  borderRadius: '5px',
-                                  fontWeight: 800,
-                                  fontSize: '0.66rem',
-                                }}
-                              >
-                                {day.marginPercent || 0}%
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Middle Breakdown: Revenue vs Costs */}
+                        return (
                           <div
+                            key={day.date}
                             style={{
-                              display: 'grid',
-                              gridTemplateColumns: '1fr 1fr',
-                              gap: '6px',
-                              padding: '6px 8px',
-                              background: '#f8fafc',
-                              borderRadius: '8px',
-                              fontSize: '0.72rem',
-                              marginBottom: '6px',
+                              background: '#ffffff',
+                              border: '1px solid #e2e8f0',
+                              borderLeft: `4px solid ${dayProfit ? '#16a34a' : '#dc2626'}`,
+                              borderRadius: '12px',
+                              padding: '10px 12px',
+                              boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
                             }}
                           >
-                            <div>
-                              <div style={{ color: '#64748b', fontSize: '0.64rem', fontWeight: 700, textTransform: 'uppercase' }}>
-                                Revenue (Inflow)
+                            {/* Top Row: Date + Net Profit + Margin */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                              <div style={{ fontWeight: 800, fontSize: '0.84rem', color: '#0f172a' }}>
+                                {formattedDate}
                               </div>
-                              <div style={{ fontWeight: 800, color: '#16a34a', marginTop: '1px' }}>
-                                {formatCurrency(day.revenue)}
-                              </div>
-                              <div style={{ color: '#94a3b8', fontSize: '0.62rem', marginTop: '1px' }}>
-                                Bills: {formatCurrency(day.invoiceSales)} • Waste: {formatCurrency(day.wastageSales)}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span
+                                  style={{
+                                    fontWeight: 900,
+                                    fontSize: '0.92rem',
+                                    color: dayProfit ? '#16a34a' : '#dc2626',
+                                  }}
+                                >
+                                  {dayProfit ? '+' : ''}{formatCurrency(day.netProfit)}
+                                </span>
+                                <span
+                                  style={{
+                                    background: dayProfit ? '#f0fdf4' : '#fef2f2',
+                                    color: dayProfit ? '#16a34a' : '#dc2626',
+                                    padding: '1px 6px',
+                                    borderRadius: '5px',
+                                    fontWeight: 800,
+                                    fontSize: '0.66rem',
+                                  }}
+                                >
+                                  {day.marginPercent || 0}%
+                                </span>
                               </div>
                             </div>
-                            <div>
-                              <div style={{ color: '#64748b', fontSize: '0.64rem', fontWeight: 700, textTransform: 'uppercase' }}>
-                                Operating Costs
-                              </div>
-                              <div style={{ fontWeight: 800, color: '#dc2626', marginTop: '1px' }}>
-                                {formatCurrency(day.expenses)}
-                              </div>
-                              <div style={{ color: '#94a3b8', fontSize: '0.62rem', marginTop: '1px' }}>
-                                Wages: {formatCurrency(day.staffWages)} • Ice: {formatCurrency(day.iceExpenses)}
-                              </div>
-                            </div>
-                          </div>
 
-                          {/* Bottom Action: Inspect Button */}
-                          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                            <button
-                              type="button"
-                              onClick={() => handleDrilldownDay(day.date)}
+                            {/* Middle Breakdown: Revenue vs Costs */}
+                            <div
                               style={{
-                                background: '#eff6ff',
-                                border: '1px solid #bfdbfe',
-                                color: '#0b5394',
-                                borderRadius: '6px',
-                                padding: '3px 8px',
-                                fontSize: '0.68rem',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                gap: '6px',
+                                padding: '6px 8px',
+                                background: '#f8fafc',
+                                borderRadius: '8px',
+                                fontSize: '0.72rem',
+                                marginBottom: '6px',
                               }}
                             >
-                              Inspect Day Breakdown ↗
-                            </button>
+                              <div>
+                                <div style={{ color: '#64748b', fontSize: '0.64rem', fontWeight: 700, textTransform: 'uppercase' }}>
+                                  Revenue (Inflow)
+                                </div>
+                                <div style={{ fontWeight: 800, color: '#16a34a', marginTop: '1px' }}>
+                                  {formatCurrency(day.revenue)}
+                                </div>
+                                <div style={{ color: '#94a3b8', fontSize: '0.62rem', marginTop: '1px' }}>
+                                  Bills: {formatCurrency(day.invoiceSales)} • Waste: {formatCurrency(day.wastageSales)}
+                                </div>
+                              </div>
+                              <div>
+                                <div style={{ color: '#64748b', fontSize: '0.64rem', fontWeight: 700, textTransform: 'uppercase' }}>
+                                  Operating Costs
+                                </div>
+                                <div style={{ fontWeight: 800, color: '#dc2626', marginTop: '1px' }}>
+                                  {formatCurrency(day.expenses)}
+                                </div>
+                                <div style={{ color: '#94a3b8', fontSize: '0.62rem', marginTop: '1px' }}>
+                                  Wages: {formatCurrency(day.staffWages)} • Ice: {formatCurrency(day.iceExpenses)}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Bottom Action: Inspect Button */}
+                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleDrilldownDay(day.date)}
+                                style={{
+                                  background: '#eff6ff',
+                                  border: '1px solid #bfdbfe',
+                                  color: '#0b5394',
+                                  borderRadius: '6px',
+                                  padding: '3px 8px',
+                                  fontSize: '0.68rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                }}
+                              >
+                                Inspect Day Breakdown ↗
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    )}
                   </div>
                 )}
               </div>

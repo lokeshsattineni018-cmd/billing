@@ -374,7 +374,11 @@ router.get('/profit-loss', protect, restrictTo('owner', 'admin'), async (req, re
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
     let filterStart, filterEnd, periodLabel;
-    if (period === 'today') {
+    if (period === 'all') {
+      filterStart = null;
+      filterEnd = null;
+      periodLabel = 'All Time';
+    } else if (period === 'today') {
       filterStart = startOfDay;
       filterEnd = endOfDay;
       periodLabel = 'Today';
@@ -417,7 +421,7 @@ router.get('/profit-loss', protect, restrictTo('owner', 'admin'), async (req, re
       periodLabel = 'This Month';
     }
 
-    const dateFilter = { date: { $gte: filterStart, $lt: filterEnd } };
+    const dateFilter = filterStart && filterEnd ? { date: { $gte: filterStart, $lt: filterEnd } } : {};
 
     const [
       billSalesAgg,
