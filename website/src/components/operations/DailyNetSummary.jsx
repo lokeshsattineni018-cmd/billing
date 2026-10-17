@@ -71,7 +71,7 @@ export default function DailyNetSummary() {
           />
           <button
             type="button"
-            className="btn btn-secondary btn-sm"
+            className="btn btn-secondary btn-sm btn-refresh"
             onClick={loadDailySummary}
             title="Refresh"
           >
@@ -87,22 +87,131 @@ export default function DailyNetSummary() {
         </div>
       ) : (
         <>
-          {/* Main Net Financial Health Card (Clean White Design) */}
+          {/* Mobile Compact Hero Glance Card (Same layout as 2nd SS with accent border like 3rd SS) */}
           <div
-            className="card"
-            style={{
-              padding: '20px',
-              marginBottom: '20px',
-              background: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderLeft: `5px solid ${isProfit ? '#16a34a' : isLoss ? '#dc2626' : '#0b5394'}`,
-              color: '#0f172a',
-              borderRadius: '14px',
-              boxShadow: '0 1px 4px rgba(15, 23, 42, 0.04)',
-            }}
+            className="staff-mobile-glance staff-glance-hero"
+            style={{ borderLeft: `4px solid ${isProfit ? '#16a34a' : isLoss ? '#dc2626' : '#0b5394'}` }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+            <div className="staff-glance-top">
               <div>
+                <div className="staff-glance-title">
+                  {isProfit ? 'Net Factory Profit' : isLoss ? 'Net Factory Expense' : 'Net Factory Balance'}
+                </div>
+                <div
+                  className="staff-glance-metric-lg"
+                  style={{ color: isProfit ? '#16a34a' : isLoss ? '#dc2626' : '#0f172a' }}
+                >
+                  {isProfit ? `+ ${formatCurrency(absNet)}` : isLoss ? `- ${formatCurrency(absNet)}` : '₹0.00'}
+                </div>
+              </div>
+              <span
+                className="staff-glance-pill"
+                style={{
+                  background: isProfit ? '#f0fdf4' : isLoss ? '#fef2f2' : '#f0f7ff',
+                  color: isProfit ? '#16a34a' : isLoss ? '#dc2626' : '#0b5394',
+                  borderColor: isProfit ? '#bbf7d0' : isLoss ? '#fecaca' : '#bae6fd',
+                }}
+              >
+                {isProfit ? 'Profit' : isLoss ? 'Expense' : 'Break-Even'}
+              </span>
+            </div>
+
+            <div className="staff-glance-grid">
+              <div className="staff-glance-subcol">
+                <span className="staff-glance-subcol-label">Outflow</span>
+                <span className="staff-glance-subcol-val" style={{ color: '#dc2626' }}>
+                  {formatCurrency(totalOperatingCosts)}
+                </span>
+              </div>
+              <div className="staff-glance-subcol">
+                <span className="staff-glance-subcol-label">Inflow</span>
+                <span className="staff-glance-subcol-val" style={{ color: '#16a34a' }}>
+                  + {formatCurrency(wastageRevenue)}
+                </span>
+              </div>
+              <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
+                <span className="staff-glance-subcol-label">Recovery</span>
+                <span className="staff-glance-subcol-val">
+                  {totalOperatingCosts > 0 ? `${Math.round((wastageRevenue / totalOperatingCosts) * 100)}%` : '0%'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Compact 3-Component Breakdown Rows */}
+          <div className="staff-mobile-glance" style={{ marginBottom: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {/* 1. Worker Labor */}
+              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderLeft: '4px solid #0b5394', borderRadius: '12px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ background: '#f1f5f9', padding: '7px', borderRadius: '8px', color: '#0b5394', display: 'flex' }}>
+                    <StaffIcon size={16} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: '0.84rem', color: '#0f172a' }}>1. Worker Labor Wages</div>
+                    <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{data?.labor?.workerCount || 0} staff • {data?.labor?.totalKg || 0} kg</div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontWeight: 800, fontSize: '0.96rem', color: '#0f172a' }}>{formatCurrency(laborWages)}</div>
+                  <span className="badge badge-amber" style={{ fontSize: '0.62rem', padding: '1px 6px' }}>Expense</span>
+                </div>
+              </div>
+
+              {/* 2. Ice Blocks */}
+              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderLeft: '4px solid #0284c7', borderRadius: '12px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ background: '#f1f5f9', padding: '7px', borderRadius: '8px', color: '#0284c7', display: 'flex' }}>
+                    <IceIcon size={16} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: '0.84rem', color: '#0f172a' }}>2. Ice Blocks Used</div>
+                    <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{data?.ice?.totalBlocks || 0} blocks • {data?.ice?.totalBlocks > 0 ? `₹${(iceCost / data.ice.totalBlocks).toFixed(2)}` : '₹0'}/blk</div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontWeight: 800, fontSize: '0.96rem', color: '#0f172a' }}>{formatCurrency(iceCost)}</div>
+                  <span className="badge badge-amber" style={{ fontSize: '0.62rem', padding: '1px 6px' }}>Expense</span>
+                </div>
+              </div>
+
+              {/* 3. Prawn Head Wastage */}
+              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderLeft: '4px solid #16a34a', borderRadius: '12px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ background: '#f1f5f9', padding: '7px', borderRadius: '8px', color: '#16a34a', display: 'flex' }}>
+                    <ScaleIcon size={16} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: '0.84rem', color: '#0f172a' }}>3. Prawn Head Wastage</div>
+                    <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{data?.wastage?.totalKg || 0} kg • {data?.wastage?.totalKg > 0 ? `₹${(wastageRevenue / data.wastage.totalKg).toFixed(2)}` : '₹0'}/kg</div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontWeight: 800, fontSize: '0.96rem', color: '#16a34a' }}>+ {formatCurrency(wastageRevenue)}</div>
+                  <span className="badge badge-green" style={{ fontSize: '0.62rem', padding: '1px 6px' }}>Revenue</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Detailed View */}
+          <div className="staff-desktop-stats">
+            {/* Main Net Financial Health Card (Clean White Design) */}
+            <div
+              className="card"
+              style={{
+                padding: '20px',
+                marginBottom: '20px',
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderLeft: `5px solid ${isProfit ? '#16a34a' : isLoss ? '#dc2626' : '#0b5394'}`,
+                color: '#0f172a',
+                borderRadius: '14px',
+                boxShadow: '0 1px 4px rgba(15, 23, 42, 0.04)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   <span
                     style={{
@@ -292,8 +401,9 @@ export default function DailyNetSummary() {
               </div>
             </div>
           </div>
-        </>
-      )}
+        </div>
+      </>
+    )}
     </div>
   );
 }
