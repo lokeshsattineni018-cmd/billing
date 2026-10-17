@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { staffAPI } from '../../services/api';
 import { formatCurrency, formatDate, numberToWords, useToast, Toast, playSuccessSound } from '../../utils/helpers';
 import { useLanguage } from '../../context/LanguageContext';
@@ -40,6 +40,37 @@ export default function IceTracker() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+
+  // Instant search input handler
+  const searchTimeoutRef = useRef(null);
+  const handleSearchChange = (val) => {
+    setSearch(val);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => {
+      loadEntries(val);
+    }, 250);
+  };
+
+  // Instant client-side filtered entries (immediate 0ms response when typing even 1 letter)
+  const displayedEntries = useMemo(() => {
+    let list = entries;
+    const q = (search || '').trim().toLowerCase();
+    if (q) {
+      list = list.filter((e) => {
+        const supp = (e.supplierName || '').toLowerCase();
+        const from = (e.iceFrom || '').toLowerCase();
+        const to = (e.iceTo || '').toLowerCase();
+        const veh = (e.vehicleNo || '').toLowerCase();
+        const notes = (e.notes || '').toLowerCase();
+        const voucher = (e.voucherNo || '').toLowerCase();
+        return supp.includes(q) || from.includes(q) || to.includes(q) || veh.includes(q) || notes.includes(q) || voucher.includes(q);
+      });
+    }
+    if (statusFilter) {
+      list = list.filter((e) => e.paymentStatus === statusFilter);
+    }
+    return list;
+  }, [entries, search, statusFilter]);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -416,17 +447,16 @@ export default function IceTracker() {
           {/* Search & Status Filter Row Side-by-Side */}
           <div className="staff-filter-row">
             <div style={{ position: 'relative', flex: 1.4 }}>
-              <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
+              <span style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', zIndex: 2 }}>
                 <SearchIcon size={14} />
               </span>
               <input
                 type="text"
-                className="form-input"
-                style={{ paddingLeft: '32px' }}
+                className="form-input staff-search-input"
+                style={{ paddingLeft: '36px', paddingRight: search ? '28px' : '10px' }}
                 placeholder="Search supplier, from, to..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && loadEntries()}
+                onChange={(e) => handleSearchChange(e.target.value)}
               />
             </div>
 
@@ -472,7 +502,7 @@ export default function IceTracker() {
           <div className="spinner" style={{ margin: '0 auto 12px auto' }}></div>
           <p style={{ fontWeight: 600 }}>Loading Ice Records...</p>
         </div>
-      ) : entries.length === 0 ? (
+      ) : displayedEntries.length === 0 ? (
         <div
           className="card"
           style={{
@@ -486,7 +516,7 @@ export default function IceTracker() {
               width: '56px',
               height: '56px',
               borderRadius: '50%',
-              background: '#e0f2fe',
+              background: '#f1f5f9',
               color: '#0284c7',
               display: 'flex',
               alignItems: 'center',
@@ -497,95 +527,112 @@ export default function IceTracker() {
             <IceIcon size={28} color="#0284c7" />
           </div>
           <h3 style={{ margin: '0 0 6px 0', color: 'var(--text-primary)', fontSize: '1.1rem' }}>
-            No Ice Usage Records Found
+            {search ? 'No Matching Ice Records' : 'No Ice Usage Records Found'}
           </h3>
           <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem' }}>
-            Track how many ice blocks your factory used today, rate per block, and total ice expense.
+            {search ? `No records matched "${search}". Clear search or try another keyword.` : 'Track how many ice blocks your factory used today, rate per block, and total ice expense.'}
           </p>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleOpenAddModal}
-          >
-            + Record Today's Ice Blocks
-          </button>
+          {!search && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleOpenAddModal}
+            >
+              + Record Today's Ice Blocks
+            </button>
+          )}
         </div>
       ) : (
         <>
-          {/* Mobile Cards List */}
-          <div className="mobile-bills-list" style={{ marginBottom: '16px' }}>
-            {entries.map((entry, index) => (
-              <div key={entry._id} className="mobile-bill-card">
-                <div className="mobile-bill-header">
-                  <div>
-                    <span style={{ fontWeight: 800, fontSize: '0.92rem', color: '#0f172a' }}>
-                      {formatDate(entry.date)}
-                    </span>
-                    {(entry.iceFrom || entry.iceTo) && (
-                      <span style={{ fontSize: '0.74rem', color: '#64748b', marginLeft: '6px' }}>
-                        {entry.iceFrom} → {entry.iceTo}
+          {/* Mobile Cards List (Clean White Layout) */}
+          <div className="mobile-bills-list" style={{ padding: '10px 8px', marginBottom: '16px' }}>
+            {displayedEntries.map((entry, index) => (
+              <div key={entry._id} className="worker-clean-card">
+                <div className="worker-clean-header">
+                  <div className="worker-clean-left">
+                    <div className="worker-avatar" style={{ background: '#f8fafc', color: '#0284c7', border: '1px solid #e2e8f0' }}>
+                      🧊
+                    </div>
+                    <div className="worker-name-block">
+                      <span className="worker-name">
+                        {formatDate(entry.date)}
                       </span>
-                    )}
+                      <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>
+                        {entry.iceFrom || 'Factory'} → {entry.iceTo || 'Cold Storage'}
+                      </div>
+                    </div>
                   </div>
-                  <span className={`badge ${(entry.paymentStatus || 'Paid') === 'Paid' ? 'badge-green' : 'badge-amber'}`}>
-                    {entry.paymentStatus || 'Paid'}
-                  </span>
+
+                  <div className="worker-clean-right">
+                    <span className="worker-wage-val">{formatCurrency(entry.totalAmount)}</span>
+                    <span
+                      className={`badge ${(entry.paymentStatus || 'Paid') === 'Paid' ? 'badge-green' : 'badge-amber'}`}
+                      style={{ fontSize: '0.68rem', fontWeight: 800, padding: '2px 7px', marginTop: '3px' }}
+                    >
+                      {entry.paymentStatus || 'Paid'}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="mobile-bill-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '6px 0' }}>
-                  <div style={{ background: '#f8fafc', padding: '8px', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Blocks Used</div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0284c7' }}>
-                      {entry.blocks} <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>blocks</span>
-                    </div>
-                    <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>₹{entry.rate?.toFixed(2)} / block</div>
-                  </div>
-
-                  <div style={{ background: '#f8fafc', padding: '8px', borderRadius: '8px', textAlign: 'right' }}>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Total Expense</div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0f172a' }}>
-                      {formatCurrency(entry.totalAmount)}
-                    </div>
-                  </div>
+                <div className="worker-clean-details-bar">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Blocks:</span>
+                    <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>{entry.blocks} blocks</strong>
+                  </span>
+                  <span style={{ color: '#cbd5e1' }}>|</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Rate:</span>
+                    <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>₹{entry.rate?.toFixed(2)} / block</strong>
+                  </span>
+                  {entry.supplierName && (
+                    <>
+                      <span style={{ color: '#cbd5e1' }}>|</span>
+                      <span style={{ color: '#64748b', fontSize: '0.72rem', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {entry.supplierName}
+                      </span>
+                    </>
+                  )}
                 </div>
 
                 {entry.notes && (
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic', padding: '2px 0' }}>
+                  <div style={{ fontSize: '0.74rem', color: '#64748b', fontStyle: 'italic', padding: '0 4px' }}>
                     "{entry.notes}"
                   </div>
                 )}
 
-                <div className="mobile-bill-actions">
+                <div className="worker-clean-actions">
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
                     onClick={() => handleGenerateBill(entry, index)}
-                    style={{ color: '#7c3aed', borderColor: '#ddd6fe', fontWeight: 700, background: '#f5f3ff' }}
+                    style={{ color: '#7c3aed', borderColor: '#ddd6fe', fontWeight: 700, background: '#f5f3ff', flex: 1, height: '36px' }}
                   >
                     <PrintIcon size={14} color="#7c3aed" />
                     <span>Bill</span>
                   </button>
 
                   {canEditDelete && (
-                    <>
+                    <div style={{ display: 'flex', gap: '4px', marginLeft: 'auto' }}>
                       <button
                         type="button"
                         className="btn btn-secondary btn-sm"
+                        style={{ width: '34px', padding: 0, justifyContent: 'center' }}
                         onClick={() => handleOpenEditModal(entry)}
+                        title="Edit"
                       >
-                        <EditIcon size={14} color="#0b5394" />
-                        <span>Edit</span>
+                        <EditIcon size={14} />
                       </button>
+
                       <button
                         type="button"
                         className="btn btn-ghost btn-sm"
-                        style={{ color: '#ef4444' }}
+                        style={{ color: '#ef4444', width: '34px', padding: 0, justifyContent: 'center' }}
                         onClick={() => handlePromptDelete(entry)}
+                        title="Delete"
                       >
                         <TrashIcon size={14} color="#ef4444" />
-                        <span>Delete</span>
                       </button>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
@@ -610,7 +657,7 @@ export default function IceTracker() {
                   </tr>
                 </thead>
                 <tbody>
-                  {entries.map((entry, index) => (
+                  {displayedEntries.map((entry, index) => (
                     <tr key={entry._id}>
                       <td style={{ fontWeight: 700, fontSize: '0.84rem' }}>
                         {formatDate(entry.date)}

@@ -258,17 +258,18 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
           className="card"
           style={{
             padding: '16px',
-            background: '#f0fdf4',
-            border: '1px solid #bbf7d0',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
             borderRadius: '12px',
+            boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
           }}
         >
-          <div style={{ fontSize: '0.76rem', color: '#166534', fontWeight: 800, textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>
             📅 {t('presentDays') || 'Days Present'}
           </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#15803d', marginTop: '4px' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', marginTop: '4px' }}>
             {monthlyStats.daysPresent}{' '}
-            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#166534' }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>
               / {daysInMonth} days
             </span>
           </div>
@@ -278,17 +279,18 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
           className="card"
           style={{
             padding: '16px',
-            background: '#eff6ff',
-            border: '1px solid #bfdbfe',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
             borderRadius: '12px',
+            boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
           }}
         >
-          <div style={{ fontSize: '0.76rem', color: '#1e40af', fontWeight: 800, textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>
             ⚖️ {t('totalKgProcessed') || 'Total KG Processed'}
           </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#1d4ed8', marginTop: '4px' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', marginTop: '4px' }}>
             {monthlyStats.totalKg.toLocaleString('en-IN')}{' '}
-            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e40af' }}>KG</span>
+            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>KG</span>
           </div>
         </div>
 
@@ -296,15 +298,16 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
           className="card"
           style={{
             padding: '16px',
-            background: '#fefce8',
-            border: '1px solid #fef08a',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
             borderRadius: '12px',
+            boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
           }}
         >
-          <div style={{ fontSize: '0.76rem', color: '#854d0e', fontWeight: 800, textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>
             💰 {t('totalWagesEarned') || 'Total Wages Earned'}
           </div>
-          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#a16207', marginTop: '4px' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', marginTop: '4px' }}>
             {formatCurrency(monthlyStats.totalEarnings)}
           </div>
         </div>
@@ -313,15 +316,16 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
           className="card"
           style={{
             padding: '16px',
-            background: monthlyStats.unpaidAmount > 0 ? '#fff1f2' : '#f8fafc',
-            border: `1px solid ${monthlyStats.unpaidAmount > 0 ? '#fecdd3' : '#e2e8f0'}`,
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
             borderRadius: '12px',
+            boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
           }}
         >
           <div
             style={{
-              fontSize: '0.76rem',
-              color: monthlyStats.unpaidAmount > 0 ? '#9f1239' : '#64748b',
+              fontSize: '0.74rem',
+              color: '#64748b',
               fontWeight: 800,
               textTransform: 'uppercase',
             }}
@@ -330,9 +334,9 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
           </div>
           <div
             style={{
-              fontSize: '1.6rem',
+              fontSize: '1.5rem',
               fontWeight: 900,
-              color: monthlyStats.unpaidAmount > 0 ? '#e11d48' : '#059669',
+              color: monthlyStats.unpaidAmount > 0 ? '#dc2626' : '#16a34a',
               marginTop: '4px',
             }}
           >

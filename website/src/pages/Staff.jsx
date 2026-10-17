@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { staffAPI } from '../services/api';
 import { formatCurrency, formatDate, numberToWords, useToast, Toast, playSuccessSound } from '../utils/helpers';
 import { useLanguage } from '../context/LanguageContext';
@@ -138,6 +138,76 @@ export default function Staff() {
 
   // Selected Worker filter from Accounts tab
   const [selectedWorkerFilter, setSelectedWorkerFilter] = useState('');
+
+  // Instant search input handler
+  const searchTimeoutRef = useRef(null);
+  const handleSearchChange = (val) => {
+    setSearch(val);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => {
+      loadEntries(val);
+    }, 250);
+  };
+
+  // Instant client-side filtered entries (immediate 0ms response when typing even 1 letter)
+  const displayedEntries = useMemo(() => {
+    let list = entries;
+    const q = (search || '').trim().toLowerCase();
+    if (q) {
+      list = list.filter((e) => {
+        const name = (e.staffName || '').toLowerCase();
+        const type = (e.workType || '').toLowerCase();
+        const notes = (e.notes || '').toLowerCase();
+        const voucher = (e.voucherNo || '').toLowerCase();
+        return name.includes(q) || type.includes(q) || notes.includes(q) || voucher.includes(q);
+      });
+    }
+    if (statusFilter) {
+      list = list.filter((e) => e.paymentStatus === statusFilter);
+    }
+    return list;
+  }, [entries, search, statusFilter]);
+
+  // Slide / Pull down to refresh state
+  const [pullY, setPullY] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const touchStartY = useRef(0);
+
+  const handleTouchStart = (e) => {
+    if (window.scrollY <= 5) {
+      touchStartY.current = e.touches[0].clientY;
+      setIsPulling(true);
+    } else {
+      setIsPulling(false);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isPulling || refreshing) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - touchStartY.current;
+    if (diff > 0 && window.scrollY <= 5) {
+      const distance = Math.min(diff * 0.45, 65);
+      setPullY(distance);
+    } else {
+      setPullY(0);
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (!isPulling) return;
+    if (pullY >= 38 && !refreshing) {
+      setPullY(38);
+      await handleRefresh();
+      setTimeout(() => {
+        setPullY(0);
+        setIsPulling(false);
+      }, 250);
+    } else {
+      setPullY(0);
+      setIsPulling(false);
+    }
+  };
 
   useEffect(() => {
     loadAllData();
@@ -778,8 +848,38 @@ export default function Staff() {
   const liveTotal = Math.round(liveQty * livePrice * 100) / 100;
 
   return (
-    <div className="page-container fade-in">
+    <div
+      className="page-container fade-in"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <Toast toast={toast} />
+
+      {/* Pull / Slide down to refresh indicator */}
+      <div
+        className="mobile-pull-indicator"
+        style={{
+          height: `${pullY}px`,
+          opacity: pullY > 10 ? Math.min(pullY / 35, 1) : 0,
+          display: pullY > 0 || refreshing ? 'flex' : 'none',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          transition: isPulling ? 'none' : 'all 0.25s ease',
+          gap: '8px',
+          color: '#64748b',
+          fontSize: '0.78rem',
+          fontWeight: 700,
+          background: '#f8fafc',
+          borderRadius: '10px',
+          marginBottom: pullY > 0 || refreshing ? '10px' : '0',
+          border: pullY > 10 ? '1px dashed #cbd5e1' : 'none',
+        }}
+      >
+        <RefreshIcon size={16} spinning={refreshing || pullY >= 38} color="#0b5394" />
+        <span>{refreshing ? (lang === 'te' ? 'రిఫ్రెష్ అవుతోంది...' : 'Refreshing records...') : pullY >= 38 ? (lang === 'te' ? 'వదిలివేయండి' : 'Release to refresh') : (lang === 'te' ? 'రిఫ్రెష్ చేయడానికి క్రిందికి లాగండి' : 'Slide down to refresh')}</span>
+      </div>
 
       {/* Page Header */}
       <div
@@ -844,7 +944,7 @@ export default function Staff() {
 
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button
-            className="btn btn-secondary"
+            className="btn btn-secondary staff-header-refresh"
             onClick={handleRefresh}
             disabled={refreshing}
             style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
@@ -1348,17 +1448,16 @@ export default function Staff() {
               {/* Search & Status Filter Row Side-by-Side */}
               <div className="staff-filter-row">
                 <div style={{ position: 'relative', flex: 1.4 }}>
-                  <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
+                  <span style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', zIndex: 2 }}>
                     <SearchIcon size={14} />
                   </span>
                   <input
                     type="text"
-                    className="form-input"
-                    style={{ paddingLeft: '32px', paddingRight: search ? '28px' : '10px' }}
+                    className="form-input staff-search-input"
+                    style={{ paddingLeft: '36px', paddingRight: search ? '28px' : '10px' }}
                     placeholder={lang === 'te' ? 'కార్మికుని పేరు...' : 'Search worker, notes...'}
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && loadEntries()}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                   />
                   {search && (
                     <button
@@ -1440,21 +1539,21 @@ export default function Staff() {
           <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
             {loading ? (
               <SkeletonTable rows={7} cols={6} hasHeader={false} />
-            ) : entries.length === 0 ? (
+            ) : displayedEntries.length === 0 ? (
               <div style={{ padding: '48px 20px', textAlign: 'center', color: '#64748b' }}>
                 <StaffIcon size={44} color="#94a3b8" />
                 <h4 style={{ margin: '14px 0 6px 0', fontSize: '1.05rem', color: 'var(--text-primary)' }}>
-                  No Work Entries Found
+                  {search ? 'No Matching Work Entries' : 'No Work Entries Found'}
                 </h4>
                 <p style={{ margin: 0, fontSize: '0.85rem' }}>
-                  Click <strong>"+ Add Work Entry"</strong> or <strong>"⚡ Bulk Attendance"</strong> above to record staff labor.
+                  {search ? `No entries matched "${search}". Clear search or try another worker name.` : 'Click "+ Add Work Entry" or "⚡ Bulk Attendance" above to record staff labor.'}
                 </p>
               </div>
             ) : (
               <>
                 {/* Mobile Cards View (Clean Modern Layout for Phone) */}
                 <div className="mobile-bills-list" style={{ padding: '10px 8px' }}>
-                  {entries.map((entry, index) => (
+                  {displayedEntries.map((entry, index) => (
                     <div key={entry._id} className="worker-clean-card">
                       {/* Clean Top Header */}
                       <div className="worker-clean-header">
@@ -1621,7 +1720,7 @@ export default function Staff() {
                       </tr>
                     </thead>
                     <tbody>
-                      {entries.map((entry, index) => (
+                      {displayedEntries.map((entry, index) => (
                         <tr key={entry._id}>
                           <td style={{ textAlign: 'center' }}>
                             {entry.paymentStatus !== 'Paid' ? (

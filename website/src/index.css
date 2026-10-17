@@ -1466,21 +1466,21 @@ a:hover {
     gap: 10px !important;
   }
 
-  /* Bottom Navigation Bar — 5-Tab Layout */
+  /* Bottom Navigation Bar — Clean, Spacious 5-Tab Layout */
   .mobile-bottom-nav {
     display: flex;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 60px;
+    height: 68px;
     background: #ffffff;
     border-top: 1px solid #e2e8f0;
     box-shadow: 0 -2px 16px rgba(15, 23, 42, 0.06);
     z-index: 1000;
     align-items: center;
     justify-content: space-around;
-    padding: 0 4px;
+    padding: 0 6px;
     width: 100%;
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
@@ -1494,13 +1494,18 @@ a:hover {
     height: 100%;
     color: #94a3b8;
     text-decoration: none;
-    font-size: 0.62rem;
+    font-size: 0.68rem;
     font-weight: 700;
-    gap: 2px;
+    gap: 3px;
     transition: color 0.15s ease;
     -webkit-tap-highlight-color: transparent;
     min-width: 0;
-    padding: 6px 2px;
+    padding: 4px 2px;
+  }
+
+  .mobile-bottom-tab svg {
+    width: 22px;
+    height: 22px;
   }
 
   .mobile-bottom-tab.active {
@@ -1514,14 +1519,14 @@ a:hover {
 
   .mobile-add-btn {
     background: linear-gradient(135deg, #0b5394, #2563eb);
-    width: 42px;
-    height: 42px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 3px 12px rgba(11, 83, 148, 0.35);
-    margin-top: -14px;
+    box-shadow: 0 4px 14px rgba(11, 83, 148, 0.35);
+    margin-top: -16px;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
 
@@ -2446,17 +2451,18 @@ a:hover {
     box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08) !important;
   }
 
-  /* Clean Staff Hero Glance Card */
+  /* Clean White Staff Hero Glance Card */
   .staff-glance-hero {
-    background: linear-gradient(135deg, #0b5394 0%, #1e3a8a 100%);
-    border-radius: 16px;
-    padding: 16px;
-    color: #ffffff;
-    box-shadow: 0 6px 20px -4px rgba(11, 83, 148, 0.25);
-    margin-bottom: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    padding: 14px 16px !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04) !important;
+    margin-bottom: 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
   }
 
   .staff-glance-top {
@@ -2470,24 +2476,25 @@ a:hover {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    opacity: 0.85;
+    color: #64748b;
   }
 
   .staff-glance-metric-lg {
-    font-size: 1.6rem;
+    font-size: 1.55rem;
     font-weight: 900;
     line-height: 1.1;
     margin-top: 3px;
-    color: #ffffff;
+    color: #0f172a;
   }
 
   .staff-glance-pill {
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(8px);
-    padding: 3px 8px;
+    background: #f1f5f9;
+    color: #475569;
+    padding: 3px 9px;
     border-radius: 20px;
     font-size: 0.7rem;
     font-weight: 700;
+    border: 1px solid #e2e8f0;
   }
 
   .staff-glance-grid {
@@ -2495,7 +2502,7 @@ a:hover {
     grid-template-columns: 1fr 1fr 1fr;
     gap: 8px;
     padding-top: 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    border-top: 1px solid #f1f5f9;
   }
 
   .staff-glance-subcol {
@@ -2504,17 +2511,34 @@ a:hover {
   }
 
   .staff-glance-subcol-label {
-    font-size: 0.64rem;
+    font-size: 0.65rem;
     font-weight: 600;
-    opacity: 0.78;
+    color: #64748b;
     text-transform: uppercase;
   }
 
   .staff-glance-subcol-val {
-    font-size: 0.96rem;
+    font-size: 0.95rem;
     font-weight: 800;
     margin-top: 2px;
-    color: #ffffff;
+    color: #0f172a;
+  }
+
+  /* Clean White KPI Cards across all sub-pages on mobile */
+  .staff-kpi-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .staff-kpi-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-left: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 12px 14px !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
   }
 
   /* Control bar clean mobile styling */
@@ -2566,7 +2590,7 @@ a:hover {
     text-align: center !important;
   }
 
-  /* Search & Filter row side-by-side */
+  /* Search & Filter row side-by-side with guaranteed icon padding */
   .staff-filter-row {
     display: flex !important;
     gap: 8px !important;
@@ -2575,11 +2599,24 @@ a:hover {
   }
 
   .staff-filter-row .form-input,
-  .staff-filter-row .form-select {
+  .staff-filter-row input[type="text"] {
     height: 38px !important;
-    padding: 6px 12px !important;
+    padding: 6px 12px 6px 36px !important;
     font-size: 0.82rem !important;
     line-height: 24px !important;
+  }
+
+  .staff-filter-row .form-select {
+    height: 38px !important;
+    padding: 6px 10px !important;
+    font-size: 0.82rem !important;
+    line-height: 24px !important;
+  }
+
+  /* Hide Refresh buttons on mobile (replaced by slide-down pull to refresh) */
+  .btn-refresh,
+  .staff-header-refresh {
+    display: none !important;
   }
 
   .staff-control-right {
@@ -2589,20 +2626,10 @@ a:hover {
     align-items: stretch !important;
   }
 
-  .staff-control-right .btn-refresh {
-    flex: 0 0 42px !important;
-    height: 40px !important;
-    padding: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 10px !important;
-  }
-
   .staff-control-right .btn-action {
     flex: 1 !important;
     height: 40px !important;
-    padding: 0 12px !important;
+    padding: 0 10px !important;
     font-size: 0.82rem !important;
     font-weight: 800 !important;
     display: flex !important;
