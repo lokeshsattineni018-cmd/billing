@@ -385,18 +385,13 @@ export default function IceTracker() {
 
       {/* Control Bar & Action Buttons */}
       <div
-        className="card"
+        className="card staff-control-bar"
         style={{
           padding: '14px 18px',
           marginBottom: '18px',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '12px',
-          justifyContent: 'space-between',
-          alignItems: 'center',
         }}
       >
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', flex: 1, minWidth: '280px' }}>
+        <div className="staff-control-left">
           {/* Quick Date Pills */}
           <div style={{ display: 'flex', gap: '4px', background: '#f1f5f9', padding: '3px', borderRadius: '8px' }}>
             {[
@@ -456,7 +451,7 @@ export default function IceTracker() {
           </select>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div className="staff-control-right">
           <button
             type="button"
             className="btn btn-secondary btn-sm"
@@ -524,97 +519,180 @@ export default function IceTracker() {
           </button>
         </div>
       ) : (
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div className="table-responsive">
-            <table className="table" style={{ margin: 0 }}>
-              <thead>
-                <tr>
-                  <th style={{ width: '100px' }}>Date</th>
-                  <th style={{ width: '120px' }}>From</th>
-                  <th style={{ width: '120px' }}>To</th>
-                  <th className="text-right" style={{ width: '90px' }}>Blocks</th>
-                  <th className="text-right" style={{ width: '100px' }}>Rate</th>
-                  <th className="text-right" style={{ width: '120px' }}>Total</th>
-                  <th style={{ width: '80px' }}>Status</th>
-                  <th>Notes</th>
-                  <th className="text-center" style={{ width: '120px' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map((entry, index) => (
-                  <tr key={entry._id}>
-                    <td style={{ fontWeight: 700, fontSize: '0.84rem' }}>
+        <>
+          {/* Mobile Cards List */}
+          <div className="mobile-bills-list" style={{ marginBottom: '16px' }}>
+            {entries.map((entry, index) => (
+              <div key={entry._id} className="mobile-bill-card">
+                <div className="mobile-bill-header">
+                  <div>
+                    <span style={{ fontWeight: 800, fontSize: '0.92rem', color: '#0f172a' }}>
                       {formatDate(entry.date)}
-                    </td>
-                    <td style={{ fontSize: '0.82rem', color: '#0b5394', fontWeight: 600 }}>
-                      {entry.iceFrom || '—'}
-                    </td>
-                    <td style={{ fontSize: '0.82rem', color: '#16a34a', fontWeight: 600 }}>
-                      {entry.iceTo || '—'}
-                    </td>
-                    <td className="text-right">
-                      <span style={{ fontWeight: 900, color: '#0284c7', fontSize: '0.98rem' }}>
-                        {entry.blocks}
+                    </span>
+                    {(entry.iceFrom || entry.iceTo) && (
+                      <span style={{ fontSize: '0.74rem', color: '#64748b', marginLeft: '6px' }}>
+                        {entry.iceFrom} → {entry.iceTo}
                       </span>
-                      <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '4px' }}>blocks</span>
-                    </td>
-                    <td className="text-right" style={{ fontWeight: 600 }}>
-                      ₹{entry.rate?.toFixed(2)}
-                    </td>
-                    <td className="text-right">
-                      <strong style={{ fontSize: '0.96rem', color: 'var(--text-primary)' }}>
-                        {formatCurrency(entry.totalAmount)}
-                      </strong>
-                    </td>
-                    <td>
-                      <span className={`badge ${(entry.paymentStatus || 'Paid') === 'Paid' ? 'badge-green' : 'badge-amber'}`}>
-                        {entry.paymentStatus || 'Paid'}
-                      </span>
-                    </td>
-                    <td style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                      {entry.notes || '—'}
-                    </td>
-                    <td className="text-center">
-                      <div style={{ display: 'inline-flex', gap: '4px' }}>
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => handleGenerateBill(entry, index)}
-                          title="Generate & View Bill"
-                          style={{ padding: '4px 6px' }}
-                        >
-                          <PrintIcon size={14} color="#7c3aed" />
-                        </button>
-                        {canEditDelete && (
-                          <>
-                            <button
-                              type="button"
-                              className="btn btn-ghost btn-sm"
-                              onClick={() => handleOpenEditModal(entry)}
-                              title="Edit"
-                              style={{ padding: '4px 6px' }}
-                            >
-                              <EditIcon size={14} color="#0b5394" />
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-ghost btn-sm"
-                              onClick={() => handlePromptDelete(entry)}
-                              title="Delete"
-                              style={{ padding: '4px 6px' }}
-                            >
-                              <TrashIcon size={14} color="#ef4444" />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    )}
+                  </div>
+                  <span className={`badge ${(entry.paymentStatus || 'Paid') === 'Paid' ? 'badge-green' : 'badge-amber'}`}>
+                    {entry.paymentStatus || 'Paid'}
+                  </span>
+                </div>
+
+                <div className="mobile-bill-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '6px 0' }}>
+                  <div style={{ background: '#f8fafc', padding: '8px', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Blocks Used</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0284c7' }}>
+                      {entry.blocks} <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>blocks</span>
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>₹{entry.rate?.toFixed(2)} / block</div>
+                  </div>
+
+                  <div style={{ background: '#f8fafc', padding: '8px', borderRadius: '8px', textAlign: 'right' }}>
+                    <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Total Expense</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0f172a' }}>
+                      {formatCurrency(entry.totalAmount)}
+                    </div>
+                  </div>
+                </div>
+
+                {entry.notes && (
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic', padding: '2px 0' }}>
+                    "{entry.notes}"
+                  </div>
+                )}
+
+                <div className="mobile-bill-actions">
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => handleGenerateBill(entry, index)}
+                    style={{ color: '#7c3aed', borderColor: '#ddd6fe', fontWeight: 700, background: '#f5f3ff' }}
+                  >
+                    <PrintIcon size={14} color="#7c3aed" />
+                    <span>Bill</span>
+                  </button>
+
+                  {canEditDelete && (
+                    <>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => handleOpenEditModal(entry)}
+                      >
+                        <EditIcon size={14} color="#0b5394" />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        style={{ color: '#ef4444' }}
+                        onClick={() => handlePromptDelete(entry)}
+                      >
+                        <TrashIcon size={14} color="#ef4444" />
+                        <span>Delete</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+
+          {/* Desktop Table View */}
+          <div className="card desktop-only-table" style={{ padding: 0, overflow: 'hidden' }}>
+            <div className="table-responsive">
+              <table className="table" style={{ margin: 0 }}>
+                <thead>
+                  <tr>
+                    <th style={{ width: '100px' }}>Date</th>
+                    <th style={{ width: '120px' }}>From</th>
+                    <th style={{ width: '120px' }}>To</th>
+                    <th className="text-right" style={{ width: '90px' }}>Blocks</th>
+                    <th className="text-right" style={{ width: '100px' }}>Rate</th>
+                    <th className="text-right" style={{ width: '120px' }}>Total</th>
+                    <th style={{ width: '80px' }}>Status</th>
+                    <th>Notes</th>
+                    <th className="text-center" style={{ width: '120px' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {entries.map((entry, index) => (
+                    <tr key={entry._id}>
+                      <td style={{ fontWeight: 700, fontSize: '0.84rem' }}>
+                        {formatDate(entry.date)}
+                      </td>
+                      <td style={{ fontSize: '0.82rem', color: '#0b5394', fontWeight: 600 }}>
+                        {entry.iceFrom || '—'}
+                      </td>
+                      <td style={{ fontSize: '0.82rem', color: '#16a34a', fontWeight: 600 }}>
+                        {entry.iceTo || '—'}
+                      </td>
+                      <td className="text-right">
+                        <span style={{ fontWeight: 900, color: '#0284c7', fontSize: '0.98rem' }}>
+                          {entry.blocks}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '4px' }}>blocks</span>
+                      </td>
+                      <td className="text-right" style={{ fontWeight: 600 }}>
+                        ₹{entry.rate?.toFixed(2)}
+                      </td>
+                      <td className="text-right">
+                        <strong style={{ fontSize: '0.96rem', color: 'var(--text-primary)' }}>
+                          {formatCurrency(entry.totalAmount)}
+                        </strong>
+                      </td>
+                      <td>
+                        <span className={`badge ${(entry.paymentStatus || 'Paid') === 'Paid' ? 'badge-green' : 'badge-amber'}`}>
+                          {entry.paymentStatus || 'Paid'}
+                        </span>
+                      </td>
+                      <td style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                        {entry.notes || '—'}
+                      </td>
+                      <td className="text-center">
+                        <div style={{ display: 'inline-flex', gap: '4px' }}>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => handleGenerateBill(entry, index)}
+                            title="Generate & View Bill"
+                            style={{ padding: '4px 6px' }}
+                          >
+                            <PrintIcon size={14} color="#7c3aed" />
+                          </button>
+                          {canEditDelete && (
+                            <>
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => handleOpenEditModal(entry)}
+                                title="Edit"
+                                style={{ padding: '4px 6px' }}
+                              >
+                                <EditIcon size={14} color="#0b5394" />
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => handlePromptDelete(entry)}
+                                title="Delete"
+                                style={{ padding: '4px 6px' }}
+                              >
+                                <TrashIcon size={14} color="#ef4444" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
       {/* MODAL: RECORD / EDIT ICE USAGE */}

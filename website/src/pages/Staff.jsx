@@ -857,33 +857,14 @@ export default function Staff() {
       </div>
 
       {/* Main Tabs Navigation */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '8px',
-          borderBottom: '2px solid #e2e8f0',
-          marginBottom: '20px',
-          overflowX: 'auto',
-          whiteSpace: 'nowrap',
-          paddingBottom: '2px',
-        }}
-      >
+      <div className="staff-tabs-nav">
         <button
           type="button"
+          className="staff-tab-btn"
           onClick={() => setActiveTab('entries')}
           style={{
-            padding: '10px 16px',
-            fontSize: '0.9rem',
-            fontWeight: 800,
-            background: 'none',
-            border: 'none',
             borderBottom: activeTab === 'entries' ? '3px solid #0b5394' : '3px solid transparent',
             color: activeTab === 'entries' ? '#0b5394' : '#64748b',
-            cursor: 'pointer',
-            marginBottom: '-2px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
           }}
         >
           <span>👥 {t('workerLaborTitle') || 'Workers Labor'}</span>
@@ -902,65 +883,38 @@ export default function Staff() {
 
         <button
           type="button"
+          className="staff-tab-btn"
           onClick={() => setActiveTab('ice')}
           style={{
-            padding: '10px 16px',
-            fontSize: '0.9rem',
-            fontWeight: 800,
-            background: 'none',
-            border: 'none',
             borderBottom: activeTab === 'ice' ? '3px solid #0284c7' : '3px solid transparent',
             color: activeTab === 'ice' ? '#0284c7' : '#64748b',
-            cursor: 'pointer',
-            marginBottom: '-2px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
           }}
         >
-          <span>🧊 {t('iceBlocks') || 'Ice Blocks Tracker'}</span>
+          <span>🧊 {t('iceBlocks') || 'Ice Blocks'}</span>
         </button>
 
         <button
           type="button"
+          className="staff-tab-btn"
           onClick={() => setActiveTab('wastage')}
           style={{
-            padding: '10px 16px',
-            fontSize: '0.9rem',
-            fontWeight: 800,
-            background: 'none',
-            border: 'none',
             borderBottom: activeTab === 'wastage' ? '3px solid #16a34a' : '3px solid transparent',
             color: activeTab === 'wastage' ? '#16a34a' : '#64748b',
-            cursor: 'pointer',
-            marginBottom: '-2px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
           }}
         >
-          <span>🦐 {t('prawnHeadWastage') || 'Prawn Head Wastage'}</span>
+          <span>🦐 {t('prawnHeadWastage') || 'Wastage'}</span>
         </button>
 
         <button
           type="button"
+          className="staff-tab-btn"
           onClick={() => setActiveTab('accounts')}
           style={{
-            padding: '10px 16px',
-            fontSize: '0.9rem',
-            fontWeight: 800,
-            background: 'none',
-            border: 'none',
             borderBottom: activeTab === 'accounts' ? '3px solid #0b5394' : '3px solid transparent',
             color: activeTab === 'accounts' ? '#0b5394' : '#64748b',
-            cursor: 'pointer',
-            marginBottom: '-2px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
           }}
         >
-          <span>📒 {t('workerAccounts') || 'Workers Accounts'}</span>
+          <span>📒 {t('workerAccounts') || 'Accounts'}</span>
           <span
             style={{
               background: activeTab === 'accounts' ? '#eff6ff' : '#f1f5f9',
@@ -976,44 +930,26 @@ export default function Staff() {
 
         <button
           type="button"
+          className="staff-tab-btn"
           onClick={() => setActiveTab('net')}
           style={{
-            padding: '10px 16px',
-            fontSize: '0.9rem',
-            fontWeight: 800,
-            background: 'none',
-            border: 'none',
             borderBottom: activeTab === 'net' ? '3px solid #7c3aed' : '3px solid transparent',
             color: activeTab === 'net' ? '#7c3aed' : '#64748b',
-            cursor: 'pointer',
-            marginBottom: '-2px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
           }}
         >
-          <span>📊 {t('dailyOperations') || 'Daily Net Summary'}</span>
+          <span>📊 {t('dailyOperations') || 'Net Summary'}</span>
         </button>
 
         <button
           type="button"
+          className="staff-tab-btn"
           onClick={() => setActiveTab('calendar')}
           style={{
-            padding: '10px 16px',
-            fontSize: '0.9rem',
-            fontWeight: 800,
-            background: 'none',
-            border: 'none',
             borderBottom: activeTab === 'calendar' ? '3px solid #16a34a' : '3px solid transparent',
             color: activeTab === 'calendar' ? '#16a34a' : '#64748b',
-            cursor: 'pointer',
-            marginBottom: '-2px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
           }}
         >
-          <span>📅 {t('attendanceCalendar') || 'Attendance Calendar'}</span>
+          <span>📅 {t('attendanceCalendar') || 'Calendar'}</span>
         </button>
       </div>
 
@@ -1162,15 +1098,7 @@ export default function Staff() {
               </div>
 
               {/* Column Headers */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1.4fr 1fr 1fr 1fr auto',
-                  gap: '8px',
-                  padding: '6px 10px',
-                  marginBottom: '6px',
-                }}
-              >
+              <div className="bulk-grid-header">
                 <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('workerName') || 'Worker Name'}</span>
                 <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('weightKg') || 'Weight (KG)'}</span>
                 <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{t('ratePerKg') || 'Rate (₹/KG)'}</span>
@@ -1188,17 +1116,7 @@ export default function Staff() {
                   return (
                     <div
                       key={idx}
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1.4fr 1fr 1fr 1fr auto',
-                        gap: '8px',
-                        alignItems: 'center',
-                        background: '#ffffff',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '8px',
-                        padding: '8px 10px',
-                        marginBottom: '6px',
-                      }}
+                      className="bulk-grid-row"
                     >
                       <input
                         type="text"
@@ -1208,39 +1126,45 @@ export default function Staff() {
                         onChange={(e) => handleBulkRowChange(idx, 'staffName', e.target.value)}
                         style={{ height: '36px', fontSize: '0.85rem' }}
                       />
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        className="form-input"
-                        placeholder="0"
-                        value={row.quantity}
-                        onChange={(e) => handleBulkRowChange(idx, 'quantity', e.target.value)}
-                        style={{ height: '36px', fontSize: '0.85rem' }}
-                      />
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        className="form-input"
-                        placeholder="0"
-                        value={row.price}
-                        onChange={(e) => handleBulkRowChange(idx, 'price', e.target.value)}
-                        style={{ height: '36px', fontSize: '0.85rem' }}
-                      />
-                      <div style={{ textAlign: 'right', paddingRight: '6px' }}>
-                        <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0b5394' }}>
-                          {formatCurrency(rowTotal)}
-                        </span>
+                      <div className="bulk-row-fields">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className="form-input"
+                          placeholder={t('weightKg') || "Weight (KG)"}
+                          value={row.quantity}
+                          onChange={(e) => handleBulkRowChange(idx, 'quantity', e.target.value)}
+                          style={{ height: '36px', fontSize: '0.85rem' }}
+                        />
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className="form-input"
+                          placeholder={t('ratePerKg') || "Rate (₹/KG)"}
+                          value={row.price}
+                          onChange={(e) => handleBulkRowChange(idx, 'price', e.target.value)}
+                          style={{ height: '36px', fontSize: '0.85rem' }}
+                        />
                       </div>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        style={{ padding: '4px', color: '#ef4444', width: '28px' }}
-                        onClick={() => handleRemoveBulkRow(idx)}
-                      >
-                        ✕
-                      </button>
+                      <div className="bulk-row-total-bar">
+                        <span style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 700 }}>Total:</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0b5394' }}>
+                            {formatCurrency(rowTotal)}
+                          </span>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            style={{ padding: '4px', color: '#ef4444', width: '28px' }}
+                            onClick={() => handleRemoveBulkRow(idx)}
+                            title="Remove worker"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   );
                 })}
@@ -1356,19 +1280,15 @@ export default function Staff() {
           )}
 
           {/* Control Bar & Action Buttons (Identical to Ice and Wastage trackers) */}
+          {/* Control Bar & Action Buttons (Identical to Ice and Wastage trackers) */}
           <div
-            className="card"
+            className="card staff-control-bar"
             style={{
               padding: '14px 18px',
               marginBottom: '18px',
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '12px',
-              justifyContent: 'space-between',
-              alignItems: 'center',
             }}
           >
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', flex: 1, minWidth: '280px' }}>
+            <div className="staff-control-left">
               {/* Quick Date Pills */}
               <div style={{ display: 'flex', gap: '4px', background: '#f1f5f9', padding: '3px', borderRadius: '8px' }}>
                 {[
@@ -1453,7 +1373,7 @@ export default function Staff() {
               </select>
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div className="staff-control-right">
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
