@@ -961,9 +961,9 @@ export default function Staff() {
             const periodLabel = dateFilter === 'today' ? "Today's" : dateFilter === 'yesterday' ? "Yesterday's" : dateFilter === 'week' ? '7-Day' : dateFilter === 'month' ? "This Month's" : (dateFilter === 'all' && !dateFrom) ? 'All-Time' : 'Filtered';
             const badgeLabel = dateFilter === 'today' ? 'Today' : dateFilter === 'yesterday' ? 'Yesterday' : dateFilter === 'week' ? '7 Days' : dateFilter === 'month' ? 'Month' : (dateFilter === 'all' && !dateFrom) ? 'All Time' : 'Custom';
             return (
-          <div className="dashboard-stats-grid" style={{ marginBottom: '20px' }}>
+          <div className="staff-kpi-grid" style={{ marginBottom: '20px' }}>
             {/* Period Workers */}
-            <div className="stat-card-compact" style={{ borderLeft: '4px solid #0b5394' }}>
+            <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0b5394' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                   {periodLabel} Workers
@@ -980,7 +980,7 @@ export default function Staff() {
             </div>
 
             {/* Period Weight Processed */}
-            <div className="stat-card-compact" style={{ borderLeft: '4px solid #0891b2' }}>
+            <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0891b2' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                   {periodLabel} Processed
@@ -997,7 +997,7 @@ export default function Staff() {
             </div>
 
             {/* Period Total Wages */}
-            <div className="stat-card-compact" style={{ borderLeft: '4px solid #16a34a' }}>
+            <div className="staff-kpi-card" style={{ borderLeft: '4px solid #16a34a' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                   {periodLabel} Wages
@@ -1013,7 +1013,7 @@ export default function Staff() {
             </div>
 
             {/* Period Outstanding Wages to Pay */}
-            <div className="stat-card-compact" style={{ borderLeft: '4px solid #ea580c' }}>
+            <div className="staff-kpi-card" style={{ borderLeft: '4px solid #ea580c' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                   {periodLabel} Pending

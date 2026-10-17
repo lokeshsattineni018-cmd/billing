@@ -295,9 +295,9 @@ export default function WastageTracker() {
         const periodLabel = dateFilter === 'today' || (dateFilter === 'all' && !dateFrom) ? "Today's" : dateFilter === 'yesterday' ? "Yesterday's" : dateFilter === 'week' ? '7-Day' : dateFilter === 'month' ? "This Month's" : 'Filtered';
         const badgeLabel = dateFilter === 'today' || (dateFilter === 'all' && !dateFrom) ? 'Today' : dateFilter === 'yesterday' ? 'Yesterday' : dateFilter === 'week' ? '7 Days' : dateFilter === 'month' ? 'Month' : 'Custom';
         return (
-      <div className="dashboard-stats-grid" style={{ marginBottom: '20px' }}>
+      <div className="staff-kpi-grid" style={{ marginBottom: '20px' }}>
         {/* Period Wastage Sold (Boxes) */}
-        <div className="stat-card-compact" style={{ borderLeft: '4px solid #16a34a' }}>
+        <div className="staff-kpi-card" style={{ borderLeft: '4px solid #16a34a' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
               {periodLabel} Prawn Head Sold
@@ -314,7 +314,7 @@ export default function WastageTracker() {
         </div>
 
         {/* Period Wastage Revenue */}
-        <div className="stat-card-compact" style={{ borderLeft: '4px solid #059669' }}>
+        <div className="staff-kpi-card" style={{ borderLeft: '4px solid #059669' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
               {periodLabel} Revenue
@@ -330,7 +330,7 @@ export default function WastageTracker() {
         </div>
 
         {/* Average Rate / Box */}
-        <div className="stat-card-compact" style={{ borderLeft: '4px solid #0b5394' }}>
+        <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0b5394' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
               {periodLabel} Selling Rate
@@ -346,7 +346,7 @@ export default function WastageTracker() {
         </div>
 
         {/* Total Wastage Sales Income */}
-        <div className="stat-card-compact" style={{ borderLeft: '4px solid #8b5cf6' }}>
+        <div className="staff-kpi-card" style={{ borderLeft: '4px solid #8b5cf6' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
               Total Wastage Sales

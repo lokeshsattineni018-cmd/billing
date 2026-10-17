@@ -316,9 +316,9 @@ export default function IceTracker() {
       <Toast toast={toast} />
 
       {/* KPI Summary Cards */}
-      <div className="dashboard-stats-grid" style={{ marginBottom: '20px' }}>
+      <div className="staff-kpi-grid" style={{ marginBottom: '20px' }}>
         {/* Period Ice Blocks */}
-        <div className="stat-card-compact" style={{ borderLeft: '4px solid #0284c7' }}>
+        <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0284c7' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
               {periodLabel} Ice Blocks
@@ -335,7 +335,7 @@ export default function IceTracker() {
         </div>
 
         {/* Period Ice Cost */}
-        <div className="stat-card-compact" style={{ borderLeft: '4px solid #0891b2' }}>
+        <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0891b2' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
               {periodLabel} Ice Cost
@@ -351,7 +351,7 @@ export default function IceTracker() {
         </div>
 
         {/* Average Rate / Block */}
-        <div className="stat-card-compact" style={{ borderLeft: '4px solid #6366f1' }}>
+        <div className="staff-kpi-card" style={{ borderLeft: '4px solid #6366f1' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
               {periodLabel} Rate / Block
@@ -367,7 +367,7 @@ export default function IceTracker() {
         </div>
 
         {/* Total Historical Ice Spend */}
-        <div className="stat-card-compact" style={{ borderLeft: '4px solid #d97706' }}>
+        <div className="staff-kpi-card" style={{ borderLeft: '4px solid #d97706' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
               Total Ice Expense

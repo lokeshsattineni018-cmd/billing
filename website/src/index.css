@@ -1744,90 +1744,114 @@ a:hover {
 
   .dashboard-stats-grid {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 8px !important;
-    margin-bottom: 14px !important;
+    gap: 12px !important;
+    margin-bottom: 18px !important;
   }
 
   .stat-card-compact {
-    padding: 10px 12px !important;
-    border-radius: 12px !important;
-    border-left-width: 3px !important;
-    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04) !important;
+    padding: 14px 14px !important;
+    border-radius: 14px !important;
   }
 
   .stat-card-compact.stat-hero {
     grid-column: span 2 !important;
-    padding: 12px 14px !important;
+    padding: 16px 18px !important;
     background: #ffffff !important;
     border: 1.5px solid #dbeafe !important;
-    box-shadow: 0 2px 8px rgba(11, 83, 148, 0.05) !important;
+    box-shadow: 0 4px 12px rgba(11, 83, 148, 0.05) !important;
   }
 
   .stat-card-compact.stat-hero .stat-value {
-    font-size: 1.35rem !important;
+    font-size: 1.55rem !important;
     font-weight: 900 !important;
   }
 
   .stat-card-compact .stat-label {
-    font-size: 0.68rem !important;
-    letter-spacing: 0.3px !important;
+    font-size: 0.72rem !important;
+    letter-spacing: 0.4px !important;
   }
 
   .stat-card-compact .stat-value {
-    font-size: 1.15rem !important;
-    margin-top: 2px !important;
+    font-size: 1.28rem !important;
+    margin-top: 3px !important;
   }
 
   .stat-card-compact .stat-icon {
-    width: 28px !important;
-    height: 28px !important;
-    border-radius: 8px !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 9px !important;
   }
 
   .stat-card-compact .stat-footer {
-    margin-top: 6px !important;
-    padding-top: 6px !important;
-    font-size: 0.68rem !important;
-  }
-
-  /* Compact header row on phone */
-  .stat-card-compact > div:first-child {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-  }
-
-  .stat-card-compact > div:first-child span:first-child {
-    font-size: 0.68rem !important;
-    letter-spacing: 0.2px !important;
-  }
-
-  .stat-card-compact > div:first-child .badge {
-    font-size: 0.62rem !important;
-    padding: 1px 6px !important;
-  }
-
-  /* Compact value row on phone */
-  .stat-card-compact > div:nth-child(2) {
-    font-size: 1.18rem !important;
-    margin-top: 2px !important;
-    line-height: 1.2 !important;
-  }
-
-  /* Compact/subtle description row on phone to save massive space */
-  .stat-card-compact > div:last-child {
-    font-size: 0.68rem !important;
-    margin-top: 3px !important;
-    opacity: 0.85 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+    margin-top: 10px !important;
+    padding-top: 8px !important;
+    font-size: 0.72rem !important;
   }
 
   /* Hide elements on mobile phones */
   .hide-on-phone,
   .hide-on-mobile {
     display: none !important;
+  }
+}
+
+/* ── Staff Specific KPI Cards (Scope only to Staff subpages) ── */
+.staff-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.staff-kpi-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 18px 20px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .staff-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .staff-kpi-card {
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04) !important;
+  }
+
+  .staff-kpi-card > div:first-child span:first-child {
+    font-size: 0.68rem !important;
+    letter-spacing: 0.2px !important;
+  }
+
+  .staff-kpi-card > div:first-child .badge {
+    font-size: 0.62rem !important;
+    padding: 1px 6px !important;
+  }
+
+  .staff-kpi-card > div:nth-child(2) {
+    font-size: 1.15rem !important;
+    margin-top: 2px !important;
+    line-height: 1.2 !important;
+  }
+
+  .staff-kpi-card > div:last-child {
+    font-size: 0.68rem !important;
+    margin-top: 3px !important;
+    opacity: 0.85 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 }
 
