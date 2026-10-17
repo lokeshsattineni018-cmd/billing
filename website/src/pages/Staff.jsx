@@ -860,7 +860,7 @@ export default function Staff() {
       <div className="staff-tabs-nav">
         <button
           type="button"
-          className="staff-tab-btn"
+          className={`staff-tab-btn ${activeTab === 'entries' ? 'active' : ''}`}
           onClick={() => setActiveTab('entries')}
           style={{
             borderBottom: activeTab === 'entries' ? '3px solid #0b5394' : '3px solid transparent',
@@ -883,7 +883,7 @@ export default function Staff() {
 
         <button
           type="button"
-          className="staff-tab-btn"
+          className={`staff-tab-btn ${activeTab === 'ice' ? 'active' : ''}`}
           onClick={() => setActiveTab('ice')}
           style={{
             borderBottom: activeTab === 'ice' ? '3px solid #0284c7' : '3px solid transparent',
@@ -895,7 +895,7 @@ export default function Staff() {
 
         <button
           type="button"
-          className="staff-tab-btn"
+          className={`staff-tab-btn ${activeTab === 'wastage' ? 'active' : ''}`}
           onClick={() => setActiveTab('wastage')}
           style={{
             borderBottom: activeTab === 'wastage' ? '3px solid #16a34a' : '3px solid transparent',
@@ -907,7 +907,7 @@ export default function Staff() {
 
         <button
           type="button"
-          className="staff-tab-btn"
+          className={`staff-tab-btn ${activeTab === 'accounts' ? 'active' : ''}`}
           onClick={() => setActiveTab('accounts')}
           style={{
             borderBottom: activeTab === 'accounts' ? '3px solid #0b5394' : '3px solid transparent',
@@ -930,7 +930,7 @@ export default function Staff() {
 
         <button
           type="button"
-          className="staff-tab-btn"
+          className={`staff-tab-btn ${activeTab === 'net' ? 'active' : ''}`}
           onClick={() => setActiveTab('net')}
           style={{
             borderBottom: activeTab === 'net' ? '3px solid #7c3aed' : '3px solid transparent',
@@ -942,7 +942,7 @@ export default function Staff() {
 
         <button
           type="button"
-          className="staff-tab-btn"
+          className={`staff-tab-btn ${activeTab === 'calendar' ? 'active' : ''}`}
           onClick={() => setActiveTab('calendar')}
           style={{
             borderBottom: activeTab === 'calendar' ? '3px solid #16a34a' : '3px solid transparent',
@@ -960,74 +960,110 @@ export default function Staff() {
           {(() => {
             const periodLabel = dateFilter === 'today' ? "Today's" : dateFilter === 'yesterday' ? "Yesterday's" : dateFilter === 'week' ? '7-Day' : dateFilter === 'month' ? "This Month's" : (dateFilter === 'all' && !dateFrom) ? 'All-Time' : 'Filtered';
             const badgeLabel = dateFilter === 'today' ? 'Today' : dateFilter === 'yesterday' ? 'Yesterday' : dateFilter === 'week' ? '7 Days' : dateFilter === 'month' ? 'Month' : (dateFilter === 'all' && !dateFrom) ? 'All Time' : 'Custom';
+            const totalWages = summary?.today?.todayWages || 0;
+            const workersCount = summary?.today?.todayWorkersCount || 0;
+            const processedKg = summary?.today?.todayKg || 0;
+            const pendingWages = dateFilter === 'all' && !dateFrom ? summary?.overall?.totalPending || 0 : summary?.today?.periodPending || 0;
+
             return (
-          <div className="staff-kpi-grid" style={{ marginBottom: '20px' }}>
-            {/* Period Workers */}
-            <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0b5394' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-                  {periodLabel} Workers
-                </span>
-                <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{badgeLabel}</span>
-              </div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
-                {summary?.today?.todayWorkersCount || 0}
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b', marginLeft: '6px' }}>present</span>
-              </div>
-              <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-                Total {summary?.overall?.totalWorkers || 0} active workers in registry
-              </div>
-            </div>
+              <>
+                {/* Clean Mobile Glance Hero */}
+                <div className="staff-mobile-glance staff-glance-hero">
+                  <div className="staff-glance-top">
+                    <div>
+                      <div className="staff-glance-title">{periodLabel} Total Wages</div>
+                      <div className="staff-glance-metric-lg">{formatCurrency(totalWages)}</div>
+                    </div>
+                    <span className="staff-glance-pill">{badgeLabel}</span>
+                  </div>
 
-            {/* Period Weight Processed */}
-            <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0891b2' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-                  {periodLabel} Processed
-                </span>
-                <ScaleIcon size={16} color="#0891b2" />
-              </div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0891b2', marginTop: '6px' }}>
-                {(summary?.today?.todayKg || 0).toLocaleString('en-IN')}
-                <span style={{ fontSize: '0.9rem', fontWeight: 700, marginLeft: '4px' }}>kg</span>
-              </div>
-              <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-                Lifetime: {(summary?.overall?.totalKg || 0).toLocaleString('en-IN')} kg
-              </div>
-            </div>
+                  <div className="staff-glance-grid">
+                    <div className="staff-glance-subcol">
+                      <span className="staff-glance-subcol-label">Workers</span>
+                      <span className="staff-glance-subcol-val">{workersCount} <span style={{ fontSize: '0.72rem', fontWeight: 600, opacity: 0.8 }}>present</span></span>
+                    </div>
+                    <div className="staff-glance-subcol">
+                      <span className="staff-glance-subcol-label">Processed</span>
+                      <span className="staff-glance-subcol-val">{processedKg.toLocaleString('en-IN')} <span style={{ fontSize: '0.72rem', fontWeight: 600, opacity: 0.8 }}>kg</span></span>
+                    </div>
+                    <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
+                      <span className="staff-glance-subcol-label">To Pay</span>
+                      <span className="staff-glance-subcol-val" style={{ color: '#fed7aa' }}>{formatCurrency(pendingWages)}</span>
+                    </div>
+                  </div>
+                </div>
 
-            {/* Period Total Wages */}
-            <div className="staff-kpi-card" style={{ borderLeft: '4px solid #16a34a' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-                  {periodLabel} Wages
-                </span>
-                <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>Earned</span>
-              </div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
-                {formatCurrency(summary?.today?.todayWages || 0)}
-              </div>
-              <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-                Total Earned: {formatCurrency(summary?.overall?.totalWages || 0)}
-              </div>
-            </div>
+                {/* Desktop Detailed KPI Grid */}
+                <div className="staff-desktop-stats">
+                  <div className="staff-kpi-grid" style={{ marginBottom: '20px' }}>
+                    {/* Period Workers */}
+                    <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0b5394' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                          {periodLabel} Workers
+                        </span>
+                        <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{badgeLabel}</span>
+                      </div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
+                        {workersCount}
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b', marginLeft: '6px' }}>present</span>
+                      </div>
+                      <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+                        Total {summary?.overall?.totalWorkers || 0} active workers in registry
+                      </div>
+                    </div>
 
-            {/* Period Outstanding Wages to Pay */}
-            <div className="staff-kpi-card" style={{ borderLeft: '4px solid #ea580c' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-                  {periodLabel} Pending
-                </span>
-                <span className="badge badge-amber" style={{ fontSize: '0.7rem' }}>To Pay</span>
-              </div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '6px' }}>
-                {formatCurrency(dateFilter === 'all' && !dateFrom ? summary?.overall?.totalPending || 0 : summary?.today?.periodPending || 0)}
-              </div>
-              <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
-                Paid in Period: {formatCurrency(dateFilter === 'all' && !dateFrom ? summary?.overall?.totalPaid || 0 : summary?.today?.periodPaid || 0)} • Due: {formatCurrency(summary?.overall?.totalPending || 0)}
-              </div>
-            </div>
-          </div>
+                    {/* Period Weight Processed */}
+                    <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0891b2' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                          {periodLabel} Processed
+                        </span>
+                        <ScaleIcon size={16} color="#0891b2" />
+                      </div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0891b2', marginTop: '6px' }}>
+                        {processedKg.toLocaleString('en-IN')}
+                        <span style={{ fontSize: '0.9rem', fontWeight: 700, marginLeft: '4px' }}>kg</span>
+                      </div>
+                      <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+                        Lifetime: {(summary?.overall?.totalKg || 0).toLocaleString('en-IN')} kg
+                      </div>
+                    </div>
+
+                    {/* Period Total Wages */}
+                    <div className="staff-kpi-card" style={{ borderLeft: '4px solid #16a34a' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                          {periodLabel} Wages
+                        </span>
+                        <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>Earned</span>
+                      </div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
+                        {formatCurrency(totalWages)}
+                      </div>
+                      <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+                        Total Earned: {formatCurrency(summary?.overall?.totalWages || 0)}
+                      </div>
+                    </div>
+
+                    {/* Period Outstanding Wages to Pay */}
+                    <div className="staff-kpi-card" style={{ borderLeft: '4px solid #ea580c' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                          {periodLabel} Pending
+                        </span>
+                        <span className="badge badge-amber" style={{ fontSize: '0.7rem' }}>To Pay</span>
+                      </div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '6px' }}>
+                        {formatCurrency(pendingWages)}
+                      </div>
+                      <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+                        Paid in Period: {formatCurrency(dateFilter === 'all' && !dateFrom ? summary?.overall?.totalPaid || 0 : summary?.today?.periodPaid || 0)} • Due: {formatCurrency(summary?.overall?.totalPending || 0)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
             );
           })()}
 
@@ -1416,46 +1452,44 @@ export default function Staff() {
               </div>
             ) : (
               <>
-                {/* Mobile Cards View (Visible on Mobile & Tablet) */}
-                <div className="mobile-bills-list" style={{ padding: '12px' }}>
+                {/* Mobile Cards View (Clean Modern Layout for Phone) */}
+                <div className="mobile-bills-list" style={{ padding: '10px 8px' }}>
                   {entries.map((entry, index) => (
-                    <div key={entry._id} className="mobile-bill-card">
-                      {/* Header */}
-                      <div className="mobile-bill-header">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div key={entry._id} className="worker-clean-card">
+                      {/* Clean Top Header */}
+                      <div className="worker-clean-header">
+                        <div className="worker-clean-left">
                           {entry.paymentStatus !== 'Paid' && (
                             <input
                               type="checkbox"
                               checked={selectedEntryIds.includes(entry._id)}
                               onChange={() => handleToggleSelectEntry(entry._id)}
-                              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                             />
                           )}
-                          <span style={{ fontWeight: 800, fontSize: '0.98rem', color: '#0b5394' }}>
-                            {entry.staffName}
-                          </span>
-                          {entry.isOffline && (
-                            <span style={{ fontSize: '0.68rem', background: '#fef3c7', color: '#92400e', padding: '2px 5px', borderRadius: '4px', fontWeight: 800 }}>
-                              ⚡ Offline
+                          <div className="worker-avatar">
+                            {(entry.staffName || 'W').charAt(0).toUpperCase()}
+                          </div>
+                          <div className="worker-name-block">
+                            <span className="worker-name">
+                              {entry.staffName}
                             </span>
-                          )}
-                          <span
-                            style={{
-                              fontSize: '0.72rem',
-                              background: '#f1f5f9',
-                              padding: '2px 6px',
-                              borderRadius: '4px',
-                              color: '#475569',
-                              fontWeight: 600,
-                            }}
-                          >
-                            {entry.workType?.split('/')[0]?.trim() || 'Work'}
-                          </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
+                              <span className="worker-category-tag">
+                                {entry.workType?.split('/')[0]?.trim() || 'Work'}
+                              </span>
+                              {entry.isOffline && (
+                                <span style={{ fontSize: '0.65rem', background: '#fef3c7', color: '#92400e', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
+                                  ⚡ Offline
+                                </span>
+                              )}
+                              <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>• {formatDate(entry.date)}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '0.76rem', color: '#94a3b8', fontWeight: 600 }}>
-                            {formatDate(entry.date)}
-                          </span>
+
+                        <div className="worker-clean-right">
+                          <span className="worker-wage-val">{formatCurrency(entry.totalAmount)}</span>
                           <span
                             className={`badge ${
                               entry.paymentStatus === 'Paid'
@@ -1464,7 +1498,7 @@ export default function Staff() {
                                 ? 'badge-blue'
                                 : 'badge-amber'
                             }`}
-                            style={{ fontSize: '0.7rem', fontWeight: 800, padding: '2px 8px' }}
+                            style={{ fontSize: '0.68rem', fontWeight: 800, padding: '2px 7px', marginTop: '3px' }}
                           >
                             {entry.paymentStatus === 'Partial'
                               ? `Partial (₹${entry.amountPaid || 0})`
@@ -1473,50 +1507,50 @@ export default function Staff() {
                         </div>
                       </div>
 
-                      {/* Body */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: '8px', padding: '6px 0' }}>
-                        <div style={{ background: '#f8fafc', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
-                          <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>WEIGHT</div>
-                          <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                            {entry.quantity} kg
-                          </div>
-                        </div>
-
-                        <div style={{ background: '#f8fafc', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
-                          <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>RATE</div>
-                          <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                            ₹{entry.price}/kg
-                          </div>
-                        </div>
-
-                        <div style={{ background: '#eff6ff', padding: '8px', borderRadius: '6px', textAlign: 'center', border: '1px solid #bfdbfe' }}>
-                          <div style={{ fontSize: '0.7rem', color: '#1e40af', fontWeight: 700 }}>TOTAL WAGE</div>
-                          <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0b5394' }}>
-                            {formatCurrency(entry.totalAmount)}
-                          </div>
-                        </div>
+                      {/* Clean Details Strip */}
+                      <div className="worker-clean-details-bar">
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Weight:</span>
+                          <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>{entry.quantity} kg</strong>
+                        </span>
+                        <span style={{ color: '#cbd5e1' }}>|</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Rate:</span>
+                          <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>₹{entry.price}/kg</strong>
+                        </span>
+                        {entry.paymentStatus !== 'Paid' && (
+                          <>
+                            <span style={{ color: '#cbd5e1' }}>|</span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ color: '#b45309', fontSize: '0.72rem' }}>Due:</span>
+                              <strong style={{ color: '#b45309', fontSize: '0.86rem' }}>
+                                ₹{Math.max(0, (entry.totalAmount || 0) - (entry.amountPaid || 0)).toFixed(0)}
+                              </strong>
+                            </span>
+                          </>
+                        )}
                       </div>
 
                       {entry.notes && (
-                        <div style={{ fontSize: '0.76rem', color: '#64748b', fontStyle: 'italic', padding: '2px 0' }}>
+                        <div style={{ fontSize: '0.74rem', color: '#64748b', fontStyle: 'italic', padding: '0 4px' }}>
                           "{entry.notes}"
                         </div>
                       )}
 
-                      {/* Action Buttons */}
-                      <div className="mobile-bill-actions">
+                      {/* Clean Mobile Action Buttons */}
+                      <div className="worker-clean-actions">
                         <button
                           type="button"
                           className="btn btn-secondary btn-sm"
                           onClick={() => handlePrintEntryBill(entry, index)}
-                          style={{ color: '#7c3aed', borderColor: '#ddd6fe', fontWeight: 800, background: '#f5f3ff' }}
+                          style={{ color: '#7c3aed', borderColor: '#ddd6fe', fontWeight: 700, background: '#f5f3ff', flex: '0 0 auto', padding: '0 12px' }}
                         >
                           <PrintIcon size={14} color="#7c3aed" />
                           <span>Bill</span>
                         </button>
 
                         <button
-                          className={`btn btn-sm ${entry.paymentStatus === 'Paid' ? 'btn-ghost' : 'btn-primary'}`}
+                          className={`btn btn-sm btn-pay ${entry.paymentStatus === 'Paid' ? 'btn-ghost' : 'btn-primary'}`}
                           style={
                             entry.paymentStatus === 'Paid'
                               ? { color: '#059669', background: '#ecfdf5', border: '1px solid #a7f3d0' }
@@ -1532,29 +1566,30 @@ export default function Staff() {
                               ? 'Paid ✓'
                               : entry.paymentStatus === 'Partial'
                               ? `Pay Due (₹${Math.max(0, (entry.totalAmount || 0) - (entry.amountPaid || 0)).toFixed(0)})`
-                              : 'Pay'}
+                              : 'Pay Now'}
                           </span>
                         </button>
 
                         {canEditDelete && (
-                          <>
+                          <div style={{ display: 'flex', gap: '4px', marginLeft: 'auto' }}>
                             <button
                               className="btn btn-secondary btn-sm"
+                              style={{ width: '34px', padding: 0, justifyContent: 'center' }}
                               onClick={() => handleOpenEdit(entry)}
+                              title="Edit"
                             >
                               <EditIcon size={14} />
-                              <span>Edit</span>
                             </button>
 
                             <button
                               className="btn btn-ghost btn-sm"
-                              style={{ color: '#ef4444' }}
+                              style={{ color: '#ef4444', width: '34px', padding: 0, justifyContent: 'center' }}
                               onClick={() => handlePromptDelete(entry)}
+                              title="Delete"
                             >
                               <TrashIcon size={14} color="#ef4444" />
-                              <span>Delete</span>
                             </button>
-                          </>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -1739,47 +1774,55 @@ export default function Staff() {
           ) : (
             <>
               {/* Mobile View for Accounts */}
-              <div className="mobile-bills-list" style={{ padding: '12px' }}>
+              <div className="mobile-bills-list" style={{ padding: '10px 8px' }}>
                 {summary.staffAccounts.map((acc) => (
-                  <div key={acc.staffName} className="mobile-bill-card" style={{ borderLeft: acc.pendingBalance > 0 ? '4px solid #ea580c' : '4px solid #16a34a' }}>
-                    <div className="mobile-bill-header">
-                      <div>
-                        <strong style={{ fontSize: '1rem', color: '#0b5394' }}>{acc.staffName}</strong>
-                        <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>
-                          {acc.daysWorkedCount} days worked • {acc.totalEntries} sessions
+                  <div key={acc.staffName} className="worker-clean-card" style={{ borderLeft: acc.pendingBalance > 0 ? '4px solid #ea580c' : '4px solid #16a34a' }}>
+                    <div className="worker-clean-header">
+                      <div className="worker-clean-left">
+                        <div className="worker-avatar" style={{ background: acc.pendingBalance > 0 ? '#fff7ed' : '#f0fdf4', color: acc.pendingBalance > 0 ? '#c2410c' : '#15803d', border: acc.pendingBalance > 0 ? '1px solid #fed7aa' : '1px solid #bbf7d0' }}>
+                          {(acc.staffName || 'W').charAt(0).toUpperCase()}
+                        </div>
+                        <div className="worker-name-block">
+                          <strong className="worker-name">{acc.staffName}</strong>
+                          <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>
+                            {acc.daysWorkedCount} days worked • {acc.totalEntries} entries
+                          </div>
                         </div>
                       </div>
-                      <span
-                        className={`badge ${acc.pendingBalance > 0 ? 'badge-amber' : 'badge-green'}`}
-                        style={{ fontWeight: 800, fontSize: '0.72rem' }}
-                      >
-                        {acc.pendingBalance > 0 ? `Due: ${formatCurrency(acc.pendingBalance)}` : 'Settled ✓'}
+
+                      <div className="worker-clean-right">
+                        <span className="worker-wage-val">{formatCurrency(acc.totalEarned)}</span>
+                        <span
+                          className={`badge ${acc.pendingBalance > 0 ? 'badge-amber' : 'badge-green'}`}
+                          style={{ fontWeight: 800, fontSize: '0.68rem', padding: '2px 7px', marginTop: '3px' }}
+                        >
+                          {acc.pendingBalance > 0 ? `Due: ${formatCurrency(acc.pendingBalance)}` : 'Settled ✓'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="worker-clean-details-bar">
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Total Weight:</span>
+                        <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>{acc.totalKg} kg</strong>
+                      </span>
+                      <span style={{ color: '#cbd5e1' }}>|</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Avg Rate:</span>
+                        <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>₹{acc.avgRate}/kg</strong>
+                      </span>
+                      <span style={{ color: '#cbd5e1' }}>|</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ color: '#16a34a', fontSize: '0.72rem' }}>Paid:</span>
+                        <strong style={{ color: '#16a34a', fontSize: '0.86rem' }}>{formatCurrency(acc.totalPaid)}</strong>
                       </span>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '6px 0' }}>
-                      <div style={{ background: '#f8fafc', padding: '8px 10px', borderRadius: '6px' }}>
-                        <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>TOTAL PROCESSED</div>
-                        <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                          {acc.totalKg} kg
-                        </div>
-                        <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Avg ₹{acc.avgRate}/kg</div>
-                      </div>
-
-                      <div style={{ background: '#f8fafc', padding: '8px 10px', borderRadius: '6px' }}>
-                        <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>TOTAL EARNED</div>
-                        <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0b5394' }}>
-                          {formatCurrency(acc.totalEarned)}
-                        </div>
-                        <div style={{ fontSize: '0.68rem', color: '#16a34a' }}>Paid: {formatCurrency(acc.totalPaid)}</div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '6px' }}>
+                    <div className="worker-clean-actions">
                       <button
                         className="btn btn-secondary btn-sm"
                         onClick={() => handleViewWorkerHistory(acc.staffName)}
-                        style={{ fontSize: '0.8rem', fontWeight: 700 }}
+                        style={{ flex: 1, fontSize: '0.8rem', fontWeight: 700, height: '36px' }}
                       >
                         View Entries →
                       </button>
@@ -1787,6 +1830,7 @@ export default function Staff() {
                         className="btn btn-sm"
                         onClick={() => handlePrintWorkerStatement(acc.staffName)}
                         style={{
+                          flex: 1,
                           fontSize: '0.8rem',
                           fontWeight: 800,
                           background: '#f5f3ff',
@@ -1795,10 +1839,11 @@ export default function Staff() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          gap: '4px',
+                          gap: '6px',
+                          height: '36px',
                         }}
                       >
-                        <PrintIcon size={14} color="#7c3aed" /> Bill
+                        <PrintIcon size={14} color="#7c3aed" /> Wage Statement
                       </button>
                     </div>
                   </div>

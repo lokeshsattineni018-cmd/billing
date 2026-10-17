@@ -1269,11 +1269,13 @@ a:hover {
 
 /* ── Mobile Bills Cards & Bottom Navigation Bar ── */
 .mobile-bills-list,
-.mobile-items-list {
+.mobile-items-list,
+.staff-mobile-glance {
   display: none;
 }
 
-.desktop-only-table {
+.desktop-only-table,
+.staff-desktop-stats {
   display: block;
 }
 
@@ -1283,6 +1285,13 @@ a:hover {
 
 /* Strict mobile lock to prevent zooming out */
 @media (max-width: 768px) {
+  .staff-desktop-stats {
+    display: none !important;
+  }
+
+  .staff-mobile-glance {
+    display: block !important;
+  }
   html, body {
     overflow-x: hidden !important;
     width: 100% !important;
@@ -2389,25 +2398,136 @@ a:hover {
 }
 
 @media (max-width: 768px) {
+  /* ── Staff Clean Mobile Design System ── */
+  .staff-mobile-clean {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
   .staff-tabs-nav {
-    gap: 6px;
-    margin-bottom: 14px;
-    padding-bottom: 6px;
+    display: flex !important;
+    gap: 6px !important;
+    background: #f1f5f9 !important;
+    padding: 4px !important;
+    border-radius: 12px !important;
+    border-bottom: none !important;
+    margin-bottom: 12px !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+
+  .staff-tabs-nav::-webkit-scrollbar {
+    display: none !important;
   }
 
   .staff-tab-btn {
-    padding: 8px 12px;
-    font-size: 0.8rem;
-    border-radius: 8px;
+    padding: 7px 12px !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    border-radius: 9px !important;
+    border: none !important;
+    color: #64748b !important;
+    background: transparent !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    flex-shrink: 0 !important;
+    box-shadow: none !important;
   }
 
+  .staff-tab-btn.active {
+    background: #ffffff !important;
+    color: #0b5394 !important;
+    font-weight: 800 !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08) !important;
+  }
+
+  /* Clean Staff Hero Glance Card */
+  .staff-glance-hero {
+    background: linear-gradient(135deg, #0b5394 0%, #1e3a8a 100%);
+    border-radius: 16px;
+    padding: 16px;
+    color: #ffffff;
+    box-shadow: 0 6px 20px -4px rgba(11, 83, 148, 0.25);
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .staff-glance-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .staff-glance-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.85;
+  }
+
+  .staff-glance-metric-lg {
+    font-size: 1.6rem;
+    font-weight: 900;
+    line-height: 1.1;
+    margin-top: 3px;
+    color: #ffffff;
+  }
+
+  .staff-glance-pill {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+
+  .staff-glance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .staff-glance-subcol {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .staff-glance-subcol-label {
+    font-size: 0.64rem;
+    font-weight: 600;
+    opacity: 0.78;
+    text-transform: uppercase;
+  }
+
+  .staff-glance-subcol-val {
+    font-size: 0.96rem;
+    font-weight: 800;
+    margin-top: 2px;
+    color: #ffffff;
+  }
+
+  /* Control bar clean mobile styling */
   .staff-control-bar {
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 10px !important;
     padding: 12px 14px !important;
-    margin-bottom: 14px !important;
+    margin-bottom: 12px !important;
     border-radius: 14px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04) !important;
   }
 
   .staff-control-left {
@@ -2423,13 +2543,14 @@ a:hover {
   .staff-date-pills {
     display: flex !important;
     gap: 4px !important;
-    background: #f1f5f9 !important;
+    background: #f8fafc !important;
     padding: 3px !important;
     border-radius: 8px !important;
     overflow-x: auto !important;
     width: 100% !important;
     -webkit-overflow-scrolling: touch !important;
     scrollbar-width: none !important;
+    border: 1px solid #f1f5f9 !important;
   }
 
   .staff-date-pills::-webkit-scrollbar {
@@ -2475,7 +2596,7 @@ a:hover {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
   }
 
   .staff-control-right .btn-action {
@@ -2488,7 +2609,120 @@ a:hover {
     align-items: center !important;
     justify-content: center !important;
     gap: 6px !important;
+    border-radius: 10px !important;
+  }
+
+  /* Clean Worker Mobile Card */
+  .worker-clean-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .worker-clean-card:active {
+    transform: scale(0.99);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  }
+
+  .worker-clean-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .worker-clean-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .worker-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #0b5394;
+    font-weight: 800;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #dbeafe;
+  }
+
+  .worker-name-block {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .worker-name {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+  }
+
+  .worker-category-tag {
+    font-size: 0.72rem;
+    color: #64748b;
+    margin-top: 2px;
+  }
+
+  .worker-clean-right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .worker-wage-val {
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: #0b5394;
+    line-height: 1.2;
+  }
+
+  .worker-clean-details-bar {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    color: #475569;
+  }
+
+  .worker-clean-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding-top: 4px;
+    border-top: 1px dashed #f1f5f9;
+  }
+
+  .worker-clean-actions .btn {
     border-radius: 8px !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    height: 36px !important;
+    padding: 0 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+  }
+
+  .worker-clean-actions .btn-pay {
+    flex: 1.2 !important;
   }
 
   /* Bulk form mobile transformation: stacked card layout */
@@ -2523,4 +2757,5 @@ a:hover {
     border-top: 1px dashed #e2e8f0 !important;
   }
 }
+
 
