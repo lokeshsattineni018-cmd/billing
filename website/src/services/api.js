@@ -46,14 +46,12 @@ api.interceptors.response.use(
     // If it's a login attempt, pass the error to the form directly without reloading
     const isLoginRequest = error.config?.url?.includes('/auth/login');
     if (error.response?.status === 401 && !isLoginRequest) {
-      // Only force logout if the token is genuinely rejected by the server
-      const loginTime = localStorage.getItem('srsf_login_time');
-      const SESSION_MS = 7 * 24 * 60 * 60 * 1000;
-      const isSessionExpired = loginTime && (Date.now() - Number(loginTime)) > SESSION_MS;
       const serverMessage = error.response?.data?.message || '';
-      const isTokenInvalid = serverMessage.includes('expired') || serverMessage.includes('invalid') || serverMessage.includes('not authorized');
+      // Only clear credentials if the server explicitly states the session was revoked/logged out
+      const isExplicitSessionRejection = serverMessage.includes('Session expired or logged out');
 
-      if (isSessionExpired || isTokenInvalid) {
+      const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
+      if (isExplicitSessionRejection && isOnline) {
         localStorage.removeItem('srsf_token');
         localStorage.removeItem('srsf_user');
         localStorage.removeItem('srsf_login_time');

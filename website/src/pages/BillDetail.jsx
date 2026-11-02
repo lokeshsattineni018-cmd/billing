@@ -38,10 +38,10 @@ export default function BillDetail() {
   const [voiding, setVoiding] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
 
-  const isAdmin = user?.role === 'admin';
-  const canVoidBill = user?.role === 'admin' || user?.role === 'owner';
-  const canSeeSales = user?.role === 'owner' || user?.role === 'admin';
-  const canUpdateStatus = user?.role === 'owner' || user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'owner';
+  const canVoidBill = isAdmin;
+  const canSeeSales = isAdmin;
+  const canUpdateStatus = isAdmin;
   const { lang, t } = useLanguage();
 
   useEffect(() => {

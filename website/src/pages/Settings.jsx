@@ -20,8 +20,8 @@ export default function Settings() {
   const { user: currentUser, logout } = useAuth();
   const { t } = useLanguage();
   const { toast, showToast } = useToast();
-  const isAdmin = currentUser?.role === 'admin';
-  const isOwnerOrAdmin = currentUser?.role === 'owner' || currentUser?.role === 'admin';
+  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'owner';
+  const isOwnerOrAdmin = isAdmin;
 
   const [activeTab, setActiveTab] = useState('business'); // 'business' | 'users' | 'backup'
   const [notificationPerm, setNotificationPerm] = useState(getNotificationPermission());

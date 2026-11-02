@@ -52,7 +52,7 @@ function Sidebar({ onInstall, onLogout }) {
   const { user } = useAuth();
   const { lang, toggleLang, t } = useLanguage();
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'owner';
 
   const navItems = [
     { path: '/', label: t('dashboard'), icon: <DashboardIcon size={18} /> },
@@ -176,7 +176,7 @@ function AppLayout() {
   const { lang, toggleLang, t } = useLanguage();
   const navigate = useNavigate();
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'owner';
 
   const drawerNavItems = [
     { path: '/', label: t('dashboard'), icon: <DashboardIcon size={18} /> },

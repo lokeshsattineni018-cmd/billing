@@ -9,20 +9,12 @@ const { handleServerError } = require('../utils/errorTracker');
 
 const router = express.Router();
 
-// Generate JWT with secure secret and tokenVersion (Minimum 7 days session)
+// Generate JWT with secure secret and tokenVersion (Permanent session until explicit logout)
 const signToken = (id, tokenVersion = 0) => {
   const secret = getJwtSecret();
-  let expiresIn = '7d';
-  if (typeof process.env.JWT_EXPIRES_IN === 'string') {
-    const cleaned = process.env.JWT_EXPIRES_IN.replace(/['"]/g, '').trim();
-    // Do not allow short 1d/24h expiration that logs users out prematurely
-    if (/^\d+[smhdwy]?$/i.test(cleaned) && !/^(1d|24h|12h|1h)$/i.test(cleaned)) {
-      expiresIn = cleaned;
-    }
-  } else if (typeof process.env.JWT_EXPIRES_IN === 'number' && process.env.JWT_EXPIRES_IN > 0) {
-    expiresIn = process.env.JWT_EXPIRES_IN;
-  }
-  return jwt.sign({ id, tokenVersion }, secret, { expiresIn });
+  // 3650 days (10 years) — keep user logged in forever until they explicitly click sign out
+  const expiresIn = '3650d';
+  return jwt.sign({ id, tokenVersion: tokenVersion ?? 0 }, secret, { expiresIn });
 };
 
 /**
