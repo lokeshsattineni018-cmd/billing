@@ -27,8 +27,8 @@ export default function Dashboard() {
   const [loadingSummary, setLoadingSummary] = useState(false);
   const { toast, showToast } = useToast();
 
-  const isAdmin = user?.role === 'admin' || user?.role === 'owner';
-  const isOwnerOrAdmin = isAdmin;
+  const isAdmin = user?.role === 'admin';
+  const isOwnerOrAdmin = user?.role === 'owner' || user?.role === 'admin';
 
   const loadDashboard = useCallback(async (isSilent = false) => {
     if (!isSilent) setLoading(true);

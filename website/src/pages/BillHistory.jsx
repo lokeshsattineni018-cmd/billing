@@ -36,9 +36,9 @@ export default function BillHistory() {
   const [shareBill, setShareBill] = useState(null);
   const [downloadingPdfId, setDownloadingPdfId] = useState(null);
 
-  const isAdmin = user?.role === 'admin' || user?.role === 'owner';
-  const canSeeSales = isAdmin;
-  const canUpdateStatus = isAdmin;
+  const isAdmin = user?.role === 'admin';
+  const canSeeSales = user?.role === 'owner' || user?.role === 'admin';
+  const canUpdateStatus = user?.role === 'owner' || user?.role === 'admin';
 
   // Compute total quantity from items array, with fallback to bill.quantity
   const getTotalQuantity = (bill) => {
