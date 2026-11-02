@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { dashboardAPI } from '../services/api';
 import { formatCurrency } from '../utils/helpers';
 import CountUp from './CountUp';
@@ -13,7 +13,7 @@ import {
   StaffIcon,
 } from './Icons';
 
-export default function ProfitLossWidget() {
+function ProfitLossWidget() {
   const getTodayStr = () => new Date().toISOString().split('T')[0];
   const getFirstOfMonthStr = () => {
     const d = new Date();
@@ -28,6 +28,7 @@ export default function ProfitLossWidget() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [timelineOpen, setTimelineOpen] = useState(false);
+  const [staleData, setStaleData] = useState(false);
 
   const loadPnl = async (overrideParams) => {
     setLoading(true);
@@ -53,8 +54,11 @@ export default function ProfitLossWidget() {
       const finalParams = overrideParams ? { ...params, ...overrideParams } : params;
       const res = await dashboardAPI.getProfitLoss(finalParams);
       setData(res.data);
+      setStaleData(false);
     } catch (err) {
-      // Keep existing data on error
+      // Keep existing data on error but mark as stale
+      setStaleData(true);
+      if (import.meta.env.DEV) { console.warn('P&L fetch failed, showing stale data:', err); }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -184,6 +188,25 @@ export default function ProfitLossWidget() {
               >
                 {displayPeriodLabel()}
               </span>
+              {staleData && (
+                <span
+                  title="Could not refresh data. Showing cached values."
+                  style={{
+                    background: '#fffbeb',
+                    color: '#b45309',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    border: '1px solid #fde68a',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  ⚠️ Stale / Offline
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -379,7 +402,7 @@ export default function ProfitLossWidget() {
                 </div>
                 <div
                   className="staff-glance-metric-lg"
-                  style={{ color: isProfit ? '#16a34a' : '#dc2626' }}
+                  style={{ color: isProfit ? '#16a34a' : '#dc2626', whiteSpace: 'nowrap' }}
                 >
                   <CountUp value={Math.abs(pnl.netProfit)} isCurrency prefix={isProfit ? '+ ' : '- '} />
                 </div>
@@ -451,11 +474,11 @@ export default function ProfitLossWidget() {
             {/* 1. Total Revenue Card */}
             <div className="stat-card-compact">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
+                <div style={{ minWidth: 0, flex: 1, marginRight: '8px' }}>
                   <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     Total Revenue
                   </span>
-                  <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#059669', marginTop: '4px', letterSpacing: '-0.5px' }}>
+                  <div className="stat-value" style={{ fontSize: 'clamp(1.18rem, 1.45vw, 1.55rem)', fontWeight: 900, color: '#059669', marginTop: '4px', letterSpacing: '-0.5px', whiteSpace: 'nowrap' }}>
                     <CountUp value={revenue.totalRevenue} isCurrency />
                   </div>
                 </div>
@@ -491,11 +514,11 @@ export default function ProfitLossWidget() {
             {/* 2. Total Operating Costs Card */}
             <div className="stat-card-compact">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
+                <div style={{ minWidth: 0, flex: 1, marginRight: '8px' }}>
                   <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     Operating Expenses
                   </span>
-                  <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#c2410c', marginTop: '4px', letterSpacing: '-0.5px' }}>
+                  <div className="stat-value" style={{ fontSize: 'clamp(1.18rem, 1.45vw, 1.55rem)', fontWeight: 900, color: '#c2410c', marginTop: '4px', letterSpacing: '-0.5px', whiteSpace: 'nowrap' }}>
                     <CountUp value={expenses.totalExpenses} isCurrency />
                   </div>
                 </div>
@@ -531,18 +554,19 @@ export default function ProfitLossWidget() {
             {/* 3. Net Profit / Loss Card */}
             <div className="stat-card-compact">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
+                <div style={{ minWidth: 0, flex: 1, marginRight: '8px' }}>
                   <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     Net {isProfit ? 'Profit' : 'Loss'}
                   </span>
                   <div
                     className="stat-value"
                     style={{
-                      fontSize: '1.55rem',
+                      fontSize: 'clamp(1.18rem, 1.45vw, 1.55rem)',
                       fontWeight: 900,
                       color: isProfit ? '#047857' : '#b91c1c',
                       marginTop: '4px',
                       letterSpacing: '-0.5px',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     <CountUp value={Math.abs(pnl.netProfit)} isCurrency prefix={isProfit ? '+ ' : '- '} />
@@ -589,11 +613,11 @@ export default function ProfitLossWidget() {
             {/* 4. Operating Margin % Card */}
             <div className="stat-card-compact">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
+                <div style={{ minWidth: 0, flex: 1, marginRight: '8px' }}>
                   <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     Operating Margin
                   </span>
-                  <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#0b5394', marginTop: '4px', letterSpacing: '-0.5px' }}>
+                  <div className="stat-value" style={{ fontSize: 'clamp(1.18rem, 1.45vw, 1.55rem)', fontWeight: 900, color: '#0b5394', marginTop: '4px', letterSpacing: '-0.5px', whiteSpace: 'nowrap' }}>
                     {pnl.marginPercent}%
                   </div>
                 </div>
@@ -1050,3 +1074,5 @@ export default function ProfitLossWidget() {
     </div>
   );
 }
+
+export default memo(ProfitLossWidget);

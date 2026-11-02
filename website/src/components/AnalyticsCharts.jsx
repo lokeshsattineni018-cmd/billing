@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { formatCurrency } from '../utils/helpers';
 
 /**
@@ -29,7 +29,7 @@ function getCurvedPath(points) {
 /**
  * High-End Modern Revenue Trend Area & Spline Chart
  */
-export function RevenueTrendChart({ data = [], title = 'Revenue Analytics' }) {
+export const RevenueTrendChart = memo(function RevenueTrendChart({ data = [], title = 'Revenue Analytics' }) {
   const [hoverIndex, setHoverIndex] = useState(null);
 
   const maxVal = useMemo(() => {
@@ -317,12 +317,12 @@ export function RevenueTrendChart({ data = [], title = 'Revenue Analytics' }) {
       </div>
     </div>
   );
-}
+});
 
 /**
  * Modern Radial / Donut Collection Health Gauge
  */
-export function PaymentStatusDonut({ paid = 0, pending = 0 }) {
+export const PaymentStatusDonut = memo(function PaymentStatusDonut({ paid = 0, pending = 0 }) {
   const total = paid + pending || 1;
   const paidPct = Math.round((paid / total) * 100);
   const pendingPct = 100 - paidPct;
@@ -454,12 +454,12 @@ export function PaymentStatusDonut({ paid = 0, pending = 0 }) {
       </div>
     </div>
   );
-}
+});
 
 /**
  * Top Customers Leaderboard
  */
-export function TopCustomersBarChart({ data = [] }) {
+export const TopCustomersBarChart = memo(function TopCustomersBarChart({ data = [] }) {
   const maxVal = Math.max(...data.map((d) => d.revenue || 0), 1);
 
   return (
@@ -549,4 +549,4 @@ export function TopCustomersBarChart({ data = [] }) {
       </div>
     </div>
   );
-}
+});

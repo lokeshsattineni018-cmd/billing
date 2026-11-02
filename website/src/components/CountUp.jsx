@@ -38,8 +38,8 @@ export default function CountUp({ value = 0, isCurrency = false, duration = 750,
   }, [targetVal, duration]);
 
   if (isCurrency) {
-    return <span>{prefix}{formatCurrency(displayValue)}{suffix}</span>;
+    return <span style={{ whiteSpace: 'nowrap' }}>{prefix}{formatCurrency(displayValue)}{suffix}</span>;
   }
 
-  return <span>{prefix}{Math.round(displayValue).toLocaleString('en-IN')}{suffix}</span>;
+  return <span style={{ whiteSpace: 'nowrap' }}>{prefix}{Math.round(displayValue).toLocaleString('en-IN')}{suffix}</span>;
 }

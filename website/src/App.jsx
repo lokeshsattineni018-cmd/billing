@@ -12,6 +12,7 @@ const BillDetail = lazy(() => import('./pages/BillDetail'));
 const PublicInvoice = lazy(() => import('./pages/PublicInvoice'));
 
 const CustomerDirectory = lazy(() => import('./pages/CustomerDirectory'));
+const CustomerLedger = lazy(() => import('./pages/CustomerLedger'));
 const Reports = lazy(() => import('./pages/Reports'));
 const ActivityLog = lazy(() => import('./pages/ActivityLog'));
 const Settings = lazy(() => import('./pages/Settings'));
@@ -62,6 +63,7 @@ function Sidebar({ onInstall, onLogout }) {
       ? [
           { path: '/reports', label: t('salesReports'), icon: <TrendingUpIcon size={18} /> },
           { path: '/customers', label: t('customers'), icon: <UserIcon size={18} /> },
+          { path: '/ledger', label: 'Customer Ledger', icon: <InvoiceIcon size={18} /> },
           { path: '/activity-log', label: t('activityLog'), icon: <SettingsIcon size={18} /> },
           { path: '/settings', label: t('settings'), icon: <SettingsIcon size={18} /> },
         ]
@@ -185,6 +187,7 @@ function AppLayout() {
       ? [
           { path: '/reports', label: t('salesReports'), icon: <TrendingUpIcon size={18} /> },
           { path: '/customers', label: t('customers'), icon: <UserIcon size={18} /> },
+          { path: '/ledger', label: 'Customer Ledger', icon: <InvoiceIcon size={18} /> },
           { path: '/activity-log', label: t('activityLog'), icon: <InvoiceIcon size={18} /> },
           { path: '/settings', label: t('settings'), icon: <SettingsIcon size={18} /> },
         ]
@@ -411,7 +414,7 @@ function AppLayout() {
               <Route path="/staff" element={<Staff />} />
               {isAdmin && <Route path="/reports" element={<Reports />} />}
               {isAdmin && <Route path="/customers" element={<CustomerDirectory />} />}
-
+              {isAdmin && <Route path="/ledger" element={<CustomerLedger />} />}
               {isAdmin && <Route path="/activity-log" element={<ActivityLog />} />}
               {isAdmin && <Route path="/settings" element={<Settings />} />}
               <Route path="*" element={<Navigate to="/" replace />} />

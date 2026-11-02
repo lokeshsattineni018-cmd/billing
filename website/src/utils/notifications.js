@@ -68,7 +68,63 @@ export function notifyPaymentReceived(customerName, amount) {
   sendBrowserNotification('💰 Payment Received!', {
     body: `Received ₹${Number(amount).toLocaleString('en-IN')} from ${customerName || 'Customer'}.`,
     tag: `payment-${Date.now()}`,
+    url: '/ledger',
+  });
+}
+
+/**
+ * Triggered when a new invoice is generated
+ */
+export function notifyNewBillCreated(billNumber, customerName, totalAmount) {
+  sendBrowserNotification(`📄 New Invoice #${billNumber}`, {
+    body: `Bill generated for ${customerName || 'Customer'} — ₹${Number(totalAmount).toLocaleString('en-IN')}`,
+    tag: `bill-${billNumber}`,
     url: '/bills',
   });
 }
+
+/**
+ * Triggered when offline shed mode entries are synced to the cloud
+ */
+export function notifySyncComplete(itemCount) {
+  if (!itemCount) return;
+  sendBrowserNotification('☁️ Offline Entries Synced', {
+    body: `Successfully synchronized ${itemCount} offline record(s) to the server.`,
+    tag: `sync-${Date.now()}`,
+  });
+}
+
+/**
+ * Triggered on backup completion or error
+ */
+export function notifyBackupResult(success, message) {
+  sendBrowserNotification(success ? '✅ Backup Completed' : '⚠️ Backup Alert', {
+    body: message || (success ? 'System backup saved successfully.' : 'Backup encountered an issue.'),
+    tag: `backup-${Date.now()}`,
+    url: '/settings',
+  });
+}
+
+/**
+ * Triggered when staff wage payouts are completed
+ */
+export function notifyWageBatchPaid(workerCount, totalAmount) {
+  sendBrowserNotification('👥 Worker Wages Settled', {
+    body: `Paid ₹${Number(totalAmount).toLocaleString('en-IN')} across ${workerCount} worker(s).`,
+    tag: `wages-${Date.now()}`,
+    url: '/staff',
+  });
+}
+
+/**
+ * Triggered when a customer crosses warning credit threshold
+ */
+export function notifyCreditAlert(customerName, balance) {
+  sendBrowserNotification('⚠️ High Credit Alert', {
+    body: `${customerName} outstanding balance has reached ₹${Number(balance).toLocaleString('en-IN')}.`,
+    tag: `credit-${customerName}`,
+    url: '/ledger',
+  });
+}
+
 

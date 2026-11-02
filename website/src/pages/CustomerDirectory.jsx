@@ -166,11 +166,20 @@ export default function CustomerDirectory() {
           <button
             type="button"
             className="btn btn-secondary"
+            onClick={() => navigate('/ledger')}
+            style={{ fontWeight: 700, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            title="Open Outstanding Customer Ledger & Payment Reminders"
+          >
+            📋 Outstanding Ledger
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
             onClick={() => window.open(customersAPI.exportCSVUrl(), '_blank')}
             style={{ fontWeight: 700, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
             title="Export complete customer directory as CSV"
           >
-            <DownloadIcon size={16} /> Export Customers CSV
+            <DownloadIcon size={16} /> Export CSV
           </button>
           <button
             type="button"

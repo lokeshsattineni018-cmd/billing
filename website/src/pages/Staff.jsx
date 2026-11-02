@@ -40,7 +40,9 @@ function getInitialBulkDraft() {
         return parsed;
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    if (import.meta.env.DEV) { console.warn('Failed to parse draft:', e); }
+  }
   return null;
 }
 
@@ -133,7 +135,9 @@ export default function Staff() {
       } else {
         localStorage.removeItem(BULK_DRAFT_KEY);
       }
-    } catch (e) {}
+    } catch (e) {
+      if (import.meta.env.DEV) { console.warn('Failed to save draft:', e); }
+    }
   }, [bulkDate, bulkRows, bulkModalOpen]);
 
   // Selected Worker filter from Accounts tab

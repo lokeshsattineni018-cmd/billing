@@ -14,6 +14,7 @@ import {
 } from '../utils/offlineDb';
 import { billsAPI, staffAPI } from './api';
 import { playSuccessSound } from '../utils/helpers';
+import { notifySyncComplete } from '../utils/notifications';
 
 let isSyncing = false;
 const listeners = new Set();
@@ -238,6 +239,7 @@ export async function flushSyncQueue() {
 
     if (synced > 0) {
       playSuccessSound();
+      notifySyncComplete(synced);
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent('vda-sync-completed', {

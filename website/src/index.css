@@ -1713,6 +1713,10 @@ a:hover {
   overflow: hidden;
 }
 
+.stat-card-compact .stat-value {
+  white-space: nowrap;
+}
+
 .show-on-mobile-flex {
   display: none !important;
 }

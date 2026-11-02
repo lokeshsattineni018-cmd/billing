@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dashboardAPI, billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +10,7 @@ import { SkeletonKPIGrid, SkeletonTable, SkeletonChart, SkeletonCard, Skeleton }
 import CountUp from '../components/CountUp';
 import PullToRefresh from '../components/PullToRefresh';
 import ProfitLossWidget from '../components/ProfitLossWidget';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -29,29 +30,7 @@ export default function Dashboard() {
   const isAdmin = user?.role === 'admin';
   const isOwnerOrAdmin = user?.role === 'owner' || user?.role === 'admin';
 
-  useEffect(() => {
-    loadDashboard(false);
-    if (isAdmin) {
-      loadAnalytics();
-    }
-  }, [isAdmin]);
-
-  // Live Auto-Refresh every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        setRefreshing(true);
-        loadDashboard(true);
-        if (isAdmin) {
-          loadAnalytics();
-        }
-      }
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [isAdmin]);
-
-  const loadDashboard = async (isSilent = false) => {
+  const loadDashboard = useCallback(async (isSilent = false) => {
     if (!isSilent) setLoading(true);
     try {
       const response = await dashboardAPI.summary();
@@ -62,7 +41,40 @@ export default function Dashboard() {
     } finally {
       if (!isSilent) setLoading(false);
     }
-  };
+  }, []);
+
+  const loadAnalytics = useCallback(async () => {
+    try {
+      const res = await dashboardAPI.getAnalytics();
+      setAnalytics(res.data);
+    } catch (error) {
+      if (import.meta.env.DEV) { console.error('Failed to load analytics:', error); }
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDashboard(false).catch(() => {});
+    if (isAdmin) {
+      loadAnalytics();
+    }
+  }, [isAdmin, loadDashboard, loadAnalytics]);
+
+  // Live Auto-Refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        setRefreshing(true);
+        Promise.all([
+          loadDashboard(true).catch(() => {}),
+          isAdmin ? loadAnalytics() : Promise.resolve(),
+        ]).finally(() => {
+          setRefreshing(false);
+        });
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [isAdmin, loadDashboard, loadAnalytics]);
 
   const handleManualRefresh = async () => {
     if (refreshing) return;
@@ -82,14 +94,6 @@ export default function Dashboard() {
     }
   };
 
-  const loadAnalytics = async () => {
-    try {
-      const res = await dashboardAPI.getAnalytics();
-      setAnalytics(res.data);
-    } catch (error) {
-      if (import.meta.env.DEV) { console.error('Failed to load analytics:', error); }
-    }
-  };
 
   const handleOpenDailySummary = async () => {
     setLoadingSummary(true);
@@ -568,7 +572,11 @@ export default function Dashboard() {
       {/* ========================================================================= */}
       {/* 2.5 LIVE PROFIT & LOSS (P&L) WITH MARGIN TRACKING                          */}
       {/* ========================================================================= */}
-      {isAdmin && <ProfitLossWidget />}
+      {isAdmin && (
+        <ErrorBoundary inline>
+          <ProfitLossWidget />
+        </ErrorBoundary>
+      )}
 
       {/* ========================================================================= */}
       {/* 3. VISUAL ANALYTICS & REVENUE TREND ENGINE (ADMIN EXCLUSIVE)               */}
@@ -633,16 +641,20 @@ export default function Dashboard() {
           {/* Grid: Spline Area Chart (Left) + Radial Health (Right) */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px', marginBottom: '16px' }}>
             <div style={{ gridColumn: 'span 2' }}>
-              <RevenueTrendChart
-                data={trendView === 'daily' ? analytics.dailyTrends : analytics.monthlyTrends}
-                title={trendView === 'daily' ? '7-Day Revenue Curve (INR)' : '6-Month Revenue Curve (INR)'}
-              />
+              <ErrorBoundary inline>
+                <RevenueTrendChart
+                  data={trendView === 'daily' ? analytics.dailyTrends : analytics.monthlyTrends}
+                  title={trendView === 'daily' ? '7-Day Revenue Curve (INR)' : '6-Month Revenue Curve (INR)'}
+                />
+              </ErrorBoundary>
             </div>
             <div>
-              <PaymentStatusDonut
-                paid={data?.month?.totalSales ? Math.max(0, data.month.totalSales - (data?.receivables?.totalPending || 0)) : 0}
-                pending={data?.receivables?.totalPending || 0}
-              />
+              <ErrorBoundary inline>
+                <PaymentStatusDonut
+                  paid={data?.month?.totalSales ? Math.max(0, data.month.totalSales - (data?.receivables?.totalPending || 0)) : 0}
+                  pending={data?.receivables?.totalPending || 0}
+                />
+              </ErrorBoundary>
             </div>
           </div>
         </div>

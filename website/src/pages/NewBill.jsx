@@ -7,6 +7,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { PrintIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
 import { saveOfflineBill, getMasterCache } from '../utils/offlineDb';
 import { enqueueShedAction } from '../services/syncManager';
+import { notifyNewBillCreated } from '../utils/notifications';
 
 const DRAFT_KEY = 'srsf_bill_draft';
 
@@ -526,12 +527,11 @@ export default function NewBill() {
         showToast(`Invoice #${invoice.billNo || editBillNo} updated successfully`);
       } else {
         const response = await billsAPI.create(invoiceData);
-        invoice = response.data;
-
         // Clear draft upon successful creation
         localStorage.removeItem(DRAFT_KEY);
 
         playSuccessSound();
+        notifyNewBillCreated(invoice.billNo, invoice.companyName, invoice.grandTotal);
         showToast(`Invoice #${invoice.billNo} created successfully`);
       }
 

@@ -37,7 +37,9 @@ api.interceptors.response.use(
           setMasterCache('staffSummary', response.data);
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      if (import.meta.env.DEV) { console.warn('Master cache error:', e); }
+    }
     return response;
   },
   async (error) => {
