@@ -119,8 +119,8 @@ npm run dev
 
 ## 📜 Maintenance & Backup
 
-- **Keep-Alive Cron**: Hits `/api/health` every 10 minutes (configured in `vercel.json`) to eliminate serverless cold-starts during operating hours.
-- **Automated Daily Summaries**: Nightly cron triggered at 18:30 UTC for daily backup aggregation and audit logging.
+- **Keep-Alive (Optional)**: Can be pinged via any free external uptime monitor (e.g. Cron-job.org or UptimeRobot) pointing to `/api/health` to keep serverless functions warm during business hours.
+- **Automated Daily Summaries**: Nightly cron triggered at 18:30 UTC via `vercel.json` for daily backup aggregation and audit logging.
 - **Manual Backups**: Administrators can export full system data as JSON/CSV via the Settings page.
 
 ---
