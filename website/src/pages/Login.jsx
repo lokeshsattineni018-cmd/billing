@@ -10,26 +10,10 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [warmingUp, setWarmingUp] = useState(true);
-  const [serverReady, setServerReady] = useState(null);
 
   useEffect(() => {
-    // Pre-warm the serverless backend function and DB connection pool while user is on login screen
-    let mounted = true;
-    fetch('/api/health')
-      .then((res) => {
-        if (mounted) {
-          setServerReady(res.ok);
-          setWarmingUp(false);
-        }
-      })
-      .catch(() => {
-        if (mounted) {
-          setServerReady(false);
-          setWarmingUp(false);
-        }
-      });
-    return () => { mounted = false; };
+    // Quietly pre-warm the serverless backend function and DB connection pool while user is on login screen
+    fetch('/api/health').catch(() => {});
   }, []);
 
   const handleSubmit = async (e) => {
@@ -70,20 +54,6 @@ export default function Login() {
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '4px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>
             Invoice &amp; Billing Portal
           </p>
-
-          <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'center' }}>
-            {warmingUp ? (
-              <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                <span className="spinner-border" style={{ width: '10px', height: '10px', borderWidth: '1.5px' }} />
-                Connecting to cloud server...
-              </span>
-            ) : serverReady ? (
-              <span style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }} />
-                Server connected
-              </span>
-            ) : null}
-          </div>
         </div>
 
         {error && (
