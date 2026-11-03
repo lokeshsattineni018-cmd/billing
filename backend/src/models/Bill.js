@@ -127,6 +127,25 @@ const billSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
+  deletedAt: {
+    type: Date,
+  },
+  deletedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
+  deletedReason: {
+    type: String,
+    default: '',
+    trim: true,
+  },
+  originalBillNo: {
+    type: Number,
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -143,5 +162,8 @@ billSchema.index({ isVoided: 1 });
 billSchema.index({ isVoided: 1, date: -1, billNo: -1 });
 billSchema.index({ companyName: 1, isVoided: 1, date: -1 });
 billSchema.index({ paymentStatus: 1, isVoided: 1, date: -1 });
+billSchema.index({ isDeleted: 1 });
+billSchema.index({ isDeleted: 1, date: -1, billNo: -1 });
+billSchema.index({ isDeleted: 1, isVoided: 1, date: -1 });
 
 module.exports = mongoose.model('Bill', billSchema);

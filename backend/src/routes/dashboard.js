@@ -60,22 +60,22 @@ router.get('/summary', protect, restrictTo('owner', 'admin', 'staff'), async (re
     const [todayStats, monthStats, filterStats, receivablesStats, recentBills, totalBills] = await Promise.all([
       // Today's aggregation (excluding voided bills)
       Bill.aggregate([
-        { $match: { date: { $gte: startOfDay, $lt: endOfDay }, isVoided: { $ne: true } } },
+        { $match: { date: { $gte: startOfDay, $lt: endOfDay }, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
         { $group: { _id: null, totalSales: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
       ]),
       // This month's aggregation (excluding voided bills)
       Bill.aggregate([
-        { $match: { date: { $gte: startOfMonth, $lt: endOfMonth }, isVoided: { $ne: true } } },
+        { $match: { date: { $gte: startOfMonth, $lt: endOfMonth }, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
         { $group: { _id: null, totalSales: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
       ]),
       // Filtered period aggregation (excluding voided bills)
       Bill.aggregate([
-        { $match: { date: { $gte: filterStart, $lte: filterEnd }, isVoided: { $ne: true } } },
+        { $match: { date: { $gte: filterStart, $lte: filterEnd }, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
         { $group: { _id: null, totalSales: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
       ]),
       // Total Outstanding Receivables (excluding voided bills, accounting for partial payments)
       Bill.aggregate([
-        { $match: { paymentStatus: { $ne: 'Paid' }, isVoided: { $ne: true } } },
+        { $match: { paymentStatus: { $ne: 'Paid' }, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
         {
           $group: {
             _id: null,
@@ -89,13 +89,13 @@ router.get('/summary', protect, restrictTo('owner', 'admin', 'staff'), async (re
         },
       ]),
       // Recent invoices (last 10)
-      Bill.find()
+      Bill.find({ isDeleted: { $ne: true } })
         .populate('createdBy', 'name')
         .sort({ createdAt: -1 })
         .limit(10)
         .lean(),
       // Total invoice count
-      Bill.countDocuments({ isVoided: { $ne: true } }),
+      Bill.countDocuments({ isVoided: { $ne: true }, isDeleted: { $ne: true }, isDeleted: { $ne: true } }),
     ]);
 
     const today = todayStats[0] || { totalSales: 0, billCount: 0 };
@@ -149,15 +149,15 @@ router.get('/daily-summary', protect, restrictTo('owner', 'admin', 'staff'), asy
 
     const [todayBills, monthStats, receivablesStats, topBuyerToday, topBuyerMonth] = await Promise.all([
       // All today's bills (excluding voided bills)
-      Bill.find({ date: { $gte: startOfDay, $lt: endOfDay }, isVoided: { $ne: true } }).lean(),
+      Bill.find({ date: { $gte: startOfDay, $lt: endOfDay }, isVoided: { $ne: true }, isDeleted: { $ne: true } }).lean(),
       // Month stats (excluding voided bills)
       Bill.aggregate([
-        { $match: { date: { $gte: startOfMonth, $lt: endOfMonth }, isVoided: { $ne: true } } },
+        { $match: { date: { $gte: startOfMonth, $lt: endOfMonth }, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
         { $group: { _id: null, totalSales: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
       ]),
       // Outstanding receivables (excluding voided bills, accounting for partial payments)
       Bill.aggregate([
-        { $match: { paymentStatus: { $ne: 'Paid' }, isVoided: { $ne: true } } },
+        { $match: { paymentStatus: { $ne: 'Paid' }, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
         {
           $group: {
             _id: null,
@@ -172,14 +172,14 @@ router.get('/daily-summary', protect, restrictTo('owner', 'admin', 'staff'), asy
       ]),
       // Top buyer today (excluding voided bills)
       Bill.aggregate([
-        { $match: { date: { $gte: startOfDay, $lt: endOfDay }, isVoided: { $ne: true } } },
+        { $match: { date: { $gte: startOfDay, $lt: endOfDay }, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
         { $group: { _id: '$companyName', totalAmount: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
         { $sort: { totalAmount: -1 } },
         { $limit: 1 },
       ]),
       // Top buyer this month (excluding voided bills)
       Bill.aggregate([
-        { $match: { date: { $gte: startOfMonth, $lt: endOfMonth }, isVoided: { $ne: true } } },
+        { $match: { date: { $gte: startOfMonth, $lt: endOfMonth }, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
         { $group: { _id: '$companyName', totalAmount: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
         { $sort: { totalAmount: -1 } },
         { $limit: 1 },
@@ -251,7 +251,7 @@ router.get('/analytics', protect, restrictTo('owner', 'admin', 'staff'), async (
         {
           $match: {
             date: { $gte: sevenDaysAgo },
-            isVoided: { $ne: true },
+            isVoided: { $ne: true }, isDeleted: { $ne: true },
           },
         },
         {
@@ -273,7 +273,7 @@ router.get('/analytics', protect, restrictTo('owner', 'admin', 'staff'), async (
             date: {
               $gte: new Date(now.getFullYear(), now.getMonth() - 5, 1),
             },
-            isVoided: { $ne: true },
+            isVoided: { $ne: true }, isDeleted: { $ne: true },
           },
         },
         {
@@ -290,7 +290,7 @@ router.get('/analytics', protect, restrictTo('owner', 'admin', 'staff'), async (
 
       // Top 5 customers
       Bill.aggregate([
-        { $match: { isVoided: { $ne: true } } },
+        { $match: { isVoided: { $ne: true }, isDeleted: { $ne: true } } },
         {
           $group: {
             _id: '$companyName',
@@ -304,7 +304,7 @@ router.get('/analytics', protect, restrictTo('owner', 'admin', 'staff'), async (
 
       // Payment status breakdown
       Bill.aggregate([
-        { $match: { isVoided: { $ne: true } } },
+        { $match: { isVoided: { $ne: true }, isDeleted: { $ne: true } } },
         {
           $group: {
             _id: '$paymentStatus',
@@ -435,7 +435,7 @@ router.get('/profit-loss', protect, restrictTo('owner', 'admin'), async (req, re
     ] = await Promise.all([
       // 1. Total Bill Sales
       Bill.aggregate([
-        { $match: { ...dateFilter, isVoided: { $ne: true } } },
+        { $match: { ...dateFilter, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
         { $group: { _id: null, total: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, count: { $sum: 1 } } },
       ]),
       // 2. Total Wastage Sales
@@ -455,7 +455,7 @@ router.get('/profit-loss', protect, restrictTo('owner', 'admin'), async (req, re
       ]),
       // 5. Daily timeline for bills
       Bill.aggregate([
-        { $match: { ...dateFilter, isVoided: { $ne: true } } },
+        { $match: { ...dateFilter, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
         {
           $group: {
             _id: { $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: '+05:30' } },

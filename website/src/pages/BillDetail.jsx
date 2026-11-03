@@ -14,6 +14,7 @@ import { getOfflineBill, saveOfflineBill, getMasterCache } from '../utils/offlin
 import { flushSyncQueue } from '../services/syncManager';
 import { useLanguage } from '../context/LanguageContext';
 import ConfirmModal from '../components/ConfirmModal';
+import DeleteInvoiceModal from '../components/DeleteInvoiceModal';
 
 export default function BillDetail() {
   const { id } = useParams();
@@ -38,8 +39,13 @@ export default function BillDetail() {
   const [voiding, setVoiding] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
 
+  // Delete Action State (Admin/Owner only)
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const isAdmin = user?.role === 'admin';
   const canVoidBill = user?.role === 'admin' || user?.role === 'owner';
+  const canDeleteBill = user?.role === 'admin' || user?.role === 'owner';
   const canSeeSales = user?.role === 'owner' || user?.role === 'admin';
   const canUpdateStatus = user?.role === 'owner' || user?.role === 'admin';
   const { lang, t } = useLanguage();
@@ -216,6 +222,27 @@ export default function BillDetail() {
     }
   };
 
+  // Delete Invoice Handler (Admin Only)
+  const handleDeleteInvoice = async ({ confirmationCode, reason }) => {
+    setDeleting(true);
+    try {
+      const res = await billsAPI.delete(id, confirmationCode, reason);
+      showToast(
+        res.data?.message ||
+          (lang === 'te'
+            ? `ఇన్‌వాయిస్ #${bill.billNo} విజయవంతంగా తొలగించబడింది.`
+            : `Invoice #${bill.billNo} deleted successfully. Next invoice will be #${res.data?.nextInvoiceNo || bill.billNo}.`),
+        'success'
+      );
+      setShowDeleteModal(false);
+      navigate('/bills');
+    } catch (err) {
+      showToast(err.response?.data?.message || (lang === 'te' ? 'ఇన్‌వాయిస్ తొలగింపు విఫలమైంది' : 'Failed to delete invoice'), 'error');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
 
 
   if (loading) return <div className="spinner"></div>;
@@ -345,11 +372,23 @@ export default function BillDetail() {
           {canVoidBill && !bill.isVoided && (
             <button
               className="btn btn-secondary"
-              style={{ padding: '10px 14px', color: '#ef4444', border: '1px solid #fecaca', background: '#fff5f5', fontWeight: 700 }}
+              style={{ padding: '10px 14px', color: '#b45309', border: '1px solid #fde68a', background: '#fffbeb', fontWeight: 700 }}
               onClick={() => setShowVoidModal(true)}
               title={lang === 'te' ? 'ఈ బిల్లును రద్దు చేయండి (అడ్మిన్/యజమాని ప్రత్యేకం)' : 'Mark this bill as voided (Admin exclusive)'}
             >
               {lang === 'te' ? 'బిల్లు రద్దు చేయి' : 'Void Bill'}
+            </button>
+          )}
+
+          {/* Admin / Owner Only: Delete Invoice Button */}
+          {canDeleteBill && (
+            <button
+              className="btn btn-secondary"
+              style={{ padding: '10px 14px', color: '#dc2626', border: '1px solid #fecaca', background: '#fff5f5', fontWeight: 700 }}
+              onClick={() => setShowDeleteModal(true)}
+              title={lang === 'te' ? 'ఈ బిల్లును శాశ్వతంగా తొలగించండి' : 'Delete this bill (Admin security confirmation required)'}
+            >
+              {lang === 'te' ? 'బిల్లు తొలగించు' : 'Delete Bill'}
             </button>
           )}
 
@@ -1100,6 +1139,16 @@ export default function BillDetail() {
           />
         </div>
       </ConfirmModal>
+
+      {/* ── MODAL: DELETE INVOICE WITH SECURITY CODE ── */}
+      <DeleteInvoiceModal
+        isOpen={showDeleteModal}
+        bill={bill}
+        loading={deleting}
+        lang={lang}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteInvoice}
+      />
 
       {/* Record Payment Modal */}
       {showPaymentModal && (

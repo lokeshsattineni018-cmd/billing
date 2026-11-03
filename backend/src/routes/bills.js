@@ -5,7 +5,7 @@ const { body, validationResult } = require('express-validator');
 const Bill = require('../models/Bill');
 const Settings = require('../models/Settings');
 const Customer = require('../models/Customer');
-const { getNextSequence } = require('../models/Counter');
+const { getNextSequence, resetSequence } = require('../models/Counter');
 const { protect, restrictTo } = require('../middleware/auth');
 const { billCreateLimiter, escapeRegex } = require('../middleware/security');
 const { logActivity } = require('../utils/activityLogger');
@@ -28,6 +28,7 @@ router.get('/ledger', protect, restrictTo('owner', 'admin'), async (req, res) =>
         $match: {
           companyName: { $exists: true, $ne: null, $nin: ['', 'null', 'undefined'] },
           isVoided: { $ne: true },
+          isDeleted: { $ne: true },
         },
       },
       {
@@ -88,7 +89,9 @@ router.get('/', protect, async (req, res) => {
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
     const skip = (page - 1) * limit;
 
-    const filter = {};
+    const filter = {
+      isDeleted: { $ne: true },
+    };
 
     if (req.query.search && typeof req.query.search === 'string') {
       const search = req.query.search.trim();
@@ -166,6 +169,7 @@ router.get('/customers/list', protect, async (req, res) => {
         $match: {
           companyName: { $exists: true, $ne: '', $nin: ['null', 'undefined'] },
           isVoided: { $ne: true },
+          isDeleted: { $ne: true },
         },
       },
       { $sort: { date: 1, createdAt: 1 } },
@@ -199,7 +203,9 @@ router.get('/customers/list', protect, async (req, res) => {
 router.get('/export/csv', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
     const { search, dateFrom, dateTo, paymentStatus, isVoided } = req.query;
-    const filter = {};
+    const filter = {
+      isDeleted: { $ne: true },
+    };
 
     if (isVoided === 'true') filter.isVoided = true;
     else if (isVoided === 'false' || isVoided === undefined) filter.isVoided = { $ne: true };
@@ -301,7 +307,10 @@ router.get('/export/csv', protect, restrictTo('owner', 'admin'), async (req, res
 router.get('/export/tally', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
     const { dateFrom, dateTo } = req.query;
-    const filter = { isVoided: { $ne: true } };
+    const filter = {
+      isVoided: { $ne: true },
+      isDeleted: { $ne: true },
+    };
 
     if (dateFrom || dateTo) {
       filter.date = {};
@@ -422,7 +431,7 @@ router.get('/export/tally', protect, restrictTo('owner', 'admin'), async (req, r
 router.get('/:id/reminder', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
     const bill = await Bill.findById(req.params.id);
-    if (!bill) {
+    if (!bill || bill.isDeleted) {
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
@@ -485,7 +494,13 @@ router.post('/:id/duplicate', protect, restrictTo('owner', 'admin'), async (req,
       return res.status(404).json({ message: 'Source invoice not found' });
     }
 
-    const billNo = await getNextSequence('billNo');
+    let billNo = await getNextSequence('billNo');
+    // Ensure billNo does not collide with an active non-deleted bill
+    let existingActive = await Bill.findOne({ billNo, isDeleted: { $ne: true } });
+    while (existingActive) {
+      billNo = await getNextSequence('billNo');
+      existingActive = await Bill.findOne({ billNo, isDeleted: { $ne: true } });
+    }
     const settingsDoc = await Settings.findOne().lean();
     const prefix = settingsDoc?.invoicePrefix || 'VDA/';
     const formattedBillNo = `${prefix}${String(billNo).padStart(4, '0')}`;
@@ -546,7 +561,7 @@ async function findBillByPublicToken(token) {
     return null;
   }
 
-  return Bill.findOne({ shareToken: cleanToken });
+  return Bill.findOne({ shareToken: cleanToken, isDeleted: { $ne: true } });
 }
 
 /**
@@ -606,7 +621,7 @@ router.get('/:id', protect, async (req, res) => {
     const bill = await Bill.findById(req.params.id)
       .populate('createdBy', 'name')
       .populate('voidedBy', 'name');
-    if (!bill) {
+    if (!bill || bill.isDeleted) {
       return res.status(404).json({ message: 'Invoice not found' });
     }
     res.json(bill);
@@ -713,7 +728,13 @@ router.post('/', protect, billCreateLimiter, [
       });
     }
 
-    const billNo = await getNextSequence('billNo');
+    let billNo = await getNextSequence('billNo');
+    // Ensure billNo does not collide with an active non-deleted bill
+    let existingActive = await Bill.findOne({ billNo, isDeleted: { $ne: true } });
+    while (existingActive) {
+      billNo = await getNextSequence('billNo');
+      existingActive = await Bill.findOne({ billNo, isDeleted: { $ne: true } });
+    }
     const settingsDoc = await Settings.findOne().lean();
     const prefix = settingsDoc?.invoicePrefix || 'VDA/';
     const formattedBillNo = `${prefix}${String(billNo).padStart(4, '0')}`;
@@ -810,7 +831,7 @@ router.put('/:id', protect, [
     }
 
     const bill = await Bill.findById(req.params.id);
-    if (!bill) {
+    if (!bill || bill.isDeleted) {
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
@@ -905,7 +926,7 @@ router.patch('/:id/void', protect, restrictTo('owner', 'admin'), [
     }
 
     const bill = await Bill.findById(req.params.id);
-    if (!bill) {
+    if (!bill || bill.isDeleted) {
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
@@ -940,6 +961,84 @@ router.patch('/:id/void', protect, restrictTo('owner', 'admin'), [
 });
 
 /**
+ * DELETE /api/bills/:id
+ * Delete an invoice (Admin/Owner only).
+ * Performs a safe soft-delete so record is kept in database for audit/records,
+ * but completely removed from website view.
+ * If the deleted invoice was the latest (e.g. #16), rolls back the invoice sequence
+ * counter so the next created invoice reuses that number (#16).
+ * Requires confirmationCode to ensure deliberate action.
+ */
+router.delete('/:id', protect, restrictTo('owner', 'admin'), async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+
+    const confirmationCode = (req.body?.confirmationCode || req.query?.confirmationCode || '').toString().trim();
+    if (!confirmationCode) {
+      return res.status(400).json({ message: 'Confirmation code is required to delete this invoice.' });
+    }
+
+    const bill = await Bill.findById(req.params.id);
+    if (!bill || bill.isDeleted) {
+      return res.status(404).json({ message: 'Invoice not found or already deleted' });
+    }
+
+    const originalBillNo = bill.originalBillNo || bill.billNo;
+    const customerName = bill.companyName;
+    const billAmount = bill.grandTotal || bill.total || 0;
+    const deleteReason = (req.body?.reason || '').trim() || 'Deleted by admin';
+
+    // 1. Soft-delete the bill: keep full record in DB with original metadata
+    bill.isDeleted = true;
+    bill.deletedAt = new Date();
+    bill.deletedBy = req.user._id;
+    bill.deletedReason = deleteReason;
+    bill.originalBillNo = originalBillNo;
+
+    // Shift billNo to a unique negative value to free up the positive billNo in DB
+    // preventing unique key collisions when re-issuing this invoice number
+    bill.billNo = -Math.abs(Date.now() + Math.floor(Math.random() * 1000));
+    bill.shareToken = undefined;
+
+    await bill.save();
+
+    // 2. Synchronize invoice sequence counter:
+    // If invoice #16 was deleted, next created invoice should be #16 (not #17)
+    const maxActiveBill = await Bill.findOne({
+      isDeleted: { $ne: true },
+      billNo: { $gt: 0 },
+    }).sort({ billNo: -1 }).lean();
+
+    const maxBillNo = maxActiveBill ? maxActiveBill.billNo : 0;
+    await resetSequence('billNo', maxBillNo);
+
+    await logActivity(req, 'DELETE_BILL', String(originalBillNo), {
+      customer: customerName,
+      amount: billAmount,
+      reason: deleteReason,
+      newNextInvoiceNo: maxBillNo + 1,
+    });
+    structuredLogger.logBillOperation('DELETE', bill, req, {
+      originalBillNo,
+      nextBillNo: maxBillNo + 1,
+      reason: deleteReason,
+    });
+
+    res.json({
+      success: true,
+      message: `Invoice #${originalBillNo} has been deleted from website views. Next invoice will be #${maxBillNo + 1}.`,
+      deletedBillNo: originalBillNo,
+      nextInvoiceNo: maxBillNo + 1,
+    });
+  } catch (error) {
+    console.error('Delete Bill Error:', error);
+    return handleServerError(res, error, 'Server error', req);
+  }
+});
+
+/**
  * POST /api/bills/:id/payments
  * Record a payment against an invoice (supports partial & full payments)
  */
@@ -953,7 +1052,7 @@ router.post('/:id/payments', protect, restrictTo('owner', 'admin'), async (req, 
     }
 
     const bill = await Bill.findById(req.params.id);
-    if (!bill) {
+    if (!bill || bill.isDeleted) {
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
@@ -1054,7 +1153,7 @@ router.patch('/:id/payment-status', protect, restrictTo('owner', 'admin'), [
     }
 
     const bill = await Bill.findById(req.params.id);
-    if (!bill) {
+    if (!bill || bill.isDeleted) {
       return res.status(404).json({ message: 'Invoice not found' });
     }
 

@@ -42,7 +42,7 @@ router.get('/:id/pdf', generalLimiter, async (req, res) => {
     }
 
     const bill = await Bill.findById(req.params.id);
-    if (!bill) {
+    if (!bill || bill.isDeleted) {
       return res.status(404).send('Invoice not found');
     }
 

@@ -21,6 +21,8 @@ router.get('/', protect, restrictTo('admin', 'owner'), async (req, res) => {
         $match: {
           companyName: { $exists: true, $ne: null, $nin: ['', 'null', 'undefined'] },
           isVoided: { $ne: true },
+      isDeleted: { $ne: true },
+          isDeleted: { $ne: true },
         },
       },
       {
@@ -116,6 +118,7 @@ router.get('/:name/bills', protect, restrictTo('admin', 'owner'), async (req, re
     const bills = await Bill.find({
       companyName: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
       isVoided: { $ne: true },
+      isDeleted: { $ne: true },
     })
       .sort({ date: -1, billNo: -1 })
       .lean();
@@ -161,6 +164,7 @@ router.post('/:name/record-payment', protect, restrictTo('admin', 'owner'), asyn
     const unpaidBills = await Bill.find({
       companyName: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
       isVoided: { $ne: true },
+      isDeleted: { $ne: true },
       paymentStatus: { $ne: 'Paid' },
     }).sort({ date: 1, billNo: 1 });
 
@@ -273,6 +277,8 @@ router.get('/export/csv', protect, restrictTo('owner', 'admin'), async (req, res
         $match: {
           companyName: { $exists: true, $ne: null, $nin: ['', 'null', 'undefined'] },
           isVoided: { $ne: true },
+      isDeleted: { $ne: true },
+          isDeleted: { $ne: true },
         },
       },
       {

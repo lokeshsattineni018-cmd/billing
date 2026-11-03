@@ -59,7 +59,7 @@ router.get('/sales', protect, restrictTo('owner', 'admin', 'staff'), async (req,
 
     const matchQuery = {
       date: { $gte: start, $lte: end },
-      isVoided: { $ne: true },
+      isVoided: { $ne: true }, isDeleted: { $ne: true },
     };
 
     const now = new Date();
@@ -110,7 +110,7 @@ router.get('/sales', protect, restrictTo('owner', 'admin', 'staff'), async (req,
         {
           $match: {
             date: { $gte: thisMonthStart, $lt: thisMonthEnd },
-            isVoided: { $ne: true },
+            isVoided: { $ne: true }, isDeleted: { $ne: true },
           },
         },
         {
@@ -135,7 +135,7 @@ router.get('/sales', protect, restrictTo('owner', 'admin', 'staff'), async (req,
         {
           $match: {
             date: { $gte: lastMonthStart, $lt: lastMonthEnd },
-            isVoided: { $ne: true },
+            isVoided: { $ne: true }, isDeleted: { $ne: true },
           },
         },
         {
@@ -320,7 +320,7 @@ router.get('/outstanding', protect, restrictTo('owner', 'admin', 'staff'), async
       {
         $match: {
           paymentStatus: { $ne: 'Paid' },
-          isVoided: { $ne: true },
+          isVoided: { $ne: true }, isDeleted: { $ne: true },
           companyName: { $exists: true, $ne: null, $nin: ['', 'null', 'undefined'] },
         },
       },
@@ -419,7 +419,7 @@ router.get('/pdf', protect, restrictTo('owner', 'admin'), async (req, res) => {
 
     const matchQuery = {
       date: { $gte: start, $lte: end },
-      isVoided: { $ne: true },
+      isVoided: { $ne: true }, isDeleted: { $ne: true },
     };
 
     const [bills, topBuyers, itemsAgg, settingsDoc] = await Promise.all([
@@ -546,7 +546,7 @@ router.get('/gst-export', protect, restrictTo('owner', 'admin'), async (req, res
 
     const bills = await Bill.find({
       date: { $gte: start, $lte: end },
-      isVoided: { $ne: true },
+      isVoided: { $ne: true }, isDeleted: { $ne: true },
     }).sort({ date: 1 }).lean();
 
     const csvLines = [];

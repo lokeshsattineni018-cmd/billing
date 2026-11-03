@@ -111,6 +111,7 @@ export const billsAPI = {
   create: (data) => api.post('/bills', data),
   update: (id, data) => api.put(`/bills/${id}`, data),
   void: (id, reason) => api.patch(`/bills/${id}/void`, { reason }),
+  delete: (id, confirmationCode, reason) => api.delete(`/bills/${id}`, { data: { confirmationCode, reason } }),
   duplicate: (id) => api.post(`/bills/${id}/duplicate`),
   getReminder: (id) => api.get(`/bills/${id}/reminder`),
   updatePaymentStatus: (id, paymentStatus) => api.patch(`/bills/${id}/payment-status`, { paymentStatus }),

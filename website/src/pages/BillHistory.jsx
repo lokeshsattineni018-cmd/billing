@@ -10,6 +10,7 @@ import ReminderModal from '../components/ReminderModal';
 import PaymentModal from '../components/PaymentModal';
 import SwipeableItem from '../components/SwipeableItem';
 import PullToRefresh from '../components/PullToRefresh';
+import DeleteInvoiceModal from '../components/DeleteInvoiceModal';
 import { getAllOfflineBills } from '../utils/offlineDb';
 
 export default function BillHistory() {
@@ -35,8 +36,11 @@ export default function BillHistory() {
   const [paymentBillId, setPaymentBillId] = useState(null);
   const [shareBill, setShareBill] = useState(null);
   const [downloadingPdfId, setDownloadingPdfId] = useState(null);
+  const [deleteBillTarget, setDeleteBillTarget] = useState(null);
+  const [deletingBill, setDeletingBill] = useState(false);
 
   const isAdmin = user?.role === 'admin';
+  const canDeleteBill = user?.role === 'admin' || user?.role === 'owner';
   const canSeeSales = user?.role === 'owner' || user?.role === 'admin';
   const canUpdateStatus = user?.role === 'owner' || user?.role === 'admin';
 
@@ -199,6 +203,28 @@ export default function BillHistory() {
       await shareInvoicePDFOnWhatsApp(bill, showToast);
     } catch (err) {
       if (import.meta.env.DEV) { console.error('WhatsApp share error:', err); }
+    }
+  };
+
+  const handleDeleteBill = async ({ confirmationCode, reason }) => {
+    if (!deleteBillTarget) return;
+    setDeletingBill(true);
+    try {
+      const res = await billsAPI.delete(deleteBillTarget._id, confirmationCode, reason);
+      const targetNo = deleteBillTarget.billNo || deleteBillTarget.originalBillNo;
+      showToast(
+        res.data?.message ||
+          `Invoice #${targetNo} deleted successfully. Next invoice will be #${res.data?.nextInvoiceNo || targetNo}.`,
+        'success'
+      );
+      // Remove from active list immediately
+      setBills((prev) => prev.filter((b) => b._id !== deleteBillTarget._id));
+      setPagination((prev) => ({ ...prev, total: Math.max(0, (prev.total || 1) - 1) }));
+      setDeleteBillTarget(null);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to delete invoice', 'error');
+    } finally {
+      setDeletingBill(false);
     }
   };
 
@@ -583,6 +609,30 @@ export default function BillHistory() {
                     >
                       View
                     </button>
+                    {canDeleteBill && (
+                      <button
+                        className="btn btn-sm"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '9px 10px',
+                          fontSize: '0.82rem',
+                          background: '#fff5f5',
+                          border: '1px solid #fecaca',
+                          color: '#dc2626',
+                          fontWeight: 700,
+                          borderRadius: '8px',
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteBillTarget(bill);
+                        }}
+                        title="Delete Invoice"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
               </SwipeableItem>
@@ -720,6 +770,17 @@ export default function BillHistory() {
                               </>
                             )}
                           </button>
+                          {canDeleteBill && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              style={{ color: '#dc2626', borderColor: '#fecaca', background: '#fff5f5', fontWeight: 700 }}
+                              onClick={() => setDeleteBillTarget(bill)}
+                              title="Delete Invoice"
+                            >
+                              Delete
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -898,6 +959,15 @@ export default function BillHistory() {
           }}
         />
       )}
+
+      {/* Delete Invoice Modal (Admin Only) */}
+      <DeleteInvoiceModal
+        isOpen={Boolean(deleteBillTarget)}
+        bill={deleteBillTarget}
+        loading={deletingBill}
+        onClose={() => setDeleteBillTarget(null)}
+        onConfirm={handleDeleteBill}
+      />
       </div>
     </PullToRefresh>
   );
