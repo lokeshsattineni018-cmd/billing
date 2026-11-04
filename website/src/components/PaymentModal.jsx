@@ -264,19 +264,6 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
-                  Reference / UTR / Cheque No. (Optional):
-                </label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="e.g. UTR12345678 or Cheque #4521"
-                  value={reference}
-                  onChange={(e) => setReference(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
                   Notes / Remarks (Optional):
                 </label>
                 <input

@@ -1272,7 +1272,14 @@ a:hover {
   }
 }
 
-/* ── Mobile Bills Cards & Bottom Navigation Bar ── */
+/* ── Bills Cards List (Desktop & Mobile) ── */
+.bills-cards-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
 .mobile-bills-list,
 .mobile-items-list,
 .staff-mobile-glance {
@@ -1374,6 +1381,14 @@ a:hover {
 
   .stat-icon-wrapper {
     display: none !important;
+  }
+
+  /* Bills Cards List Mobile */
+  .bills-cards-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
   }
 
   /* Mobile Bills List */
@@ -2003,12 +2018,14 @@ body:has(.modal-backdrop) {
 
   .invoice-filter-grid {
     display: none !important;
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
     gap: 10px !important;
     margin-top: 12px !important;
     padding-top: 12px !important;
     border-top: 1px dashed #e2e8f0 !important;
     animation: fadeIn 0.2s ease-in-out;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .invoice-filter-grid.mobile-filters-expanded {
@@ -2019,16 +2036,26 @@ body:has(.modal-backdrop) {
     display: none !important; /* Handled by top mobile bar */
   }
 
-  .invoice-filter-grid .filter-date-from-group {
-    grid-column: span 1 !important;
-  }
-
+  .invoice-filter-grid .filter-date-from-group,
   .invoice-filter-grid .filter-date-to-group {
     grid-column: span 1 !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .invoice-filter-grid input[type="date"] {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
   }
 
   .invoice-filter-grid .filter-status-group {
     grid-column: span 2 !important;
+    min-width: 0 !important;
+    width: 100% !important;
   }
 
   .invoice-filter-grid .filter-actions-group {
@@ -2036,6 +2063,7 @@ body:has(.modal-backdrop) {
     display: flex !important;
     gap: 8px !important;
     margin-top: 4px !important;
+    width: 100% !important;
   }
 
   .invoice-filter-grid .filter-actions-group button {

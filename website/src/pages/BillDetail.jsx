@@ -363,16 +363,6 @@ export default function BillDetail() {
             </button>
           )}
 
-          {canVoidBill && !bill.isVoided && (
-            <button
-              className="btn btn-secondary"
-              style={{ padding: '10px 14px', color: '#b45309', border: '1px solid #fde68a', background: '#fffbeb', fontWeight: 700 }}
-              onClick={() => setShowVoidModal(true)}
-            >
-              {lang === 'te' ? 'బిల్లు రద్దు చేయి' : 'Void Bill'}
-            </button>
-          )}
-
           {canDeleteBill && (
             <button
               className="btn btn-secondary"
@@ -380,27 +370,6 @@ export default function BillDetail() {
               onClick={() => setShowDeleteModal(true)}
             >
               {lang === 'te' ? 'బిల్లు తొలగించు' : 'Delete Bill'}
-            </button>
-          )}
-
-          {isAdmin && !bill.isVoided && bill.paymentStatus !== 'Paid' && (
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ background: '#fef3c7', color: '#b45309', border: '1.5px solid #fde68a', fontWeight: 800, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
-              onClick={() => setShowReminderModal(true)}
-            >
-              Send Reminder
-            </button>
-          )}
-
-          {isAdmin && (
-            <button
-              className="btn btn-secondary"
-              style={{ padding: '10px 14px', fontWeight: 700 }}
-              onClick={() => navigate('/new-bill', { state: { cloneBill: bill } })}
-            >
-              Duplicate Bill
             </button>
           )}
 
@@ -442,50 +411,22 @@ export default function BillDetail() {
             </button>
           </div>
 
-          {/* Secondary row: admin actions as small buttons */}
-          {(canEditBill || canVoidBill || canDeleteBill || (isAdmin && bill.paymentStatus !== 'Paid' && !bill.isVoided) || isAdmin) && (
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Secondary row: only Edit and Delete buttons */}
+          {(canEditBill || canDeleteBill) && (
+            <div style={{ display: 'flex', gap: '8px' }}>
               {canEditBill && (
                 <button
                   className="btn btn-secondary btn-sm"
-                  style={{ flex: '1 1 auto', fontWeight: 600 }}
+                  style={{ flex: 1, fontWeight: 700, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                   onClick={() => navigate('/new-bill', { state: { editBill: bill } })}
                 >
                   ✏️ Edit
                 </button>
               )}
-              {isAdmin && (
-                <button
-                  className="btn btn-secondary btn-sm"
-                  style={{ flex: '1 1 auto', fontWeight: 600 }}
-                  onClick={() => navigate('/new-bill', { state: { cloneBill: bill } })}
-                >
-                  📋 Duplicate
-                </button>
-              )}
-              {isAdmin && !bill.isVoided && bill.paymentStatus !== 'Paid' && (
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  style={{ flex: '1 1 auto', background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', fontWeight: 700 }}
-                  onClick={() => setShowReminderModal(true)}
-                >
-                  📲 Reminder
-                </button>
-              )}
-              {canVoidBill && !bill.isVoided && (
-                <button
-                  className="btn btn-secondary btn-sm"
-                  style={{ flex: '1 1 auto', color: '#b45309', border: '1px solid #fde68a', background: '#fffbeb', fontWeight: 700 }}
-                  onClick={() => setShowVoidModal(true)}
-                >
-                  ⛔ Void
-                </button>
-              )}
               {canDeleteBill && (
                 <button
                   className="btn btn-secondary btn-sm"
-                  style={{ flex: '1 1 auto', color: '#dc2626', border: '1px solid #fecaca', background: '#fff5f5', fontWeight: 700 }}
+                  style={{ flex: 1, color: '#dc2626', border: '1px solid #fecaca', background: '#fff5f5', fontWeight: 700, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                   onClick={() => setShowDeleteModal(true)}
                 >
                   🗑️ Delete
