@@ -318,9 +318,10 @@ export default function BillDetail() {
           </p>
         </div>
 
-        <div className="action-buttons" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        {/* ── Desktop action buttons (hidden on phone) ── */}
+        <div className="action-buttons hide-on-phone" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           <button
-            className="btn btn-secondary hide-on-phone"
+            className="btn btn-secondary"
             style={{ fontWeight: 800, padding: '10px 18px', background: '#ffffff', border: '1.5px solid #0b5394', color: '#0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}
             onClick={handlePrint}
             title="Direct Print (Ctrl + P)"
@@ -346,78 +347,154 @@ export default function BillDetail() {
             disabled={downloadingPdf}
           >
             {downloadingPdf ? (
-              <>
-                <span className="btn-spinner" style={{ width: '13px', height: '13px' }}></span> PDF...
-              </>
+              <><span className="btn-spinner" style={{ width: '13px', height: '13px' }}></span> PDF...</>
             ) : (
-              <>
-                <DownloadIcon size={16} /> PDF
-              </>
+              <><DownloadIcon size={16} /> PDF</>
             )}
           </button>
 
-          {/* Edit Invoice Button: opens invoice in NewBill page for editing */}
           {canEditBill && (
             <button
               className="btn btn-secondary"
               style={{ padding: '10px 14px', border: '1px solid #cbd5e1', fontWeight: 600 }}
               onClick={() => navigate('/new-bill', { state: { editBill: bill } })}
-              title="Edit invoice in billing creator"
             >
               Edit Bill
             </button>
           )}
 
-          {/* Admin / Owner Only: Void Invoice Button */}
           {canVoidBill && !bill.isVoided && (
             <button
               className="btn btn-secondary"
               style={{ padding: '10px 14px', color: '#b45309', border: '1px solid #fde68a', background: '#fffbeb', fontWeight: 700 }}
               onClick={() => setShowVoidModal(true)}
-              title={lang === 'te' ? 'ఈ బిల్లును రద్దు చేయండి (అడ్మిన్/యజమాని ప్రత్యేకం)' : 'Mark this bill as voided (Admin exclusive)'}
             >
               {lang === 'te' ? 'బిల్లు రద్దు చేయి' : 'Void Bill'}
             </button>
           )}
 
-          {/* Admin / Owner Only: Delete Invoice Button */}
           {canDeleteBill && (
             <button
               className="btn btn-secondary"
               style={{ padding: '10px 14px', color: '#dc2626', border: '1px solid #fecaca', background: '#fff5f5', fontWeight: 700 }}
               onClick={() => setShowDeleteModal(true)}
-              title={lang === 'te' ? 'ఈ బిల్లును శాశ్వతంగా తొలగించండి' : 'Delete this bill (Admin security confirmation required)'}
             >
               {lang === 'te' ? 'బిల్లు తొలగించు' : 'Delete Bill'}
             </button>
           )}
 
-          {/* Admin Only: WhatsApp & SMS Payment Reminder Modal */}
           {isAdmin && !bill.isVoided && bill.paymentStatus !== 'Paid' && (
             <button
               type="button"
               className="btn btn-secondary"
               style={{ background: '#fef3c7', color: '#b45309', border: '1.5px solid #fde68a', fontWeight: 800, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
               onClick={() => setShowReminderModal(true)}
-              title="Send formatted payment reminder via WhatsApp or SMS"
             >
               Send Reminder
             </button>
           )}
 
-          {/* Admin Only: Duplicate Bill */}
           {isAdmin && (
             <button
               className="btn btn-secondary"
               style={{ padding: '10px 14px', fontWeight: 700 }}
               onClick={() => navigate('/new-bill', { state: { cloneBill: bill } })}
-              title="Duplicate this bill for a new invoice"
             >
               Duplicate Bill
             </button>
           )}
 
           <button className="btn btn-ghost btn-sm" onClick={() => navigate('/bills')}>
+            <ArrowLeftIcon size={16} /> Back
+          </button>
+        </div>
+
+        {/* ── Mobile action buttons (phone only) ── */}
+        <div className="mobile-only-actions" style={{ display: 'none' }}>
+          {/* Primary row: WhatsApp full-width + Print icon */}
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
+            {!bill.isVoided && (
+              <button
+                className="btn btn-whatsapp"
+                style={{ flex: 1, fontWeight: 700, padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '1rem' }}
+                onClick={handleShareWhatsApp}
+                disabled={sharing}
+              >
+                <WhatsAppIcon size={20} color="#ffffff" /> WhatsApp
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleDownloadPDF}
+              disabled={downloadingPdf}
+              style={{ width: '48px', height: '48px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+              title="Download PDF"
+            >
+              {downloadingPdf ? <span className="btn-spinner" style={{ width: '14px', height: '14px' }} /> : <DownloadIcon size={18} color="#334155" />}
+            </button>
+            <button
+              type="button"
+              onClick={handlePrint}
+              style={{ width: '48px', height: '48px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+              title="Print Invoice"
+            >
+              <PrintIcon size={18} color="#0b5394" />
+            </button>
+          </div>
+
+          {/* Secondary row: admin actions as small buttons */}
+          {(canEditBill || canVoidBill || canDeleteBill || (isAdmin && bill.paymentStatus !== 'Paid' && !bill.isVoided) || isAdmin) && (
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {canEditBill && (
+                <button
+                  className="btn btn-secondary btn-sm"
+                  style={{ flex: '1 1 auto', fontWeight: 600 }}
+                  onClick={() => navigate('/new-bill', { state: { editBill: bill } })}
+                >
+                  ✏️ Edit
+                </button>
+              )}
+              {isAdmin && (
+                <button
+                  className="btn btn-secondary btn-sm"
+                  style={{ flex: '1 1 auto', fontWeight: 600 }}
+                  onClick={() => navigate('/new-bill', { state: { cloneBill: bill } })}
+                >
+                  📋 Duplicate
+                </button>
+              )}
+              {isAdmin && !bill.isVoided && bill.paymentStatus !== 'Paid' && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  style={{ flex: '1 1 auto', background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', fontWeight: 700 }}
+                  onClick={() => setShowReminderModal(true)}
+                >
+                  📲 Reminder
+                </button>
+              )}
+              {canVoidBill && !bill.isVoided && (
+                <button
+                  className="btn btn-secondary btn-sm"
+                  style={{ flex: '1 1 auto', color: '#b45309', border: '1px solid #fde68a', background: '#fffbeb', fontWeight: 700 }}
+                  onClick={() => setShowVoidModal(true)}
+                >
+                  ⛔ Void
+                </button>
+              )}
+              {canDeleteBill && (
+                <button
+                  className="btn btn-secondary btn-sm"
+                  style={{ flex: '1 1 auto', color: '#dc2626', border: '1px solid #fecaca', background: '#fff5f5', fontWeight: 700 }}
+                  onClick={() => setShowDeleteModal(true)}
+                >
+                  🗑️ Delete
+                </button>
+              )}
+            </div>
+          )}
+
+          <button className="btn btn-ghost btn-sm" style={{ width: '100%', marginTop: '8px', justifyContent: 'center' }} onClick={() => navigate('/bills')}>
             <ArrowLeftIcon size={16} /> Back
           </button>
         </div>

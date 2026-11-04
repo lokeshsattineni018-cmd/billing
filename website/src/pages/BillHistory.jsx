@@ -431,9 +431,6 @@ export default function BillHistory() {
             {/* Mobile Cards View (Visible on Phones & Tablets) */}
             {viewFormat === 'cards' && (
               <div className="mobile-bills-list">
-                <div style={{ fontSize: '0.72rem', color: '#94a3b8', textAlign: 'right', padding: '0 4px 6px 0', fontWeight: 600 }}>
-                  👈 Swipe card left for quick actions
-                </div>
               {bills.map((bill) => {
                 const totalQty = getTotalQuantity(bill);
                 return (
@@ -456,192 +453,121 @@ export default function BillHistory() {
                         background: '#0b5394',
                         onClick: () => handlePrint(null, bill._id),
                       },
-                      {
-                        label: 'View',
-                        icon: <InvoiceIcon size={16} color="#ffffff" />,
-                        background: '#4f46e5',
-                        onClick: () => navigate(`/bills/${bill._id}`),
-                      },
+                      ...(canDeleteBill
+                        ? [
+                            {
+                              label: 'Delete',
+                              icon: <span style={{ fontSize: '15px' }}>🗑️</span>,
+                              background: '#dc2626',
+                              onClick: () => setDeleteBillTarget(bill),
+                            },
+                          ]
+                        : []),
                     ]}
                   >
-                    <div className="mobile-bill-card" style={bill.isVoided ? { background: '#fef2f2', border: '1px dashed #fca5a5', opacity: 0.85 } : {}}>
-                      {/* Top Row: Bill # + Date + Status */}
-                      <div className="mobile-bill-header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span className="badge badge-blue" style={{ fontSize: '0.8rem', padding: '3px 8px', fontWeight: 800 }}>#{bill.billNo}</span>
-                      {bill.isVoided && (
-                        <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800, fontSize: '0.72rem' }}>
-                          VOIDED
-                        </span>
-                      )}
-                      {bill.isOffline && (
-                        <span className="badge" style={{ background: '#fef3c7', color: '#92400e', fontWeight: 800, fontSize: '0.72rem' }}>
-                          ⚡ Shed Offline
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 500 }}>{formatDate(bill.date)}</span>
-                      {!bill.isVoided && (
-                        <span
-                          className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}
-                          style={{ padding: '3px 8px', fontSize: '0.72rem', fontWeight: 700 }}
-                        >
-                          {bill.paymentStatus || 'Pending'}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Main Body: Company + Weight + Amount */}
-                  <div className="mobile-bill-body" onClick={() => navigate(`/bills/${bill._id}`)}>
-                    <div style={{
-                      fontSize: '1rem',
-                      fontWeight: 700,
-                      color: bill.isVoided ? '#991b1b' : 'var(--text-primary)',
-                      textDecoration: bill.isVoided ? 'line-through' : 'none',
-                      marginBottom: '8px',
-                      lineHeight: 1.3,
-                    }}>
-                      {bill.companyName}
-                    </div>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      background: '#f8fafc',
-                      borderRadius: '8px',
-                      padding: '8px 10px',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Weight:</span>
-                        <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>{totalQty} kg</span>
-                      </div>
-                      {canSeeSales && (
-                        <span style={{
-                          fontSize: '1.1rem',
-                          fontWeight: 800,
-                          color: bill.isVoided ? '#dc2626' : '#0b5394',
-                          textDecoration: bill.isVoided ? 'line-through' : 'none',
-                        }}>
-                          {formatCurrency(bill.grandTotal || bill.total)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="mobile-bill-actions">
-                    <button
-                      className="btn btn-sm"
-                      style={{
-                        flex: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '5px',
-                        padding: '9px 6px',
-                        fontSize: '0.82rem',
-                        background: '#f8fafc',
-                        border: '1.5px solid #0b5394',
-                        color: '#0b5394',
-                        fontWeight: 700,
-                        borderRadius: '8px',
-                      }}
-                      onClick={(e) => handlePrint(e, bill._id)}
-                      title="Print Invoice"
-                    >
-                      <PrintIcon size={14} color="#0b5394" /> Print
-                    </button>
-                    <button
-                      className="btn btn-sm"
-                      style={{
-                        flex: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '5px',
-                        padding: '9px 6px',
-                        fontSize: '0.82rem',
-                        background: '#ffffff',
-                        border: '1px solid #cbd5e1',
-                        color: '#334155',
-                        fontWeight: 700,
-                        borderRadius: '8px',
-                      }}
-                      onClick={(e) => handleDownloadPDF(e, bill._id, bill.formattedBillNo || bill.billNumber || bill.billNo)}
-                      disabled={downloadingPdfId === bill._id}
-                    >
-                      {downloadingPdfId === bill._id ? (
-                        <>
-                          <span className="btn-spinner"></span> PDF...
-                        </>
-                      ) : (
-                        <>
-                          <DownloadIcon size={14} color="#334155" /> PDF
-                        </>
-                      )}
-                    </button>
-                    {!bill.isVoided && (
-                      <button
-                        className="btn btn-whatsapp btn-sm"
-                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', padding: '9px 6px', fontSize: '0.82rem', fontWeight: 700, borderRadius: '8px' }}
-                        onClick={(e) => handleShareWhatsApp(e, bill)}
-                      >
-                        <WhatsAppIcon size={15} color="#ffffff" /> Share
-                      </button>
-                    )}
-                    <button
-                      className="btn btn-sm"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '9px 12px',
-                        fontSize: '0.82rem',
-                        background: '#f1f5f9',
-                        border: '1px solid #e2e8f0',
-                        color: '#475569',
-                        fontWeight: 600,
-                        borderRadius: '8px',
-                      }}
+                    <div
+                      className="mobile-bill-card"
+                      style={bill.isVoided ? { background: '#fef2f2', border: '1px dashed #fca5a5', opacity: 0.85 } : {}}
                       onClick={() => navigate(`/bills/${bill._id}`)}
                     >
-                      View
-                    </button>
-                    {canDeleteBill && (
-                      <button
-                        className="btn btn-sm"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '9px 10px',
-                          fontSize: '0.82rem',
-                          background: '#fff5f5',
-                          border: '1px solid #fecaca',
-                          color: '#dc2626',
+                      {/* Top Row: Bill # + Date + Status */}
+                      <div className="mobile-bill-header">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className="badge badge-blue" style={{ fontSize: '0.8rem', padding: '3px 8px', fontWeight: 800 }}>#{bill.billNo}</span>
+                          {bill.isVoided && (
+                            <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800, fontSize: '0.72rem' }}>
+                              VOIDED
+                            </span>
+                          )}
+                          {bill.isOffline && (
+                            <span className="badge" style={{ background: '#fef3c7', color: '#92400e', fontWeight: 800, fontSize: '0.72rem' }}>
+                              ⚡ Offline
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 500 }}>{formatDate(bill.date)}</span>
+                          {!bill.isVoided && (
+                            <span
+                              className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}
+                              style={{ padding: '3px 8px', fontSize: '0.72rem', fontWeight: 700 }}
+                            >
+                              {bill.paymentStatus || 'Pending'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Main Body: Company + Weight + Amount */}
+                      <div className="mobile-bill-body">
+                        <div style={{
+                          fontSize: '1rem',
                           fontWeight: 700,
+                          color: bill.isVoided ? '#991b1b' : 'var(--text-primary)',
+                          textDecoration: bill.isVoided ? 'line-through' : 'none',
+                          marginBottom: '8px',
+                          lineHeight: 1.3,
+                        }}>
+                          {bill.companyName}
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          background: '#f8fafc',
                           borderRadius: '8px',
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteBillTarget(bill);
-                        }}
-                        title="Delete Invoice"
+                          padding: '8px 10px',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Weight:</span>
+                            <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>{totalQty} kg</span>
+                          </div>
+                          {canSeeSales && (
+                            <span style={{
+                              fontSize: '1.1rem',
+                              fontWeight: 800,
+                              color: bill.isVoided ? '#dc2626' : '#0b5394',
+                              textDecoration: bill.isVoided ? 'line-through' : 'none',
+                            }}>
+                              {formatCurrency(bill.grandTotal || bill.total)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Footer: icon-only action buttons */}
+                      <div
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingTop: '10px', borderTop: '1px solid #f1f5f9', marginTop: '10px' }}
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        Delete
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </SwipeableItem>
-              )})}
-            </div>
+                        {!bill.isVoided && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleShareWhatsApp(e, bill); }}
+                            style={{ background: '#25D366', border: 'none', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                            title="Share on WhatsApp"
+                          >
+                            <WhatsAppIcon size={18} color="#ffffff" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); handlePrint(e, bill._id); }}
+                          style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                          title="Print Invoice"
+                        >
+                          <PrintIcon size={16} color="#0b5394" />
+                        </button>
+                      </div>
+                    </div>
+                  </SwipeableItem>
+                );
+              })}
+              </div>
             )}
 
             {/* Table View (Scrollable on Mobile, Native on Desktop) */}
-            <div className={`table-container ${viewFormat === 'table' ? 'mobile-visible-table' : 'desktop-only-table'}`}>
+            <div className="table-container desktop-only-table">
               <table className="table">
                 <thead>
                   <tr>

@@ -1208,6 +1208,11 @@ a:hover {
     gap: 14px;
   }
 
+  /* Hide the desktop action-buttons block on phone — replaced by mobile-only-actions */
+  .bill-detail-header .action-buttons.hide-on-phone {
+    display: none !important;
+  }
+
   .bill-detail-header .action-buttons {
     width: 100%;
     flex-direction: column;
@@ -1569,6 +1574,13 @@ a:hover {
   z-index: 999999 !important;
   padding: 16px !important;
   margin: 0 !important;
+  overscroll-behavior: contain !important;
+}
+
+/* Lock page scroll when any modal is open */
+body:has(.modal-backdrop) {
+  overflow: hidden !important;
+  touch-action: none !important;
 }
 
 .modal-content {
@@ -1837,6 +1849,14 @@ a:hover {
   .hide-on-phone,
   .hide-on-mobile {
     display: none !important;
+  }
+
+  /* Mobile-only action section in BillDetail */
+  .mobile-only-actions {
+    display: flex !important;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
   }
 }
 
