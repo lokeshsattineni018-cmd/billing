@@ -21,9 +21,10 @@ export default function ConfirmModal({
   if (!isOpen) return null;
 
   const isDanger = confirmType === 'danger';
-  const iconBg = isDanger ? '#fee2e2' : '#fef3c7';
-  const iconColor = isDanger ? '#dc2626' : '#d97706';
-  const btnBg = isDanger ? '#dc2626' : '#d97706';
+  const isPrimary = confirmType === 'primary';
+  const iconBg = isDanger ? '#fee2e2' : isPrimary ? '#dcfce7' : '#fef3c7';
+  const iconColor = isDanger ? '#dc2626' : isPrimary ? '#16a34a' : '#d97706';
+  const btnBg = isDanger ? '#dc2626' : isPrimary ? '#16a34a' : '#d97706';
 
   return (
     <div className="modal-backdrop" onClick={loading ? undefined : onClose}>
@@ -104,24 +105,24 @@ export default function ConfirmModal({
           </div>
         )}
 
-        {/* Warning Banner */}
+        {/* Warning / Info Banner */}
         {warningText && (
           <div
             style={{
-              background: isDanger ? '#fff5f5' : '#fffbeb',
-              border: `1px solid ${isDanger ? '#fecaca' : '#fde68a'}`,
+              background: isDanger ? '#fff5f5' : isPrimary ? '#f0fdf4' : '#fffbeb',
+              border: `1px solid ${isDanger ? '#fecaca' : isPrimary ? '#86efac' : '#fde68a'}`,
               borderRadius: '8px',
               padding: '10px 12px',
               marginBottom: '20px',
               fontSize: '0.8rem',
-              color: isDanger ? '#991b1b' : '#92400e',
+              color: isDanger ? '#991b1b' : isPrimary ? '#166534' : '#92400e',
               display: 'flex',
               alignItems: 'flex-start',
               gap: '8px',
               lineHeight: '1.4',
             }}
           >
-            <span>⚠️</span>
+            <span>{isPrimary ? 'ℹ️' : '⚠️'}</span>
             <span>{warningText}</span>
           </div>
         )}
