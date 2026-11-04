@@ -440,17 +440,17 @@ router.get('/profit-loss', protect, restrictTo('owner', 'admin'), async (req, re
       ]),
       // 2. Total Wastage Sales
       DailyWastage.aggregate([
-        { $match: dateFilter },
+        { $match: { ...dateFilter, isDeleted: { $ne: true } } },
         { $group: { _id: null, total: { $sum: '$totalAmount' }, kg: { $sum: '$quantityKg' } } },
       ]),
       // 3. Total Staff Wages
       StaffWork.aggregate([
-        { $match: dateFilter },
+        { $match: { ...dateFilter, isDeleted: { $ne: true } } },
         { $group: { _id: null, total: { $sum: '$totalAmount' }, count: { $sum: 1 } } },
       ]),
       // 4. Total Ice Expenses
       DailyIce.aggregate([
-        { $match: dateFilter },
+        { $match: { ...dateFilter, isDeleted: { $ne: true } } },
         { $group: { _id: null, total: { $sum: '$totalAmount' }, blocks: { $sum: '$blocks' } } },
       ]),
       // 5. Daily timeline for bills
@@ -465,7 +465,7 @@ router.get('/profit-loss', protect, restrictTo('owner', 'admin'), async (req, re
       ]),
       // 6. Daily timeline for wastage
       DailyWastage.aggregate([
-        { $match: dateFilter },
+        { $match: { ...dateFilter, isDeleted: { $ne: true } } },
         {
           $group: {
             _id: { $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: '+05:30' } },
@@ -475,7 +475,7 @@ router.get('/profit-loss', protect, restrictTo('owner', 'admin'), async (req, re
       ]),
       // 7. Daily timeline for staff
       StaffWork.aggregate([
-        { $match: dateFilter },
+        { $match: { ...dateFilter, isDeleted: { $ne: true } } },
         {
           $group: {
             _id: { $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: '+05:30' } },
@@ -485,7 +485,7 @@ router.get('/profit-loss', protect, restrictTo('owner', 'admin'), async (req, re
       ]),
       // 8. Daily timeline for ice
       DailyIce.aggregate([
-        { $match: dateFilter },
+        { $match: { ...dateFilter, isDeleted: { $ne: true } } },
         {
           $group: {
             _id: { $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: '+05:30' } },

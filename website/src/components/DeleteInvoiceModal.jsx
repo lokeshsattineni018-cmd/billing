@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import ConfirmModal from './ConfirmModal';
 import { TrashIcon } from './Icons';
 
 export default function DeleteInvoiceModal({
@@ -15,9 +14,8 @@ export default function DeleteInvoiceModal({
   const [reason, setReason] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Generate a fresh 4-digit numeric code whenever modal opens
   const generateNewCode = () => {
-    const code = String(Math.floor(1000 + Math.random() * 9000));
+    const code = String(Math.floor(100000 + Math.random() * 900000));
     setSecurityCode(code);
     setTypedCode('');
     setErrorMsg('');
@@ -33,17 +31,15 @@ export default function DeleteInvoiceModal({
   if (!isOpen || !bill) return null;
 
   const billNo = bill.billNo || bill.originalBillNo;
-  const isMatch =
-    typedCode.trim() === securityCode ||
-    typedCode.trim().toUpperCase() === 'DELETE' ||
-    typedCode.trim() === String(billNo);
+  const isMatch = typedCode.trim() === securityCode;
 
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+    e?.preventDefault();
     if (!isMatch) {
       setErrorMsg(
         lang === 'te'
-          ? 'దయచేసి సరైన నిర్ధారణ కోడ్‌ను నమోదు చేయండి.'
-          : 'Please enter the exact confirmation code shown above.'
+          ? 'దయచేసి పై నిర్ధారణ కోడ్‌ను సరిగ్గా నమోదు చేయండి.'
+          : 'Please enter the exact 6-digit confirmation code shown above.'
       );
       return;
     }
@@ -52,154 +48,230 @@ export default function DeleteInvoiceModal({
   };
 
   return (
-    <ConfirmModal
-      isOpen={isOpen}
-      customIcon={<TrashIcon size={24} color="#dc2626" />}
-      title={lang === 'te' ? `ఇన్‌వాయిస్ #${billNo} తొలగించాలా?` : `Delete Invoice #${billNo}?`}
-      subtitle={lang === 'te' ? 'అడ్మిన్ సెక్యూరిటీ నిర్ధారణ' : 'Admin Security Confirmation Required'}
-      message={
-        lang === 'te'
-          ? 'ఈ ఇన్‌వాయిస్ వెబ్‌సైట్ మరియు అన్ని ఖాతాల నుండి పూర్తిగా తొలగించబడుతుంది. రికార్డుల కోసం డేటాబేస్‌లో ఉంటుంది.'
-          : 'This invoice will be removed from all website views and balances. Next invoice sequence will automatically roll back so this invoice number can be re-used.'
-      }
-      itemDetails={[
-        { label: lang === 'te' ? 'ఇన్‌వాయిస్ నం' : 'Invoice #', value: `#${billNo}`, isMono: true },
-        { label: lang === 'te' ? 'కస్టమర్ పేరు' : 'Customer', value: bill.companyName || bill.customerName || '—' },
-        {
-          label: lang === 'te' ? 'మొత్తం విలువ' : 'Amount',
-          value: `₹${Number(bill.grandTotal || bill.total || 0).toLocaleString('en-IN')}`,
-          isMono: true,
-        },
-      ]}
-      warningText={
-        lang === 'te'
-          ? `ఇన్‌వాయిస్ #${billNo} తొలగించబడితే, తదుపరి సృష్టించబడే ఇన్‌వాయిస్ నంబర్ #${billNo} మాత్రమే అవుతుంది.`
-          : `Deleting Invoice #${billNo} will reset the sequence so your next created invoice will be #${billNo}.`
-      }
-      confirmText={lang === 'te' ? 'ఖచ్చితంగా తొలగించు' : 'Confirm & Delete'}
-      cancelText={lang === 'te' ? 'రద్దు చేయి' : 'Cancel'}
-      confirmType="danger"
-      loading={loading}
-      confirmLoadingText={lang === 'te' ? 'తొలగిస్తోంది...' : 'Deleting...'}
-      onConfirm={handleSubmit}
-      onClose={() => {
-        if (!loading) onClose();
-      }}
-    >
-      <div style={{ marginTop: '8px' }}>
-        {/* Security Code Box */}
-        <div
-          style={{
-            background: '#fef2f2',
-            border: '1.5px dashed #f87171',
-            borderRadius: '10px',
-            padding: '12px 14px',
-            textAlign: 'center',
-            marginBottom: '14px',
-          }}
-        >
-          <div style={{ fontSize: '0.8rem', color: '#991b1b', fontWeight: 600, marginBottom: '6px' }}>
-            {lang === 'te'
-              ? 'తొలగింపును నిర్ధారించడానికి క్రింది కోడ్‌ను టైప్ చేయండి:'
-              : 'Type the confirmation code below to confirm deletion:'}
-          </div>
+    <div className="modal-backdrop" onClick={loading ? undefined : onClose}>
+      <div
+        className="modal-content fade-in"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: '450px', padding: '24px' }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
           <div
             style={{
-              display: 'inline-flex',
+              width: '46px',
+              height: '46px',
+              borderRadius: '50%',
+              background: '#fee2e2',
+              display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              background: '#ffffff',
-              padding: '6px 18px',
-              borderRadius: '8px',
-              border: '1px solid #fca5a5',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <TrashIcon size={22} color="#dc2626" />
+          </div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.18rem', fontWeight: 800, color: '#0f172a' }}>
+              {lang === 'te' ? `ఇన్‌వాయిస్ #${billNo} తొలగించాలా?` : `Delete Invoice #${billNo}?`}
+            </h3>
+            <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
+              {lang === 'te' ? 'అడ్మిన్ అధీకృత చర్య' : 'Admin Authorized Action — Recoverable from Recycle Bin'}
+            </span>
+          </div>
+        </div>
+
+        {/* Item summary */}
+        <div
+          style={{
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: '10px',
+            padding: '12px 14px',
+            marginBottom: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.84rem' }}>
+            <span style={{ color: '#64748b', fontWeight: 600 }}>{lang === 'te' ? 'కస్టమర్:' : 'Customer:'}</span>
+            <span style={{ color: '#0f172a', fontWeight: 700 }}>
+              {bill.companyName || bill.customerName || '—'}
+            </span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.84rem' }}>
+            <span style={{ color: '#64748b', fontWeight: 600 }}>{lang === 'te' ? 'మొత్తం:' : 'Amount:'}</span>
+            <span style={{ color: '#0b5394', fontWeight: 800, fontFamily: 'monospace' }}>
+              ₹{Number(bill.grandTotal || bill.total || 0).toLocaleString('en-IN')}
+            </span>
+          </div>
+        </div>
+
+        {/* Security Code */}
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <label className="form-label" style={{ margin: 0 }}>
+              {lang === 'te' ? '6-అంకెల నిర్ధారణ కోడ్' : 'Confirmation Code'}
+              <span style={{ color: '#dc2626' }}> *</span>
+            </label>
+            <button
+              type="button"
+              onClick={generateNewCode}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#2563eb',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                padding: 0,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '3px',
+              }}
+            >
+              🔄 {lang === 'te' ? 'కొత్త కోడ్' : 'New code'}
+            </button>
+          </div>
+
+          {/* Code display — matches the same card style as item summary */}
+          <div
+            style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '10px',
+              padding: '14px',
+              textAlign: 'center',
+              marginBottom: '10px',
             }}
           >
             <span
               style={{
-                fontSize: '1.45rem',
+                fontSize: '2rem',
                 fontWeight: 900,
-                letterSpacing: '5px',
-                color: '#b91c1c',
+                letterSpacing: '10px',
+                color: '#0f172a',
                 fontFamily: 'monospace',
                 userSelect: 'all',
               }}
             >
               {securityCode}
             </span>
-            <button
-              type="button"
-              onClick={generateNewCode}
-              title="Generate new code"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '0.85rem',
-                color: '#64748b',
-                padding: '2px 4px',
-              }}
-            >
-              🔄
-            </button>
           </div>
-        </div>
 
-        {/* Input for Confirmation Code */}
-        <div className="form-group" style={{ marginBottom: '12px' }}>
-          <label className="form-label" style={{ fontWeight: 700, fontSize: '0.85rem' }}>
-            {lang === 'te' ? 'నిర్ధారణ కోడ్ నమోదు చేయండి:' : 'Enter Confirmation Code:'}
-            <span style={{ color: '#dc2626' }}> *</span>
-          </label>
           <input
             type="text"
-            className="form-input"
+            inputMode="numeric"
+            maxLength={6}
             autoFocus
-            placeholder={`Type ${securityCode} to confirm`}
+            className="form-input"
+            placeholder={lang === 'te' ? `${securityCode} టైప్ చేయండి` : `Type ${securityCode} to confirm`}
             value={typedCode}
             onChange={(e) => {
               setTypedCode(e.target.value);
               if (errorMsg) setErrorMsg('');
             }}
             style={{
-              fontSize: '1rem',
+              textAlign: 'center',
+              fontSize: '1.1rem',
               fontWeight: 700,
-              letterSpacing: '2px',
-              borderColor: isMatch ? '#16a34a' : typedCode ? '#dc2626' : undefined,
+              letterSpacing: '4px',
+              borderColor: isMatch ? '#16a34a' : typedCode.length > 0 ? '#dc2626' : undefined,
             }}
           />
+
           {errorMsg && (
-            <div style={{ color: '#dc2626', fontSize: '0.78rem', marginTop: '4px', fontWeight: 600 }}>
+            <p style={{ color: '#dc2626', fontSize: '0.8rem', margin: '6px 0 0', fontWeight: 600 }}>
               {errorMsg}
-            </div>
+            </p>
           )}
           {isMatch && (
-            <div style={{ color: '#16a34a', fontSize: '0.78rem', marginTop: '4px', fontWeight: 700 }}>
-              ✓ {lang === 'te' ? 'కోడ్ సరిపోలింది' : 'Confirmation code verified'}
-            </div>
+            <p style={{ color: '#16a34a', fontSize: '0.8rem', margin: '6px 0 0', fontWeight: 700 }}>
+              ✓ {lang === 'te' ? 'కోడ్ సరిపోలింది' : 'Code matched — ready to delete'}
+            </p>
           )}
         </div>
 
-        {/* Reason Field */}
-        <div className="form-group" style={{ marginBottom: '4px' }}>
-          <label className="form-label" style={{ fontWeight: 600, fontSize: '0.82rem', color: '#64748b' }}>
-            {lang === 'te' ? 'తొలగించడానికి కారణం (ఐచ్ఛికం):' : 'Reason for Deletion (Optional):'}
+        {/* Reason */}
+        <div className="form-group" style={{ marginBottom: '16px' }}>
+          <label className="form-label">
+            {lang === 'te' ? 'తొలగించడానికి కారణం (ఐచ్ఛికం)' : 'Reason for Deletion (Optional)'}
           </label>
           <input
             type="text"
             className="form-input"
-            placeholder={
-              lang === 'te'
-                ? 'ఉదా. తప్పుడు ఎంట్రీ, టెస్ట్ బిల్లు...'
-                : 'e.g. Wrong entry, test invoice, customer cancelled'
-            }
+            placeholder={lang === 'te' ? 'ఉదా. తప్పుడు ఎంట్రీ...' : 'e.g. Mistake in weights, customer cancelled'}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            style={{ fontSize: '0.85rem' }}
           />
         </div>
+
+        {/* Info notice */}
+        <div
+          style={{
+            background: '#fffbeb',
+            border: '1px solid #fde68a',
+            borderRadius: '8px',
+            padding: '10px 12px',
+            marginBottom: '20px',
+            fontSize: '0.8rem',
+            color: '#92400e',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '8px',
+            lineHeight: '1.4',
+          }}
+        >
+          <span>⚠️</span>
+          <span>
+            {lang === 'te'
+              ? `ఇన్‌వాయిస్ #${billNo} తొలగించబడితే, తదుపరి ఇన్‌వాయిస్ నంబర్ #${billNo} అవుతుంది. అడ్మిన్ రీసైకిల్ బిన్ నుండి తిరిగి పొందవచ్చు.`
+              : `Deleting Invoice #${billNo} will reset the sequence so your next created invoice will be #${billNo}. You can restore it from the Admin Recycle Bin.`}
+          </span>
+        </div>
+
+        {/* Footer buttons */}
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onClose}
+            disabled={loading}
+            style={{ fontWeight: 700, padding: '9px 18px', fontSize: '0.88rem' }}
+          >
+            {lang === 'te' ? 'రద్దు' : 'Cancel'}
+          </button>
+          <button
+            type="button"
+            className="btn"
+            onClick={handleSubmit}
+            disabled={!isMatch || loading}
+            style={{
+              background: isMatch ? '#dc2626' : '#cbd5e1',
+              color: '#ffffff',
+              fontWeight: 800,
+              padding: '9px 20px',
+              fontSize: '0.88rem',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: isMatch && !loading ? 'pointer' : 'not-allowed',
+              boxShadow: isMatch ? '0 2px 8px rgba(220, 38, 38, 0.25)' : 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            {loading ? (
+              <>
+                <span className="btn-spinner" style={{ width: '14px', height: '14px' }}></span>
+                <span>{lang === 'te' ? 'తొలగిస్తోంది...' : 'Deleting...'}</span>
+              </>
+            ) : (
+              lang === 'te' ? 'ఖచ్చితంగా తొలగించు' : 'Confirm & Delete'
+            )}
+          </button>
+        </div>
       </div>
-    </ConfirmModal>
+    </div>
   );
 }
-

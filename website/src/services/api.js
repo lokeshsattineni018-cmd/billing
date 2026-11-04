@@ -228,5 +228,14 @@ export const staffAPI = {
   getVoucherPDF: (payload) => api.post('/staff/voucher/pdf', payload, { responseType: 'blob' }),
 };
 
+// Admin Recycle Bin / Recovery Center
+export const recycleBinAPI = {
+  list: (params) => api.get('/recycle-bin', { params }),
+  restoreBill: (id) => api.post(`/recycle-bin/restore/bill/${id}`),
+  restoreIce: (id) => api.post(`/recycle-bin/restore/ice/${id}`),
+  restoreWastage: (id) => api.post(`/recycle-bin/restore/wastage/${id}`),
+  restoreStaff: (id) => api.post(`/recycle-bin/restore/staff/${id}`),
+};
+
 export default api;
 

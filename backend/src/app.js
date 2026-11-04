@@ -21,6 +21,7 @@ const activityLogsRoutes = require('./routes/activityLogs');
 const usersRoutes = require('./routes/users');
 const backupRoutes = require('./routes/backup');
 const staffRoutes = require('./routes/staff');
+const recycleBinRoutes = require('./routes/recycleBin');
 const mongoose = require('mongoose');
 const { initErrorTracking, captureException, handleServerError } = require('./utils/errorTracker');
 const structuredLogger = require('./utils/structuredLogger');
@@ -135,6 +136,7 @@ const routeMappings = [
   ['/users', usersRoutes],
   ['/backup', backupRoutes],
   ['/staff', staffRoutes],
+  ['/recycle-bin', recycleBinRoutes],
 ];
 
 routeMappings.forEach(([path, handler]) => {

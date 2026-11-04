@@ -19,7 +19,7 @@ router.get('/', protect, async (req, res) => {
   try {
     const { search, dateFrom, dateTo, paymentStatus, workType, page = 1, limit = 50 } = req.query;
 
-    const filter = {};
+    const filter = { isDeleted: { $ne: true } };
 
     if (search) {
       const sanitized = escapeRegex(search.trim());
@@ -93,9 +93,9 @@ router.get('/summary', protect, async (req, res) => {
     const { dateFrom, dateTo, dateFilter } = req.query;
 
     // Build period filter
-    let periodMatch = {};
+    let periodMatch = { isDeleted: { $ne: true } };
     if (dateFilter === 'all' && !dateFrom && !dateTo) {
-      periodMatch = {};
+      periodMatch = { isDeleted: { $ne: true } };
     } else if (dateFrom || dateTo) {
       periodMatch.date = {};
       if (dateFrom) {
@@ -112,11 +112,12 @@ router.get('/summary', protect, async (req, res) => {
       const now = new Date();
       const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-      periodMatch = { date: { $gte: startOfToday, $lte: endOfToday } };
+      periodMatch = { date: { $gte: startOfToday, $lte: endOfToday }, isDeleted: { $ne: true } };
     }
 
     // 1. Overall Totals
     const overallAgg = await StaffWork.aggregate([
+      { $match: { isDeleted: { $ne: true } } },
       {
         $group: {
           _id: null,
@@ -172,6 +173,7 @@ router.get('/summary', protect, async (req, res) => {
 
     // 3. Per-Staff Accounts Breakdown ("how much they worked for all accounts")
     const perStaffAgg = await StaffWork.aggregate([
+      { $match: { isDeleted: { $ne: true } } },
       {
         $group: {
           _id: '$staffName',
@@ -477,7 +479,7 @@ router.post('/batch-pay', protect, restrictTo('admin', 'owner'), async (req, res
 router.get('/ice', protect, async (req, res) => {
   try {
     const { search, dateFrom, dateTo, paymentStatus, page = 1, limit = 50 } = req.query;
-    const filter = {};
+    const filter = { isDeleted: { $ne: true } };
 
     if (search) {
       const sanitized = escapeRegex(search.trim());
@@ -567,7 +569,7 @@ router.get('/ice/summary', protect, async (req, res) => {
 
     const [periodAgg, overallAgg] = await Promise.all([
       DailyIce.aggregate([
-        { $match: periodFilter },
+        { $match: { ...periodFilter, isDeleted: { $ne: true } } },
         {
           $group: {
             _id: null,
@@ -582,6 +584,7 @@ router.get('/ice/summary', protect, async (req, res) => {
         },
       ]),
       DailyIce.aggregate([
+        { $match: { isDeleted: { $ne: true } } },
         {
           $group: {
             _id: null,
@@ -795,14 +798,20 @@ router.put('/ice/:id', protect, restrictTo('admin', 'owner'), async (req, res) =
 
 /**
  * DELETE /api/staff/ice/:id
- * Delete ice record
+ * Delete ice record (Soft delete for recycle bin / recovery)
  */
 router.delete('/ice/:id', protect, restrictTo('admin', 'owner'), async (req, res) => {
   try {
-    const record = await DailyIce.findByIdAndDelete(req.params.id);
-    if (!record) {
+    const record = await DailyIce.findById(req.params.id);
+    if (!record || record.isDeleted) {
       return res.status(404).json({ message: 'Ice record not found' });
     }
+
+    record.isDeleted = true;
+    record.deletedAt = new Date();
+    record.deletedBy = req.user._id;
+    record.deletedReason = req.body?.reason?.trim() || 'Deleted by admin';
+    await record.save();
 
     await logActivity(req, 'ICE_DELETED', req.params.id, {
       targetType: 'ICE',
@@ -828,7 +837,7 @@ router.delete('/ice/:id', protect, restrictTo('admin', 'owner'), async (req, res
 router.get('/wastage', protect, async (req, res) => {
   try {
     const { search, dateFrom, dateTo, paymentStatus, page = 1, limit = 50 } = req.query;
-    const filter = {};
+    const filter = { isDeleted: { $ne: true } };
 
     if (search) {
       const sanitized = escapeRegex(search.trim());
@@ -914,7 +923,7 @@ router.get('/wastage/summary', protect, async (req, res) => {
 
     const [periodAgg, overallAgg] = await Promise.all([
       DailyWastage.aggregate([
-        { $match: periodFilter },
+        { $match: { ...periodFilter, isDeleted: { $ne: true } } },
         {
           $group: {
             _id: null,
@@ -929,6 +938,7 @@ router.get('/wastage/summary', protect, async (req, res) => {
         },
       ]),
       DailyWastage.aggregate([
+        { $match: { isDeleted: { $ne: true } } },
         {
           $group: {
             _id: null,
@@ -1135,14 +1145,20 @@ router.put('/wastage/:id', protect, restrictTo('admin', 'owner'), async (req, re
 
 /**
  * DELETE /api/staff/wastage/:id
- * Delete wastage sales record
+ * Delete wastage sales record (Soft delete for recycle bin / recovery)
  */
 router.delete('/wastage/:id', protect, restrictTo('admin', 'owner'), async (req, res) => {
   try {
-    const record = await DailyWastage.findByIdAndDelete(req.params.id);
-    if (!record) {
+    const record = await DailyWastage.findById(req.params.id);
+    if (!record || record.isDeleted) {
       return res.status(404).json({ message: 'Wastage record not found' });
     }
+
+    record.isDeleted = true;
+    record.deletedAt = new Date();
+    record.deletedBy = req.user._id;
+    record.deletedReason = req.body?.reason?.trim() || 'Deleted by admin';
+    await record.save();
 
     await logActivity(req, 'WASTAGE_DELETED', req.params.id, {
       targetType: 'WASTAGE',
@@ -1373,16 +1389,20 @@ router.patch('/:id/pay', protect, restrictTo('admin', 'owner'), async (req, res)
 
 /**
  * DELETE /api/staff/:id
- * Delete a work entry
+ * Delete a work entry (Soft delete for recycle bin / recovery)
  */
 router.delete('/:id', protect, restrictTo('admin', 'owner'), async (req, res) => {
   try {
     const entry = await StaffWork.findById(req.params.id);
-    if (!entry) {
+    if (!entry || entry.isDeleted) {
       return res.status(404).json({ message: 'Staff work entry not found' });
     }
 
-    await StaffWork.findByIdAndDelete(req.params.id);
+    entry.isDeleted = true;
+    entry.deletedAt = new Date();
+    entry.deletedBy = req.user._id;
+    entry.deletedReason = req.body?.reason?.trim() || 'Deleted by admin';
+    await entry.save();
 
     await logActivity(req, 'STAFF_WORK_DELETED', req.params.id, {
       staffName: entry.staffName,

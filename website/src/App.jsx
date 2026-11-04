@@ -17,6 +17,7 @@ const Reports = lazy(() => import('./pages/Reports'));
 const ActivityLog = lazy(() => import('./pages/ActivityLog'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Staff = lazy(() => import('./pages/Staff'));
+const RecycleBin = lazy(() => import('./pages/RecycleBin'));
 
 import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon, UserIcon, StaffIcon, MenuIcon, CloseIcon } from './components/Icons';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -65,6 +66,7 @@ function Sidebar({ onInstall, onLogout }) {
           { path: '/customers', label: t('customers'), icon: <UserIcon size={18} /> },
           { path: '/ledger', label: 'Customer Ledger', icon: <InvoiceIcon size={18} /> },
           { path: '/activity-log', label: t('activityLog'), icon: <SettingsIcon size={18} /> },
+          { path: '/recycle-bin', label: 'Recycle Bin', icon: <span style={{ fontSize: '15px' }}>🗑️</span> },
           { path: '/settings', label: t('settings'), icon: <SettingsIcon size={18} /> },
         ]
       : []),
@@ -189,6 +191,7 @@ function AppLayout() {
           { path: '/customers', label: t('customers'), icon: <UserIcon size={18} /> },
           { path: '/ledger', label: 'Customer Ledger', icon: <InvoiceIcon size={18} /> },
           { path: '/activity-log', label: t('activityLog'), icon: <InvoiceIcon size={18} /> },
+          { path: '/recycle-bin', label: 'Recycle Bin', icon: <span style={{ fontSize: '15px' }}>🗑️</span> },
           { path: '/settings', label: t('settings'), icon: <SettingsIcon size={18} /> },
         ]
       : []),
@@ -416,6 +419,7 @@ function AppLayout() {
               {isAdmin && <Route path="/customers" element={<CustomerDirectory />} />}
               {isAdmin && <Route path="/ledger" element={<CustomerLedger />} />}
               {isAdmin && <Route path="/activity-log" element={<ActivityLog />} />}
+              {isAdmin && <Route path="/recycle-bin" element={<RecycleBin />} />}
               {isAdmin && <Route path="/settings" element={<Settings />} />}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
