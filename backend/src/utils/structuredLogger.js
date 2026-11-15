@@ -31,12 +31,11 @@ function emitLog(level, event, message, metadata = {}, req = null) {
     data: metadata,
   };
 
-  // Output as a single serialized line for standard cloud log collectors
-  const jsonStr = JSON.stringify(logEntry);
+  // Only emit ERROR or FATAL to stderr; quiet INFO/WARN in production to keep cloud/Vercel logs clean
   if (level === 'ERROR' || level === 'FATAL') {
-    process.stderr.write(jsonStr + '\n');
-  } else {
-    process.stdout.write(jsonStr + '\n');
+    process.stderr.write(JSON.stringify(logEntry) + '\n');
+  } else if (process.env.ENABLE_VERBOSE_LOGS === 'true') {
+    process.stdout.write(JSON.stringify(logEntry) + '\n');
   }
 
   return logEntry;
