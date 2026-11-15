@@ -408,8 +408,8 @@ export default function BillHistory() {
           <SkeletonTable rows={8} cols={6} hasHeader={false} />
         ) : bills.length > 0 ? (
           <>
-            {/* Cards View */}
-            <div className="bills-cards-list">
+            {/* Mobile Cards View (Hidden on Desktop/Laptop, Visible on Phones) */}
+            <div className="mobile-bills-list">
               {bills.map((bill) => {
                 const totalQty = getTotalQuantity(bill);
                 return (
@@ -542,6 +542,126 @@ export default function BillHistory() {
                   </SwipeableItem>
                 );
               })}
+            </div>
+
+            {/* Desktop / Laptop Table View (Hidden on Phones, Native Table on Laptop) */}
+            <div className="table-container desktop-only-table">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Invoice Number</th>
+                    <th>Company Name</th>
+                    <th>Invoice Date</th>
+                    <th className="text-right">Quantity (KG)</th>
+                    <th>Payment Status</th>
+                    {canSeeSales && <th className="text-right">Total Amount</th>}
+                    <th className="text-center" style={{ width: '200px' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bills.map((bill) => (
+                    <tr key={bill._id} style={bill.isVoided ? { background: '#fef2f2', opacity: 0.85 } : {}}>
+                      <td>
+                        <span className="badge badge-blue">#{bill.billNo}</span>
+                        {bill.isVoided && (
+                          <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800, marginLeft: '6px' }}>
+                            VOIDED
+                          </span>
+                        )}
+                        {bill.isOffline && (
+                          <span className="badge" style={{ background: '#fef3c7', color: '#92400e', fontWeight: 800, marginLeft: '6px', fontSize: '0.72rem' }}>
+                            ⚡ Offline
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <span
+                          style={{
+                            fontWeight: 600,
+                            color: bill.isVoided ? '#991b1b' : 'var(--accent-primary)',
+                            cursor: 'pointer',
+                            textDecoration: bill.isVoided ? 'line-through' : 'none',
+                          }}
+                          onClick={() => navigate(`/bills/${bill._id}`)}
+                          title="Click to view invoice details"
+                        >
+                          {bill.companyName}
+                        </span>
+                      </td>
+                      <td>{formatDate(bill.date)}</td>
+                      <td className="text-right">{getTotalQuantity(bill)} kg</td>
+                      <td>
+                        {bill.isVoided ? (
+                          <span className="badge" style={{ background: '#fecaca', color: '#991b1b', fontWeight: 700 }}>
+                            Voided
+                          </span>
+                        ) : (
+                          <span
+                            className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}
+                          >
+                            {bill.paymentStatus || 'Pending'}
+                          </span>
+                        )}
+                      </td>
+                      {canSeeSales && (
+                        <td className="text-right" style={{
+                          fontWeight: 700,
+                          color: bill.isVoided ? '#dc2626' : 'var(--text-primary)',
+                          textDecoration: bill.isVoided ? 'line-through' : 'none',
+                        }}>
+                          {formatCurrency(bill.grandTotal || bill.total)}
+                        </td>
+                      )}
+                      <td className="text-center">
+                        <div className="action-buttons" style={{ justifyContent: 'center', display: 'flex', gap: '6px' }}>
+                          {!bill.isVoided && (
+                            <button
+                              className="btn btn-whatsapp btn-sm"
+                              onClick={(e) => handleShareWhatsApp(e, bill)}
+                              title="Share on WhatsApp"
+                              style={{ padding: '6px 10px' }}
+                            >
+                              <WhatsAppIcon size={14} color="#ffffff" />
+                            </button>
+                          )}
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={(e) => handlePrint(e, bill._id)}
+                            title="Print Invoice"
+                            style={{ padding: '6px 10px' }}
+                          >
+                            <PrintIcon size={14} />
+                          </button>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={(e) => handleDownloadPDF(e, bill._id, bill.formattedBillNo || bill.billNumber || bill.billNo)}
+                            disabled={downloadingPdfId === bill._id}
+                            title="Download PDF"
+                            style={{ padding: '6px 10px' }}
+                          >
+                            {downloadingPdfId === bill._id ? (
+                              <span className="btn-spinner" style={{ width: '12px', height: '12px' }}></span>
+                            ) : (
+                              <DownloadIcon size={14} />
+                            )}
+                          </button>
+                          {canDeleteBill && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              style={{ color: '#dc2626', borderColor: '#fecaca', background: '#fff5f5', fontWeight: 700, padding: '6px 10px' }}
+                              onClick={() => setDeleteBillTarget(bill)}
+                              title="Delete Invoice"
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
             {/* Pagination & Infinite Load More Controls */}

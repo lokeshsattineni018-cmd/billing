@@ -527,11 +527,12 @@ export default function NewBill() {
         showToast(`Invoice #${invoice.billNo || editBillNo} updated successfully`);
       } else {
         const response = await billsAPI.create(invoiceData);
+        invoice = response.data;
         // Clear draft upon successful creation
         localStorage.removeItem(DRAFT_KEY);
 
         playSuccessSound();
-        notifyNewBillCreated(invoice.billNo, invoice.companyName, invoice.grandTotal);
+        notifyNewBillCreated(invoice.billNo, invoice.companyName, invoice.grandTotal || invoice.total);
         showToast(`Invoice #${invoice.billNo} created successfully`);
       }
 
@@ -542,7 +543,13 @@ export default function NewBill() {
       }
     } catch (error) {
       // Offline / Network failure: seamless Shed Mode fall-through
-      const isNetworkError = !error.response || error.code === 'ERR_NETWORK' || error.message?.includes('Network');
+      const isNetworkError = (
+        !navigator.onLine ||
+        error.code === 'ERR_NETWORK' ||
+        error.code === 'ECONNABORTED' ||
+        (error.isAxiosError && !error.response) ||
+        error.message?.includes('Network')
+      );
       if (isNetworkError && !editBillId) {
         try {
           const randSeq = Math.floor(1000 + Math.random() * 9000);
