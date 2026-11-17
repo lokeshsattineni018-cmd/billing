@@ -9,11 +9,11 @@ const { handleServerError } = require('../utils/errorTracker');
 
 const router = express.Router();
 
-// Generate JWT with secure secret and tokenVersion (Permanent session until explicit logout)
+// Generate JWT with secure secret and tokenVersion (24h lifespan with server-side revocation)
 const signToken = (id, tokenVersion = 0) => {
   const secret = getJwtSecret();
-  // 3650 days (10 years) — keep user logged in forever until they explicitly click sign out
-  const expiresIn = '3650d';
+  // Standard 24h operational lifespan per security baseline
+  const expiresIn = process.env.JWT_EXPIRES_IN || '24h';
   return jwt.sign({ id, tokenVersion: tokenVersion ?? 0 }, secret, { expiresIn });
 };
 
@@ -147,3 +147,4 @@ router.get('/me', protect, async (req, res) => {
 
 module.exports = router;
 module.exports.autoSeedUsers = autoSeedUsers;
+module.exports.signToken = signToken;
