@@ -80,6 +80,9 @@ export default function BillDetail() {
     const searchParams = new URLSearchParams(location.search);
     if (searchParams.get('autoprint') === 'true') {
       setTimeout(() => {
+        if (id && !String(id).startsWith('offline_')) {
+          billsAPI.markPrinted(id).catch(() => {});
+        }
         window.print();
       }, 450);
     }
@@ -141,6 +144,9 @@ export default function BillDetail() {
   }, []);
 
   const handlePrint = () => {
+    if (bill?._id && !String(bill._id).startsWith('offline_')) {
+      billsAPI.markPrinted(bill._id).catch(() => {});
+    }
     window.print();
   };
 

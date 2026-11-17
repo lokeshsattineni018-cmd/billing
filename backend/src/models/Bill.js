@@ -115,6 +115,12 @@ const billSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  sharedAt: {
+    type: Date,
+  },
+  printedAt: {
+    type: Date,
+  },
   voidReason: {
     type: String,
     default: '',
