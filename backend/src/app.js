@@ -92,8 +92,8 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // NoSQL / MongoDB Operator Injection Sanitization
 app.use(sanitizeMongoInput);
 
-// General API Rate Limiting
-app.use('/api', generalLimiter);
+// General Application Rate Limiting across all routes (with or without /api prefix)
+app.use(generalLimiter);
 
 // Request logger for serverless observability
 app.use((req, res, next) => {

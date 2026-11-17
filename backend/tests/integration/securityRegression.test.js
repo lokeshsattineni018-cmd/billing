@@ -94,6 +94,20 @@ describe('Security Regression Tests (CORS, IDOR & Access Control)', () => {
     });
   });
 
+  describe('General Rate Limiter App Root Coverage', () => {
+    it('applies general rate limiter headers to non-/api routes (e.g. /health)', async () => {
+      const res = await request(app).get('/health');
+      assert.ok(res.headers['ratelimit-limit'], 'RateLimit-Limit header must be present on non-/api routes');
+      assert.strictEqual(res.headers['ratelimit-limit'], '400');
+    });
+
+    it('applies general rate limiter headers to /api routes', async () => {
+      const res = await request(app).get('/api/health');
+      assert.ok(res.headers['ratelimit-limit'], 'RateLimit-Limit header must be present on /api routes');
+      assert.strictEqual(res.headers['ratelimit-limit'], '400');
+    });
+  });
+
   describe('IDOR & Public Endpoint Enumeration Protection', () => {
     it('strictly blocks sequential integer enumeration attacks on /api/bills/public/:token', async () => {
       // Attacker trying sequential invoice IDs 1, 2, 3
