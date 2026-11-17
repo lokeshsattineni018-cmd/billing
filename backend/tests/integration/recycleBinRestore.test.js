@@ -42,6 +42,9 @@ describe('Recycle Bin Restore Business Rules Integration Tests', () => {
   after(async () => {
     await mongoose.connection.collection('bills').deleteMany({ companyName: /Recycle Bin Test/ });
     await mongoose.connection.collection('users').deleteMany({ email: /recycle-admin/ });
+    const maxActive = await Bill.findOne({ isDeleted: { $ne: true } }).sort({ billNo: -1 }).lean();
+    const { Counter } = require('../../src/models/Counter');
+    await Counter.updateOne({ _id: 'billNo' }, { $set: { seq: maxActive ? maxActive.billNo : 0 } });
     await mongoose.disconnect();
   });
 

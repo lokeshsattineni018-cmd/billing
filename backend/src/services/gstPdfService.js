@@ -5,6 +5,20 @@ function fmtINR(n) {
 }
 
 /**
+ * Calculates Indian Financial Year string (e.g. '2026 - 2027') from a date or invoices.
+ * Indian Financial Year runs from April 1 to March 31.
+ */
+function getFinancialYear(dateInput) {
+  const d = dateInput instanceof Date ? dateInput : new Date(dateInput || Date.now());
+  if (isNaN(d.getTime())) return '2024 - 2025';
+  const year = d.getFullYear();
+  const month = d.getMonth(); // 0 = Jan, 3 = Apr
+  const startYear = month >= 3 ? year : year - 1;
+  const endYear = startYear + 1;
+  return `${startYear} - ${endYear}`;
+}
+
+/**
  * Generate Official Government GSTR-1 Return / Outward Supplies Summary PDF
  * (Prescribed format under Rule 59(1) of the CGST Rules, 2017)
  */
@@ -93,10 +107,13 @@ async function generateGSTR1PDF({ bills = [], dateRange = {}, settings = {} }) {
       doc.text(settings.businessName || 'VIJAYA DURGA SEA FOODS', L + 110, y + 30.5);
 
       // Right Box
+      const sampleDate = dateRange.start || dateRange.end || (bills.length > 0 ? bills[0].date : new Date());
+      const fyStr = getFinancialYear(sampleDate);
+
       doc.font('Helvetica-Bold').fontSize(7).fillColor(textMuted);
       doc.text('3(a). Financial Year :', L + halfW + 6, y + 5);
       doc.font('Helvetica-Bold').fontSize(8).fillColor(black);
-      doc.text('2024 - 2025', L + halfW + 110, y + 5);
+      doc.text(fyStr, L + halfW + 110, y + 5);
 
       doc.font('Helvetica').fontSize(7).fillColor(textMuted);
       doc.text('3(b). Tax Period / Range :', L + halfW + 6, y + 18);
@@ -556,4 +573,4 @@ async function generateGSTR1PDF({ bills = [], dateRange = {}, settings = {} }) {
   });
 }
 
-module.exports = { generateGSTR1PDF };
+module.exports = { generateGSTR1PDF, getFinancialYear };
