@@ -3,7 +3,17 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
+function checkSafetyGuards(env = process.env) {
+  if (env.NODE_ENV === 'production') {
+    throw new Error('SAFETY BLOCKED: reset_to_bill_one.js cannot be executed in production environment (NODE_ENV=production).');
+  }
+  if (env.CONFIRM_PURGE !== 'true') {
+    throw new Error('SAFETY BLOCKED: Destructive purge script requires explicit CONFIRM_PURGE=true environment variable.');
+  }
+}
+
 async function resetToBillOne() {
+  checkSafetyGuards();
   try {
     console.log('Connecting to MongoDB...');
     await mongoose.connect(process.env.MONGODB_URI);
@@ -55,4 +65,11 @@ async function resetToBillOne() {
   }
 }
 
-resetToBillOne();
+if (require.main === module) {
+  resetToBillOne();
+}
+
+module.exports = {
+  checkSafetyGuards,
+  resetToBillOne,
+};
