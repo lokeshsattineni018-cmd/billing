@@ -430,8 +430,8 @@ export default function NewBill() {
       const finalItems = items.map((it, idx) => ({
         sno: idx + 1,
         count: it.count ? String(it.count).trim() : '',
-        particulars: 'HEAD-ON',
-        hsn: '0306',
+        particulars: (it.particulars && String(it.particulars).trim()) ? String(it.particulars).trim() : 'HEAD-ON',
+        hsn: (it.hsn && String(it.hsn).trim()) ? String(it.hsn).trim() : '0306',
         quantity: parseFloat(it.quantity) || 0,
         rate: parseFloat(it.rate) || 0,
         taxRate: it.taxRate || '0',
