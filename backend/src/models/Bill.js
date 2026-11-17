@@ -171,5 +171,6 @@ billSchema.index({ paymentStatus: 1, isVoided: 1, date: -1 });
 billSchema.index({ isDeleted: 1 });
 billSchema.index({ isDeleted: 1, date: -1, billNo: -1 });
 billSchema.index({ isDeleted: 1, isVoided: 1, date: -1 });
+billSchema.index({ isDeleted: 1, isVoided: 1, companyName: 1 });
 
 module.exports = mongoose.model('Bill', billSchema);
