@@ -40,12 +40,30 @@ router.get('/ledger', protect, restrictTo('owner', 'admin'), async (req, res) =>
           totalInvoiced: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
           totalPaid: {
             $sum: {
-              $cond: [{ $eq: ['$paymentStatus', 'Paid'] }, { $ifNull: ['$grandTotal', '$total'] }, 0],
+              $cond: [
+                { $eq: ['$paymentStatus', 'Paid'] },
+                { $ifNull: ['$grandTotal', '$total'] },
+                { $ifNull: ['$paidAmount', 0] },
+              ],
             },
           },
           outstandingBalance: {
             $sum: {
-              $cond: [{ $ne: ['$paymentStatus', 'Paid'] }, { $ifNull: ['$grandTotal', '$total'] }, 0],
+              $cond: [
+                { $eq: ['$paymentStatus', 'Paid'] },
+                0,
+                {
+                  $max: [
+                    0,
+                    {
+                      $subtract: [
+                        { $ifNull: ['$grandTotal', '$total'] },
+                        { $ifNull: ['$paidAmount', 0] },
+                      ],
+                    },
+                  ],
+                },
+              ],
             },
           },
           totalBills: { $sum: 1 },
