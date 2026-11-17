@@ -1,23 +1,11 @@
 import { defineConfig } from 'vite';
 
-function stripConsolePlugin() {
-  return {
-    name: 'vite-plugin-strip-console',
-    enforce: 'post',
-    transform(code, id) {
-      // Apply to all application source files
-      if (/\.(jsx?|tsx?)$/.test(id) && !id.includes('node_modules')) {
-        const stripped = code.replace(/console\.(log|warn|error|info|debug|table|trace)\s*\([\s\S]*?\);?/g, '');
-        return { code: stripped, map: null };
-      }
-      return null;
-    },
-  };
-}
-
 export default defineConfig(({ mode }) => ({
   base: '/',
-  plugins: mode === 'production' ? [stripConsolePlugin()] : [],
+  esbuild: mode === 'production' ? {
+    drop: ['console', 'debugger'],
+  } : {},
+  plugins: [],
   build: {
     outDir: 'dist',
     sourcemap: false,
