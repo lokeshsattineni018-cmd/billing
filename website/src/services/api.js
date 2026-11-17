@@ -119,7 +119,13 @@ export const billsAPI = {
   updatePaymentStatus: (id, paymentStatus) => api.patch(`/bills/${id}/payment-status`, { paymentStatus }),
   recordPayment: (id, data) => api.post(`/bills/${id}/payments`, data),
   getPayments: (id) => api.get(`/bills/${id}/payments`),
-  getPDF: (id) => `${API_BASE_URL}/bills/${id}/pdf?token=${localStorage.getItem('srsf_token')}`,
+  getPDFBlob: (id) => api.get(`/bills/${id}/pdf`, { responseType: 'blob' }),
+  getPDFTicket: (id) => api.post(`/bills/${id}/pdf-ticket`),
+  getPDFUrlWithTicket: async (id) => {
+    const res = await api.post(`/bills/${id}/pdf-ticket`);
+    return `${API_BASE_URL}/bills/${id}/pdf?ticket=${res.data.ticket}`;
+  },
+  getPDF: (id) => `${API_BASE_URL}/bills/${id}/pdf`,
   exportCSVUrl: (params) => {
     const query = new URLSearchParams(params || {}).toString();
     return `${API_BASE_URL}/bills/export/csv?${query}&token=${localStorage.getItem('srsf_token')}`;

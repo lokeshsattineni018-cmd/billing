@@ -176,10 +176,8 @@ export default function BillHistory() {
     setDownloadingPdfId(id);
     showToast(`Generating PDF invoice...`, 'info');
     try {
-      const pdfUrl = billsAPI.getPDF(id);
-      const response = await fetch(pdfUrl);
-      if (!response.ok) throw new Error('PDF generation failed');
-      const blob = await response.blob();
+      const response = await billsAPI.getPDFBlob(id);
+      const blob = response.data;
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;

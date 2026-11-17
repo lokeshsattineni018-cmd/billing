@@ -5,8 +5,8 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 
 process.env.NODE_ENV = 'test';
-process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/srsf_test_suite';
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_key_production_readiness_32b';
+process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/srsf_test_suite';
+process.env.JWT_SECRET = 'test_jwt_secret_key_production_readiness_32b';
 
 const app = require('../../src/app');
 const User = require('../../src/models/User');

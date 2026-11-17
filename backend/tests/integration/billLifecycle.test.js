@@ -5,8 +5,8 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 
 process.env.NODE_ENV = 'test';
-process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/srsf_test_suite';
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_key_production_readiness_32b';
+process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/srsf_test_suite';
+process.env.JWT_SECRET = 'test_jwt_secret_key_production_readiness_32b';
 
 const app = require('../../src/app');
 const User = require('../../src/models/User');
@@ -55,12 +55,6 @@ describe('Full Bill Lifecycle Integration Tests', () => {
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
-  });
-
-  after(async () => {
-    await mongoose.connection.collection('users').deleteMany({ email: /test-lifecycle/ });
-    await mongoose.connection.collection('bills').deleteMany({ companyName: /Lifecycle Test Customer/ });
-    await mongoose.disconnect();
   });
 
   it('Step 1: Creates a new bill with server-calculated totals and shareToken', async () => {
@@ -225,5 +219,11 @@ describe('Full Bill Lifecycle Integration Tests', () => {
       .send({ paymentStatus: 'Pending' });
     assert.strictEqual(paymentRes.status, 400);
     assert.match(paymentRes.body.message, /cannot change payment status of a voided invoice/i);
+  });
+
+  after(async () => {
+    await mongoose.connection.collection('users').deleteMany({ email: /test-lifecycle/ });
+    await mongoose.connection.collection('bills').deleteMany({ companyName: /Lifecycle Test Customer/ });
+    await mongoose.disconnect();
   });
 });
