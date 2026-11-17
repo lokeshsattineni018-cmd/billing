@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { encryptText } = require('../utils/crypto');
 
 const settingsSchema = new mongoose.Schema({
   businessName: {
@@ -52,6 +53,7 @@ const settingsSchema = new mongoose.Schema({
   smtpPass: {
     type: String,
     default: '',
+    set: (val) => (val ? encryptText(val) : ''),
   },
   smtpHost: {
     type: String,

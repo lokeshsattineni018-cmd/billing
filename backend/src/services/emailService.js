@@ -1,11 +1,13 @@
 const { generateDailyReportPDF } = require('./dailyReportPdf');
+const { decryptText } = require('../utils/crypto');
 
 function createTransporter(settings = {}) {
   let nodemailer;
   try { nodemailer = require('nodemailer'); } catch (e) { throw new Error('Nodemailer not installed.'); }
 
   const user = settings.smtpUser || process.env.SMTP_USER;
-  const pass = settings.smtpPass || process.env.SMTP_PASS;
+  const rawPass = settings.smtpPass || process.env.SMTP_PASS;
+  const pass = rawPass ? decryptText(rawPass) : '';
   const host = settings.smtpHost || process.env.SMTP_HOST || 'smtp.gmail.com';
   const port = parseInt(settings.smtpPort || process.env.SMTP_PORT || '587', 10);
 
