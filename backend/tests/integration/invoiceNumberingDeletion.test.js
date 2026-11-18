@@ -203,4 +203,40 @@ describe('Invoice Numbering & Deletion Business Rules Integration Tests', () => 
     assert.ok(softDeleted.deletedAt instanceof Date);
     assert.strictEqual(softDeleted.originalBillNo, 401);
   });
+
+  it('Case 5: Safety Guard for legacy/old bills without timestamps (>24h)', async () => {
+    await resetSequence('billNo', 500);
+
+    // 1. Create a bill and backdate it to 48 hours ago without sharedAt / printedAt
+    const oldBill = await Bill.create({
+      billNo: 501,
+      companyName: 'Invoice Numbering Test C5',
+      companyGstin: '37ABCDE1234F1Z5',
+      date: new Date(Date.now() - 48 * 60 * 60 * 1000),
+      createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000),
+      quantity: 10,
+      rate: 100,
+      total: 1000,
+      grandTotal: 1000,
+      items: [{ particulars: 'Prawns', quantity: 10, rate: 100, amount: 1000 }],
+      paymentStatus: 'Pending',
+      isDeleted: false,
+      isVoided: false,
+      createdBy: adminUser._id,
+    });
+    await Counter.findOneAndUpdate({ id: 'billNo' }, { seq: 501 });
+
+    // Trying to delete legacy highest bill (>24h old) must be blocked
+    const delOldRes = await request(app)
+      .delete(`/api/bills/${oldBill._id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ confirmationCode: 'DELETE', reason: 'Try deleting 48h old invoice' });
+
+    assert.strictEqual(delOldRes.status, 400);
+    assert.match(delOldRes.body.message, /issued more than 24 hours ago/i);
+
+    // Verify bill is intact in DB
+    const checkOld = await Bill.findById(oldBill._id);
+    assert.strictEqual(checkOld.isDeleted, false);
+  });
 });

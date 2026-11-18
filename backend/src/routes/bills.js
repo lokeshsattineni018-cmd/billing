@@ -1034,11 +1034,22 @@ router.delete('/:id', protect, restrictTo('owner', 'admin'), async (req, res) =>
 
     const isHighest = highestActiveBill && highestActiveBill._id.toString() === bill._id.toString();
 
-    // Safety guard: if highest bill was already shared or printed, block deletion and require a void instead
-    const isSharedOrPrinted = Boolean(bill.sharedAt || bill.printedAt);
-    if (isHighest && isSharedOrPrinted) {
+    // Safety guard: if highest bill was already shared or printed, block deletion and require a void instead.
+    // Safe for legacy/old bills: treat any bill older than 24 hours as already shared.
+    const billAgeHours = (Date.now() - new Date(bill.createdAt || bill.date).getTime()) / (1000 * 60 * 60);
+    const isOlderThan24h = billAgeHours > 24;
+    const isExplicitlySharedOrPrinted = Boolean(bill.sharedAt || bill.printedAt);
+    const isTreatedAsShared = isExplicitlySharedOrPrinted || isOlderThan24h;
+
+    if (isHighest && isTreatedAsShared) {
+      const reasonTag = bill.sharedAt
+        ? 'shared'
+        : bill.printedAt
+        ? 'printed'
+        : 'issued more than 24 hours ago';
+
       return res.status(400).json({
-        message: `Cannot delete Invoice #${originalBillNo} because it has already been ${bill.sharedAt ? 'shared' : 'printed'}. Please void the invoice instead to preserve the legal audit trail.`,
+        message: `Cannot delete Invoice #${originalBillNo} because it has already been ${reasonTag}. Please void the invoice instead to preserve the legal audit trail.`,
       });
     }
 
