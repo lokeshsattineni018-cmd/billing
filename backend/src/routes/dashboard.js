@@ -95,7 +95,7 @@ router.get('/summary', protect, restrictTo('owner', 'admin', 'staff'), async (re
         .limit(10)
         .lean(),
       // Total invoice count
-      Bill.countDocuments({ isVoided: { $ne: true }, isDeleted: { $ne: true }, isDeleted: { $ne: true } }),
+      Bill.countDocuments({ isVoided: { $ne: true }, isDeleted: { $ne: true } }),
     ]);
 
     const today = todayStats[0] || { totalSales: 0, billCount: 0 };
