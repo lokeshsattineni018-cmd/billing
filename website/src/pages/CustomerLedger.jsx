@@ -227,8 +227,34 @@ Phone: ${settings?.phone || '9441429745'}`;
             </table>
           </div>
         ) : (
-          <div className="empty-state">
-            <p>No customer records found</p>
+          <div className="empty-state" style={{ padding: '48px 20px', textAlign: 'center' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '12px', opacity: 0.4 }}>👥</div>
+            <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+              No customer records found
+            </p>
+            {search && (
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                Try adjusting your search
+              </p>
+            )}
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              {search && (
+                <button
+                  className="btn btn-secondary"
+                  style={{ minHeight: '44px', padding: '10px 20px', fontSize: '0.9rem' }}
+                  onClick={() => setSearch('')}
+                >
+                  Clear Filters
+                </button>
+              )}
+              <button
+                className="btn btn-primary"
+                style={{ minHeight: '44px', padding: '10px 20px', fontSize: '0.9rem' }}
+                onClick={() => navigate('/new-bill')}
+              >
+                + New Invoice
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -817,8 +817,41 @@ export default function BillHistory() {
             </div>
           </>
         ) : (
-          <div className="empty-state">
-            <p>No invoices found</p>
+          <div className="empty-state" style={{ padding: '48px 20px', textAlign: 'center' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '12px', opacity: 0.4 }}>📋</div>
+            <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+              {t?.noInvoicesFound || 'No invoices found'}
+            </p>
+            {(search || dateFrom || dateTo || statusFilter) && (
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                {t?.tryAdjustingFilters || 'Try adjusting your search or filters'}
+              </p>
+            )}
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              {(search || dateFrom || dateTo || statusFilter) && (
+                <button
+                  className="btn btn-secondary"
+                  style={{ minHeight: '44px', padding: '10px 20px', fontSize: '0.9rem' }}
+                  onClick={() => {
+                    setSearch('');
+                    setDateFrom('');
+                    setDateTo('');
+                    setStatusFilter('');
+                    setPage(1);
+                    setTimeout(() => loadBills(true), 0);
+                  }}
+                >
+                  {t?.clearFilters || 'Clear Filters'}
+                </button>
+              )}
+              <button
+                className="btn btn-primary"
+                style={{ minHeight: '44px', padding: '10px 20px', fontSize: '0.9rem' }}
+                onClick={() => navigate('/new-bill')}
+              >
+                {t?.newInvoice || '+ New Invoice'}
+              </button>
+            </div>
           </div>
         )}
       </div>
