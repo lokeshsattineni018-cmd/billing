@@ -21,22 +21,15 @@ const RecycleBin = lazy(() => import('./pages/RecycleBin'));
 
 import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon, UserIcon, StaffIcon, MenuIcon, CloseIcon } from './components/Icons';
 import ErrorBoundary from './components/ErrorBoundary';
+import { SkeletonPage } from './components/Skeleton';
 import logoImg from './assets/logo.png';
 import ShedModeSyncBar from './components/ShedModeSyncBar';
 import { initSyncManager } from './services/syncManager';
 import './index.css';
 
-// Shared loading spinner for lazy-loaded pages
+// Shared structured skeleton for lazy-loaded route transitions (eliminates white flash)
 function PageLoader() {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      minHeight: '60vh', flexDirection: 'column', gap: '12px',
-    }}>
-      <div className="spinner" style={{ width: '32px', height: '32px' }}></div>
-      <span style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: 600 }}>Loading...</span>
-    </div>
-  );
+  return <SkeletonPage />;
 }
 
 function ProtectedRoute({ children }) {
