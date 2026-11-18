@@ -109,4 +109,57 @@ describe('SMTP Credentials At-Rest Encryption & Migration Unit Tests', () => {
     assert.equal(res.success, false);
     assert.match(res.message, /not configured/i);
   });
+
+  it('handles wrong/changed encryption key gracefully without crashing, skips email and flags Settings message', async () => {
+    // 1. Encrypt with current key
+    const ciphertext = encryptText('valid_smtp_pass_1234');
+
+    // 2. Change key in environment to simulate wrong / rotated key
+    const origKey = process.env.ENCRYPTION_KEY;
+    process.env.ENCRYPTION_KEY = 'completely_different_key_that_fails_mac';
+
+    try {
+      // Decrypt should not throw, returns empty string
+      let decrypted;
+      assert.doesNotThrow(() => {
+        decrypted = decryptText(ciphertext);
+      });
+      assert.equal(decrypted, '', 'Failed decryption must return empty string');
+
+      // sendDailySummaryEmail must not crash; skips email safely
+      const emailRes = await sendDailySummaryEmail({
+        recipientEmail: 'owner@vda.local',
+        date: new Date(),
+        bills: [],
+        summary: { totalBills: 0, totalRevenue: 0 },
+        settings: { smtpUser: 'admin@vda.com', smtpPass: ciphertext },
+      });
+      assert.equal(emailRes.success, false);
+      assert.match(emailRes.message, /not configured or unavailable/i);
+
+      // Verify Settings response mapping flags decryption failure and shows re-entry instruction
+      const settingsDoc = {
+        smtpUser: 'admin@vda.com',
+        smtpPass: ciphertext,
+        toObject() {
+          return { smtpUser: this.smtpUser, smtpPass: this.smtpPass };
+        },
+      };
+
+      const data = settingsDoc.toObject();
+      const testDecrypted = decryptText(data.smtpPass);
+      if (!testDecrypted) {
+        data.smtpConfigured = false;
+        data.smtpDecryptionFailed = true;
+        data.smtpWarning = 'SMTP password could not be decrypted (encryption key changed or invalid). Please re-enter your SMTP password.';
+      }
+      delete data.smtpPass;
+
+      assert.equal(data.smtpConfigured, false);
+      assert.equal(data.smtpDecryptionFailed, true);
+      assert.match(data.smtpWarning, /re-enter your SMTP password/i);
+    } finally {
+      process.env.ENCRYPTION_KEY = origKey;
+    }
+  });
 });

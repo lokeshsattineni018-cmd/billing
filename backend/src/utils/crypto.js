@@ -77,7 +77,7 @@ function decryptText(ciphertext) {
     decrypted += decipher.final('utf8');
     return decrypted;
   } catch (err) {
-    console.error('Failed to decrypt secret with configured key (authentication MAC failed or key mismatch).');
+    console.warn('[SECURITY WARNING] Failed to decrypt secret with configured key (authentication MAC failed or encryption key changed). Skipping secret safely.');
     return '';
   }
 }

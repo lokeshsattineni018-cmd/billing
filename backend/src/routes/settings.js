@@ -3,6 +3,7 @@ const Settings = require('../models/Settings');
 const { protect, restrictTo } = require('../middleware/auth');
 const { logActivity } = require('../utils/activityLogger');
 const { handleServerError } = require('../utils/errorTracker');
+const { decryptText } = require('../utils/crypto');
 
 const router = express.Router();
 
@@ -32,7 +33,20 @@ router.get('/', protect, async (req, res) => {
     }
     // Never expose smtpPass to frontend
     const data = settings.toObject();
-    data.smtpConfigured = !!(data.smtpPass && data.smtpPass.length > 0);
+    if (data.smtpPass && data.smtpPass.length > 0) {
+      const decrypted = decryptText(data.smtpPass);
+      if (!decrypted) {
+        data.smtpConfigured = false;
+        data.smtpDecryptionFailed = true;
+        data.smtpWarning = 'SMTP password could not be decrypted (encryption key changed or invalid). Please re-enter your SMTP password.';
+      } else {
+        data.smtpConfigured = true;
+        data.smtpDecryptionFailed = false;
+      }
+    } else {
+      data.smtpConfigured = false;
+      data.smtpDecryptionFailed = false;
+    }
     delete data.smtpPass;
     res.json(data);
   } catch (error) {
@@ -77,7 +91,17 @@ router.put('/', protect, restrictTo('admin', 'owner'), async (req, res) => {
     await settings.save();
     // Never expose smtpPass to frontend
     const data = settings.toObject();
-    data.smtpConfigured = !!(data.smtpPass && data.smtpPass.length > 0);
+    if (data.smtpPass && data.smtpPass.length > 0) {
+      const decrypted = decryptText(data.smtpPass);
+      data.smtpConfigured = !!decrypted;
+      data.smtpDecryptionFailed = !decrypted;
+      if (!decrypted) {
+        data.smtpWarning = 'SMTP password could not be decrypted with active encryption key. Please re-enter your SMTP password.';
+      }
+    } else {
+      data.smtpConfigured = false;
+      data.smtpDecryptionFailed = false;
+    }
     delete data.smtpPass;
     res.json(data);
   } catch (error) {
