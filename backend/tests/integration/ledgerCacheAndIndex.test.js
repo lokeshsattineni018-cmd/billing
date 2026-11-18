@@ -12,7 +12,7 @@ const app = require('../../src/app');
 const User = require('../../src/models/User');
 const Bill = require('../../src/models/Bill');
 
-describe('Customer Ledger Compound Index & Cache Optimization Tests', () => {
+describe('Customer Ledger Compound Index & Real-Time Performance Tests', () => {
   let adminToken;
   let adminUser;
 
@@ -21,13 +21,13 @@ describe('Customer Ledger Compound Index & Cache Optimization Tests', () => {
       await mongoose.connect(process.env.MONGODB_URI);
     }
 
-    await mongoose.connection.collection('users').deleteMany({ email: 'ledger-cache-admin@srsf.local' });
-    await mongoose.connection.collection('bills').deleteMany({ companyName: /Ledger Cache Test/ });
+    await mongoose.connection.collection('users').deleteMany({ email: 'ledger-index-admin@srsf.local' });
+    await mongoose.connection.collection('bills').deleteMany({ companyName: /Ledger Index Test/ });
 
     adminUser = await User.create({
-      name: 'Ledger Cache Admin',
-      username: 'ledger_cache_admin',
-      email: 'ledger-cache-admin@srsf.local',
+      name: 'Ledger Index Admin',
+      username: 'ledger_index_admin',
+      email: 'ledger-index-admin@srsf.local',
       password: 'password123',
       role: 'admin',
     });
@@ -37,13 +37,29 @@ describe('Customer Ledger Compound Index & Cache Optimization Tests', () => {
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
+
+    // Create test bills
+    await Bill.create([
+      {
+        billNo: 88801,
+        companyName: 'Ledger Index Test Corp',
+        companyGstin: '37ABCDE1234F1Z5',
+        quantity: 100,
+        rate: 500,
+        total: 50000,
+        grandTotal: 50000,
+        paidAmount: 20000,
+        paymentStatus: 'Partial',
+        isDeleted: false,
+        isVoided: false,
+        createdBy: adminUser._id,
+      },
+    ]);
   });
 
   after(async () => {
-    await mongoose.connection.collection('users').deleteMany({ email: 'ledger-cache-admin@srsf.local' });
-    await mongoose.connection.collection('bills').deleteMany({ companyName: /Ledger Cache Test/ });
-    const billsRouter = require('../../src/routes/bills');
-    if (billsRouter.invalidateLedgerCache) billsRouter.invalidateLedgerCache();
+    await mongoose.connection.collection('users').deleteMany({ email: 'ledger-index-admin@srsf.local' });
+    await mongoose.connection.collection('bills').deleteMany({ companyName: /Ledger Index Test/ });
     await mongoose.disconnect();
   });
 
@@ -58,22 +74,21 @@ describe('Customer Ledger Compound Index & Cache Optimization Tests', () => {
     assert.ok(targetIndex, 'Compound index on { isDeleted: 1, isVoided: 1, companyName: 1 } must exist');
   });
 
-  it('caches /api/bills/ledger responses and serves subsequent calls from memory cache', async () => {
-    // 1. Initial query populates cache
-    const res1 = await request(app)
+  it('serves real-time /api/bills/ledger directly from indexed MongoDB without stale cache', async () => {
+    const start = performance.now();
+    const res = await request(app)
       .get('/api/bills/ledger')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .set('x-test-cache', 'true');
+      .set('Authorization', `Bearer ${adminToken}`);
+    const duration = performance.now() - start;
 
-    assert.equal(res1.status, 200);
+    assert.equal(res.status, 200);
+    assert.ok(res.body.customers.length > 0);
+    assert.ok(duration < 200, `Execution took ${duration.toFixed(2)}ms, expected < 200ms`);
 
-    // 2. Immediate second query serves from memory cache
-    const res2 = await request(app)
-      .get('/api/bills/ledger')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .set('x-test-cache', 'true');
-
-    assert.equal(res2.status, 200);
-    assert.deepEqual(res1.body, res2.body);
+    const customer = res.body.customers.find((c) => c.companyName === 'Ledger Index Test Corp');
+    assert.ok(customer);
+    assert.equal(customer.totalInvoiced, 50000);
+    assert.equal(customer.totalPaid, 20000);
+    assert.equal(customer.outstandingBalance, 30000);
   });
 });

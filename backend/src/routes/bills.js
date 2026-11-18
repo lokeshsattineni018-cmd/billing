@@ -16,27 +16,14 @@ const { handleServerError, captureException } = require('../utils/errorTracker')
 
 const router = express.Router();
 
-// In-memory cache for customer ledger aggregation (TTL: 60s)
-let ledgerCache = null;
-let ledgerCacheExpiry = 0;
-
-function invalidateLedgerCache() {
-  ledgerCache = null;
-  ledgerCacheExpiry = 0;
-}
-
 /**
  * GET /api/bills/ledger
  * Customer Ledger with total invoiced, paid, and outstanding balances
  * (Owner and Admin only — protects confidential customer financial ledgers)
+ * Backed by compound index { isDeleted: 1, isVoided: 1, companyName: 1 } for sub-10ms performance.
  */
 router.get('/ledger', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
-    const isCacheActive = !req.query.nocache && (process.env.NODE_ENV !== 'test' || req.headers['x-test-cache'] === 'true');
-    if (isCacheActive && ledgerCache && Date.now() < ledgerCacheExpiry) {
-      return res.json(ledgerCache);
-    }
-
     const customers = await Bill.aggregate([
       {
         $match: {
@@ -105,11 +92,6 @@ router.get('/ledger', protect, restrictTo('owner', 'admin'), async (req, res) =>
         totalCustomers: customers.length,
       },
     };
-
-    if (process.env.NODE_ENV !== 'test' || req.headers['x-test-cache'] === 'true') {
-      ledgerCache = ledgerData;
-      ledgerCacheExpiry = Date.now() + 60 * 1000;
-    }
 
     res.json(ledgerData);
   } catch (error) {
@@ -853,7 +835,6 @@ router.post('/', protect, billCreateLimiter, [
       billNo: bill.billNo,
     });
     structuredLogger.logBillOperation('CREATE', bill, req);
-    invalidateLedgerCache();
 
     const populatedBill = await Bill.findById(bill._id).populate('createdBy', 'name');
     res.status(201).json({
@@ -958,7 +939,6 @@ router.put('/:id', protect, [
       amount: bill.grandTotal || bill.total,
     });
     structuredLogger.logBillOperation('EDIT', bill, req);
-    invalidateLedgerCache();
 
     const updated = await Bill.findById(bill._id).populate('createdBy', 'name');
     res.json(updated);
@@ -1000,7 +980,6 @@ router.patch('/:id/void', protect, restrictTo('owner', 'admin'), [
       reason: bill.voidReason,
     });
     structuredLogger.logBillOperation('VOID', bill, req, { reason: bill.voidReason });
-    invalidateLedgerCache();
 
     const updated = await Bill.findById(bill._id)
       .populate('createdBy', 'name')
@@ -1106,7 +1085,6 @@ router.delete('/:id', protect, restrictTo('owner', 'admin'), async (req, res) =>
       reason: deleteReason,
       isHighest,
     });
-    invalidateLedgerCache();
 
     res.json({
       success: true,
@@ -1217,7 +1195,6 @@ router.post('/:id/payments', protect, restrictTo('owner', 'admin'), async (req, 
       paidAmount: newPaidAmount,
       total: billTotal,
     });
-    invalidateLedgerCache();
 
     const populated = await Bill.findById(bill._id).populate('createdBy', 'name');
 
@@ -1293,7 +1270,6 @@ router.patch('/:id/payment-status', protect, restrictTo('owner', 'admin'), [
     }
 
     await bill.save();
-    invalidateLedgerCache();
 
     await logActivity(req, 'UPDATE_PAYMENT_STATUS', String(bill.billNo), {
       customer: bill.companyName,
@@ -1306,5 +1282,4 @@ router.patch('/:id/payment-status', protect, restrictTo('owner', 'admin'), [
   }
 });
 
-router.invalidateLedgerCache = invalidateLedgerCache;
 module.exports = router;
