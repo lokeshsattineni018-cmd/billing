@@ -7,14 +7,32 @@
 
 const logger = require('./structuredLogger');
 
+let Sentry = null;
+let sentryAttempted = false;
 let sentryInitialized = false;
+
+function getSentry() {
+  if (sentryAttempted) return Sentry;
+  sentryAttempted = true;
+  try {
+    Sentry = require('@sentry/node');
+  } catch (err) {
+    Sentry = null;
+  }
+  return Sentry;
+}
 
 function initErrorTracking(app) {
   const dsn = process.env.SENTRY_DSN;
   if (dsn) {
+    const SentryInstance = getSentry();
+    if (!SentryInstance) {
+      console.warn('⚠️ Sentry module (@sentry/node) is not installed or could not be loaded. Running with local structured logging.');
+      return;
+    }
+
     try {
-      const Sentry = require('@sentry/node');
-      Sentry.init({
+      SentryInstance.init({
         dsn,
         environment: process.env.NODE_ENV || 'production',
         tracesSampleRate: 0.2, // 20% trace sampling for performance
@@ -22,7 +40,7 @@ function initErrorTracking(app) {
       sentryInitialized = true;
       console.log('✅ Sentry Error Tracking initialized successfully.');
     } catch (err) {
-      console.warn('⚠️ Sentry module not installed or failed to initialize:', err.message);
+      console.warn('⚠️ Sentry module failed to initialize:', err.message);
     }
   } else {
     // Standard structured error fallback
@@ -46,23 +64,25 @@ function captureException(error, context = {}, req = null) {
 
   // 2. Dispatch to Sentry if active
   if (sentryInitialized) {
-    try {
-      const Sentry = require('@sentry/node');
-      Sentry.withScope((scope) => {
-        if (req?.user) {
-          scope.setUser({
-            id: req.user._id?.toString(),
-            username: req.user.username,
-            role: req.user.role,
-          });
-        }
-        if (context) {
-          scope.setExtras(context);
-        }
-        Sentry.captureException(error);
-      });
-    } catch (sentryErr) {
-      console.error('Failed to forward error to Sentry:', sentryErr.message);
+    const SentryInstance = getSentry();
+    if (SentryInstance) {
+      try {
+        SentryInstance.withScope((scope) => {
+          if (req?.user) {
+            scope.setUser({
+              id: req.user._id?.toString(),
+              username: req.user.username,
+              role: req.user.role,
+            });
+          }
+          if (context) {
+            scope.setExtras(context);
+          }
+          SentryInstance.captureException(error);
+        });
+      } catch (sentryErr) {
+        console.error('Failed to forward error to Sentry:', sentryErr.message);
+      }
     }
   }
 }

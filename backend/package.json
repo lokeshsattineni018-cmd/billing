@@ -22,6 +22,9 @@
     "nodemailer": "^10.0.15",
     "pdfkit": "^0.15.0"
   },
+  "optionalDependencies": {
+    "@sentry/node": "^8.0.0"
+  },
   "devDependencies": {
     "nodemon": "^3.1.14",
     "supertest": "^7.2.2"
