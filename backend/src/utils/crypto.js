@@ -3,11 +3,22 @@ const crypto = require('crypto');
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12; // 96-bit IV recommended for AES-GCM
 
+let hasWarnedMissingKey = false;
+
 /**
  * Derives a consistent 32-byte key from environment variables.
+ * Prioritizes ENCRYPTION_KEY, then JWT_SECRET.
+ * If neither is set, emits a safe warning and returns null without crashing.
  */
 function getMasterKey() {
-  const secret = process.env.ENCRYPTION_KEY || process.env.JWT_SECRET || 'srsf_default_crypto_secret_32bytes_min';
+  const secret = process.env.ENCRYPTION_KEY || process.env.JWT_SECRET;
+  if (!secret) {
+    if (!hasWarnedMissingKey) {
+      console.warn('[SECURITY WARNING] Neither ENCRYPTION_KEY nor JWT_SECRET is configured in environment variables. At-rest encryption falling back to safe unencrypted passthrough.');
+      hasWarnedMissingKey = true;
+    }
+    return null;
+  }
   return crypto.createHash('sha256').update(String(secret)).digest();
 }
 
@@ -20,6 +31,11 @@ function encryptText(plaintext) {
   if (plaintext.startsWith('enc:v1:')) return plaintext; // Prevent double encryption
 
   const key = getMasterKey();
+  if (!key) {
+    // If no key is configured, safely return plaintext rather than crashing
+    return plaintext;
+  }
+
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
 
@@ -40,12 +56,17 @@ function decryptText(ciphertext) {
     return ciphertext; // Plaintext fallback
   }
 
+  const key = getMasterKey();
+  if (!key) {
+    // Cannot decrypt without encryption key; return empty string safely without crashing
+    return '';
+  }
+
   try {
     const parts = ciphertext.split(':');
     if (parts.length !== 5) return '';
 
     const [, , ivHex, tagHex, encryptedHex] = parts;
-    const key = getMasterKey();
     const iv = Buffer.from(ivHex, 'hex');
     const tag = Buffer.from(tagHex, 'hex');
 
@@ -56,12 +77,13 @@ function decryptText(ciphertext) {
     decrypted += decipher.final('utf8');
     return decrypted;
   } catch (err) {
-    console.error('Failed to decrypt secret:', err.message);
+    console.error('Failed to decrypt secret with configured key (authentication MAC failed or key mismatch).');
     return '';
   }
 }
 
 module.exports = {
+  getMasterKey,
   encryptText,
   decryptText,
 };

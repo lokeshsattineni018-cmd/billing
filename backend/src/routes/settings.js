@@ -27,6 +27,8 @@ router.get('/', protect, async (req, res) => {
     let settings = await Settings.findOne();
     if (!settings) {
       settings = await Settings.create(DEFAULT_SETTINGS);
+    } else {
+      await Settings.ensureSmtpEncrypted(settings);
     }
     // Never expose smtpPass to frontend
     const data = settings.toObject();
