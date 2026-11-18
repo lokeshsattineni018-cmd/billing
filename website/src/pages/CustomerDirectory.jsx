@@ -175,7 +175,7 @@ export default function CustomerDirectory() {
           <button
             type="button"
             className="btn btn-secondary"
-            onClick={() => window.open(customersAPI.exportCSVUrl(), '_blank')}
+            onClick={() => customersAPI.exportCSV()}
             style={{ fontWeight: 700, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
             title="Export complete customer directory as CSV"
           >

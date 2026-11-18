@@ -219,17 +219,17 @@ export default function Reports() {
 
   const handleDownloadPDF = () => {
     const params = getReportParams();
-    window.open(reportsAPI.downloadPDFUrl(params), '_blank');
+    reportsAPI.downloadPDF(params);
   };
 
   const handleDownloadGSTPDF = () => {
     const params = getReportParams();
-    window.open(reportsAPI.downloadGSTPDFUrl(params), '_blank');
+    reportsAPI.downloadGSTPDF(params);
   };
 
   const handleExportGST = () => {
     const params = getReportParams();
-    window.open(reportsAPI.exportGSTUrl(params), '_blank');
+    reportsAPI.exportGST(params);
   };
 
   const handleShareWhatsApp = async () => {
@@ -258,27 +258,27 @@ export default function Reports() {
 
   const handleExportCSV = () => {
     const { dateFrom, dateTo } = getDates();
-    window.open(billsAPI.exportCSVUrl({ dateFrom, dateTo }), '_blank');
+    billsAPI.exportCSV({ dateFrom, dateTo });
   };
 
   const handleExportTally = () => {
     const { dateFrom, dateTo } = getDates();
-    window.open(billsAPI.exportTallyUrl({ dateFrom, dateTo }), '_blank');
+    billsAPI.exportTally({ dateFrom, dateTo });
   };
 
   const handleExportIce = () => {
     const { dateFrom, dateTo } = getDates();
-    window.open(staffAPI.exportIceCSVUrl({ dateFrom, dateTo }), '_blank');
+    staffAPI.exportIceCSV({ dateFrom, dateTo });
   };
 
   const handleExportStaff = () => {
     const { dateFrom, dateTo } = getDates();
-    window.open(staffAPI.exportCSVUrl({ dateFrom, dateTo }), '_blank');
+    staffAPI.exportCSV({ dateFrom, dateTo });
   };
 
   const handleExportWastage = () => {
     const { dateFrom, dateTo } = getDates();
-    window.open(staffAPI.exportWastageCSVUrl({ dateFrom, dateTo }), '_blank');
+    staffAPI.exportWastageCSV({ dateFrom, dateTo });
   };
 
   const handleSendWhatsAppReminder = (customer) => {

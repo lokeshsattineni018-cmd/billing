@@ -244,7 +244,7 @@ export default function BillHistory() {
             <>
               <button
                 className="btn btn-secondary"
-                onClick={() => window.open(billsAPI.exportCSVUrl({ search, dateFrom, dateTo, paymentStatus }), '_blank')}
+                onClick={() => billsAPI.exportCSV({ search, dateFrom, dateTo, paymentStatus })}
                 title="Export all filtered bills to CSV for GST / CA accounting"
                 style={{ fontWeight: 700 }}
               >
@@ -252,7 +252,7 @@ export default function BillHistory() {
               </button>
               <button
                 className="btn btn-secondary"
-                onClick={() => window.open(billsAPI.exportTallyUrl({ dateFrom, dateTo }), '_blank')}
+                onClick={() => billsAPI.exportTally({ dateFrom, dateTo })}
                 title="Export sales vouchers in standard Tally Prime XML"
                 style={{ fontWeight: 700, border: '1.5px solid #0b5394', color: '#0b5394' }}
               >
