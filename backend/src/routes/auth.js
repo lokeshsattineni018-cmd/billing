@@ -9,11 +9,11 @@ const { handleServerError } = require('../utils/errorTracker');
 
 const router = express.Router();
 
-// Generate JWT with secure secret and tokenVersion (24h lifespan with server-side revocation)
+// Generate JWT with secure secret and tokenVersion (7d lifespan with server-side revocation)
 const signToken = (id, tokenVersion = 0) => {
   const secret = getJwtSecret();
-  // Standard 24h operational lifespan per security baseline
-  const expiresIn = process.env.JWT_EXPIRES_IN || '24h';
+  // Standard 7d operational lifespan per security baseline
+  const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
   return jwt.sign({ id, tokenVersion: tokenVersion ?? 0 }, secret, { expiresIn });
 };
 

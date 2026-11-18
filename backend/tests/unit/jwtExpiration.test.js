@@ -7,7 +7,7 @@ const { signToken } = require('../../src/routes/auth');
 const { getJwtSecret } = require('../../src/middleware/security');
 
 describe('JWT Expiration & TokenVersion Security Unit Tests', () => {
-  it('signs JWT with a 24h expiration window (86400 seconds), not 3650 days', () => {
+  it('signs JWT with a 7d expiration window (604800 seconds), not 3650 days', () => {
     const fakeId = '507f1f77bcf86cd799439011';
     const token = signToken(fakeId, 2);
 
@@ -17,9 +17,9 @@ describe('JWT Expiration & TokenVersion Security Unit Tests', () => {
     assert.strictEqual(decoded.id, fakeId);
     assert.strictEqual(decoded.tokenVersion, 2);
 
-    // exp - iat should be 24h in seconds (86,400s)
+    // exp - iat should be 7d in seconds (604,800s)
     const lifespanSeconds = decoded.exp - decoded.iat;
-    assert.strictEqual(lifespanSeconds, 86400, 'JWT lifespan must be 24 hours (86400 seconds)');
+    assert.strictEqual(lifespanSeconds, 604800, 'JWT lifespan must be 7 days (604800 seconds)');
   });
 
   it('preserves tokenVersion in the signed JWT payload for server-side revocation', () => {
