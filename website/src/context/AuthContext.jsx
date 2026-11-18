@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
+import { prefetchCoreRoutes, resetPrefetchGuard } from '../utils/routePrefetch';
 
 const AuthContext = createContext(null);
 
@@ -13,7 +14,10 @@ export function AuthProvider({ children }) {
 
     if (token && savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
+        // Prefetch core chunks in background during idle time when app starts with saved session
+        prefetchCoreRoutes();
       } catch {
         localStorage.removeItem('srsf_token');
         localStorage.removeItem('srsf_user');
@@ -31,6 +35,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem('srsf_user', JSON.stringify(userData));
     localStorage.setItem('srsf_login_time', String(Date.now()));
     setUser(userData);
+    prefetchCoreRoutes();
 
     return userData;
   };
@@ -44,6 +49,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('srsf_token');
     localStorage.removeItem('srsf_user');
     localStorage.removeItem('srsf_login_time');
+    resetPrefetchGuard();
     setUser(null);
     return true;
   };

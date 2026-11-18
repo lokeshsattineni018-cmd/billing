@@ -6,21 +6,11 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 
 // Lazy-loaded pages with prefetch capabilities
-export const loadNewBill = () => import('./pages/NewBill');
-export const loadBillHistory = () => import('./pages/BillHistory');
+import { loadNewBill, loadBillHistory, prefetchCoreRoutes } from './utils/routePrefetch';
 
 const NewBill = lazy(loadNewBill);
 const BillHistory = lazy(loadBillHistory);
-
-export function prefetchCoreRoutes() {
-  if (typeof window !== 'undefined') {
-    const runPrefetch = window.requestIdleCallback || ((cb) => setTimeout(cb, 100));
-    runPrefetch(() => {
-      loadNewBill();
-      loadBillHistory();
-    });
-  }
-}
+export { loadNewBill, loadBillHistory, prefetchCoreRoutes };
 
 // Lazy-loaded pages — only fetched when navigated to (reduces initial bundle ~40%)
 const BillDetail = lazy(() => import('./pages/BillDetail'));
