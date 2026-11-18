@@ -3,6 +3,12 @@ import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { billsAPI, settingsAPI } from '../services/api';
 import { formatCurrency, useToast, Toast, playSuccessSound, playErrorSound } from '../utils/helpers';
+import {
+  calculateItemAmount,
+  calculateBillTotals,
+  restoreDraft,
+  serializeDraft,
+} from '../utils/billingCalculations';
 import { useLanguage } from '../context/LanguageContext';
 import { PrintIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
 import { saveOfflineBill, getMasterCache } from '../utils/offlineDb';
@@ -346,23 +352,21 @@ export default function NewBill() {
     // Check for saved offline draft on initial load
     try {
       const savedDraft = localStorage.getItem(DRAFT_KEY);
-      if (savedDraft) {
-        const draft = JSON.parse(savedDraft);
-        if (draft && (draft.companyName || (draft.items && draft.items.some((i) => i.quantity || i.rate)) || draft.ice?.quantity)) {
-          if (draft.companyName) setCompanyName(draft.companyName);
-          if (draft.customerPhone) setCustomerPhone(draft.customerPhone);
-          if (draft.vehicleNo) setVehicleNo(draft.vehicleNo);
-          if (draft.date) setDate(draft.date);
-          if (draft.paymentStatus) setPaymentStatus(draft.paymentStatus);
-          if (draft.cgstRate) setCgstRate(draft.cgstRate);
-          if (draft.cgstAmount) setCgstAmount(draft.cgstAmount);
-          if (draft.sgstRate) setSgstRate(draft.sgstRate);
-          if (draft.sgstAmount) setSgstAmount(draft.sgstAmount);
-          if (draft.igstAmount) setIgstAmount(draft.igstAmount);
-          if (draft.items && draft.items.length > 0) setItems(draft.items);
-          if (draft.ice) setIce(draft.ice);
-          setHasDraftNotice(true);
-        }
+      const draft = restoreDraft(savedDraft);
+      if (draft) {
+        if (draft.companyName) setCompanyName(draft.companyName);
+        if (draft.customerPhone) setCustomerPhone(draft.customerPhone);
+        if (draft.vehicleNo) setVehicleNo(draft.vehicleNo);
+        if (draft.date) setDate(draft.date);
+        if (draft.paymentStatus) setPaymentStatus(draft.paymentStatus);
+        if (draft.cgstRate) setCgstRate(draft.cgstRate);
+        if (draft.cgstAmount) setCgstAmount(draft.cgstAmount);
+        if (draft.sgstRate) setSgstRate(draft.sgstRate);
+        if (draft.sgstAmount) setSgstAmount(draft.sgstAmount);
+        if (draft.igstAmount) setIgstAmount(draft.igstAmount);
+        if (draft.items && draft.items.length > 0) setItems(draft.items);
+        if (draft.ice) setIce(draft.ice);
+        setHasDraftNotice(true);
       }
     } catch (e) {
       if (import.meta.env.DEV) { console.warn('Could not read draft from localStorage', e); }
@@ -373,7 +377,7 @@ export default function NewBill() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (companyName || items.some((it) => it.quantity || it.rate) || ice.quantity || ice.rate) {
-        const draftData = {
+        const serialized = serializeDraft({
           date,
           companyName,
           customerPhone,
@@ -386,10 +390,9 @@ export default function NewBill() {
           sgstRate,
           sgstAmount,
           igstAmount,
-          savedAt: new Date().toISOString(),
-        };
+        });
         try {
-          localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
+          localStorage.setItem(DRAFT_KEY, serialized);
         } catch (e) {
           if (import.meta.env.DEV) { console.warn('Failed to auto-save draft to localStorage', e); }
         }
@@ -523,9 +526,7 @@ export default function NewBill() {
       }
 
       if (field === 'quantity' || field === 'rate' || field === 'count') {
-        const q = parseFloat(target.quantity) || 0;
-        const r = parseFloat(target.rate) || 0;
-        target.amount = Math.round(q * r * 100) / 100;
+        target.amount = calculateItemAmount(target.quantity, target.rate);
       }
 
       updated[index] = target;
@@ -583,25 +584,15 @@ export default function NewBill() {
     showToast('Draft cleared');
   };
 
-  const iceQuantityNum = parseFloat(ice.quantity) || 0;
-  const iceRateNum = parseFloat(ice.rate) || 0;
-  const iceAmount = Math.round(iceQuantityNum * iceRateNum * 100) / 100;
-  const hasIce = iceQuantityNum > 0 && iceRateNum > 0;
-
   const { subtotal, totalTax, grandTotal, totalWeight } = useMemo(() => {
-    const itemsSub = Math.round(items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) * 100) / 100;
-    const sub = Math.round((itemsSub + (hasIce ? iceAmount : 0)) * 100) / 100;
-    const numCgst = parseFloat(cgstAmount) || 0;
-    const numSgst = parseFloat(sgstAmount) || 0;
-    const numIgst = parseFloat(igstAmount) || 0;
-    const tax = Math.round((numCgst + numSgst + numIgst) * 100) / 100;
-    const grand = Math.round((sub + tax) * 100) / 100;
-
-    const itemsWeight = items.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
-    const totWeight = Math.round(itemsWeight * 100) / 100;
-
-    return { subtotal: sub, totalTax: tax, grandTotal: grand, totalWeight: totWeight };
-  }, [items, hasIce, iceAmount, cgstAmount, sgstAmount, igstAmount]);
+    return calculateBillTotals({
+      items,
+      ice,
+      cgstAmount,
+      sgstAmount,
+      igstAmount,
+    });
+  }, [items, ice, cgstAmount, sgstAmount, igstAmount]);
 
   const handleSave = async (actionType = 'save') => {
     if (!companyName.trim()) {

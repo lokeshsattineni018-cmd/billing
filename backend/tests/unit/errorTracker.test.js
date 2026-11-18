@@ -7,8 +7,17 @@ describe('ErrorTracker & Sentry Guarded Require Unit Tests', () => {
   const originalEnv = process.env.NODE_ENV;
 
   afterEach(() => {
-    process.env.SENTRY_DSN = originalDsn;
-    process.env.NODE_ENV = originalEnv;
+    if (originalDsn !== undefined) {
+      process.env.SENTRY_DSN = originalDsn;
+    } else {
+      delete process.env.SENTRY_DSN;
+    }
+
+    if (originalEnv !== undefined) {
+      process.env.NODE_ENV = originalEnv;
+    } else {
+      process.env.NODE_ENV = 'test';
+    }
   });
 
   it('runs safely in fallback mode when SENTRY_DSN is absent', () => {
