@@ -23,6 +23,9 @@ export default function Login() {
 
     try {
       await login(email, password);
+      // Prefetch primary operational screens into browser cache immediately after login
+      import('./NewBill');
+      import('./BillHistory');
     } catch (err) {
       const msg = err.response?.data?.error || err.response?.data?.message || err.message || 'Login failed. Please try again.';
       setError(msg);

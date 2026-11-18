@@ -4,8 +4,23 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import NewBill from './pages/NewBill';
-import BillHistory from './pages/BillHistory';
+
+// Lazy-loaded pages with prefetch capabilities
+export const loadNewBill = () => import('./pages/NewBill');
+export const loadBillHistory = () => import('./pages/BillHistory');
+
+const NewBill = lazy(loadNewBill);
+const BillHistory = lazy(loadBillHistory);
+
+export function prefetchCoreRoutes() {
+  if (typeof window !== 'undefined') {
+    const runPrefetch = window.requestIdleCallback || ((cb) => setTimeout(cb, 100));
+    runPrefetch(() => {
+      loadNewBill();
+      loadBillHistory();
+    });
+  }
+}
 
 // Lazy-loaded pages — only fetched when navigated to (reduces initial bundle ~40%)
 const BillDetail = lazy(() => import('./pages/BillDetail'));
@@ -231,8 +246,9 @@ function AppLayout() {
 
   const isIOS = typeof navigator !== 'undefined' && (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
-  // Initialize background and foreground sync manager for Shed Mode
+  // Initialize background and foreground sync manager for Shed Mode & prefetch core screens
   useEffect(() => {
+    prefetchCoreRoutes();
     const cleanup = initSyncManager();
     return () => {
       if (cleanup) cleanup();
