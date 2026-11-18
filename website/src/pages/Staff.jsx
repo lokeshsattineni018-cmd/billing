@@ -19,11 +19,13 @@ import {
   RefreshIcon,
   PrintIcon,
 } from '../components/Icons';
-// Lazy-loaded secondary operations tabs to split Staff bundle chunk
-const IceTracker = lazy(() => import('../components/operations/IceTracker'));
-const WastageTracker = lazy(() => import('../components/operations/WastageTracker'));
-const DailyNetSummary = lazy(() => import('../components/operations/DailyNetSummary'));
-const StaffAttendanceCalendar = lazy(() => import('../components/StaffAttendanceCalendar'));
+import { lazyWithRetry } from '../utils/chunkLoadRecovery';
+
+// Lazy-loaded secondary operations tabs with stale chunk recovery & reload loop prevention
+const IceTracker = lazyWithRetry(() => import('../components/operations/IceTracker'));
+const WastageTracker = lazyWithRetry(() => import('../components/operations/WastageTracker'));
+const DailyNetSummary = lazyWithRetry(() => import('../components/operations/DailyNetSummary'));
+const StaffAttendanceCalendar = lazyWithRetry(() => import('../components/StaffAttendanceCalendar'));
 import { SkeletonTable } from '../components/Skeleton';
 import ganeshaImg from '../assets/ganesha.jpg';
 import durgaImg from '../assets/durga.jpg';

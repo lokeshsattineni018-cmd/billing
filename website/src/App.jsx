@@ -7,22 +7,23 @@ import Dashboard from './pages/Dashboard';
 
 // Lazy-loaded pages with prefetch capabilities
 import { loadNewBill, loadBillHistory, prefetchCoreRoutes } from './utils/routePrefetch';
+import { lazyWithRetry } from './utils/chunkLoadRecovery';
 
-const NewBill = lazy(loadNewBill);
-const BillHistory = lazy(loadBillHistory);
+const NewBill = lazyWithRetry(loadNewBill);
+const BillHistory = lazyWithRetry(loadBillHistory);
 export { loadNewBill, loadBillHistory, prefetchCoreRoutes };
 
-// Lazy-loaded pages — only fetched when navigated to (reduces initial bundle ~40%)
-const BillDetail = lazy(() => import('./pages/BillDetail'));
-const PublicInvoice = lazy(() => import('./pages/PublicInvoice'));
+// Lazy-loaded pages with automatic stale chunk recovery & reload loop prevention
+const BillDetail = lazyWithRetry(() => import('./pages/BillDetail'));
+const PublicInvoice = lazyWithRetry(() => import('./pages/PublicInvoice'));
 
-const CustomerDirectory = lazy(() => import('./pages/CustomerDirectory'));
-const CustomerLedger = lazy(() => import('./pages/CustomerLedger'));
-const Reports = lazy(() => import('./pages/Reports'));
-const ActivityLog = lazy(() => import('./pages/ActivityLog'));
-const Settings = lazy(() => import('./pages/Settings'));
-const Staff = lazy(() => import('./pages/Staff'));
-const RecycleBin = lazy(() => import('./pages/RecycleBin'));
+const CustomerDirectory = lazyWithRetry(() => import('./pages/CustomerDirectory'));
+const CustomerLedger = lazyWithRetry(() => import('./pages/CustomerLedger'));
+const Reports = lazyWithRetry(() => import('./pages/Reports'));
+const ActivityLog = lazyWithRetry(() => import('./pages/ActivityLog'));
+const Settings = lazyWithRetry(() => import('./pages/Settings'));
+const Staff = lazyWithRetry(() => import('./pages/Staff'));
+const RecycleBin = lazyWithRetry(() => import('./pages/RecycleBin'));
 
 import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon, UserIcon, StaffIcon, MenuIcon, CloseIcon } from './components/Icons';
 import ErrorBoundary from './components/ErrorBoundary';
