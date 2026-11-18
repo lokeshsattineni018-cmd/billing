@@ -133,7 +133,7 @@ router.get('/', protect, async (req, res) => {
       filter.companyName = req.query.customer.trim();
     }
 
-    if (req.query.status && ['Pending', 'Paid'].includes(req.query.status)) {
+    if (req.query.status && ['Pending', 'Paid', 'Partial'].includes(req.query.status)) {
       filter.paymentStatus = req.query.status;
     }
 
@@ -255,7 +255,7 @@ router.get('/export/csv', protect, restrictTo('owner', 'admin'), async (req, res
       }
     }
 
-    if (paymentStatus && ['Pending', 'Paid'].includes(paymentStatus)) {
+    if (paymentStatus && ['Pending', 'Paid', 'Partial'].includes(paymentStatus)) {
       filter.paymentStatus = paymentStatus;
     }
 
