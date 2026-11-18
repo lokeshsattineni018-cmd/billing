@@ -231,11 +231,13 @@ export default function Dashboard() {
                   background: '#f8fafc',
                   border: '1px solid #cbd5e1',
                   borderRadius: '10px',
-                  padding: '7px 11px',
+                  padding: '10px 14px',
+                  minHeight: '48px',
+                  minWidth: '48px',
                   alignItems: 'center',
                   gap: '6px',
                   cursor: 'pointer',
-                  fontSize: '0.76rem',
+                  fontSize: '0.8rem',
                   fontWeight: 700,
                   color: '#0b5394',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
@@ -243,7 +245,7 @@ export default function Dashboard() {
                 }}
                 title="Reload dashboard data"
               >
-                <RefreshIcon size={14} color="#0b5394" spinning={refreshing} />
+                <RefreshIcon size={16} color="#0b5394" spinning={refreshing} />
                 <span>{refreshing ? '...' : 'Reload'}</span>
               </button>
             </div>

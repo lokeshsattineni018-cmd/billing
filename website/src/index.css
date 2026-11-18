@@ -1184,6 +1184,26 @@ a:hover {
     width: 100%;
   }
 
+  /* Enforce WCAG AA 48x48px tap targets with >= 8px spacing on mobile */
+  .btn,
+  .btn-sm,
+  .btn-ghost,
+  .btn-primary,
+  .btn-secondary,
+  .btn-large,
+  .staff-tab-btn,
+  .settings-grid .btn,
+  .pnl-filter-pills button {
+    min-height: 48px !important;
+    min-width: 48px !important;
+    box-sizing: border-box !important;
+  }
+
+  .btn + .btn,
+  .staff-tab-btn + .staff-tab-btn {
+    margin-left: 8px !important;
+  }
+
   .detail-grid {
     grid-template-columns: 1fr;
     gap: 14px;

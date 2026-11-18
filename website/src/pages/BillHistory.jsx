@@ -4,7 +4,7 @@ import { billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast, shareInvoicePDFOnWhatsApp } from '../utils/helpers';
-import { SearchIcon, PrintIcon, DownloadIcon, WhatsAppIcon, DownloadIcon as ExportIcon, PlusIcon, ShareIcon, InvoiceIcon } from '../components/Icons';
+import { SearchIcon, PrintIcon, DownloadIcon, WhatsAppIcon, DownloadIcon as ExportIcon, PlusIcon, ShareIcon, InvoiceIcon, TrashIcon } from '../components/Icons';
 import { SkeletonTable } from '../components/Skeleton';
 import ReminderModal from '../components/ReminderModal';
 import PaymentModal from '../components/PaymentModal';
@@ -512,7 +512,7 @@ export default function BillHistory() {
                         </div>
                       </div>
 
-                      {/* Footer: icon-only action buttons */}
+                      {/* Footer: action buttons with >= 48px tap targets */}
                       <div
                         style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingTop: '10px', borderTop: '1px solid #f1f5f9', marginTop: '10px' }}
                         onClick={(e) => e.stopPropagation()}
@@ -521,20 +521,30 @@ export default function BillHistory() {
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); handleShareWhatsApp(e, bill); }}
-                            style={{ background: '#25D366', border: 'none', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                            style={{ background: '#25D366', border: 'none', borderRadius: '10px', minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: '10px' }}
                             title="Share on WhatsApp"
                           >
-                            <WhatsAppIcon size={18} color="#ffffff" />
+                            <WhatsAppIcon size={20} color="#ffffff" />
                           </button>
                         )}
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); handlePrint(e, bill._id); }}
-                          style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                          style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '10px', minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: '10px' }}
                           title="Print Invoice"
                         >
-                          <PrintIcon size={16} color="#0b5394" />
+                          <PrintIcon size={18} color="#0b5394" />
                         </button>
+                        {canDeleteBill && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setDeleteBillTarget(bill); }}
+                            style={{ background: '#fee2e2', border: '1px solid #fecaca', borderRadius: '10px', minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: '10px' }}
+                            title="Delete Invoice"
+                          >
+                            <TrashIcon size={18} color="#dc2626" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </SwipeableItem>

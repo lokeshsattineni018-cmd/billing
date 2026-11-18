@@ -266,14 +266,18 @@ function AppLayout() {
             type="button"
             onClick={toggleLang}
             style={{
-              padding: '8px 12px',
-              fontSize: '0.74rem',
+              padding: '10px 14px',
+              fontSize: '0.82rem',
               fontWeight: 800,
               background: '#f1f5f9',
               border: '1px solid #cbd5e1',
               borderRadius: '8px',
               color: '#0b5394',
-              minHeight: '36px',
+              minHeight: '48px',
+              minWidth: '48px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             {lang === 'en' ? 'తెలుగు' : 'EN'}
