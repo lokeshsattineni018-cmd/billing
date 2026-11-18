@@ -42,38 +42,51 @@ app.use(helmet({
 }));
 
 // Strict Domain Whitelist for CORS
-const allowedOrigins = [
+const productionOrigins = [
   'https://billing-snowy-three.vercel.app',
+];
+
+const devOrigins = [
   'http://localhost:5173',
+  'http://localhost:4173',
   'http://localhost:3000',
   'http://localhost:5001',
   'http://127.0.0.1:5173',
+  'http://127.0.0.1:4173',
   'http://127.0.0.1:3000',
 ];
 
-if (process.env.CLIENT_URL) {
-  const envUrl = process.env.CLIENT_URL.replace(/\/$/, '');
-  if (!allowedOrigins.includes(envUrl)) {
-    allowedOrigins.push(envUrl);
+function isOriginAllowed(origin, env = process.env.NODE_ENV) {
+  // Allow non-browser requests (mobile apps, Postman, curl, server-to-server)
+  if (!origin) return true;
+
+  // Production whitelist
+  if (productionOrigins.includes(origin)) return true;
+
+  // Custom environment CLIENT_URL override
+  if (process.env.CLIENT_URL && process.env.CLIENT_URL.replace(/\/$/, '') === origin) {
+    return true;
   }
+
+  // Localhost origins allowed ONLY in non-production environments
+  if (env !== 'production' && devOrigins.includes(origin)) {
+    return true;
+  }
+
+  // Match Vercel preview deployment domains for this project strictly
+  if (/^https:\/\/billing-[a-z0-9-]+-lokeshsattinenis-projects\.vercel\.app$/.test(origin) ||
+      /^https:\/\/billing-snowy-three(-[a-z0-9-]+)?\.vercel\.app$/.test(origin)) {
+    return true;
+  }
+
+  return false;
 }
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow non-browser requests (mobile apps, Postman, curl, server-to-server)
-    if (!origin) return callback(null, true);
-
-    // Exact whitelist match
-    if (allowedOrigins.includes(origin)) {
+    if (isOriginAllowed(origin)) {
       return callback(null, true);
     }
-
-    // Match Vercel preview deployment domains for this project strictly
-    if (/^https:\/\/billing-[a-z0-9-]+-lokeshsattinenis-projects\.vercel\.app$/.test(origin) ||
-        /^https:\/\/billing-snowy-three(-[a-z0-9-]+)?\.vercel\.app$/.test(origin)) {
-      return callback(null, true);
-    }
-
     return callback(new Error(`CORS blocked for unauthorized origin: ${origin}`));
   },
   credentials: true,
@@ -81,6 +94,8 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   optionsSuccessStatus: 200,
 };
+
+app.isOriginAllowed = isOriginAllowed;
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));

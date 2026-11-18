@@ -68,12 +68,20 @@ describe('Security Regression Tests (CORS, IDOR & Access Control)', () => {
       assert.strictEqual(res.headers['access-control-allow-credentials'], 'true');
     });
 
-    it('allows requests from local development frontend', async () => {
+    it('allows requests from local development frontend in non-production mode', async () => {
       const res = await request(app)
         .get('/api/health')
         .set('Origin', 'http://localhost:5173');
 
       assert.strictEqual(res.headers['access-control-allow-origin'], 'http://localhost:5173');
+    });
+
+    it('blocks localhost origins when NODE_ENV is production, but allows production URL', () => {
+      assert.strictEqual(app.isOriginAllowed('http://localhost:5173', 'production'), false);
+      assert.strictEqual(app.isOriginAllowed('http://localhost:3000', 'production'), false);
+      assert.strictEqual(app.isOriginAllowed('http://127.0.0.1:5173', 'production'), false);
+      assert.strictEqual(app.isOriginAllowed('https://billing-snowy-three.vercel.app', 'production'), true);
+      assert.strictEqual(app.isOriginAllowed('http://localhost:5173', 'development'), true);
     });
 
     it('allows requests from Vercel preview deployment pattern', async () => {
