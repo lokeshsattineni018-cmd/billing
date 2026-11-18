@@ -56,8 +56,8 @@ async function generateGSTR1PDF({ bills = [], dateRange = {}, settings = {} }) {
       const endDateStr = dateRange.end ? new Date(dateRange.end).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
       const periodStr = startDateStr === endDateStr ? startDateStr : `${startDateStr} to ${endDateStr}`;
 
-      const validBills = bills.filter((b) => !b.isVoided);
-      const voidedBills = bills.filter((b) => b.isVoided);
+      const validBills = bills.filter((b) => !b.isVoided && !b.isDeleted);
+      const voidedBills = bills.filter((b) => b.isVoided && !b.isDeleted);
       const b2bBills = validBills.filter((b) => b.companyGstin && b.companyGstin.trim().length >= 10);
       const b2cBills = validBills.filter((b) => !b.companyGstin || b.companyGstin.trim().length < 10);
 
