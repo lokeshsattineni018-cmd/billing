@@ -679,7 +679,7 @@ export default function BillDetail() {
         </div>
 
         {/* Grand Total */}
-        <div className="invoice-total-section">
+        <div className="invoice-total-section print-keep-together">
           <div className="invoice-total-box" style={{ background: '#f8fafc', border: '1px solid var(--border-color)', padding: '16px 20px', borderRadius: '10px' }}>
             <div className="invoice-total-label" style={{ fontSize: '0.85rem' }}>TOTAL AMOUNT</div>
             <div className="invoice-total-value" style={{ fontSize: '1.75rem', fontWeight: 800, color: bill.isVoided ? '#dc2626' : '#0b5394', textDecoration: bill.isVoided ? 'line-through' : 'none' }}>
@@ -1000,7 +1000,7 @@ export default function BillDetail() {
           </table>
 
           {/* 8. TAX BREAKDOWN TABLE (Vehicle No. replacing Taxable Value) */}
-          <div style={{ borderBottom: '1.5px solid #0b5394' }}>
+          <div className="print-keep-together" style={{ borderBottom: '1.5px solid #0b5394' }}>
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1.2fr 1fr 1fr 1fr',
@@ -1053,7 +1053,7 @@ export default function BillDetail() {
           </div>
 
           {/* 9. GRAND TOTAL HIGHLIGHT ROW */}
-          <div style={{
+          <div className="print-keep-together" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 125px',
             borderBottom: '1.5px solid #0b5394',
@@ -1069,7 +1069,7 @@ export default function BillDetail() {
           </div>
 
           {/* 10. BANK PAYMENT DETAILS & SIGNATURE */}
-          <div style={{
+          <div className="print-keep-together" style={{
             display: 'grid',
             gridTemplateColumns: '1.4fr 1fr',
             fontSize: '0.74rem',

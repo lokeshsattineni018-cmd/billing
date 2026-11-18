@@ -1734,6 +1734,21 @@ body:has(.modal-backdrop) {
     margin: 0 !important;
     padding: 0 !important;
   }
+
+  /* Prevent page-breaks inside totals, tax breakdown, bank details, and signature blocks */
+  .print-keep-together,
+  .invoice-total-section,
+  .invoice-footer-grid,
+  .official-invoice-frame > div:last-of-type {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Keep the grand total row together with the bank/signature section */
+  .official-invoice-frame table tfoot {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
 }
 
 /* ── Compact Mobile Dashboard Bento Grid ── */
