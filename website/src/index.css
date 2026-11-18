@@ -16,7 +16,7 @@
   
   --text-primary: #0f172a;
   --text-secondary: #475569;
-  --text-muted: #94a3b8;
+  --text-muted: #64748b;
   
   --border-color: #e2e8f0;
   --border-active: #0b5394;
@@ -622,8 +622,8 @@ a:hover {
 
 .badge-amber {
   background: rgba(245, 158, 11, 0.1);
-  color: #d97706;
-  border-color: rgba(245, 158, 11, 0.2);
+  color: #b45309;
+  border-color: rgba(180, 83, 9, 0.25);
 }
 
 /* ── Login Page (Clean White Aesthetic) ── */
