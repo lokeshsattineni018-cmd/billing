@@ -1268,6 +1268,16 @@ a:hover {
     width: 100% !important;
     max-width: 100% !important;
     touch-action: pan-x pan-y !important;
+    /* Scroll shadow hints: fade edges when content overflows */
+    background:
+      linear-gradient(to right, #fff 30%, transparent),
+      linear-gradient(to left, #fff 30%, transparent),
+      linear-gradient(to right, rgba(0,0,0,0.12), transparent),
+      linear-gradient(to left, rgba(0,0,0,0.12), transparent);
+    background-position: left center, right center, left center, right center;
+    background-repeat: no-repeat;
+    background-size: 20px 100%, 20px 100%, 10px 100%, 10px 100%;
+    background-attachment: local, local, scroll, scroll;
   }
 
   .items-breakdown-container table {
@@ -1301,6 +1311,21 @@ a:hover {
 
   .tax-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Auto-scale large currency amounts so they never clip */
+  .invoice-total-value,
+  .stat-card-compact .stat-value {
+    font-size: clamp(1.1rem, 5vw, 2rem);
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+}
+
+@media (max-width: 320px) {
+  .invoice-total-value,
+  .stat-card-compact .stat-value {
+    font-size: clamp(0.95rem, 4.5vw, 1.4rem);
   }
 }
 
