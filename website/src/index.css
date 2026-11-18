@@ -597,6 +597,14 @@ a:hover {
   text-align: center;
 }
 
+/* ── Item Rows Input Sizing (16px minimum for elderly visibility and anti-iOS-zoom) ── */
+.items-table input,
+.desktop-items-table input,
+.mobile-items-list input,
+.table-container table input.form-input {
+  font-size: 16px !important;
+}
+
 /* ── Badges (Subtle Pill Style) ── */
 .badge {
   display: inline-flex;

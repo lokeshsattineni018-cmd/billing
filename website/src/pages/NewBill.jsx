@@ -867,7 +867,7 @@ export default function NewBill() {
                     value={item.count || ''}
                     onChange={(e) => handleItemChange(index, 'count', e.target.value)}
                     placeholder="e.g. 100, 118"
-                    style={{ fontWeight: 700 }}
+                    style={{ fontWeight: 700, fontSize: '16px', minHeight: '48px' }}
                   />
                 </div>
 
@@ -879,7 +879,7 @@ export default function NewBill() {
                       step="0.01"
                       min="0.01"
                       className="form-input form-input-lg"
-                      style={{ fontWeight: 800, fontSize: '1.1rem', textAlign: 'right', color: '#0f172a' }}
+                      style={{ fontWeight: 800, fontSize: '16px', textAlign: 'right', color: '#0f172a', minHeight: '48px' }}
                       value={item.quantity}
                       onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
                       placeholder="0.00"
@@ -893,7 +893,7 @@ export default function NewBill() {
                       step="0.01"
                       min="0.01"
                       className="form-input form-input-lg"
-                      style={{ fontWeight: 800, fontSize: '1.1rem', textAlign: 'right', color: '#0f172a' }}
+                      style={{ fontWeight: 800, fontSize: '16px', textAlign: 'right', color: '#0f172a', minHeight: '48px' }}
                       value={item.rate}
                       onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
                       placeholder="0.00"
@@ -910,6 +910,7 @@ export default function NewBill() {
                       value={item.taxRate || ''}
                       onChange={(e) => handleItemChange(index, 'taxRate', e.target.value)}
                       placeholder="0"
+                      style={{ fontSize: '16px', minHeight: '48px' }}
                     />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end' }}>
@@ -949,7 +950,7 @@ export default function NewBill() {
                       <input
                         type="text"
                         className="form-input"
-                        style={{ padding: '6px 8px', textAlign: 'center', fontSize: '0.9rem', fontWeight: 700 }}
+                        style={{ padding: '8px 8px', textAlign: 'center', fontSize: '16px', fontWeight: 700, minHeight: '42px' }}
                         value={item.count || ''}
                         onChange={(e) => handleItemChange(index, 'count', e.target.value)}
                         placeholder="e.g. 100"
@@ -961,7 +962,7 @@ export default function NewBill() {
                         step="0.01"
                         min="0.01"
                         className="form-input"
-                        style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 600, fontSize: '0.92rem' }}
+                        style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, fontSize: '16px', minHeight: '42px' }}
                         value={item.quantity}
                         onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
                         placeholder="0.00"
@@ -974,7 +975,7 @@ export default function NewBill() {
                         step="0.01"
                         min="0.01"
                         className="form-input"
-                        style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 600, fontSize: '0.92rem' }}
+                        style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, fontSize: '16px', minHeight: '42px' }}
                         value={item.rate}
                         onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
                         onKeyDown={(e) => {
@@ -991,13 +992,13 @@ export default function NewBill() {
                       <input
                         type="text"
                         className="form-input"
-                        style={{ padding: '6px 8px', textAlign: 'center', fontSize: '0.9rem' }}
+                        style={{ padding: '8px 8px', textAlign: 'center', fontSize: '16px', minHeight: '42px' }}
                         value={item.taxRate || ''}
                         onChange={(e) => handleItemChange(index, 'taxRate', e.target.value)}
                         placeholder="0"
                       />
                     </td>
-                    <td style={{ textAlign: 'right', fontWeight: 700, fontSize: '0.95rem', color: '#0f172a' }}>
+                    <td style={{ textAlign: 'right', fontWeight: 800, fontSize: '16px', color: '#0f172a' }}>
                       {formatCurrency(item.amount || 0)}
                     </td>
                     <td style={{ textAlign: 'center' }}>
