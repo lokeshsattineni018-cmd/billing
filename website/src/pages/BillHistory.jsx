@@ -13,6 +13,8 @@ import PullToRefresh from '../components/PullToRefresh';
 import DeleteInvoiceModal from '../components/DeleteInvoiceModal';
 import { getAllOfflineBills } from '../utils/offlineDb';
 
+const MAX_SCROLL_ITEMS = 60; // Cap continuous scroll list to protect mobile memory
+
 export default function BillHistory() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -87,12 +89,16 @@ export default function BillHistory() {
       }
       setPagination(response.data.pagination || {});
     } catch (error) {
-      // Offline fallback: load cached bills from local IndexedDB
+      // Offline fallback: window and paginate cached bills from local IndexedDB
       try {
         const offlineBills = await getAllOfflineBills().catch(() => []);
         if (offlineBills.length > 0) {
-          setBills(offlineBills);
-          setPagination({ total: offlineBills.length, pages: 1 });
+          const pageSize = 15;
+          const totalPages = Math.ceil(offlineBills.length / pageSize);
+          const startIndex = (currentPage - 1) * pageSize;
+          const pagedSlice = offlineBills.slice(startIndex, startIndex + pageSize);
+          setBills(pagedSlice);
+          setPagination({ total: offlineBills.length, pages: totalPages, page: currentPage });
         }
       } catch (e) {}
       if (import.meta.env.DEV) { console.error('Failed to load invoices:', error); }
@@ -103,6 +109,10 @@ export default function BillHistory() {
 
   const handleLoadMore = async () => {
     if (loadingMore || page >= (pagination.pages || 1)) return;
+    if (bills.length >= MAX_SCROLL_ITEMS) {
+      setDisplayMode('pages');
+      return;
+    }
     setLoadingMore(true);
     try {
       const nextPage = page + 1;
@@ -725,7 +735,31 @@ export default function BillHistory() {
               {/* In Scroll / Load More Mode */}
               {displayMode === 'scroll' ? (
                 <div style={{ textAlign: 'center', width: '100%' }}>
-                  {bills.length < (pagination.total || 0) ? (
+                  {bills.length >= MAX_SCROLL_ITEMS && bills.length < (pagination.total || 0) ? (
+                    <div
+                      style={{
+                        maxWidth: '460px',
+                        margin: '0 auto',
+                        padding: '16px 20px',
+                        background: '#eff6ff',
+                        border: '1.5px solid #bfdbfe',
+                        borderRadius: '12px',
+                        textAlign: 'center',
+                      }}
+                    >
+                      <p style={{ margin: '0 0 12px 0', fontSize: '0.88rem', color: '#1e40af', fontWeight: 600 }}>
+                        📱 <strong>{bills.length} invoices loaded.</strong> To keep scrolling smooth on mobile devices, switch to <strong>Pages</strong> mode to browse remaining invoices.
+                      </p>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={() => setDisplayMode('pages')}
+                        style={{ minHeight: '44px', width: '100%', fontSize: '0.88rem', fontWeight: 800 }}
+                      >
+                        📄 Switch to Pages Mode ({((pagination.total || 0) - bills.length)} older)
+                      </button>
+                    </div>
+                  ) : bills.length < (pagination.total || 0) ? (
                     <button
                       type="button"
                       onClick={handleLoadMore}
