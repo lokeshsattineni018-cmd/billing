@@ -3,17 +3,12 @@ const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const Settings = require('../models/Settings');
 const mongoose = require('mongoose');
-const logos = require('../assets/logosData');
-
-const ganeshaBase64 = (logos.ganeshaBase64 || logos.GANESHA_BASE64 || '').replace(/^data:image\/\w+;base64,/, '');
-const durgaBase64 = (logos.durgaBase64 || logos.DURGA_BASE64 || '').replace(/^data:image\/\w+;base64,/, '');
-const ramDarbarBase64 = (logos.ramDarbarBase64 || logos.RAM_DARBAR_BASE64 || '').replace(/^data:image\/\w+;base64,/, '');
-const teluguJaiShreeRamBase64 = (logos.JAI_SHREE_RAM_TELUGU_BASE64 || '').replace(/^data:image\/\w+;base64,/, '');
-
-const ganeshaBuffer = Buffer.from(ganeshaBase64, 'base64');
-const durgaBuffer = Buffer.from(durgaBase64, 'base64');
-const ramDarbarBuffer = Buffer.from(ramDarbarBase64, 'base64');
-const teluguJaiShreeRamBuffer = Buffer.from(teluguJaiShreeRamBase64, 'base64');
+const {
+  ganeshaBuffer,
+  durgaBuffer,
+  ramDarbarBuffer,
+  teluguJaiShreeRamBuffer
+} = require('../assets/logosData');
 
 const teluguFontPath = path.join(__dirname, '../assets/NotoSansTelugu-Bold.ttf');
 
