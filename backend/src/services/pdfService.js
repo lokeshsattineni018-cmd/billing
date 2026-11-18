@@ -270,9 +270,17 @@ async function generateBillPDFBuffer(bill) {
       // AMOUNT (spans 2 rows)
       doc.rect(colX.amt, y, cols.amt, thH1 + 14).fillAndStroke('#f0f5fa', borderBlue);
 
+      // Spanning table header: reflect custom operator-entered particulars if provided, or default to trade standard 'HEAD-ON / HEAD-LESS'
+      const firstParticulars = (bill.items && bill.items[0]?.particulars && bill.items[0].particulars.trim())
+        || (bill.particulars && bill.particulars.trim())
+        || 'HEAD-ON';
+      const headerTitle = (firstParticulars.toUpperCase() === 'HEAD-ON' || firstParticulars.toUpperCase() === 'HEAD-ON / HEAD-LESS')
+        ? 'HEAD-ON / HEAD-LESS'
+        : firstParticulars;
+
       doc.font('Helvetica-Bold').fontSize(7.5).fillColor(primaryBlue);
       doc.text('S.\nNo.', colX.sno + 2, y + 4, { width: cols.sno - 4, align: 'center' });
-      doc.text('HEAD-ON / HEAD-LESS', colX.count + 2, y + 4, { width: headOnW - 4, align: 'center' });
+      doc.text(headerTitle, colX.count + 2, y + 4, { width: headOnW - 4, align: 'center' });
       doc.text('RATE\nOF TAX', colX.tax + 2, y + 4, { width: cols.tax - 4, align: 'center' });
       doc.text('AMOUNT', colX.amt + 2, y + 9, { width: cols.amt - 4, align: 'center' });
 
