@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { billsAPI, settingsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -49,28 +49,36 @@ export default function BillDetail() {
   const canSeeSales = user?.role === 'owner' || user?.role === 'admin';
   const canUpdateStatus = user?.role === 'owner' || user?.role === 'admin';
   const { lang, t } = useLanguage();
+  const autoprintTimerRef = useRef(null);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
     loadBill();
     loadSettings();
 
     const handleSyncComplete = () => {
-      loadBill();
+      if (isMountedRef.current) loadBill();
     };
     window.addEventListener('vda-sync-completed', handleSyncComplete);
-    return () => window.removeEventListener('vda-sync-completed', handleSyncComplete);
+
+    return () => {
+      isMountedRef.current = false;
+      if (autoprintTimerRef.current) clearTimeout(autoprintTimerRef.current);
+      window.removeEventListener('vda-sync-completed', handleSyncComplete);
+    };
   }, [id]);
 
   const loadSettings = async () => {
     try {
       const response = await settingsAPI.get();
-      if (response.data) {
+      if (response.data && isMountedRef.current) {
         setBusinessSettings(response.data);
       }
     } catch (error) {
       try {
         const cached = await getMasterCache('settings');
-        if (cached) setBusinessSettings(cached);
+        if (cached && isMountedRef.current) setBusinessSettings(cached);
       } catch (e) {}
       if (import.meta.env.DEV) { console.error('Failed to load settings:', error); }
     }
@@ -79,11 +87,14 @@ export default function BillDetail() {
   const checkAutoprint = () => {
     const searchParams = new URLSearchParams(location.search);
     if (searchParams.get('autoprint') === 'true') {
-      setTimeout(() => {
-        if (id && !String(id).startsWith('offline_')) {
-          billsAPI.markPrinted(id).catch(() => {});
+      if (autoprintTimerRef.current) clearTimeout(autoprintTimerRef.current);
+      autoprintTimerRef.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          if (id && !String(id).startsWith('offline_')) {
+            billsAPI.markPrinted(id).catch(() => {});
+          }
+          window.print();
         }
-        window.print();
       }, 450);
     }
   };
@@ -92,7 +103,7 @@ export default function BillDetail() {
     try {
       if (id && id.startsWith('offline_')) {
         const offlineData = await getOfflineBill(id);
-        if (offlineData) {
+        if (offlineData && isMountedRef.current) {
           setBill(offlineData);
           checkAutoprint();
           setLoading(false);
@@ -101,13 +112,15 @@ export default function BillDetail() {
       }
 
       const response = await billsAPI.getById(id);
-      setBill(response.data);
-      saveOfflineBill({ ...response.data, isOffline: false, synced: true }).catch(() => {});
-      checkAutoprint();
+      if (isMountedRef.current) {
+        setBill(response.data);
+        saveOfflineBill({ ...response.data, isOffline: false, synced: true }).catch(() => {});
+        checkAutoprint();
+      }
     } catch (error) {
       try {
         const cached = await getOfflineBill(id);
-        if (cached) {
+        if (cached && isMountedRef.current) {
           setBill(cached);
           checkAutoprint();
           setLoading(false);
@@ -116,7 +129,9 @@ export default function BillDetail() {
       } catch (e) {}
       if (import.meta.env.DEV) { console.error('Failed to load invoice:', error); }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
