@@ -413,44 +413,57 @@ export default function NewBill() {
   }, []);
 
   const loadSettings = async () => {
+    // 1. Instant cache read for zero-delay form readiness
+    try {
+      const cached = await getMasterCache('settings');
+      if (cached && cached.gstin) {
+        setCompanyGstin((prev) => prev || cached.gstin);
+      }
+    } catch {
+      // ignore
+    }
+
+    // 2. Background revalidation
     try {
       const response = await settingsAPI.get();
       if (response.data && response.data.gstin) {
         setCompanyGstin(response.data.gstin);
+        setMasterCache('settings', response.data).catch(() => {});
       } else {
         const cached = await getMasterCache('settings');
-        if (cached && cached.gstin) {
-          setCompanyGstin(cached.gstin);
-        } else {
+        if (!cached?.gstin) {
           showToast('Business GSTIN not set. Please update in Settings.', 'error');
         }
       }
     } catch (error) {
-      const cached = await getMasterCache('settings');
-      if (cached && cached.gstin) {
-        setCompanyGstin(cached.gstin);
-      } else if (import.meta.env.DEV) {
+      if (import.meta.env.DEV) {
         console.error('Failed to load settings:', error);
       }
     }
   };
 
   const loadCustomers = async () => {
+    // 1. Instant cache read for autocomplete dropdown
+    try {
+      const cached = await getMasterCache('customers');
+      const list = cached?.customers || (Array.isArray(cached) ? cached : null);
+      if (list && list.length > 0) {
+        setCustomersList(list);
+      }
+    } catch {
+      // ignore
+    }
+
+    // 2. Background revalidation
     try {
       const response = await billsAPI.getCustomers();
-      if (response.data && response.data.customers) {
-        setCustomersList(response.data.customers);
-      } else {
-        const cached = await getMasterCache('customers');
-        if (cached && cached.customers) {
-          setCustomersList(cached.customers);
-        }
+      const list = response.data?.customers || (Array.isArray(response.data) ? response.data : null);
+      if (list) {
+        setCustomersList(list);
+        setMasterCache('customers', response.data).catch(() => {});
       }
     } catch (error) {
-      const cached = await getMasterCache('customers');
-      if (cached && cached.customers) {
-        setCustomersList(cached.customers);
-      } else if (import.meta.env.DEV) {
+      if (import.meta.env.DEV) {
         console.error('Failed to load customer list:', error);
       }
     }
