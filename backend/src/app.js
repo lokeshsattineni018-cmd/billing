@@ -9,7 +9,6 @@ const { sanitizeMongoInput, generalLimiter } = require('./middleware/security');
 
 // Route imports
 const authRoutes = require('./routes/auth');
-const { autoSeedUsers } = require('./routes/auth');
 const settingsRoutes = require('./routes/settings');
 const itemsRoutes = require('./routes/items');
 const billsRoutes = require('./routes/bills');
@@ -116,20 +115,10 @@ app.use((req, res, next) => {
   next();
 });
 
-let isDbSeeded = false;
-
 // Middleware to ensure DB is connected for serverless invocations
 app.use(async (req, res, next) => {
   try {
     await connectDB();
-    if (!isDbSeeded) {
-      isDbSeeded = true;
-      try {
-        await autoSeedUsers();
-      } catch (e) {
-        console.log('Seed note:', e.message);
-      }
-    }
     next();
   } catch (err) {
     console.error('Database connection error in middleware:', err);
