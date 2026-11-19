@@ -35,6 +35,10 @@ api.interceptors.response.use(
           setMasterCache('staffNames', response.data);
         } else if (url.includes('/staff/summary')) {
           setMasterCache('staffSummary', response.data);
+        } else if (url.includes('/dashboard/summary')) {
+          setMasterCache('dashboardSummary', response.data);
+        } else if (url.includes('/dashboard/analytics')) {
+          setMasterCache('dashboardAnalytics', response.data);
         }
       }
     } catch (e) {

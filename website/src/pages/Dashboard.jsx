@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dashboardAPI, billsAPI } from '../services/api';
+import { getMasterCache, setMasterCache } from '../utils/offlineDb';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const [dailySummary, setDailySummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isRevalidating, setIsRevalidating] = useState(false);
 
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState(false);
@@ -29,12 +31,14 @@ export default function Dashboard() {
 
   const isAdmin = user?.role === 'admin';
   const isOwnerOrAdmin = user?.role === 'owner' || user?.role === 'admin';
+  const isUpdating = refreshing || isRevalidating;
 
   const loadDashboard = useCallback(async (isSilent = false) => {
     if (!isSilent) setLoading(true);
     try {
       const response = await dashboardAPI.summary();
       setData(response.data);
+      setMasterCache('dashboardSummary', response.data).catch(() => {});
     } catch (error) {
       if (import.meta.env.DEV) { console.error('Failed to load dashboard:', error); }
       throw error;
@@ -47,16 +51,53 @@ export default function Dashboard() {
     try {
       const res = await dashboardAPI.getAnalytics();
       setAnalytics(res.data);
+      setMasterCache('dashboardAnalytics', res.data).catch(() => {});
     } catch (error) {
       if (import.meta.env.DEV) { console.error('Failed to load analytics:', error); }
     }
   }, []);
 
+  // Stale-While-Revalidate: load cached snapshot instantly, then revalidate in background
   useEffect(() => {
-    loadDashboard(false).catch(() => {});
-    if (isAdmin) {
-      loadAnalytics();
+    let active = true;
+
+    async function initDashboard() {
+      // 1. Instant Cache Render
+      try {
+        const [cachedSummary, cachedAnalytics] = await Promise.all([
+          getMasterCache('dashboardSummary'),
+          isAdmin ? getMasterCache('dashboardAnalytics') : Promise.resolve(null),
+        ]);
+        if (active && cachedSummary) {
+          setData(cachedSummary);
+          if (cachedAnalytics) setAnalytics(cachedAnalytics);
+          setLoading(false); // Immediate render with zero network delay
+          setIsRevalidating(true);
+        }
+      } catch (err) {
+        // Fall back to network loading
+      }
+
+      // 2. Background Revalidation
+      try {
+        const tasks = [loadDashboard(true)];
+        if (isAdmin) tasks.push(loadAnalytics());
+        await Promise.all(tasks);
+      } catch (error) {
+        // Handled in loadDashboard
+      } finally {
+        if (active) {
+          setLoading(false);
+          setIsRevalidating(false);
+        }
+      }
     }
+
+    initDashboard();
+
+    return () => {
+      active = false;
+    };
   }, [isAdmin, loadDashboard, loadAnalytics]);
 
   // Live Auto-Refresh every 30 seconds
@@ -245,8 +286,8 @@ export default function Dashboard() {
                 }}
                 title="Reload dashboard data"
               >
-                <RefreshIcon size={16} color="#0b5394" spinning={refreshing} />
-                <span>{refreshing ? '...' : 'Reload'}</span>
+                <RefreshIcon size={16} color="#0b5394" spinning={isUpdating} />
+                <span>{isUpdating ? '...' : 'Reload'}</span>
               </button>
             </div>
 
@@ -255,7 +296,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={handleManualRefresh}
-                disabled={refreshing}
+                disabled={isUpdating}
                 className="hide-on-mobile"
                 style={{
                   background: '#f8fafc',
@@ -274,8 +315,8 @@ export default function Dashboard() {
                 }}
                 title="Click to refresh dashboard data"
               >
-                <RefreshIcon size={16} color="#0b5394" spinning={refreshing} />
-                <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+                <RefreshIcon size={16} color="#0b5394" spinning={isUpdating} />
+                <span>{isUpdating ? 'Updating...' : 'Refresh'}</span>
               </button>
               <button
                 type="button"
@@ -381,8 +422,8 @@ export default function Dashboard() {
               }}
               title="Refresh dashboard"
             >
-              <RefreshIcon size={15} color="#0b5394" spinning={refreshing} />
-              <span>{refreshing ? '...' : 'Refresh'}</span>
+              <RefreshIcon size={15} color="#0b5394" spinning={isUpdating} />
+              <span>{isUpdating ? '...' : 'Refresh'}</span>
             </button>
             <button
               className="btn btn-primary"
