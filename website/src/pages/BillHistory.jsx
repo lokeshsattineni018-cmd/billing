@@ -11,7 +11,7 @@ import PaymentModal from '../components/PaymentModal';
 import SwipeableItem from '../components/SwipeableItem';
 import PullToRefresh from '../components/PullToRefresh';
 import DeleteInvoiceModal from '../components/DeleteInvoiceModal';
-import { getAllOfflineBills } from '../utils/offlineDb';
+import { getAllOfflineBills, getMasterCache, setMasterCache } from '../utils/offlineDb';
 
 const MAX_SCROLL_ITEMS = 60; // Cap continuous scroll list to protect mobile memory
 
@@ -23,6 +23,7 @@ export default function BillHistory() {
 
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [displayMode, setDisplayMode] = useState('scroll'); // 'scroll' | 'pages'
   const [viewFormat, setViewFormat] = useState('cards'); // 'cards' | 'table'
@@ -63,11 +64,36 @@ export default function BillHistory() {
   }, [page, statusFilter]);
 
   const loadBills = async (resetPage = false) => {
-    setLoading(true);
-    try {
-      const currentPage = resetPage ? 1 : page;
-      if (resetPage) setPage(1);
+    const currentPage = resetPage ? 1 : page;
+    if (resetPage) setPage(1);
 
+    const hasFilters = Boolean(search.trim() || dateFrom || dateTo || statusFilter);
+
+    // 1. Instant Cache-First render for default Page 1
+    if (currentPage === 1 && !hasFilters) {
+      try {
+        const cached = await getMasterCache('historyPage1');
+        if (cached && Array.isArray(cached.bills) && cached.bills.length > 0) {
+          setBills(cached.bills);
+          if (cached.pagination) setPagination(cached.pagination);
+          setLoading(false);
+          setIsUpdating(true);
+        }
+      } catch (e) {
+        // Fall back to normal loading
+      }
+    }
+
+    setBills((current) => {
+      if (!current || current.length === 0) {
+        setLoading(true);
+      } else {
+        setIsUpdating(true);
+      }
+      return current;
+    });
+
+    try {
       const params = { page: currentPage, limit: 15 };
       if (search.trim()) params.search = search.trim();
       if (dateFrom) params.from = dateFrom;
@@ -82,12 +108,21 @@ export default function BillHistory() {
       const serverBills = response.data.bills || [];
 
       // Prepend pending offline invoices at the top of first page
+      let finalBills = serverBills;
       if (currentPage === 1 && pendingOffline.length > 0) {
-        setBills([...pendingOffline, ...serverBills]);
-      } else {
-        setBills(serverBills);
+        finalBills = [...pendingOffline, ...serverBills];
       }
-      setPagination(response.data.pagination || {});
+      setBills(finalBills);
+      const paginationData = response.data.pagination || {};
+      setPagination(paginationData);
+
+      // Cache page 1 snapshot for subsequent instant visits
+      if (currentPage === 1 && !hasFilters) {
+        setMasterCache('historyPage1', {
+          bills: finalBills,
+          pagination: paginationData,
+        }).catch(() => {});
+      }
     } catch (error) {
       // Offline fallback: window and paginate cached bills from local IndexedDB
       try {
@@ -104,6 +139,7 @@ export default function BillHistory() {
       if (import.meta.env.DEV) { console.error('Failed to load invoices:', error); }
     } finally {
       setLoading(false);
+      setIsUpdating(false);
     }
   };
 
@@ -245,7 +281,36 @@ export default function BillHistory() {
 
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h2>Invoice History</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h2 style={{ margin: 0 }}>Invoice History</h2>
+            {isUpdating && (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: '#0b5394',
+                  background: '#e0f2fe',
+                  padding: '3px 9px',
+                  borderRadius: '12px',
+                  lineHeight: 1.2,
+                }}
+              >
+                <span
+                  style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: '#0284c7',
+                    display: 'inline-block',
+                  }}
+                />
+                Updating...
+              </span>
+            )}
+          </div>
           <p>View, print, download, share or export invoices for GST & CA filing</p>
         </div>
 
