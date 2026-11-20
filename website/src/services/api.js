@@ -39,6 +39,9 @@ api.interceptors.response.use(
           setMasterCache('dashboardSummary', response.data);
         } else if (url.includes('/dashboard/analytics')) {
           setMasterCache('dashboardAnalytics', response.data);
+        } else if (url.includes('/dashboard/combined')) {
+          if (response.data?.summary) setMasterCache('dashboardSummary', response.data.summary);
+          if (response.data?.analytics) setMasterCache('dashboardAnalytics', response.data.analytics);
         }
       }
     } catch (e) {
@@ -178,6 +181,7 @@ export const billsAPI = {
 // Dashboard & Analytics
 export const dashboardAPI = {
   summary: (params) => api.get('/dashboard/summary', { params: { ...params, _t: Date.now() } }),
+  combined: (params) => api.get('/dashboard/combined', { params: { ...params, _t: Date.now() } }),
   getDailySummary: () => api.get('/dashboard/daily-summary', { params: { _t: Date.now() } }),
   getAnalytics: () => api.get('/dashboard/analytics', { params: { _t: Date.now() } }),
   getProfitLoss: (params) => api.get('/dashboard/profit-loss', { params: { ...params, _t: Date.now() } }),

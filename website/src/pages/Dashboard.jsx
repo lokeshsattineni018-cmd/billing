@@ -33,29 +33,40 @@ export default function Dashboard() {
   const isOwnerOrAdmin = user?.role === 'owner' || user?.role === 'admin';
   const isUpdating = refreshing || isRevalidating;
 
-  const loadDashboard = useCallback(async (isSilent = false) => {
+  const loadDashboardData = useCallback(async (isSilent = false) => {
     if (!isSilent) setLoading(true);
     try {
-      const response = await dashboardAPI.summary();
-      setData(response.data);
-      setMasterCache('dashboardSummary', response.data).catch(() => {});
+      const response = await dashboardAPI.combined();
+      if (response.data?.summary) {
+        setData(response.data.summary);
+        setMasterCache('dashboardSummary', response.data.summary).catch(() => {});
+      }
+      if (response.data?.analytics) {
+        setAnalytics(response.data.analytics);
+        setMasterCache('dashboardAnalytics', response.data.analytics).catch(() => {});
+      }
     } catch (error) {
-      if (import.meta.env.DEV) { console.error('Failed to load dashboard:', error); }
-      throw error;
+      if (import.meta.env.DEV) { console.error('Combined dashboard failed, falling back to legacy endpoints:', error); }
+      try {
+        const [sumRes, anaRes] = await Promise.all([
+          dashboardAPI.summary(),
+          isAdmin ? dashboardAPI.getAnalytics() : Promise.resolve({ data: null }),
+        ]);
+        if (sumRes?.data) {
+          setData(sumRes.data);
+          setMasterCache('dashboardSummary', sumRes.data).catch(() => {});
+        }
+        if (anaRes?.data) {
+          setAnalytics(anaRes.data);
+          setMasterCache('dashboardAnalytics', anaRes.data).catch(() => {});
+        }
+      } catch {
+        throw error;
+      }
     } finally {
       if (!isSilent) setLoading(false);
     }
-  }, []);
-
-  const loadAnalytics = useCallback(async () => {
-    try {
-      const res = await dashboardAPI.getAnalytics();
-      setAnalytics(res.data);
-      setMasterCache('dashboardAnalytics', res.data).catch(() => {});
-    } catch (error) {
-      if (import.meta.env.DEV) { console.error('Failed to load analytics:', error); }
-    }
-  }, []);
+  }, [isAdmin]);
 
   // Stale-While-Revalidate: load cached snapshot instantly, then revalidate in background
   useEffect(() => {
@@ -78,13 +89,11 @@ export default function Dashboard() {
         // Fall back to network loading
       }
 
-      // 2. Background Revalidation
+      // 2. Background Revalidation via single combined round-trip
       try {
-        const tasks = [loadDashboard(true)];
-        if (isAdmin) tasks.push(loadAnalytics());
-        await Promise.all(tasks);
+        await loadDashboardData(true);
       } catch (error) {
-        // Handled in loadDashboard
+        // Handled in loadDashboardData
       } finally {
         if (active) {
           setLoading(false);
@@ -98,35 +107,28 @@ export default function Dashboard() {
     return () => {
       active = false;
     };
-  }, [isAdmin, loadDashboard, loadAnalytics]);
+  }, [isAdmin, loadDashboardData]);
 
   // Live Auto-Refresh every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') {
         setRefreshing(true);
-        Promise.all([
-          loadDashboard(true).catch(() => {}),
-          isAdmin ? loadAnalytics() : Promise.resolve(),
-        ]).finally(() => {
+        loadDashboardData(true).finally(() => {
           setRefreshing(false);
         });
       }
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [isAdmin, loadDashboard, loadAnalytics]);
+  }, [loadDashboardData]);
 
   const handleManualRefresh = async () => {
     if (refreshing) return;
     setRefreshing(true);
     try {
       const minSpin = new Promise((resolve) => setTimeout(resolve, 600));
-      const tasks = [loadDashboard(true)];
-      if (isAdmin) {
-        tasks.push(loadAnalytics());
-      }
-      await Promise.all([Promise.all(tasks), minSpin]);
+      await Promise.all([loadDashboardData(true), minSpin]);
       showToast('Dashboard data refreshed', 'success');
     } catch (error) {
       showToast('Failed to refresh dashboard. Please retry.', 'error');

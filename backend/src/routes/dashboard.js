@@ -10,125 +10,272 @@ const { handleServerError } = require('../utils/errorTracker');
 const router = express.Router();
 
 /**
+ * Compute dashboard summary metrics
+ */
+async function computeSummaryData(query = {}) {
+  const now = new Date();
+
+  // Today's date range
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+
+  // This month's date range
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  const { period = 'today', startDate, endDate } = query;
+
+  // Helper for date range calculation
+  let filterStart, filterEnd, periodLabel;
+  if (period === 'today') {
+    filterStart = startOfDay;
+    filterEnd = endOfDay;
+    periodLabel = "Today's Sales";
+  } else if (period === 'this_week') {
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    filterStart = new Date(now.getFullYear(), now.getMonth(), diff);
+    filterStart.setHours(0, 0, 0, 0);
+    filterEnd = endOfDay;
+    periodLabel = "This Week's Sales";
+  } else if (period === 'this_month') {
+    filterStart = startOfMonth;
+    filterEnd = endOfMonth;
+    periodLabel = "This Month's Sales";
+  } else if (period === 'custom' && startDate && endDate) {
+    filterStart = new Date(startDate);
+    filterStart.setHours(0, 0, 0, 0);
+    filterEnd = new Date(endDate);
+    filterEnd.setHours(23, 59, 59, 999);
+    periodLabel = 'Custom Period Sales';
+  } else {
+    filterStart = startOfDay;
+    filterEnd = endOfDay;
+    periodLabel = "Today's Sales";
+  }
+
+  const [todayStats, monthStats, filterStats, receivablesStats, recentBills, totalBills] = await Promise.all([
+    // Today's aggregation (excluding voided bills)
+    Bill.aggregate([
+      { $match: { date: { $gte: startOfDay, $lt: endOfDay }, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
+      { $group: { _id: null, totalSales: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
+    ]),
+    // This month's aggregation (excluding voided bills)
+    Bill.aggregate([
+      { $match: { date: { $gte: startOfMonth, $lt: endOfMonth }, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
+      { $group: { _id: null, totalSales: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
+    ]),
+    // Filtered period aggregation (excluding voided bills)
+    Bill.aggregate([
+      { $match: { date: { $gte: filterStart, $lte: filterEnd }, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
+      { $group: { _id: null, totalSales: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
+    ]),
+    // Total Outstanding Receivables (excluding voided bills, accounting for partial payments)
+    Bill.aggregate([
+      { $match: { paymentStatus: { $ne: 'Paid' }, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
+      {
+        $group: {
+          _id: null,
+          totalPending: {
+            $sum: {
+              $max: [0, { $subtract: [{ $ifNull: ['$grandTotal', '$total'] }, { $ifNull: ['$paidAmount', 0] }] }],
+            },
+          },
+          pendingCount: { $sum: 1 },
+        },
+      },
+    ]),
+    // Recent invoices (last 10)
+    Bill.find({ isVoided: { $ne: true }, isDeleted: { $ne: true } })
+      .populate('createdBy', 'name')
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean(),
+    // Total invoice count
+    Bill.countDocuments({ isVoided: { $ne: true }, isDeleted: { $ne: true } }),
+  ]);
+
+  const today = todayStats[0] || { totalSales: 0, billCount: 0 };
+  const month = monthStats[0] || { totalSales: 0, billCount: 0 };
+  const filtered = filterStats[0] || { totalSales: 0, billCount: 0 };
+  const receivables = receivablesStats[0] || { totalPending: 0, pendingCount: 0 };
+
+  return {
+    selectedPeriod: {
+      period,
+      label: periodLabel,
+      totalSales: filtered.totalSales,
+      billCount: filtered.billCount,
+      startDate: filterStart,
+      endDate: filterEnd,
+    },
+    today: {
+      totalSales: today.totalSales,
+      billCount: today.billCount,
+    },
+    month: {
+      totalSales: month.totalSales,
+      billCount: month.billCount,
+    },
+    receivables: {
+      totalPending: receivables.totalPending,
+      pendingCount: receivables.pendingCount,
+    },
+    recentBills,
+    totalBills,
+  };
+}
+
+/**
+ * Compute dashboard chart analytics
+ */
+async function computeAnalyticsData() {
+  const now = new Date();
+
+  // 1. Last 7 days trend
+  const sevenDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+  sevenDaysAgo.setHours(0, 0, 0, 0);
+
+  const [dailyAgg, monthlyAgg, topCustomersAgg, paymentRatioAgg] = await Promise.all([
+    // 7-day daily aggregation
+    Bill.aggregate([
+      {
+        $match: {
+          date: { $gte: sevenDaysAgo },
+          isVoided: { $ne: true },
+          isDeleted: { $ne: true },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: '%Y-%m-%d', date: '$date' },
+          },
+          revenue: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]),
+
+    // 6-month trend
+    Bill.aggregate([
+      {
+        $match: {
+          date: {
+            $gte: new Date(now.getFullYear(), now.getMonth() - 5, 1),
+          },
+          isVoided: { $ne: true },
+          isDeleted: { $ne: true },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: '%Y-%m', date: '$date' },
+          },
+          revenue: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]),
+
+    // Top 5 customers
+    Bill.aggregate([
+      { $match: { isVoided: { $ne: true }, isDeleted: { $ne: true } } },
+      {
+        $group: {
+          _id: '$companyName',
+          total: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { total: -1 } },
+      { $limit: 5 },
+    ]),
+
+    // Payment status breakdown
+    Bill.aggregate([
+      { $match: { isVoided: { $ne: true }, isDeleted: { $ne: true } } },
+      {
+        $group: {
+          _id: '$paymentStatus',
+          total: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
+          count: { $sum: 1 },
+        },
+      },
+    ]),
+  ]);
+
+  // Format 7-day data with all 7 days guaranteed
+  const last7Days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    const dayLabel = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' });
+    const found = dailyAgg.find((item) => item._id === key);
+    last7Days.push({
+      date: key,
+      label: dayLabel,
+      revenue: found ? found.revenue : 0,
+      count: found ? found.count : 0,
+    });
+  }
+
+  // Format 6-month data
+  const last6Months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const monthLabel = d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+    const found = monthlyAgg.find((item) => item._id === key);
+    last6Months.push({
+      month: key,
+      label: monthLabel,
+      revenue: found ? found.revenue : 0,
+      count: found ? found.count : 0,
+    });
+  }
+
+  return {
+    dailyTrends: last7Days,
+    monthlyTrends: last6Months,
+    topCustomers: topCustomersAgg.map((c) => ({ name: c._id, revenue: c.total, bills: c.count })),
+    paymentRatio: paymentRatioAgg,
+  };
+}
+
+/**
+ * GET /api/dashboard/combined
+ * Consolidated dashboard endpoint returning summary & analytics in a single round-trip
+ */
+router.get('/combined', protect, restrictTo('owner', 'admin'), async (req, res) => {
+  try {
+    const [summary, analytics] = await Promise.all([
+      computeSummaryData(req.query),
+      computeAnalyticsData(),
+    ]);
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.json({
+      summary,
+      analytics,
+    });
+  } catch (error) {
+    return handleServerError(res, error, 'Server error fetching combined dashboard', req);
+  }
+});
+
+/**
  * GET /api/dashboard/summary
  * Today's sales, this month's sales, total receivables, total invoices, and recent invoices
  * (Owner and Admin only)
  */
-router.get('/summary', protect, restrictTo('owner', 'admin', 'staff'), async (req, res) => {
+router.get('/summary', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
-    const now = new Date();
-
-    // Today's date range
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-
-    // This month's date range
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-
-    const { period = 'today', startDate, endDate } = req.query;
-
-    // Helper for date range calculation
-    let filterStart, filterEnd, periodLabel;
-    if (period === 'today') {
-      filterStart = startOfDay;
-      filterEnd = endOfDay;
-      periodLabel = "Today's Sales";
-    } else if (period === 'this_week') {
-      const day = now.getDay();
-      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-      filterStart = new Date(now.getFullYear(), now.getMonth(), diff);
-      filterStart.setHours(0, 0, 0, 0);
-      filterEnd = endOfDay;
-      periodLabel = "This Week's Sales";
-    } else if (period === 'this_month') {
-      filterStart = startOfMonth;
-      filterEnd = endOfMonth;
-      periodLabel = "This Month's Sales";
-    } else if (period === 'custom' && startDate && endDate) {
-      filterStart = new Date(startDate);
-      filterStart.setHours(0, 0, 0, 0);
-      filterEnd = new Date(endDate);
-      filterEnd.setHours(23, 59, 59, 999);
-      periodLabel = 'Custom Period Sales';
-    } else {
-      filterStart = startOfDay;
-      filterEnd = endOfDay;
-      periodLabel = "Today's Sales";
-    }
-
-    const [todayStats, monthStats, filterStats, receivablesStats, recentBills, totalBills] = await Promise.all([
-      // Today's aggregation (excluding voided bills)
-      Bill.aggregate([
-        { $match: { date: { $gte: startOfDay, $lt: endOfDay }, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
-        { $group: { _id: null, totalSales: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
-      ]),
-      // This month's aggregation (excluding voided bills)
-      Bill.aggregate([
-        { $match: { date: { $gte: startOfMonth, $lt: endOfMonth }, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
-        { $group: { _id: null, totalSales: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
-      ]),
-      // Filtered period aggregation (excluding voided bills)
-      Bill.aggregate([
-        { $match: { date: { $gte: filterStart, $lte: filterEnd }, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
-        { $group: { _id: null, totalSales: { $sum: { $ifNull: ['$grandTotal', '$total'] } }, billCount: { $sum: 1 } } },
-      ]),
-      // Total Outstanding Receivables (excluding voided bills, accounting for partial payments)
-      Bill.aggregate([
-        { $match: { paymentStatus: { $ne: 'Paid' }, isVoided: { $ne: true }, isDeleted: { $ne: true } } },
-        {
-          $group: {
-            _id: null,
-            totalPending: {
-              $sum: {
-                $max: [0, { $subtract: [{ $ifNull: ['$grandTotal', '$total'] }, { $ifNull: ['$paidAmount', 0] }] }],
-              },
-            },
-            pendingCount: { $sum: 1 },
-          },
-        },
-      ]),
-      // Recent invoices (last 10)
-      Bill.find({ isDeleted: { $ne: true } })
-        .populate('createdBy', 'name')
-        .sort({ createdAt: -1 })
-        .limit(10)
-        .lean(),
-      // Total invoice count
-      Bill.countDocuments({ isVoided: { $ne: true }, isDeleted: { $ne: true } }),
-    ]);
-
-    const today = todayStats[0] || { totalSales: 0, billCount: 0 };
-    const month = monthStats[0] || { totalSales: 0, billCount: 0 };
-    const filtered = filterStats[0] || { totalSales: 0, billCount: 0 };
-    const receivables = receivablesStats[0] || { totalPending: 0, pendingCount: 0 };
-
-    // Do not cache aggressively so manual refreshes fetch immediate real-time data
+    const summary = await computeSummaryData(req.query);
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.json({
-      selectedPeriod: {
-        period,
-        label: periodLabel,
-        totalSales: filtered.totalSales,
-        billCount: filtered.billCount,
-        startDate: filterStart,
-        endDate: filterEnd,
-      },
-      today: {
-        totalSales: today.totalSales,
-        billCount: today.billCount,
-      },
-      month: {
-        totalSales: month.totalSales,
-        billCount: month.billCount,
-      },
-      receivables: {
-        totalPending: receivables.totalPending,
-        pendingCount: receivables.pendingCount,
-      },
-      recentBills,
-      totalBills,
-    });
+    res.json(summary);
   } catch (error) {
     return handleServerError(res, error, 'Server error', req);
   }
@@ -237,122 +384,11 @@ router.get('/daily-summary', protect, restrictTo('owner', 'admin', 'staff'), asy
  * GET /api/dashboard/analytics
  * Visual chart analytics: 7-day revenue, 6-month trends, customer breakdown (Owner and Admin)
  */
-router.get('/analytics', protect, restrictTo('owner', 'admin', 'staff'), async (req, res) => {
+router.get('/analytics', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
-    const now = new Date();
-
-    // 1. Last 7 days trend
-    const sevenDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
-    sevenDaysAgo.setHours(0, 0, 0, 0);
-
-    const [dailyAgg, monthlyAgg, topCustomersAgg, paymentRatioAgg] = await Promise.all([
-      // 7-day daily aggregation
-      Bill.aggregate([
-        {
-          $match: {
-            date: { $gte: sevenDaysAgo },
-            isVoided: { $ne: true }, isDeleted: { $ne: true },
-          },
-        },
-        {
-          $group: {
-            _id: {
-              $dateToString: { format: '%Y-%m-%d', date: '$date' },
-            },
-            revenue: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
-            count: { $sum: 1 },
-          },
-        },
-        { $sort: { _id: 1 } },
-      ]),
-
-      // 6-month trend
-      Bill.aggregate([
-        {
-          $match: {
-            date: {
-              $gte: new Date(now.getFullYear(), now.getMonth() - 5, 1),
-            },
-            isVoided: { $ne: true }, isDeleted: { $ne: true },
-          },
-        },
-        {
-          $group: {
-            _id: {
-              $dateToString: { format: '%Y-%m', date: '$date' },
-            },
-            revenue: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
-            count: { $sum: 1 },
-          },
-        },
-        { $sort: { _id: 1 } },
-      ]),
-
-      // Top 5 customers
-      Bill.aggregate([
-        { $match: { isVoided: { $ne: true }, isDeleted: { $ne: true } } },
-        {
-          $group: {
-            _id: '$companyName',
-            total: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
-            count: { $sum: 1 },
-          },
-        },
-        { $sort: { total: -1 } },
-        { $limit: 5 },
-      ]),
-
-      // Payment status breakdown
-      Bill.aggregate([
-        { $match: { isVoided: { $ne: true }, isDeleted: { $ne: true } } },
-        {
-          $group: {
-            _id: '$paymentStatus',
-            total: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
-            count: { $sum: 1 },
-          },
-        },
-      ]),
-    ]);
-
-    // Format 7-day data with all 7 days guaranteed
-    const last7Days = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-      const key = d.toISOString().split('T')[0];
-      const dayLabel = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' });
-      const found = dailyAgg.find((item) => item._id === key);
-      last7Days.push({
-        date: key,
-        label: dayLabel,
-        revenue: found ? found.revenue : 0,
-        count: found ? found.count : 0,
-      });
-    }
-
-    // Format 6-month data
-    const last6Months = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const monthLabel = d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
-      const found = monthlyAgg.find((item) => item._id === key);
-      last6Months.push({
-        month: key,
-        label: monthLabel,
-        revenue: found ? found.revenue : 0,
-        count: found ? found.count : 0,
-      });
-    }
-
-    // Do not cache aggressively so manual refreshes fetch immediate real-time data
+    const analytics = await computeAnalyticsData();
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.json({
-      dailyTrends: last7Days,
-      monthlyTrends: last6Months,
-      topCustomers: topCustomersAgg.map((c) => ({ name: c._id, revenue: c.total, bills: c.count })),
-      paymentRatio: paymentRatioAgg,
-    });
+    res.json(analytics);
   } catch (error) {
     console.error('Analytics Error:', error);
     return handleServerError(res, error, 'Server error', req);
@@ -570,3 +606,5 @@ router.get('/profit-loss', protect, restrictTo('owner', 'admin'), async (req, re
 });
 
 module.exports = router;
+module.exports.computeSummaryData = computeSummaryData;
+module.exports.computeAnalyticsData = computeAnalyticsData;
