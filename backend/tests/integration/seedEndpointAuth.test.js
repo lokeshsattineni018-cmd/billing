@@ -1,3 +1,7 @@
+process.env.NODE_ENV = 'test';
+process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/srsf_test_suite';
+process.env.JWT_SECRET = 'test_jwt_secret_key_production_readiness_32b';
+
 const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert');
 const request = require('supertest');
@@ -7,7 +11,7 @@ const app = require('../../src/app');
 const User = require('../../src/models/User');
 const { getJwtSecret } = require('../../src/middleware/security');
 
-const TEST_DB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/srsf_test_suite';
+const TEST_DB_URI = 'mongodb://127.0.0.1:27017/srsf_test_suite';
 const TEST_SEED_SECRET = 'test-staging-seed-secret-xyz987';
 
 describe('POST /api/auth/seed SEED_SECRET Protection Tests', () => {
