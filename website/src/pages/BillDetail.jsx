@@ -10,7 +10,7 @@ import ShareModal from '../components/ShareModal';
 import ganeshaImg from '../assets/ganesha.jpg';
 import durgaImg from '../assets/durga.jpg';
 import ramDarbarImg from '../assets/ram_darbar.jpg';
-import { getOfflineBill, saveOfflineBill, getMasterCache } from '../utils/offlineDb';
+import { getOfflineBill, saveOfflineBill, getMasterCache, invalidateBillCaches } from '../utils/offlineDb';
 import { flushSyncQueue } from '../services/syncManager';
 import { useLanguage } from '../context/LanguageContext';
 import ConfirmModal from '../components/ConfirmModal';
@@ -212,6 +212,7 @@ export default function BillDetail() {
     try {
       const response = await billsAPI.updatePaymentStatus(id, newStatus);
       setBill(response.data);
+      invalidateBillCaches('payment').catch(() => {});
       showToast(`Invoice #${bill.billNo} marked as ${newStatus}!`);
     } catch (error) {
       if (import.meta.env.DEV) { console.error('Failed to update status:', error); }
@@ -228,6 +229,7 @@ export default function BillDetail() {
       const res = await billsAPI.void(id, voidReason);
       setBill(res.data.bill);
       setShowVoidModal(false);
+      invalidateBillCaches('void').catch(() => {});
       showToast(
         lang === 'te'
           ? `ఇన్‌వాయిస్ #${bill.billNo} రద్దు చేయబడింది`
@@ -246,6 +248,7 @@ export default function BillDetail() {
     setDeleting(true);
     try {
       const res = await billsAPI.delete(id, confirmationCode, reason);
+      invalidateBillCaches('delete').catch(() => {});
       showToast(
         res.data?.message ||
           (lang === 'te'

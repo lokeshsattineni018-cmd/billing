@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { billsAPI } from '../services/api';
 import { formatCurrency, formatDate } from '../utils/helpers';
 import { notifyPaymentReceived } from '../utils/notifications';
+import { invalidateBillCaches } from '../utils/offlineDb';
 
 export default function PaymentModal({ billId, onClose, onSuccess }) {
   const [loading, setLoading] = useState(true);
@@ -66,6 +67,7 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
         date,
       });
       notifyPaymentReceived(billData?.customerName, numAmt);
+      invalidateBillCaches('payment').catch(() => {});
       if (onSuccess) {
         onSuccess(res.data.message);
       }
