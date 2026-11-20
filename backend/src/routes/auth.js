@@ -35,12 +35,6 @@ async function autoSeedUsers() {
   for (const u of defaultUsers) {
     await User.create(u);
     console.log(`Default user initialized: ${u.username || u.email} (${u.role})`);
-    if (!process.env.DEFAULT_ADMIN_PASSWORD && u.role === 'admin') {
-      console.log(`[SECURITY NOTICE] Auto-generated temporary admin password: ${adminPass}`);
-    }
-    if (!process.env.DEFAULT_STAFF_PASSWORD && u.role === 'staff') {
-      console.log(`[SECURITY NOTICE] Auto-generated temporary staff password: ${staffPass}`);
-    }
   }
 }
 
