@@ -91,6 +91,11 @@ router.get('/daily-summary', async (req, res) => {
     });
   } catch (error) {
     console.error('Daily backup error:', error);
+    if (error.code === 'EAUTH' || error.responseCode === 535) {
+      return res.status(400).json({
+        message: 'SMTP Authentication failed. For Gmail, Google requires a 16-character App Password (not your regular account password). Please generate an App Password at myaccount.google.com/apppasswords and update Settings.',
+      });
+    }
     return handleServerError(res, error, 'Failed to send daily summary', req);
   }
 });
@@ -149,6 +154,11 @@ router.post('/send-now', protect, restrictTo('admin', 'owner'), async (req, res)
     });
   } catch (error) {
     console.error('Manual backup error:', error);
+    if (error.code === 'EAUTH' || error.responseCode === 535) {
+      return res.status(400).json({
+        message: 'SMTP Authentication failed. For Gmail, Google requires a 16-character App Password (not your regular account password). Please generate an App Password at myaccount.google.com/apppasswords and update Settings.',
+      });
+    }
     return handleServerError(res, error, 'Failed to send summary email', req);
   }
 });
