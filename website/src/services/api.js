@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { setMasterCache, getMasterCache } from '../utils/offlineDb';
+import { setMasterCache, getMasterCache, getUserCacheKey, clearMasterCache, invalidateBillCaches } from '../utils/offlineDb';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -23,25 +23,38 @@ api.interceptors.request.use((config) => {
 // Response interceptor — handle 401 expired session & transparent offline fallback
 api.interceptors.response.use(
   (response) => {
-    // Cache critical master data into IndexedDB on successful GET
     try {
       const url = response.config?.url || '';
-      if (response.config?.method?.toLowerCase() === 'get' && response.data) {
+      const method = response.config?.method?.toLowerCase();
+
+      // On successful bill mutation (create/edit/payment/void/delete), invalidate cached history & dashboard
+      if (['post', 'put', 'patch', 'delete'].includes(method) && url.includes('/bills') && !url.includes('/bills/customers')) {
+        invalidateBillCaches(method).catch(() => {});
+      }
+
+      // Cache master data scoped to current user identity & role
+      if (method === 'get' && response.data) {
+        const currentUser = (() => {
+          try { return JSON.parse(localStorage.getItem('srsf_user')); } catch { return null; }
+        })();
+        const isOwnerOrAdmin = currentUser?.role === 'owner' || currentUser?.role === 'admin';
+        const isAdmin = currentUser?.role === 'admin';
+
         if (url.includes('/settings') && !url.includes('/counter-status')) {
-          setMasterCache('settings', response.data);
+          setMasterCache(getUserCacheKey('settings', currentUser), response.data);
         } else if (url.includes('/bills/customers/list') || url.includes('/customers')) {
-          setMasterCache('customers', response.data);
+          setMasterCache(getUserCacheKey('customers', currentUser), response.data);
         } else if (url.includes('/staff/names')) {
-          setMasterCache('staffNames', response.data);
+          setMasterCache(getUserCacheKey('staffNames', currentUser), response.data);
         } else if (url.includes('/staff/summary')) {
-          setMasterCache('staffSummary', response.data);
+          setMasterCache(getUserCacheKey('staffSummary', currentUser), response.data);
         } else if (url.includes('/dashboard/summary')) {
-          setMasterCache('dashboardSummary', response.data);
+          if (isOwnerOrAdmin) setMasterCache(getUserCacheKey('dashboardSummary', currentUser), response.data);
         } else if (url.includes('/dashboard/analytics')) {
-          setMasterCache('dashboardAnalytics', response.data);
+          if (isAdmin) setMasterCache(getUserCacheKey('dashboardAnalytics', currentUser), response.data);
         } else if (url.includes('/dashboard/combined')) {
-          if (response.data?.summary) setMasterCache('dashboardSummary', response.data.summary);
-          if (response.data?.analytics) setMasterCache('dashboardAnalytics', response.data.analytics);
+          if (response.data?.summary && isOwnerOrAdmin) setMasterCache(getUserCacheKey('dashboardSummary', currentUser), response.data.summary);
+          if (response.data?.analytics && isAdmin) setMasterCache(getUserCacheKey('dashboardAnalytics', currentUser), response.data.analytics);
         }
       }
     } catch (e) {
@@ -62,6 +75,7 @@ api.interceptors.response.use(
         localStorage.removeItem('srsf_token');
         localStorage.removeItem('srsf_user');
         localStorage.removeItem('srsf_login_time');
+        clearMasterCache().catch(() => {});
         if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
@@ -73,18 +87,21 @@ api.interceptors.response.use(
     const isGet = error.config?.method?.toLowerCase() === 'get';
     if (isNetworkError && isGet) {
       const url = error.config?.url || '';
+      const currentUser = (() => {
+        try { return JSON.parse(localStorage.getItem('srsf_user')); } catch { return null; }
+      })();
       try {
         if (url.includes('/settings')) {
-          const cached = await getMasterCache('settings');
+          const cached = await getMasterCache(getUserCacheKey('settings', currentUser));
           if (cached) return { data: cached, status: 200, fromOfflineCache: true, headers: {}, config: error.config };
         } else if (url.includes('/bills/customers/list') || url.includes('/customers')) {
-          const cached = await getMasterCache('customers');
+          const cached = await getMasterCache(getUserCacheKey('customers', currentUser));
           if (cached) return { data: cached, status: 200, fromOfflineCache: true, headers: {}, config: error.config };
         } else if (url.includes('/staff/names')) {
-          const cached = await getMasterCache('staffNames');
+          const cached = await getMasterCache(getUserCacheKey('staffNames', currentUser));
           if (cached) return { data: cached, status: 200, fromOfflineCache: true, headers: {}, config: error.config };
         } else if (url.includes('/staff/summary')) {
-          const cached = await getMasterCache('staffSummary');
+          const cached = await getMasterCache(getUserCacheKey('staffSummary', currentUser));
           if (cached) return { data: cached, status: 200, fromOfflineCache: true, headers: {}, config: error.config };
         }
       } catch (cacheErr) {}

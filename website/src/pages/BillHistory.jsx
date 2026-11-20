@@ -11,7 +11,7 @@ import PaymentModal from '../components/PaymentModal';
 import SwipeableItem from '../components/SwipeableItem';
 import PullToRefresh from '../components/PullToRefresh';
 import DeleteInvoiceModal from '../components/DeleteInvoiceModal';
-import { getAllOfflineBills, getMasterCache, setMasterCache } from '../utils/offlineDb';
+import { getAllOfflineBills, getMasterCache, setMasterCache, getUserCacheKey, invalidateBillCaches } from '../utils/offlineDb';
 
 const MAX_SCROLL_ITEMS = 60; // Cap continuous scroll list to protect mobile memory
 
@@ -59,8 +59,13 @@ export default function BillHistory() {
   useEffect(() => {
     loadBills();
     const handleSync = () => loadBills();
+    const handleInvalidate = () => loadBills(true);
     window.addEventListener('vda-sync-completed', handleSync);
-    return () => window.removeEventListener('vda-sync-completed', handleSync);
+    window.addEventListener('vda-cache-invalidated', handleInvalidate);
+    return () => {
+      window.removeEventListener('vda-sync-completed', handleSync);
+      window.removeEventListener('vda-cache-invalidated', handleInvalidate);
+    };
   }, [page, statusFilter]);
 
   const loadBills = async (resetPage = false) => {
@@ -69,10 +74,11 @@ export default function BillHistory() {
 
     const hasFilters = Boolean(search.trim() || dateFrom || dateTo || statusFilter);
 
-    // 1. Instant Cache-First render for default Page 1
+    // 1. Instant Cache-First render for default Page 1 (keyed by user id & role)
     if (currentPage === 1 && !hasFilters) {
       try {
-        const cached = await getMasterCache('historyPage1');
+        const historyKey = getUserCacheKey('historyPage1', user);
+        const cached = await getMasterCache(historyKey);
         if (cached && Array.isArray(cached.bills) && cached.bills.length > 0) {
           setBills(cached.bills);
           if (cached.pagination) setPagination(cached.pagination);
@@ -116,9 +122,9 @@ export default function BillHistory() {
       const paginationData = response.data.pagination || {};
       setPagination(paginationData);
 
-      // Cache page 1 snapshot for subsequent instant visits
+      // Cache page 1 snapshot for subsequent instant visits (keyed by user id & role)
       if (currentPage === 1 && !hasFilters) {
-        setMasterCache('historyPage1', {
+        setMasterCache(getUserCacheKey('historyPage1', user), {
           bills: finalBills,
           pagination: paginationData,
         }).catch(() => {});
@@ -265,6 +271,7 @@ export default function BillHistory() {
       setBills((prev) => prev.filter((b) => b._id !== deleteBillTarget._id));
       setPagination((prev) => ({ ...prev, total: Math.max(0, (prev.total || 1) - 1) }));
       setDeleteBillTarget(null);
+      invalidateBillCaches('delete').catch(() => {});
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to delete invoice', 'error');
     } finally {

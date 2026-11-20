@@ -10,8 +10,9 @@ import {
   serializeDraft,
 } from '../utils/billingCalculations';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { PrintIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
-import { saveOfflineBill, getMasterCache } from '../utils/offlineDb';
+import { saveOfflineBill, getMasterCache, setMasterCache, getUserCacheKey, invalidateBillCaches } from '../utils/offlineDb';
 import { enqueueShedAction } from '../services/syncManager';
 import { notifyNewBillCreated } from '../utils/notifications';
 
@@ -208,6 +209,7 @@ const ItemRowDesktop = memo(function ItemRowDesktop({
 export default function NewBill() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const { t } = useLanguage();
   const { toast, showToast } = useToast();
 
@@ -413,9 +415,10 @@ export default function NewBill() {
   }, []);
 
   const loadSettings = async () => {
-    // 1. Instant cache read for zero-delay form readiness
+    // 1. Instant cache read for zero-delay form readiness (keyed by user)
+    const settingsKey = getUserCacheKey('settings', user);
     try {
-      const cached = await getMasterCache('settings');
+      const cached = await getMasterCache(settingsKey);
       if (cached && cached.gstin) {
         setCompanyGstin((prev) => prev || cached.gstin);
       }
@@ -428,9 +431,9 @@ export default function NewBill() {
       const response = await settingsAPI.get();
       if (response.data && response.data.gstin) {
         setCompanyGstin(response.data.gstin);
-        setMasterCache('settings', response.data).catch(() => {});
+        setMasterCache(settingsKey, response.data).catch(() => {});
       } else {
-        const cached = await getMasterCache('settings');
+        const cached = await getMasterCache(settingsKey);
         if (!cached?.gstin) {
           showToast('Business GSTIN not set. Please update in Settings.', 'error');
         }
@@ -443,9 +446,10 @@ export default function NewBill() {
   };
 
   const loadCustomers = async () => {
-    // 1. Instant cache read for autocomplete dropdown
+    // 1. Instant cache read for autocomplete dropdown (keyed by user)
+    const customersKey = getUserCacheKey('customers', user);
     try {
-      const cached = await getMasterCache('customers');
+      const cached = await getMasterCache(customersKey);
       const list = cached?.customers || (Array.isArray(cached) ? cached : null);
       if (list && list.length > 0) {
         setCustomersList(list);
@@ -460,7 +464,7 @@ export default function NewBill() {
       const list = response.data?.customers || (Array.isArray(response.data) ? response.data : null);
       if (list) {
         setCustomersList(list);
-        setMasterCache('customers', response.data).catch(() => {});
+        setMasterCache(customersKey, response.data).catch(() => {});
       }
     } catch (error) {
       if (import.meta.env.DEV) {
@@ -719,6 +723,7 @@ export default function NewBill() {
       if (editBillId) {
         const response = await billsAPI.update(editBillId, invoiceData);
         invoice = response.data;
+        invalidateBillCaches('edit').catch(() => {});
         playSuccessSound();
         showToast(`Invoice #${invoice.billNo || editBillNo} updated successfully`);
       } else {
@@ -727,6 +732,7 @@ export default function NewBill() {
         // Clear draft upon successful creation
         localStorage.removeItem(DRAFT_KEY);
 
+        invalidateBillCaches('create').catch(() => {});
         playSuccessSound();
         notifyNewBillCreated(invoice.billNo, invoice.companyName, invoice.grandTotal || invoice.total);
         showToast(`Invoice #${invoice.billNo} created successfully`);

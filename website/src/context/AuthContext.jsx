@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
 import { prefetchCoreRoutes, resetPrefetchGuard } from '../utils/routePrefetch';
+import { clearMasterCache } from '../utils/offlineDb';
 
 const AuthContext = createContext(null);
 
@@ -50,6 +51,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('srsf_user');
     localStorage.removeItem('srsf_login_time');
     resetPrefetchGuard();
+    clearMasterCache().catch(() => {});
     setUser(null);
     return true;
   };

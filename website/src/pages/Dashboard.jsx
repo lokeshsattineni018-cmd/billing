@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dashboardAPI, billsAPI } from '../services/api';
-import { getMasterCache, setMasterCache } from '../utils/offlineDb';
+import { getMasterCache, setMasterCache, getUserCacheKey } from '../utils/offlineDb';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
@@ -34,16 +34,20 @@ export default function Dashboard() {
   const isUpdating = refreshing || isRevalidating;
 
   const loadDashboardData = useCallback(async (isSilent = false) => {
+    if (!isOwnerOrAdmin) {
+      if (!isSilent) setLoading(false);
+      return;
+    }
     if (!isSilent) setLoading(true);
     try {
       const response = await dashboardAPI.combined();
       if (response.data?.summary) {
         setData(response.data.summary);
-        setMasterCache('dashboardSummary', response.data.summary).catch(() => {});
+        setMasterCache(getUserCacheKey('dashboardSummary', user), response.data.summary).catch(() => {});
       }
-      if (response.data?.analytics) {
+      if (response.data?.analytics && isAdmin) {
         setAnalytics(response.data.analytics);
-        setMasterCache('dashboardAnalytics', response.data.analytics).catch(() => {});
+        setMasterCache(getUserCacheKey('dashboardAnalytics', user), response.data.analytics).catch(() => {});
       }
     } catch (error) {
       if (import.meta.env.DEV) { console.error('Combined dashboard failed, falling back to legacy endpoints:', error); }
@@ -54,11 +58,11 @@ export default function Dashboard() {
         ]);
         if (sumRes?.data) {
           setData(sumRes.data);
-          setMasterCache('dashboardSummary', sumRes.data).catch(() => {});
+          setMasterCache(getUserCacheKey('dashboardSummary', user), sumRes.data).catch(() => {});
         }
-        if (anaRes?.data) {
+        if (anaRes?.data && isAdmin) {
           setAnalytics(anaRes.data);
-          setMasterCache('dashboardAnalytics', anaRes.data).catch(() => {});
+          setMasterCache(getUserCacheKey('dashboardAnalytics', user), anaRes.data).catch(() => {});
         }
       } catch {
         throw error;
@@ -66,48 +70,68 @@ export default function Dashboard() {
     } finally {
       if (!isSilent) setLoading(false);
     }
-  }, [isAdmin]);
+  }, [isAdmin, isOwnerOrAdmin, user]);
 
   // Stale-While-Revalidate: load cached snapshot instantly, then revalidate in background
   useEffect(() => {
     let active = true;
 
     async function initDashboard() {
-      // 1. Instant Cache Render
-      try {
-        const [cachedSummary, cachedAnalytics] = await Promise.all([
-          getMasterCache('dashboardSummary'),
-          isAdmin ? getMasterCache('dashboardAnalytics') : Promise.resolve(null),
-        ]);
-        if (active && cachedSummary) {
-          setData(cachedSummary);
-          if (cachedAnalytics) setAnalytics(cachedAnalytics);
-          setLoading(false); // Immediate render with zero network delay
-          setIsRevalidating(true);
+      // 1. Instant Cache Render (only for owner/admin)
+      if (isOwnerOrAdmin) {
+        try {
+          const summaryKey = getUserCacheKey('dashboardSummary', user);
+          const analyticsKey = getUserCacheKey('dashboardAnalytics', user);
+          const [cachedSummary, cachedAnalytics] = await Promise.all([
+            getMasterCache(summaryKey),
+            isAdmin ? getMasterCache(analyticsKey) : Promise.resolve(null),
+          ]);
+          if (active && cachedSummary) {
+            setData(cachedSummary);
+            if (cachedAnalytics && isAdmin) setAnalytics(cachedAnalytics);
+            setLoading(false); // Immediate render with zero network delay
+            setIsRevalidating(true);
+          }
+        } catch (err) {
+          // Fall back to network loading
         }
-      } catch (err) {
-        // Fall back to network loading
+      } else {
+        // Staff role: strictly clear any state and avoid rendering owner/admin revenue metrics
+        setData(null);
+        setAnalytics(null);
+        setLoading(false);
       }
 
-      // 2. Background Revalidation via single combined round-trip
-      try {
-        await loadDashboardData(true);
-      } catch (error) {
-        // Handled in loadDashboardData
-      } finally {
-        if (active) {
-          setLoading(false);
-          setIsRevalidating(false);
+      // 2. Background Revalidation via single combined round-trip (owner/admin only)
+      if (isOwnerOrAdmin) {
+        try {
+          await loadDashboardData(true);
+        } catch (error) {
+          // Handled in loadDashboardData
+        } finally {
+          if (active) {
+            setLoading(false);
+            setIsRevalidating(false);
+          }
         }
       }
     }
 
     initDashboard();
 
+    // Listen for cache invalidation events (e.g. bill create, edit, payment, void, delete)
+    const handleInvalidation = () => {
+      if (isOwnerOrAdmin) {
+        loadDashboardData(true).catch(() => {});
+      }
+    };
+    window.addEventListener('vda-cache-invalidated', handleInvalidation);
+
     return () => {
       active = false;
+      window.removeEventListener('vda-cache-invalidated', handleInvalidation);
     };
-  }, [isAdmin, loadDashboardData]);
+  }, [isAdmin, isOwnerOrAdmin, user, loadDashboardData]);
 
   // Live Auto-Refresh every 30 seconds
   useEffect(() => {
