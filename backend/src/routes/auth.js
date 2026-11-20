@@ -39,11 +39,29 @@ async function autoSeedUsers() {
 }
 
 /**
+ * Helper to safely verify SEED_SECRET header against configured environment secret
+ */
+function verifySeedSecret(provided, expected) {
+  if (!provided || !expected) return false;
+  const pBuf = Buffer.from(String(provided));
+  const eBuf = Buffer.from(String(expected));
+  if (pBuf.length !== eBuf.length) return false;
+  return crypto.timingSafeEqual(pBuf, eBuf);
+}
+
+/**
  * POST /api/auth/seed
- * Strictly protected account seeding
+ * Strictly protected account seeding (requires SEED_SECRET header at all times)
  */
 router.post('/seed', async (req, res) => {
   try {
+    const providedSecret = req.headers['x-seed-secret'] || req.headers['seed-secret'];
+    const configuredSecret = process.env.SEED_SECRET;
+
+    if (!configuredSecret || !verifySeedSecret(providedSecret, configuredSecret)) {
+      return res.status(401).json({ message: 'Valid SEED_SECRET header required to initialize accounts' });
+    }
+
     const userCount = await User.countDocuments();
     if (userCount > 0) {
       let token;
