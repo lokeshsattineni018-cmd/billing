@@ -1,19 +1,215 @@
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { billsAPI, settingsAPI } from '../services/api';
 import { formatCurrency, useToast, Toast, playSuccessSound, playErrorSound } from '../utils/helpers';
+import {
+  calculateItemAmount,
+  calculateBillTotals,
+  restoreDraft,
+  serializeDraft,
+} from '../utils/billingCalculations';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { PrintIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
-import { saveOfflineBill, getMasterCache } from '../utils/offlineDb';
+import { saveOfflineBill, getMasterCache, setMasterCache, getUserCacheKey, invalidateBillCaches } from '../utils/offlineDb';
 import { enqueueShedAction } from '../services/syncManager';
 import { notifyNewBillCreated } from '../utils/notifications';
 
 const DRAFT_KEY = 'srsf_bill_draft';
 
+// Memoized Mobile Item Card with stable callbacks
+const ItemCardMobile = memo(function ItemCardMobile({
+  item,
+  index,
+  canRemove,
+  t,
+  onItemChange,
+  onRemoveItem,
+}) {
+  return (
+    <div
+      style={{
+        background: '#f8fafc',
+        border: '1px solid #e2e8f0',
+        borderRadius: '10px',
+        padding: '14px',
+        marginBottom: '10px',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0b5394' }}>{t('item')} #{index + 1}</span>
+        {canRemove && (
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            style={{ color: '#ef4444', padding: '2px 6px', fontSize: '0.8rem' }}
+            onClick={() => onRemoveItem(index)}
+          >
+            ✕ {t('remove')}
+          </button>
+        )}
+      </div>
+
+      <div style={{ marginBottom: '8px' }}>
+        <label className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>Prawn Count</label>
+        <input
+          type="text"
+          className="form-input"
+          value={item.count || ''}
+          onChange={(e) => onItemChange(index, 'count', e.target.value)}
+          placeholder="e.g. 100, 118"
+          style={{ fontWeight: 700, fontSize: '16px', minHeight: '48px' }}
+        />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>{t('weightKg')} *</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0.01"
+            className="form-input form-input-lg"
+            style={{ fontWeight: 800, fontSize: '16px', textAlign: 'right', color: '#0f172a', minHeight: '48px' }}
+            value={item.quantity}
+            onChange={(e) => onItemChange(index, 'quantity', e.target.value)}
+            placeholder="0.00"
+          />
+        </div>
+
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>{t('ratePerKg')} *</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0.01"
+            className="form-input form-input-lg"
+            style={{ fontWeight: 800, fontSize: '16px', textAlign: 'right', color: '#0f172a', minHeight: '48px' }}
+            value={item.rate}
+            onChange={(e) => onItemChange(index, 'rate', e.target.value)}
+            placeholder="0.00"
+          />
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>Rate of Tax</label>
+          <input
+            type="text"
+            className="form-input"
+            value={item.taxRate || ''}
+            onChange={(e) => onItemChange(index, 'taxRate', e.target.value)}
+            placeholder="0"
+            style={{ fontSize: '16px', minHeight: '48px' }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', border: '1px solid #e2e8f0', padding: '10px 12px', borderRadius: '6px', width: '100%' }}>
+            <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 600 }}>{t('itemAmount')}:</span>
+            <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0b5394' }}>
+              {formatCurrency(item.amount || 0)}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// Memoized Desktop Item Row with stable callbacks
+const ItemRowDesktop = memo(function ItemRowDesktop({
+  item,
+  index,
+  isLast,
+  canRemove,
+  t,
+  onItemChange,
+  onRemoveItem,
+  onAddItem,
+}) {
+  return (
+    <tr>
+      <td style={{ textAlign: 'center', fontWeight: 600, color: '#64748b' }}>
+        {index + 1}
+      </td>
+      <td>
+        <input
+          type="text"
+          className="form-input"
+          style={{ padding: '8px 8px', textAlign: 'center', fontSize: '16px', fontWeight: 700, minHeight: '42px' }}
+          value={item.count || ''}
+          onChange={(e) => onItemChange(index, 'count', e.target.value)}
+          placeholder="e.g. 100"
+        />
+      </td>
+      <td>
+        <input
+          type="number"
+          step="0.01"
+          min="0.01"
+          className="form-input"
+          style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, fontSize: '16px', minHeight: '42px' }}
+          value={item.quantity}
+          onChange={(e) => onItemChange(index, 'quantity', e.target.value)}
+          placeholder="0.00"
+        />
+      </td>
+      <td>
+        {/* Tab-to-new-row on the last rate field */}
+        <input
+          type="number"
+          step="0.01"
+          min="0.01"
+          className="form-input"
+          style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, fontSize: '16px', minHeight: '42px' }}
+          value={item.rate}
+          onChange={(e) => onItemChange(index, 'rate', e.target.value)}
+          onKeyDown={(e) => {
+            if (isLast && e.key === 'Tab' && !e.shiftKey) {
+              e.preventDefault();
+              onAddItem();
+            }
+          }}
+          placeholder="0.00"
+          title={isLast ? 'Press Tab to automatically add a new row' : ''}
+        />
+      </td>
+      <td>
+        <input
+          type="text"
+          className="form-input"
+          style={{ padding: '8px 8px', textAlign: 'center', fontSize: '16px', minHeight: '42px' }}
+          value={item.taxRate || ''}
+          onChange={(e) => onItemChange(index, 'taxRate', e.target.value)}
+          placeholder="0"
+        />
+      </td>
+      <td style={{ textAlign: 'right', fontWeight: 800, fontSize: '16px', color: '#0f172a' }}>
+        {formatCurrency(item.amount || 0)}
+      </td>
+      <td style={{ textAlign: 'center' }}>
+        {canRemove && (
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            style={{ color: '#ef4444', padding: '4px 8px' }}
+            onClick={() => onRemoveItem(index)}
+            title="Remove Row"
+          >
+            ✕
+          </button>
+        )}
+      </td>
+    </tr>
+  );
+});
+
 export default function NewBill() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const { t } = useLanguage();
   const { toast, showToast } = useToast();
 
@@ -158,23 +354,21 @@ export default function NewBill() {
     // Check for saved offline draft on initial load
     try {
       const savedDraft = localStorage.getItem(DRAFT_KEY);
-      if (savedDraft) {
-        const draft = JSON.parse(savedDraft);
-        if (draft && (draft.companyName || (draft.items && draft.items.some((i) => i.quantity || i.rate)) || draft.ice?.quantity)) {
-          if (draft.companyName) setCompanyName(draft.companyName);
-          if (draft.customerPhone) setCustomerPhone(draft.customerPhone);
-          if (draft.vehicleNo) setVehicleNo(draft.vehicleNo);
-          if (draft.date) setDate(draft.date);
-          if (draft.paymentStatus) setPaymentStatus(draft.paymentStatus);
-          if (draft.cgstRate) setCgstRate(draft.cgstRate);
-          if (draft.cgstAmount) setCgstAmount(draft.cgstAmount);
-          if (draft.sgstRate) setSgstRate(draft.sgstRate);
-          if (draft.sgstAmount) setSgstAmount(draft.sgstAmount);
-          if (draft.igstAmount) setIgstAmount(draft.igstAmount);
-          if (draft.items && draft.items.length > 0) setItems(draft.items);
-          if (draft.ice) setIce(draft.ice);
-          setHasDraftNotice(true);
-        }
+      const draft = restoreDraft(savedDraft);
+      if (draft) {
+        if (draft.companyName) setCompanyName(draft.companyName);
+        if (draft.customerPhone) setCustomerPhone(draft.customerPhone);
+        if (draft.vehicleNo) setVehicleNo(draft.vehicleNo);
+        if (draft.date) setDate(draft.date);
+        if (draft.paymentStatus) setPaymentStatus(draft.paymentStatus);
+        if (draft.cgstRate) setCgstRate(draft.cgstRate);
+        if (draft.cgstAmount) setCgstAmount(draft.cgstAmount);
+        if (draft.sgstRate) setSgstRate(draft.sgstRate);
+        if (draft.sgstAmount) setSgstAmount(draft.sgstAmount);
+        if (draft.igstAmount) setIgstAmount(draft.igstAmount);
+        if (draft.items && draft.items.length > 0) setItems(draft.items);
+        if (draft.ice) setIce(draft.ice);
+        setHasDraftNotice(true);
       }
     } catch (e) {
       if (import.meta.env.DEV) { console.warn('Could not read draft from localStorage', e); }
@@ -185,7 +379,7 @@ export default function NewBill() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (companyName || items.some((it) => it.quantity || it.rate) || ice.quantity || ice.rate) {
-        const draftData = {
+        const serialized = serializeDraft({
           date,
           companyName,
           customerPhone,
@@ -198,10 +392,9 @@ export default function NewBill() {
           sgstRate,
           sgstAmount,
           igstAmount,
-          savedAt: new Date().toISOString(),
-        };
+        });
         try {
-          localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
+          localStorage.setItem(DRAFT_KEY, serialized);
         } catch (e) {
           if (import.meta.env.DEV) { console.warn('Failed to auto-save draft to localStorage', e); }
         }
@@ -222,44 +415,59 @@ export default function NewBill() {
   }, []);
 
   const loadSettings = async () => {
+    // 1. Instant cache read for zero-delay form readiness (keyed by user)
+    const settingsKey = getUserCacheKey('settings', user);
+    try {
+      const cached = await getMasterCache(settingsKey);
+      if (cached && cached.gstin) {
+        setCompanyGstin((prev) => prev || cached.gstin);
+      }
+    } catch {
+      // ignore
+    }
+
+    // 2. Background revalidation
     try {
       const response = await settingsAPI.get();
       if (response.data && response.data.gstin) {
         setCompanyGstin(response.data.gstin);
+        setMasterCache(settingsKey, response.data).catch(() => {});
       } else {
-        const cached = await getMasterCache('settings');
-        if (cached && cached.gstin) {
-          setCompanyGstin(cached.gstin);
-        } else {
+        const cached = await getMasterCache(settingsKey);
+        if (!cached?.gstin) {
           showToast('Business GSTIN not set. Please update in Settings.', 'error');
         }
       }
     } catch (error) {
-      const cached = await getMasterCache('settings');
-      if (cached && cached.gstin) {
-        setCompanyGstin(cached.gstin);
-      } else if (import.meta.env.DEV) {
+      if (import.meta.env.DEV) {
         console.error('Failed to load settings:', error);
       }
     }
   };
 
   const loadCustomers = async () => {
+    // 1. Instant cache read for autocomplete dropdown (keyed by user)
+    const customersKey = getUserCacheKey('customers', user);
+    try {
+      const cached = await getMasterCache(customersKey);
+      const list = cached?.customers || (Array.isArray(cached) ? cached : null);
+      if (list && list.length > 0) {
+        setCustomersList(list);
+      }
+    } catch {
+      // ignore
+    }
+
+    // 2. Background revalidation
     try {
       const response = await billsAPI.getCustomers();
-      if (response.data && response.data.customers) {
-        setCustomersList(response.data.customers);
-      } else {
-        const cached = await getMasterCache('customers');
-        if (cached && cached.customers) {
-          setCustomersList(cached.customers);
-        }
+      const list = response.data?.customers || (Array.isArray(response.data) ? response.data : null);
+      if (list) {
+        setCustomersList(list);
+        setMasterCache(customersKey, response.data).catch(() => {});
       }
     } catch (error) {
-      const cached = await getMasterCache('customers');
-      if (cached && cached.customers) {
-        setCustomersList(cached.customers);
-      } else if (import.meta.env.DEV) {
+      if (import.meta.env.DEV) {
         console.error('Failed to load customer list:', error);
       }
     }
@@ -319,38 +527,39 @@ export default function NewBill() {
     setCustomerPhone(numeric);
   };
 
-  const handleItemChange = (index, field, value) => {
-    const updated = [...items];
-    updated[index][field] = value;
+  const handleItemChange = useCallback((index, field, value) => {
+    setItems((prev) => {
+      const updated = [...prev];
+      const target = { ...updated[index], [field]: value };
 
-    // Rate Memory: if count changed and rate is empty, lookup past rate for this customer
-    if (field === 'count' && value && !updated[index].rate && customerLastItems.length > 0) {
-      const match = customerLastItems.find(
-        (it) => it.count && it.count.trim().toLowerCase() === value.trim().toLowerCase()
-      );
-      if (match && match.rate) {
-        updated[index].rate = String(match.rate);
+      // Rate Memory: if count changed and rate is empty, lookup past rate for this customer
+      if (field === 'count' && value && !target.rate && customerLastItems.length > 0) {
+        const match = customerLastItems.find(
+          (it) => it.count && it.count.trim().toLowerCase() === value.trim().toLowerCase()
+        );
+        if (match && match.rate) {
+          target.rate = String(match.rate);
+        }
       }
-    }
 
-    if (field === 'quantity' || field === 'rate' || field === 'count') {
-      const q = parseFloat(updated[index].quantity) || 0;
-      const r = parseFloat(updated[index].rate) || 0;
-      updated[index].amount = Math.round(q * r * 100) / 100;
-    }
+      if (field === 'quantity' || field === 'rate' || field === 'count') {
+        target.amount = calculateItemAmount(target.quantity, target.rate);
+      }
 
-    setItems(updated);
-  };
+      updated[index] = target;
+      return updated;
+    });
+  }, [customerLastItems]);
 
   const handleIceChange = (field, value) => {
     setIce((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleAddItem = () => {
-    setItems([
-      ...items,
+  const handleAddItem = useCallback(() => {
+    setItems((prev) => [
+      ...prev,
       {
-        sno: items.length + 1,
+        sno: prev.length + 1,
         count: '',
         quantity: '',
         rate: '',
@@ -358,13 +567,14 @@ export default function NewBill() {
         amount: 0,
       },
     ]);
-  };
+  }, []);
 
-  const handleRemoveItem = (index) => {
-    if (items.length <= 1) return;
-    const filtered = items.filter((_, i) => i !== index).map((it, idx) => ({ ...it, sno: idx + 1 }));
-    setItems(filtered);
-  };
+  const handleRemoveItem = useCallback((index) => {
+    setItems((prev) => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((_, i) => i !== index).map((it, idx) => ({ ...it, sno: idx + 1 }));
+    });
+  }, []);
 
   const handleClearDraft = () => {
     localStorage.removeItem(DRAFT_KEY);
@@ -391,25 +601,15 @@ export default function NewBill() {
     showToast('Draft cleared');
   };
 
-  const iceQuantityNum = parseFloat(ice.quantity) || 0;
-  const iceRateNum = parseFloat(ice.rate) || 0;
-  const iceAmount = Math.round(iceQuantityNum * iceRateNum * 100) / 100;
-  const hasIce = iceQuantityNum > 0 && iceRateNum > 0;
-
   const { subtotal, totalTax, grandTotal, totalWeight } = useMemo(() => {
-    const itemsSub = Math.round(items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) * 100) / 100;
-    const sub = Math.round((itemsSub + (hasIce ? iceAmount : 0)) * 100) / 100;
-    const numCgst = parseFloat(cgstAmount) || 0;
-    const numSgst = parseFloat(sgstAmount) || 0;
-    const numIgst = parseFloat(igstAmount) || 0;
-    const tax = Math.round((numCgst + numSgst + numIgst) * 100) / 100;
-    const grand = Math.round((sub + tax) * 100) / 100;
-
-    const itemsWeight = items.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
-    const totWeight = Math.round(itemsWeight * 100) / 100;
-
-    return { subtotal: sub, totalTax: tax, grandTotal: grand, totalWeight: totWeight };
-  }, [items, hasIce, iceAmount, cgstAmount, sgstAmount, igstAmount]);
+    return calculateBillTotals({
+      items,
+      ice,
+      cgstAmount,
+      sgstAmount,
+      igstAmount,
+    });
+  }, [items, ice, cgstAmount, sgstAmount, igstAmount]);
 
   const handleSave = async (actionType = 'save') => {
     if (!companyName.trim()) {
@@ -430,8 +630,8 @@ export default function NewBill() {
       const finalItems = items.map((it, idx) => ({
         sno: idx + 1,
         count: it.count ? String(it.count).trim() : '',
-        particulars: 'HEAD-ON',
-        hsn: '0306',
+        particulars: (it.particulars && String(it.particulars).trim()) ? String(it.particulars).trim() : 'HEAD-ON',
+        hsn: (it.hsn && String(it.hsn).trim()) ? String(it.hsn).trim() : '0306',
         quantity: parseFloat(it.quantity) || 0,
         rate: parseFloat(it.rate) || 0,
         taxRate: it.taxRate || '0',
@@ -523,6 +723,7 @@ export default function NewBill() {
       if (editBillId) {
         const response = await billsAPI.update(editBillId, invoiceData);
         invoice = response.data;
+        invalidateBillCaches('edit').catch(() => {});
         playSuccessSound();
         showToast(`Invoice #${invoice.billNo || editBillNo} updated successfully`);
       } else {
@@ -531,6 +732,7 @@ export default function NewBill() {
         // Clear draft upon successful creation
         localStorage.removeItem(DRAFT_KEY);
 
+        invalidateBillCaches('create').catch(() => {});
         playSuccessSound();
         notifyNewBillCreated(invoice.billNo, invoice.companyName, invoice.grandTotal || invoice.total);
         showToast(`Invoice #${invoice.billNo} created successfully`);
@@ -835,93 +1037,15 @@ export default function NewBill() {
           {/* Mobile Item Cards */}
           <div className="mobile-items-list">
             {items.map((item, index) => (
-              <div
+              <ItemCardMobile
                 key={index}
-                style={{
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  padding: '14px',
-                  marginBottom: '10px',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0b5394' }}>{t('item')} #{index + 1}</span>
-                  {items.length > 1 && (
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-sm"
-                      style={{ color: '#ef4444', padding: '2px 6px', fontSize: '0.8rem' }}
-                      onClick={() => handleRemoveItem(index)}
-                    >
-                      ✕ {t('remove')}
-                    </button>
-                  )}
-                </div>
-
-                <div style={{ marginBottom: '8px' }}>
-                  <label className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>Prawn Count</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={item.count || ''}
-                    onChange={(e) => handleItemChange(index, 'count', e.target.value)}
-                    placeholder="e.g. 100, 118"
-                    style={{ fontWeight: 700 }}
-                  />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>{t('weightKg')} *</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      className="form-input form-input-lg"
-                      style={{ fontWeight: 800, fontSize: '1.1rem', textAlign: 'right', color: '#0f172a' }}
-                      value={item.quantity}
-                      onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                      placeholder="0.00"
-                    />
-                  </div>
-
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>{t('ratePerKg')} *</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      className="form-input form-input-lg"
-                      style={{ fontWeight: 800, fontSize: '1.1rem', textAlign: 'right', color: '#0f172a' }}
-                      value={item.rate}
-                      onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
-                      placeholder="0.00"
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>Rate of Tax</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={item.taxRate || ''}
-                      onChange={(e) => handleItemChange(index, 'taxRate', e.target.value)}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', border: '1px solid #e2e8f0', padding: '10px 12px', borderRadius: '6px', width: '100%' }}>
-                      <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 600 }}>{t('itemAmount')}:</span>
-                      <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0b5394' }}>
-                        {formatCurrency(item.amount || 0)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                item={item}
+                index={index}
+                canRemove={items.length > 1}
+                t={t}
+                onItemChange={handleItemChange}
+                onRemoveItem={handleRemoveItem}
+              />
             ))}
           </div>
 
@@ -941,79 +1065,17 @@ export default function NewBill() {
               </thead>
               <tbody>
                 {items.map((item, index) => (
-                  <tr key={index}>
-                    <td style={{ textAlign: 'center', fontWeight: 600, color: '#64748b' }}>
-                      {index + 1}
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        className="form-input"
-                        style={{ padding: '6px 8px', textAlign: 'center', fontSize: '0.9rem', fontWeight: 700 }}
-                        value={item.count || ''}
-                        onChange={(e) => handleItemChange(index, 'count', e.target.value)}
-                        placeholder="e.g. 100"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        className="form-input"
-                        style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 600, fontSize: '0.92rem' }}
-                        value={item.quantity}
-                        onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td>
-                      {/* Tab-to-new-row on the last rate field */}
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        className="form-input"
-                        style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 600, fontSize: '0.92rem' }}
-                        value={item.rate}
-                        onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
-                        onKeyDown={(e) => {
-                          if (index === items.length - 1 && e.key === 'Tab' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleAddItem();
-                          }
-                        }}
-                        placeholder="0.00"
-                        title={index === items.length - 1 ? 'Press Tab to automatically add a new row' : ''}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        className="form-input"
-                        style={{ padding: '6px 8px', textAlign: 'center', fontSize: '0.9rem' }}
-                        value={item.taxRate || ''}
-                        onChange={(e) => handleItemChange(index, 'taxRate', e.target.value)}
-                        placeholder="0"
-                      />
-                    </td>
-                    <td style={{ textAlign: 'right', fontWeight: 700, fontSize: '0.95rem', color: '#0f172a' }}>
-                      {formatCurrency(item.amount || 0)}
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      {items.length > 1 && (
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          style={{ color: '#ef4444', padding: '4px 8px' }}
-                          onClick={() => handleRemoveItem(index)}
-                          title="Remove Row"
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </td>
-                  </tr>
+                  <ItemRowDesktop
+                    key={index}
+                    item={item}
+                    index={index}
+                    isLast={index === items.length - 1}
+                    canRemove={items.length > 1}
+                    t={t}
+                    onItemChange={handleItemChange}
+                    onRemoveItem={handleRemoveItem}
+                    onAddItem={handleAddItem}
+                  />
                 ))}
               </tbody>
             </table>

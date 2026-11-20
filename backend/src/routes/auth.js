@@ -9,11 +9,11 @@ const { handleServerError } = require('../utils/errorTracker');
 
 const router = express.Router();
 
-// Generate JWT with secure secret and tokenVersion (Permanent session until explicit logout)
+// Generate JWT with secure secret and tokenVersion (7d lifespan with server-side revocation)
 const signToken = (id, tokenVersion = 0) => {
   const secret = getJwtSecret();
-  // 3650 days (10 years) — keep user logged in forever until they explicitly click sign out
-  const expiresIn = '3650d';
+  // Standard 7d operational lifespan per security baseline
+  const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
   return jwt.sign({ id, tokenVersion: tokenVersion ?? 0 }, secret, { expiresIn });
 };
 
@@ -35,21 +35,33 @@ async function autoSeedUsers() {
   for (const u of defaultUsers) {
     await User.create(u);
     console.log(`Default user initialized: ${u.username || u.email} (${u.role})`);
-    if (!process.env.DEFAULT_ADMIN_PASSWORD && u.role === 'admin') {
-      console.log(`[SECURITY NOTICE] Auto-generated temporary admin password: ${adminPass}`);
-    }
-    if (!process.env.DEFAULT_STAFF_PASSWORD && u.role === 'staff') {
-      console.log(`[SECURITY NOTICE] Auto-generated temporary staff password: ${staffPass}`);
-    }
   }
 }
 
 /**
+ * Helper to safely verify SEED_SECRET header against configured environment secret
+ */
+function verifySeedSecret(provided, expected) {
+  if (!provided || !expected) return false;
+  const pBuf = Buffer.from(String(provided));
+  const eBuf = Buffer.from(String(expected));
+  if (pBuf.length !== eBuf.length) return false;
+  return crypto.timingSafeEqual(pBuf, eBuf);
+}
+
+/**
  * POST /api/auth/seed
- * Strictly protected account seeding
+ * Strictly protected account seeding (requires SEED_SECRET header at all times)
  */
 router.post('/seed', async (req, res) => {
   try {
+    const providedSecret = req.headers['x-seed-secret'] || req.headers['seed-secret'];
+    const configuredSecret = process.env.SEED_SECRET;
+
+    if (!configuredSecret || !verifySeedSecret(providedSecret, configuredSecret)) {
+      return res.status(401).json({ message: 'Valid SEED_SECRET header required to initialize accounts' });
+    }
+
     const userCount = await User.countDocuments();
     if (userCount > 0) {
       let token;
@@ -147,3 +159,4 @@ router.get('/me', protect, async (req, res) => {
 
 module.exports = router;
 module.exports.autoSeedUsers = autoSeedUsers;
+module.exports.signToken = signToken;

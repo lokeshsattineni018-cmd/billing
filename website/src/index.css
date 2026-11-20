@@ -16,7 +16,7 @@
   
   --text-primary: #0f172a;
   --text-secondary: #475569;
-  --text-muted: #94a3b8;
+  --text-muted: #64748b;
   
   --border-color: #e2e8f0;
   --border-active: #0b5394;
@@ -226,8 +226,12 @@ a:hover {
 .main-content {
   flex: 1;
   margin-left: 260px;
+  min-width: 0;
+  width: calc(100% - 260px);
+  max-width: calc(100% - 260px);
   min-height: 100vh;
   background: var(--bg-primary);
+  overflow-x: hidden;
 }
 
 /* Smooth page transition for lazy-loaded routes */
@@ -597,6 +601,14 @@ a:hover {
   text-align: center;
 }
 
+/* ── Item Rows Input Sizing (16px minimum for elderly visibility and anti-iOS-zoom) ── */
+.items-table input,
+.desktop-items-table input,
+.mobile-items-list input,
+.table-container table input.form-input {
+  font-size: 16px !important;
+}
+
 /* ── Badges (Subtle Pill Style) ── */
 .badge {
   display: inline-flex;
@@ -622,8 +634,8 @@ a:hover {
 
 .badge-amber {
   background: rgba(245, 158, 11, 0.1);
-  color: #d97706;
-  border-color: rgba(245, 158, 11, 0.2);
+  color: #b45309;
+  border-color: rgba(180, 83, 9, 0.25);
 }
 
 /* ── Login Page (Clean White Aesthetic) ── */
@@ -1184,6 +1196,26 @@ a:hover {
     width: 100%;
   }
 
+  /* Enforce WCAG AA 48x48px tap targets with >= 8px spacing on mobile */
+  .btn,
+  .btn-sm,
+  .btn-ghost,
+  .btn-primary,
+  .btn-secondary,
+  .btn-large,
+  .staff-tab-btn,
+  .settings-grid .btn,
+  .pnl-filter-pills button {
+    min-height: 48px !important;
+    min-width: 48px !important;
+    box-sizing: border-box !important;
+  }
+
+  .btn + .btn,
+  .staff-tab-btn + .staff-tab-btn {
+    margin-left: 8px !important;
+  }
+
   .detail-grid {
     grid-template-columns: 1fr;
     gap: 14px;
@@ -1236,6 +1268,16 @@ a:hover {
     width: 100% !important;
     max-width: 100% !important;
     touch-action: pan-x pan-y !important;
+    /* Scroll shadow hints: fade edges when content overflows */
+    background:
+      linear-gradient(to right, #fff 30%, transparent),
+      linear-gradient(to left, #fff 30%, transparent),
+      linear-gradient(to right, rgba(0,0,0,0.12), transparent),
+      linear-gradient(to left, rgba(0,0,0,0.12), transparent);
+    background-position: left center, right center, left center, right center;
+    background-repeat: no-repeat;
+    background-size: 20px 100%, 20px 100%, 10px 100%, 10px 100%;
+    background-attachment: local, local, scroll, scroll;
   }
 
   .items-breakdown-container table {
@@ -1269,6 +1311,21 @@ a:hover {
 
   .tax-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Auto-scale large currency amounts so they never clip */
+  .invoice-total-value,
+  .stat-card-compact .stat-value {
+    font-size: clamp(1.1rem, 5vw, 2rem);
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+}
+
+@media (max-width: 320px) {
+  .invoice-total-value,
+  .stat-card-compact .stat-value {
+    font-size: clamp(0.95rem, 4.5vw, 1.4rem);
   }
 }
 
@@ -1701,6 +1758,21 @@ body:has(.modal-backdrop) {
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+  }
+
+  /* Prevent page-breaks inside totals, tax breakdown, bank details, and signature blocks */
+  .print-keep-together,
+  .invoice-total-section,
+  .invoice-footer-grid,
+  .official-invoice-frame > div:last-of-type {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Keep the grand total row together with the bank/signature section */
+  .official-invoice-frame table tfoot {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }
 
@@ -2524,18 +2596,15 @@ body:has(.modal-backdrop) {
 
 /* ── Staff & Operations Modern Navigation & Control System ── */
 .staff-tabs-nav {
-  display: inline-flex;
-  gap: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   background: #f1f5f9;
-  padding: 4px;
+  padding: 6px;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   margin-bottom: 20px;
-  overflow-x: auto;
-  white-space: nowrap;
   max-width: 100%;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
 }
 
 .staff-tabs-nav::-webkit-scrollbar {

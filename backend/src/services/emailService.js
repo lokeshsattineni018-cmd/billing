@@ -1,15 +1,25 @@
 const { generateDailyReportPDF } = require('./dailyReportPdf');
+const { decryptText } = require('../utils/crypto');
 
 function createTransporter(settings = {}) {
   let nodemailer;
-  try { nodemailer = require('nodemailer'); } catch (e) { throw new Error('Nodemailer not installed.'); }
+  try {
+    nodemailer = require('nodemailer');
+  } catch (e) {
+    console.warn('[EMAIL WARNING] Nodemailer is not available.');
+    return null;
+  }
 
   const user = settings.smtpUser || process.env.SMTP_USER;
-  const pass = settings.smtpPass || process.env.SMTP_PASS;
+  const rawPass = settings.smtpPass || process.env.SMTP_PASS;
+  const pass = rawPass ? decryptText(rawPass) : '';
   const host = settings.smtpHost || process.env.SMTP_HOST || 'smtp.gmail.com';
   const port = parseInt(settings.smtpPort || process.env.SMTP_PORT || '587', 10);
 
-  if (!user || !pass) throw new Error('SMTP credentials not configured. Enter Gmail & App Password in Settings.');
+  if (!user || !pass) {
+    console.warn('[EMAIL WARNING] SMTP credentials not configured or decryption unavailable. Skipping email dispatch safely.');
+    return null;
+  }
 
   return {
     transporter: nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } }),
@@ -22,7 +32,11 @@ function fmtINR(n) {
 }
 
 async function sendDailySummaryEmail({ recipientEmail, date, bills, summary, settings = {} }) {
-  const { transporter, senderEmail } = createTransporter(settings);
+  const transObj = createTransporter(settings);
+  if (!transObj) {
+    return { success: false, message: 'SMTP credentials not configured or unavailable' };
+  }
+  const { transporter, senderEmail } = transObj;
 
   const reportDate = new Date(date);
   const shortDate = reportDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });

@@ -5,7 +5,7 @@ const { body, validationResult } = require('express-validator');
 const Bill = require('../models/Bill');
 const Settings = require('../models/Settings');
 const Customer = require('../models/Customer');
-const { getNextSequence, resetSequence } = require('../models/Counter');
+const { Counter, getNextSequence, resetSequence } = require('../models/Counter');
 const { protect, restrictTo } = require('../middleware/auth');
 const { billCreateLimiter, escapeRegex } = require('../middleware/security');
 const { logActivity } = require('../utils/activityLogger');
@@ -20,15 +20,16 @@ const router = express.Router();
  * GET /api/bills/ledger
  * Customer Ledger with total invoiced, paid, and outstanding balances
  * (Owner and Admin only — protects confidential customer financial ledgers)
+ * Backed by compound index { isDeleted: 1, isVoided: 1, companyName: 1 } for sub-10ms performance.
  */
 router.get('/ledger', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
     const customers = await Bill.aggregate([
       {
         $match: {
-          companyName: { $exists: true, $ne: null, $nin: ['', 'null', 'undefined'] },
-          isVoided: { $ne: true },
           isDeleted: { $ne: true },
+          isVoided: { $ne: true },
+          companyName: { $exists: true, $ne: null, $nin: ['', 'null', 'undefined'] },
         },
       },
       {
@@ -40,12 +41,30 @@ router.get('/ledger', protect, restrictTo('owner', 'admin'), async (req, res) =>
           totalInvoiced: { $sum: { $ifNull: ['$grandTotal', '$total'] } },
           totalPaid: {
             $sum: {
-              $cond: [{ $eq: ['$paymentStatus', 'Paid'] }, { $ifNull: ['$grandTotal', '$total'] }, 0],
+              $cond: [
+                { $eq: ['$paymentStatus', 'Paid'] },
+                { $ifNull: ['$grandTotal', '$total'] },
+                { $ifNull: ['$paidAmount', 0] },
+              ],
             },
           },
           outstandingBalance: {
             $sum: {
-              $cond: [{ $ne: ['$paymentStatus', 'Paid'] }, { $ifNull: ['$grandTotal', '$total'] }, 0],
+              $cond: [
+                { $eq: ['$paymentStatus', 'Paid'] },
+                0,
+                {
+                  $max: [
+                    0,
+                    {
+                      $subtract: [
+                        { $ifNull: ['$grandTotal', '$total'] },
+                        { $ifNull: ['$paidAmount', 0] },
+                      ],
+                    },
+                  ],
+                },
+              ],
             },
           },
           totalBills: { $sum: 1 },
@@ -64,7 +83,7 @@ router.get('/ledger', protect, restrictTo('owner', 'admin'), async (req, res) =>
     const totalRevenue = customers.reduce((sum, c) => sum + c.totalInvoiced, 0);
     const totalCollected = customers.reduce((sum, c) => sum + c.totalPaid, 0);
 
-    res.json({
+    const ledgerData = {
       customers,
       summary: {
         totalReceivables,
@@ -72,7 +91,9 @@ router.get('/ledger', protect, restrictTo('owner', 'admin'), async (req, res) =>
         totalCollected,
         totalCustomers: customers.length,
       },
-    });
+    };
+
+    res.json(ledgerData);
   } catch (error) {
     console.error('Ledger error:', error);
     return handleServerError(res, error, 'Server error', req);
@@ -112,7 +133,7 @@ router.get('/', protect, async (req, res) => {
       filter.companyName = req.query.customer.trim();
     }
 
-    if (req.query.status && ['Pending', 'Paid'].includes(req.query.status)) {
+    if (req.query.status && ['Pending', 'Paid', 'Partial'].includes(req.query.status)) {
       filter.paymentStatus = req.query.status;
     }
 
@@ -234,7 +255,7 @@ router.get('/export/csv', protect, restrictTo('owner', 'admin'), async (req, res
       }
     }
 
-    if (paymentStatus && ['Pending', 'Paid'].includes(paymentStatus)) {
+    if (paymentStatus && ['Pending', 'Paid', 'Partial'].includes(paymentStatus)) {
       filter.paymentStatus = paymentStatus;
     }
 
@@ -435,6 +456,11 @@ router.get('/:id/reminder', protect, restrictTo('owner', 'admin'), async (req, r
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
+    if (!bill.sharedAt) {
+      bill.sharedAt = new Date();
+      await bill.save();
+    }
+
     const settings = await Settings.findOne() || {};
     const amount = Number(bill.grandTotal || bill.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
     const billDate = new Date(bill.date).toLocaleDateString('en-IN');
@@ -575,6 +601,10 @@ router.get('/public/:token', async (req, res) => {
     if (!bill) {
       return res.status(404).json({ message: 'Invoice not found or invalid access token' });
     }
+    if (!bill.sharedAt) {
+      bill.sharedAt = new Date();
+      await bill.save();
+    }
     res.json(bill);
   } catch (error) {
     return handleServerError(res, error, 'Server error', req);
@@ -590,6 +620,11 @@ router.get('/public/:token/pdf', async (req, res) => {
     const bill = await findBillByPublicToken(req.params.token);
     if (!bill) {
       return res.status(404).send('Invoice not found or invalid access token');
+    }
+
+    if (!bill.sharedAt) {
+      bill.sharedAt = new Date();
+      await bill.save();
     }
 
     const pdfBuffer = await generateBillPDFBuffer(bill);
@@ -963,11 +998,12 @@ router.patch('/:id/void', protect, restrictTo('owner', 'admin'), [
 /**
  * DELETE /api/bills/:id
  * Delete an invoice (Admin/Owner only).
- * Performs a safe soft-delete so record is kept in database for audit/records,
- * but completely removed from website view.
- * If the deleted invoice was the latest (e.g. #16), rolls back the invoice sequence
- * counter so the next created invoice reuses that number (#16).
- * Requires confirmationCode to ensure deliberate action.
+ * Business Rules:
+ * 1. If the HIGHEST bill number is deleted, the next new bill reuses that number.
+ * 2. If a middle bill is deleted, do NOT renumber anything; counter remains unchanged.
+ * 3. Safety Guard: if the highest bill was already shared (WhatsApp share, public link opened, or printed),
+ *    block reuse of its number and require a void instead.
+ * 4. Audit Trail: Deletion reason, deletedBy, and deletedAt timestamp are strictly preserved.
  */
 router.delete('/:id', protect, restrictTo('owner', 'admin'), async (req, res) => {
   try {
@@ -990,6 +1026,33 @@ router.delete('/:id', protect, restrictTo('owner', 'admin'), async (req, res) =>
     const billAmount = bill.grandTotal || bill.total || 0;
     const deleteReason = (req.body?.reason || '').trim() || 'Deleted by admin';
 
+    // Check if this is the HIGHEST active bill
+    const highestActiveBill = await Bill.findOne({
+      isDeleted: { $ne: true },
+      billNo: { $gt: 0 },
+    }).sort({ billNo: -1 }).lean();
+
+    const isHighest = highestActiveBill && highestActiveBill._id.toString() === bill._id.toString();
+
+    // Safety guard: if highest bill was already shared or printed, block deletion and require a void instead.
+    // Safe for legacy/old bills: treat any bill older than 24 hours as already shared.
+    const billAgeHours = (Date.now() - new Date(bill.createdAt || bill.date).getTime()) / (1000 * 60 * 60);
+    const isOlderThan24h = billAgeHours > 24;
+    const isExplicitlySharedOrPrinted = Boolean(bill.sharedAt || bill.printedAt);
+    const isTreatedAsShared = isExplicitlySharedOrPrinted || isOlderThan24h;
+
+    if (isHighest && isTreatedAsShared) {
+      const reasonTag = bill.sharedAt
+        ? 'shared'
+        : bill.printedAt
+        ? 'printed'
+        : 'issued more than 24 hours ago';
+
+      return res.status(400).json({
+        message: `Cannot delete Invoice #${originalBillNo} because it has already been ${reasonTag}. Please void the invoice instead to preserve the legal audit trail.`,
+      });
+    }
+
     // 1. Soft-delete the bill: keep full record in DB with original metadata
     bill.isDeleted = true;
     bill.deletedAt = new Date();
@@ -998,43 +1061,89 @@ router.delete('/:id', protect, restrictTo('owner', 'admin'), async (req, res) =>
     bill.originalBillNo = originalBillNo;
 
     // Shift billNo to a unique negative value to free up the positive billNo in DB
-    // preventing unique key collisions when re-issuing this invoice number
     bill.billNo = -Math.abs(Date.now() + Math.floor(Math.random() * 1000));
     bill.shareToken = undefined;
 
     await bill.save();
 
-    // 2. Synchronize invoice sequence counter:
-    // If invoice #16 was deleted, next created invoice should be #16 (not #17)
-    const maxActiveBill = await Bill.findOne({
-      isDeleted: { $ne: true },
-      billNo: { $gt: 0 },
-    }).sort({ billNo: -1 }).lean();
+    // 2. Synchronize invoice sequence counter based on business rule:
+    let nextInvoiceNo;
+    if (isHighest) {
+      // Find new highest active bill
+      const newHighestActive = await Bill.findOne({
+        isDeleted: { $ne: true },
+        billNo: { $gt: 0 },
+      }).sort({ billNo: -1 }).lean();
 
-    const maxBillNo = maxActiveBill ? maxActiveBill.billNo : 0;
-    await resetSequence('billNo', maxBillNo);
+      const newMaxBillNo = newHighestActive ? newHighestActive.billNo : 0;
+      await resetSequence('billNo', newMaxBillNo);
+      nextInvoiceNo = newMaxBillNo + 1;
+    } else {
+      // Middle bill deleted: sequence counter is NOT rolled back or modified
+      const currentCounter = await Counter.findOne({ _id: 'billNo' }).lean();
+      nextInvoiceNo = (currentCounter ? currentCounter.seq : 0) + 1;
+    }
 
     await logActivity(req, 'DELETE_BILL', String(originalBillNo), {
       customer: customerName,
       amount: billAmount,
       reason: deleteReason,
-      newNextInvoiceNo: maxBillNo + 1,
+      newNextInvoiceNo: nextInvoiceNo,
     });
     structuredLogger.logBillOperation('DELETE', bill, req, {
       originalBillNo,
-      nextBillNo: maxBillNo + 1,
+      nextBillNo: nextInvoiceNo,
       reason: deleteReason,
+      isHighest,
     });
 
     res.json({
       success: true,
-      message: `Invoice #${originalBillNo} has been deleted from website views. Next invoice will be #${maxBillNo + 1}.`,
+      message: isHighest
+        ? `Invoice #${originalBillNo} has been deleted. Next invoice will reuse #${nextInvoiceNo}.`
+        : `Invoice #${originalBillNo} has been deleted. Invoice numbering remains unchanged (next invoice: #${nextInvoiceNo}).`,
       deletedBillNo: originalBillNo,
-      nextInvoiceNo: maxBillNo + 1,
+      nextInvoiceNo,
     });
   } catch (error) {
     console.error('Delete Bill Error:', error);
     return handleServerError(res, error, 'Server error', req);
+  }
+});
+
+/**
+ * POST /api/bills/:id/mark-shared
+ * Record when an invoice is shared via WhatsApp or external channel
+ */
+router.post('/:id/mark-shared', protect, async (req, res) => {
+  try {
+    const bill = await Bill.findById(req.params.id);
+    if (!bill || bill.isDeleted) return res.status(404).json({ message: 'Invoice not found' });
+    if (!bill.sharedAt) {
+      bill.sharedAt = new Date();
+      await bill.save();
+    }
+    res.json({ success: true, sharedAt: bill.sharedAt });
+  } catch (err) {
+    return handleServerError(res, err, 'Server error', req);
+  }
+});
+
+/**
+ * POST /api/bills/:id/mark-printed
+ * Record when an invoice is printed
+ */
+router.post('/:id/mark-printed', protect, async (req, res) => {
+  try {
+    const bill = await Bill.findById(req.params.id);
+    if (!bill || bill.isDeleted) return res.status(404).json({ message: 'Invoice not found' });
+    if (!bill.printedAt) {
+      bill.printedAt = new Date();
+      await bill.save();
+    }
+    res.json({ success: true, printedAt: bill.printedAt });
+  } catch (err) {
+    return handleServerError(res, err, 'Server error', req);
   }
 });
 

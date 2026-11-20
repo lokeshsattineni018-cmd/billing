@@ -132,52 +132,42 @@ router.post('/restore/bill/:id', async (req, res) => {
       isDeleted: { $ne: true },
     }).lean();
 
-    let restoredBillNo = targetBillNo;
-    let numberChanged = false;
-
     if (activeWithSameNo) {
-      // Allocate the next available sequential number
-      restoredBillNo = await getNextSequence('billNo');
-      numberChanged = true;
+      return res.status(409).json({
+        message: `Cannot restore Invoice #${targetBillNo}: invoice slot #${targetBillNo} is already occupied by an active invoice ("${activeWithSameNo.companyName}"). Re-numbering an issued invoice is prohibited by business rules.`,
+      });
     }
 
-    bill.billNo = restoredBillNo;
+    bill.billNo = targetBillNo;
     bill.isDeleted = false;
     bill.deletedAt = undefined;
     bill.deletedBy = undefined;
     bill.deletedReason = undefined;
 
-    // Update formattedBillNo if number changed
-    if (numberChanged) {
-      const prefix = bill.formattedBillNo?.replace(/\d+$/, '') || 'VDA/';
-      bill.formattedBillNo = `${prefix}${String(restoredBillNo).padStart(4, '0')}`;
-    }
+    const prefix = bill.formattedBillNo?.replace(/\d+$/, '') || 'VDA/';
+    bill.formattedBillNo = `${prefix}${String(targetBillNo).padStart(4, '0')}`;
 
     await bill.save();
 
-    // Ensure counter sequence is at least equal to restoredBillNo
+    // Ensure counter sequence is at least equal to targetBillNo
     const currentCounter = await Counter.findOne({ _id: 'billNo' }).lean();
-    if (!currentCounter || currentCounter.seq < restoredBillNo) {
-      await resetSequence('billNo', restoredBillNo);
+    if (!currentCounter || currentCounter.seq < targetBillNo) {
+      await resetSequence('billNo', targetBillNo);
     }
 
-    await logActivity(req, 'RESTORE_BILL', String(restoredBillNo), {
+    await logActivity(req, 'RESTORE_BILL', String(targetBillNo), {
       originalBillNo: targetBillNo,
-      restoredBillNo,
-      numberChanged,
+      restoredBillNo: targetBillNo,
       customer: bill.companyName,
     });
     structuredLogger.logBillOperation('RESTORE', bill, req, {
-      restoredBillNo,
+      restoredBillNo: targetBillNo,
       originalBillNo: targetBillNo,
-      numberChanged,
     });
 
     res.json({
       success: true,
-      message: numberChanged
-        ? `Invoice restored successfully as #${restoredBillNo} (Original #${targetBillNo} was already re-assigned).`
-        : `Invoice #${restoredBillNo} restored to active bills successfully.`,
+      message: `Invoice #${targetBillNo} restored to active bills successfully.`,
       bill,
     });
   } catch (error) {

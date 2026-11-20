@@ -3,49 +3,15 @@ const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const Settings = require('../models/Settings');
 const mongoose = require('mongoose');
-const logos = require('../assets/logosData');
-
-const ganeshaBase64 = (logos.ganeshaBase64 || logos.GANESHA_BASE64 || '').replace(/^data:image\/\w+;base64,/, '');
-const durgaBase64 = (logos.durgaBase64 || logos.DURGA_BASE64 || '').replace(/^data:image\/\w+;base64,/, '');
-const ramDarbarBase64 = (logos.ramDarbarBase64 || logos.RAM_DARBAR_BASE64 || '').replace(/^data:image\/\w+;base64,/, '');
-const teluguJaiShreeRamBase64 = (logos.JAI_SHREE_RAM_TELUGU_BASE64 || '').replace(/^data:image\/\w+;base64,/, '');
-
-const ganeshaBuffer = Buffer.from(ganeshaBase64, 'base64');
-const durgaBuffer = Buffer.from(durgaBase64, 'base64');
-const ramDarbarBuffer = Buffer.from(ramDarbarBase64, 'base64');
-const teluguJaiShreeRamBuffer = Buffer.from(teluguJaiShreeRamBase64, 'base64');
+const {
+  ganeshaBuffer,
+  durgaBuffer,
+  ramDarbarBuffer,
+  teluguJaiShreeRamBuffer
+} = require('../assets/logosData');
+const { numberToWords } = require('../utils/numberToWords');
 
 const teluguFontPath = path.join(__dirname, '../assets/NotoSansTelugu-Bold.ttf');
-
-function numberToWords(num) {
-  if (!num || num === 0) return 'Zero Rupees Only';
-
-  const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
-    'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-
-  function convertBelow1000(n) {
-    if (n === 0) return '';
-    if (n < 20) return ones[n];
-    if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
-    return ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' + convertBelow1000(n % 100) : '');
-  }
-
-  const intPart = Math.floor(Math.abs(num));
-  const parts = [];
-
-  const crore = Math.floor(intPart / 10000000);
-  const lakh = Math.floor((intPart % 10000000) / 100000);
-  const thousand = Math.floor((intPart % 100000) / 1000);
-  const remainder = intPart % 1000;
-
-  if (crore > 0) parts.push(convertBelow1000(crore) + ' Crore');
-  if (lakh > 0) parts.push(convertBelow1000(lakh) + ' Lakh');
-  if (thousand > 0) parts.push(convertBelow1000(thousand) + ' Thousand');
-  if (remainder > 0) parts.push(convertBelow1000(remainder));
-
-  return parts.join(' ') + ' Rupees Only';
-}
 
 function formatDateStr(d) {
   if (!d) return '';

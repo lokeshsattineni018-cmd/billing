@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { setMasterCache, getMasterCache } from '../utils/offlineDb';
+import { setMasterCache, getMasterCache, getUserCacheKey, clearMasterCache, invalidateBillCaches } from '../utils/offlineDb';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -23,18 +23,38 @@ api.interceptors.request.use((config) => {
 // Response interceptor — handle 401 expired session & transparent offline fallback
 api.interceptors.response.use(
   (response) => {
-    // Cache critical master data into IndexedDB on successful GET
     try {
       const url = response.config?.url || '';
-      if (response.config?.method?.toLowerCase() === 'get' && response.data) {
+      const method = response.config?.method?.toLowerCase();
+
+      // On successful bill mutation (create/edit/payment/void/delete), invalidate cached history & dashboard
+      if (['post', 'put', 'patch', 'delete'].includes(method) && url.includes('/bills') && !url.includes('/bills/customers')) {
+        invalidateBillCaches(method).catch(() => {});
+      }
+
+      // Cache master data scoped to current user identity & role
+      if (method === 'get' && response.data) {
+        const currentUser = (() => {
+          try { return JSON.parse(localStorage.getItem('srsf_user')); } catch { return null; }
+        })();
+        const isOwnerOrAdmin = currentUser?.role === 'owner' || currentUser?.role === 'admin';
+        const isAdmin = currentUser?.role === 'admin';
+
         if (url.includes('/settings') && !url.includes('/counter-status')) {
-          setMasterCache('settings', response.data);
+          setMasterCache(getUserCacheKey('settings', currentUser), response.data);
         } else if (url.includes('/bills/customers/list') || url.includes('/customers')) {
-          setMasterCache('customers', response.data);
+          setMasterCache(getUserCacheKey('customers', currentUser), response.data);
         } else if (url.includes('/staff/names')) {
-          setMasterCache('staffNames', response.data);
+          setMasterCache(getUserCacheKey('staffNames', currentUser), response.data);
         } else if (url.includes('/staff/summary')) {
-          setMasterCache('staffSummary', response.data);
+          setMasterCache(getUserCacheKey('staffSummary', currentUser), response.data);
+        } else if (url.includes('/dashboard/summary')) {
+          if (isOwnerOrAdmin) setMasterCache(getUserCacheKey('dashboardSummary', currentUser), response.data);
+        } else if (url.includes('/dashboard/analytics')) {
+          if (isAdmin) setMasterCache(getUserCacheKey('dashboardAnalytics', currentUser), response.data);
+        } else if (url.includes('/dashboard/combined')) {
+          if (response.data?.summary && isOwnerOrAdmin) setMasterCache(getUserCacheKey('dashboardSummary', currentUser), response.data.summary);
+          if (response.data?.analytics && isAdmin) setMasterCache(getUserCacheKey('dashboardAnalytics', currentUser), response.data.analytics);
         }
       }
     } catch (e) {
@@ -55,6 +75,7 @@ api.interceptors.response.use(
         localStorage.removeItem('srsf_token');
         localStorage.removeItem('srsf_user');
         localStorage.removeItem('srsf_login_time');
+        clearMasterCache().catch(() => {});
         if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
@@ -66,18 +87,21 @@ api.interceptors.response.use(
     const isGet = error.config?.method?.toLowerCase() === 'get';
     if (isNetworkError && isGet) {
       const url = error.config?.url || '';
+      const currentUser = (() => {
+        try { return JSON.parse(localStorage.getItem('srsf_user')); } catch { return null; }
+      })();
       try {
         if (url.includes('/settings')) {
-          const cached = await getMasterCache('settings');
+          const cached = await getMasterCache(getUserCacheKey('settings', currentUser));
           if (cached) return { data: cached, status: 200, fromOfflineCache: true, headers: {}, config: error.config };
         } else if (url.includes('/bills/customers/list') || url.includes('/customers')) {
-          const cached = await getMasterCache('customers');
+          const cached = await getMasterCache(getUserCacheKey('customers', currentUser));
           if (cached) return { data: cached, status: 200, fromOfflineCache: true, headers: {}, config: error.config };
         } else if (url.includes('/staff/names')) {
-          const cached = await getMasterCache('staffNames');
+          const cached = await getMasterCache(getUserCacheKey('staffNames', currentUser));
           if (cached) return { data: cached, status: 200, fromOfflineCache: true, headers: {}, config: error.config };
         } else if (url.includes('/staff/summary')) {
-          const cached = await getMasterCache('staffSummary');
+          const cached = await getMasterCache(getUserCacheKey('staffSummary', currentUser));
           if (cached) return { data: cached, status: 200, fromOfflineCache: true, headers: {}, config: error.config };
         }
       } catch (cacheErr) {}
@@ -86,6 +110,45 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+/**
+ * Helper to download authenticated files as Blob using Axios (Bearer header)
+ * Compatible with mobile Safari and Chrome (creates link, appends to body, clicks, revokes)
+ */
+export const downloadAuthenticatedBlob = async (endpoint, params = {}, defaultFilename = 'download') => {
+  const response = await api.get(endpoint, {
+    params,
+    responseType: 'blob',
+  });
+
+  let filename = defaultFilename;
+  const disposition = response.headers['content-disposition'];
+  if (disposition) {
+    const filenameMatch = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]*)["']?/i);
+    if (filenameMatch && filenameMatch[1]) {
+      filename = decodeURIComponent(filenameMatch[1].trim());
+    }
+  }
+
+  const blob = new Blob([response.data], {
+    type: response.headers['content-type'] || 'application/octet-stream',
+  });
+
+  const blobUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = blobUrl;
+  link.setAttribute('download', filename);
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+
+  setTimeout(() => {
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+  }, 300);
+
+  return true;
+};
 
 // Auth
 export const authAPI = {
@@ -113,24 +176,29 @@ export const billsAPI = {
   void: (id, reason) => api.patch(`/bills/${id}/void`, { reason }),
   delete: (id, confirmationCode, reason) => api.delete(`/bills/${id}`, { data: { confirmationCode, reason } }),
   duplicate: (id) => api.post(`/bills/${id}/duplicate`),
+  markShared: (id) => api.post(`/bills/${id}/mark-shared`),
+  markPrinted: (id) => api.post(`/bills/${id}/mark-printed`),
   getReminder: (id) => api.get(`/bills/${id}/reminder`),
   updatePaymentStatus: (id, paymentStatus) => api.patch(`/bills/${id}/payment-status`, { paymentStatus }),
   recordPayment: (id, data) => api.post(`/bills/${id}/payments`, data),
   getPayments: (id) => api.get(`/bills/${id}/payments`),
-  getPDF: (id) => `${API_BASE_URL}/bills/${id}/pdf?token=${localStorage.getItem('srsf_token')}`,
-  exportCSVUrl: (params) => {
-    const query = new URLSearchParams(params || {}).toString();
-    return `${API_BASE_URL}/bills/export/csv?${query}&token=${localStorage.getItem('srsf_token')}`;
+  getPDFBlob: (id) => api.get(`/bills/${id}/pdf`, { responseType: 'blob' }),
+  getPDFTicket: (id) => api.post(`/bills/${id}/pdf-ticket`),
+  getPDFUrlWithTicket: async (id) => {
+    const res = await api.post(`/bills/${id}/pdf-ticket`);
+    return `${API_BASE_URL}/bills/${id}/pdf?ticket=${res.data.ticket}`;
   },
-  exportTallyUrl: (params) => {
-    const query = new URLSearchParams(params || {}).toString();
-    return `${API_BASE_URL}/bills/export/tally?${query}&token=${localStorage.getItem('srsf_token')}`;
-  },
+  getPDF: (id) => `${API_BASE_URL}/bills/${id}/pdf`,
+  exportCSV: (params) => downloadAuthenticatedBlob('/bills/export/csv', params, 'Bills.csv'),
+  exportTally: (params) => downloadAuthenticatedBlob('/bills/export/tally', params, 'Tally_Prime_Import.xml'),
+  exportCSVUrl: (params) => downloadAuthenticatedBlob('/bills/export/csv', params, 'Bills.csv'),
+  exportTallyUrl: (params) => downloadAuthenticatedBlob('/bills/export/tally', params, 'Tally_Prime_Import.xml'),
 };
 
 // Dashboard & Analytics
 export const dashboardAPI = {
   summary: (params) => api.get('/dashboard/summary', { params: { ...params, _t: Date.now() } }),
+  combined: (params) => api.get('/dashboard/combined', { params: { ...params, _t: Date.now() } }),
   getDailySummary: () => api.get('/dashboard/daily-summary', { params: { _t: Date.now() } }),
   getAnalytics: () => api.get('/dashboard/analytics', { params: { _t: Date.now() } }),
   getProfitLoss: (params) => api.get('/dashboard/profit-loss', { params: { ...params, _t: Date.now() } }),
@@ -140,18 +208,12 @@ export const dashboardAPI = {
 export const reportsAPI = {
   getSales: (params) => api.get('/reports/sales', { params }),
   getOutstanding: () => api.get('/reports/outstanding'),
-  downloadPDFUrl: (params) => {
-    const query = new URLSearchParams(params || {}).toString();
-    return `${API_BASE_URL}/reports/pdf?${query}&token=${localStorage.getItem('srsf_token')}`;
-  },
-  downloadGSTPDFUrl: (params) => {
-    const query = new URLSearchParams(params || {}).toString();
-    return `${API_BASE_URL}/reports/gst-pdf?${query}&token=${localStorage.getItem('srsf_token')}`;
-  },
-  exportGSTUrl: (params) => {
-    const query = new URLSearchParams(params || {}).toString();
-    return `${API_BASE_URL}/reports/gst-export?${query}&token=${localStorage.getItem('srsf_token')}`;
-  },
+  downloadPDF: (params) => downloadAuthenticatedBlob('/reports/pdf', params, 'sales_statement.pdf'),
+  downloadGSTPDF: (params) => downloadAuthenticatedBlob('/reports/gst-pdf', params, 'gstr1_statement.pdf'),
+  exportGST: (params) => downloadAuthenticatedBlob('/reports/gst-export', params, 'gstr1_export.csv'),
+  downloadPDFUrl: (params) => downloadAuthenticatedBlob('/reports/pdf', params, 'sales_statement.pdf'),
+  downloadGSTPDFUrl: (params) => downloadAuthenticatedBlob('/reports/gst-pdf', params, 'gstr1_statement.pdf'),
+  exportGSTUrl: (params) => downloadAuthenticatedBlob('/reports/gst-export', params, 'gstr1_export.csv'),
 };
 
 // Admin Customers Directory, Credit Limits & Customer Payments
@@ -160,7 +222,8 @@ export const customersAPI = {
   getBills: (name) => api.get(`/customers/${encodeURIComponent(name)}/bills`),
   recordPayment: (name, data) => api.post(`/customers/${encodeURIComponent(name)}/record-payment`, data),
   updateCreditLimit: (name, data) => api.put(`/customers/${encodeURIComponent(name)}/credit-limit`, data),
-  exportCSVUrl: () => `${API_BASE_URL}/customers/export/csv?token=${localStorage.getItem('srsf_token')}`,
+  exportCSV: () => downloadAuthenticatedBlob('/customers/export/csv', {}, 'Customers_Ledger.csv'),
+  exportCSVUrl: () => downloadAuthenticatedBlob('/customers/export/csv', {}, 'Customers_Ledger.csv'),
 };
 
 // Admin Activity Audit Logs
@@ -181,7 +244,8 @@ export const usersAPI = {
 export const backupAPI = {
   sendNow: (data) => api.post('/backup/send-now', data),
   getFullExport: () => api.get('/backup/full-export'),
-  exportFullBackupUrl: () => `${API_BASE_URL}/backup/full-export?token=${localStorage.getItem('srsf_token')}`,
+  exportFullBackup: () => downloadAuthenticatedBlob('/backup/full-export', {}, 'SRSF_Full_Backup.json'),
+  exportFullBackupUrl: () => downloadAuthenticatedBlob('/backup/full-export', {}, 'SRSF_Full_Backup.json'),
 };
 
 // Staff & Labor Work, Attendance and Wages API
@@ -195,20 +259,17 @@ export const staffAPI = {
   delete: (id) => api.delete(`/staff/${id}`),
   togglePayment: (id, data) => api.patch(`/staff/${id}/pay`, data || {}),
   batchPay: (data) => api.post('/staff/batch-pay', data),
-  exportCSVUrl: (params) => {
-    const query = new URLSearchParams(params || {}).toString();
-    return `${API_BASE_URL}/staff/export?${query}&token=${localStorage.getItem('srsf_token')}`;
-  },
+  exportCSV: (params) => downloadAuthenticatedBlob('/staff/export', params, 'Staff_Work.csv'),
+  exportIceCSV: (params) => downloadAuthenticatedBlob('/staff/ice/export', params, 'Ice_Procurement.csv'),
+  exportWastageCSV: (params) => downloadAuthenticatedBlob('/staff/wastage/export', params, 'Wastage_Records.csv'),
+  exportCSVUrl: (params) => downloadAuthenticatedBlob('/staff/export', params, 'Staff_Work.csv'),
   // Ice Blocks Tracking
   getIce: (params) => api.get('/staff/ice', { params }),
   getIceSummary: (params) => api.get('/staff/ice/summary', { params }),
   createIce: (data) => api.post('/staff/ice', data),
   updateIce: (id, data) => api.put(`/staff/ice/${id}`, data),
   deleteIce: (id) => api.delete(`/staff/ice/${id}`),
-  exportIceCSVUrl: (params) => {
-    const query = new URLSearchParams(params || {}).toString();
-    return `${API_BASE_URL}/staff/ice/export?${query}&token=${localStorage.getItem('srsf_token')}`;
-  },
+  exportIceCSVUrl: (params) => downloadAuthenticatedBlob('/staff/ice/export', params, 'Ice_Procurement.csv'),
 
   // Prawn Head Wastage Sales Tracking
   getWastage: (params) => api.get('/staff/wastage', { params }),
@@ -216,10 +277,7 @@ export const staffAPI = {
   createWastage: (data) => api.post('/staff/wastage', data),
   updateWastage: (id, data) => api.put(`/staff/wastage/${id}`, data),
   deleteWastage: (id) => api.delete(`/staff/wastage/${id}`),
-  exportWastageCSVUrl: (params) => {
-    const query = new URLSearchParams(params || {}).toString();
-    return `${API_BASE_URL}/staff/wastage/export?${query}&token=${localStorage.getItem('srsf_token')}`;
-  },
+  exportWastageCSVUrl: (params) => downloadAuthenticatedBlob('/staff/wastage/export', params, 'Wastage_Records.csv'),
 
   // Consolidated Daily Operations Summary
   getDailyOperations: (params) => api.get('/staff/daily-operations', { params }),

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { encryptText } = require('../utils/crypto');
 
 const settingsSchema = new mongoose.Schema({
   businessName: {
@@ -52,6 +53,7 @@ const settingsSchema = new mongoose.Schema({
   smtpPass: {
     type: String,
     default: '',
+    set: (val) => (val ? encryptText(val) : ''),
   },
   smtpHost: {
     type: String,
@@ -76,5 +78,19 @@ const settingsSchema = new mongoose.Schema({
 }, {
   timestamps: true,
 });
+
+/**
+ * One-time transparent migration:
+ * If an existing settings document in MongoDB contains unencrypted plaintext smtpPass,
+ * encrypt it immediately at rest and persist.
+ */
+settingsSchema.statics.ensureSmtpEncrypted = async function (settingsDoc) {
+  if (settingsDoc && settingsDoc.smtpPass && !settingsDoc.smtpPass.startsWith('enc:v1:')) {
+    const rawPlaintext = settingsDoc.smtpPass;
+    settingsDoc.smtpPass = encryptText(rawPlaintext);
+    await settingsDoc.save();
+  }
+  return settingsDoc;
+};
 
 module.exports = mongoose.model('Settings', settingsSchema);

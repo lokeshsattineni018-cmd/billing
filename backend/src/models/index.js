@@ -6,6 +6,7 @@ const ActivityLog = require('./ActivityLog');
 const StaffWork = require('./StaffWork');
 const DailyIce = require('./DailyIce');
 const DailyWastage = require('./DailyWastage');
+const ConsumedNonce = require('./ConsumedNonce');
 
 module.exports = {
   User,
@@ -16,4 +17,5 @@ module.exports = {
   StaffWork,
   DailyIce,
   DailyWastage,
+  ConsumedNonce,
 };

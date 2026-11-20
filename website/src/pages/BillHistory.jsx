@@ -4,14 +4,16 @@ import { billsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast, shareInvoicePDFOnWhatsApp } from '../utils/helpers';
-import { SearchIcon, PrintIcon, DownloadIcon, WhatsAppIcon, DownloadIcon as ExportIcon, PlusIcon, ShareIcon, InvoiceIcon } from '../components/Icons';
+import { SearchIcon, PrintIcon, DownloadIcon, WhatsAppIcon, DownloadIcon as ExportIcon, PlusIcon, ShareIcon, InvoiceIcon, TrashIcon } from '../components/Icons';
 import { SkeletonTable } from '../components/Skeleton';
 import ReminderModal from '../components/ReminderModal';
 import PaymentModal from '../components/PaymentModal';
 import SwipeableItem from '../components/SwipeableItem';
 import PullToRefresh from '../components/PullToRefresh';
 import DeleteInvoiceModal from '../components/DeleteInvoiceModal';
-import { getAllOfflineBills } from '../utils/offlineDb';
+import { getAllOfflineBills, getMasterCache, setMasterCache, getUserCacheKey, invalidateBillCaches } from '../utils/offlineDb';
+
+const MAX_SCROLL_ITEMS = 60; // Cap continuous scroll list to protect mobile memory
 
 export default function BillHistory() {
   const navigate = useNavigate();
@@ -21,6 +23,7 @@ export default function BillHistory() {
 
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [displayMode, setDisplayMode] = useState('scroll'); // 'scroll' | 'pages'
   const [viewFormat, setViewFormat] = useState('cards'); // 'cards' | 'table'
@@ -56,16 +59,47 @@ export default function BillHistory() {
   useEffect(() => {
     loadBills();
     const handleSync = () => loadBills();
+    const handleInvalidate = () => loadBills(true);
     window.addEventListener('vda-sync-completed', handleSync);
-    return () => window.removeEventListener('vda-sync-completed', handleSync);
+    window.addEventListener('vda-cache-invalidated', handleInvalidate);
+    return () => {
+      window.removeEventListener('vda-sync-completed', handleSync);
+      window.removeEventListener('vda-cache-invalidated', handleInvalidate);
+    };
   }, [page, statusFilter]);
 
   const loadBills = async (resetPage = false) => {
-    setLoading(true);
-    try {
-      const currentPage = resetPage ? 1 : page;
-      if (resetPage) setPage(1);
+    const currentPage = resetPage ? 1 : page;
+    if (resetPage) setPage(1);
 
+    const hasFilters = Boolean(search.trim() || dateFrom || dateTo || statusFilter);
+
+    // 1. Instant Cache-First render for default Page 1 (keyed by user id & role)
+    if (currentPage === 1 && !hasFilters) {
+      try {
+        const historyKey = getUserCacheKey('historyPage1', user);
+        const cached = await getMasterCache(historyKey);
+        if (cached && Array.isArray(cached.bills) && cached.bills.length > 0) {
+          setBills(cached.bills);
+          if (cached.pagination) setPagination(cached.pagination);
+          setLoading(false);
+          setIsUpdating(true);
+        }
+      } catch (e) {
+        // Fall back to normal loading
+      }
+    }
+
+    setBills((current) => {
+      if (!current || current.length === 0) {
+        setLoading(true);
+      } else {
+        setIsUpdating(true);
+      }
+      return current;
+    });
+
+    try {
       const params = { page: currentPage, limit: 15 };
       if (search.trim()) params.search = search.trim();
       if (dateFrom) params.from = dateFrom;
@@ -80,29 +114,47 @@ export default function BillHistory() {
       const serverBills = response.data.bills || [];
 
       // Prepend pending offline invoices at the top of first page
+      let finalBills = serverBills;
       if (currentPage === 1 && pendingOffline.length > 0) {
-        setBills([...pendingOffline, ...serverBills]);
-      } else {
-        setBills(serverBills);
+        finalBills = [...pendingOffline, ...serverBills];
       }
-      setPagination(response.data.pagination || {});
+      setBills(finalBills);
+      const paginationData = response.data.pagination || {};
+      setPagination(paginationData);
+
+      // Cache page 1 snapshot for subsequent instant visits (keyed by user id & role)
+      if (currentPage === 1 && !hasFilters) {
+        setMasterCache(getUserCacheKey('historyPage1', user), {
+          bills: finalBills,
+          pagination: paginationData,
+        }).catch(() => {});
+      }
     } catch (error) {
-      // Offline fallback: load cached bills from local IndexedDB
+      // Offline fallback: window and paginate cached bills from local IndexedDB
       try {
         const offlineBills = await getAllOfflineBills().catch(() => []);
         if (offlineBills.length > 0) {
-          setBills(offlineBills);
-          setPagination({ total: offlineBills.length, pages: 1 });
+          const pageSize = 15;
+          const totalPages = Math.ceil(offlineBills.length / pageSize);
+          const startIndex = (currentPage - 1) * pageSize;
+          const pagedSlice = offlineBills.slice(startIndex, startIndex + pageSize);
+          setBills(pagedSlice);
+          setPagination({ total: offlineBills.length, pages: totalPages, page: currentPage });
         }
       } catch (e) {}
       if (import.meta.env.DEV) { console.error('Failed to load invoices:', error); }
     } finally {
       setLoading(false);
+      setIsUpdating(false);
     }
   };
 
   const handleLoadMore = async () => {
     if (loadingMore || page >= (pagination.pages || 1)) return;
+    if (bills.length >= MAX_SCROLL_ITEMS) {
+      setDisplayMode('pages');
+      return;
+    }
     setLoadingMore(true);
     try {
       const nextPage = page + 1;
@@ -176,10 +228,8 @@ export default function BillHistory() {
     setDownloadingPdfId(id);
     showToast(`Generating PDF invoice...`, 'info');
     try {
-      const pdfUrl = billsAPI.getPDF(id);
-      const response = await fetch(pdfUrl);
-      if (!response.ok) throw new Error('PDF generation failed');
-      const blob = await response.blob();
+      const response = await billsAPI.getPDFBlob(id);
+      const blob = response.data;
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -221,6 +271,7 @@ export default function BillHistory() {
       setBills((prev) => prev.filter((b) => b._id !== deleteBillTarget._id));
       setPagination((prev) => ({ ...prev, total: Math.max(0, (prev.total || 1) - 1) }));
       setDeleteBillTarget(null);
+      invalidateBillCaches('delete').catch(() => {});
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to delete invoice', 'error');
     } finally {
@@ -237,7 +288,36 @@ export default function BillHistory() {
 
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h2>Invoice History</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h2 style={{ margin: 0 }}>Invoice History</h2>
+            {isUpdating && (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: '#0b5394',
+                  background: '#e0f2fe',
+                  padding: '3px 9px',
+                  borderRadius: '12px',
+                  lineHeight: 1.2,
+                }}
+              >
+                <span
+                  style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: '#0284c7',
+                    display: 'inline-block',
+                  }}
+                />
+                Updating...
+              </span>
+            )}
+          </div>
           <p>View, print, download, share or export invoices for GST & CA filing</p>
         </div>
 
@@ -246,7 +326,7 @@ export default function BillHistory() {
             <>
               <button
                 className="btn btn-secondary"
-                onClick={() => window.open(billsAPI.exportCSVUrl({ search, dateFrom, dateTo, paymentStatus }), '_blank')}
+                onClick={() => billsAPI.exportCSV({ search, dateFrom, dateTo, paymentStatus })}
                 title="Export all filtered bills to CSV for GST / CA accounting"
                 style={{ fontWeight: 700 }}
               >
@@ -254,7 +334,7 @@ export default function BillHistory() {
               </button>
               <button
                 className="btn btn-secondary"
-                onClick={() => window.open(billsAPI.exportTallyUrl({ dateFrom, dateTo }), '_blank')}
+                onClick={() => billsAPI.exportTally({ dateFrom, dateTo })}
                 title="Export sales vouchers in standard Tally Prime XML"
                 style={{ fontWeight: 700, border: '1.5px solid #0b5394', color: '#0b5394' }}
               >
@@ -514,7 +594,7 @@ export default function BillHistory() {
                         </div>
                       </div>
 
-                      {/* Footer: icon-only action buttons */}
+                      {/* Footer: action buttons with >= 48px tap targets */}
                       <div
                         style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingTop: '10px', borderTop: '1px solid #f1f5f9', marginTop: '10px' }}
                         onClick={(e) => e.stopPropagation()}
@@ -523,20 +603,30 @@ export default function BillHistory() {
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); handleShareWhatsApp(e, bill); }}
-                            style={{ background: '#25D366', border: 'none', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                            style={{ background: '#25D366', border: 'none', borderRadius: '10px', minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: '10px' }}
                             title="Share on WhatsApp"
                           >
-                            <WhatsAppIcon size={18} color="#ffffff" />
+                            <WhatsAppIcon size={20} color="#ffffff" />
                           </button>
                         )}
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); handlePrint(e, bill._id); }}
-                          style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                          style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '10px', minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: '10px' }}
                           title="Print Invoice"
                         >
-                          <PrintIcon size={16} color="#0b5394" />
+                          <PrintIcon size={18} color="#0b5394" />
                         </button>
+                        {canDeleteBill && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setDeleteBillTarget(bill); }}
+                            style={{ background: '#fee2e2', border: '1px solid #fecaca', borderRadius: '10px', minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: '10px' }}
+                            title="Delete Invoice"
+                          >
+                            <TrashIcon size={18} color="#dc2626" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </SwipeableItem>
@@ -717,7 +807,31 @@ export default function BillHistory() {
               {/* In Scroll / Load More Mode */}
               {displayMode === 'scroll' ? (
                 <div style={{ textAlign: 'center', width: '100%' }}>
-                  {bills.length < (pagination.total || 0) ? (
+                  {bills.length >= MAX_SCROLL_ITEMS && bills.length < (pagination.total || 0) ? (
+                    <div
+                      style={{
+                        maxWidth: '460px',
+                        margin: '0 auto',
+                        padding: '16px 20px',
+                        background: '#eff6ff',
+                        border: '1.5px solid #bfdbfe',
+                        borderRadius: '12px',
+                        textAlign: 'center',
+                      }}
+                    >
+                      <p style={{ margin: '0 0 12px 0', fontSize: '0.88rem', color: '#1e40af', fontWeight: 600 }}>
+                        📱 <strong>{bills.length} invoices loaded.</strong> To keep scrolling smooth on mobile devices, switch to <strong>Pages</strong> mode to browse remaining invoices.
+                      </p>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={() => setDisplayMode('pages')}
+                        style={{ minHeight: '44px', width: '100%', fontSize: '0.88rem', fontWeight: 800 }}
+                      >
+                        📄 Switch to Pages Mode ({((pagination.total || 0) - bills.length)} older)
+                      </button>
+                    </div>
+                  ) : bills.length < (pagination.total || 0) ? (
                     <button
                       type="button"
                       onClick={handleLoadMore}
@@ -809,8 +923,41 @@ export default function BillHistory() {
             </div>
           </>
         ) : (
-          <div className="empty-state">
-            <p>No invoices found</p>
+          <div className="empty-state" style={{ padding: '48px 20px', textAlign: 'center' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '12px', opacity: 0.4 }}>📋</div>
+            <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+              {t?.noInvoicesFound || 'No invoices found'}
+            </p>
+            {(search || dateFrom || dateTo || statusFilter) && (
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                {t?.tryAdjustingFilters || 'Try adjusting your search or filters'}
+              </p>
+            )}
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              {(search || dateFrom || dateTo || statusFilter) && (
+                <button
+                  className="btn btn-secondary"
+                  style={{ minHeight: '44px', padding: '10px 20px', fontSize: '0.9rem' }}
+                  onClick={() => {
+                    setSearch('');
+                    setDateFrom('');
+                    setDateTo('');
+                    setStatusFilter('');
+                    setPage(1);
+                    setTimeout(() => loadBills(true), 0);
+                  }}
+                >
+                  {t?.clearFilters || 'Clear Filters'}
+                </button>
+              )}
+              <button
+                className="btn btn-primary"
+                style={{ minHeight: '44px', padding: '10px 20px', fontSize: '0.9rem' }}
+                onClick={() => navigate('/new-bill')}
+              >
+                {t?.newInvoice || '+ New Invoice'}
+              </button>
+            </div>
           </div>
         )}
       </div>

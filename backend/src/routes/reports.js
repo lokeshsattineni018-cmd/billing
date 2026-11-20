@@ -511,6 +511,7 @@ router.get('/gst-pdf', protect, restrictTo('owner', 'admin'), async (req, res) =
 
     const matchQuery = {
       date: { $gte: start, $lte: end },
+      isDeleted: { $ne: true },
     };
 
     const [bills, settingsDoc] = await Promise.all([

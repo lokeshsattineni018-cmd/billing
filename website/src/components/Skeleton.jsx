@@ -108,4 +108,38 @@ export function SkeletonCard({ height = '180px' }) {
   );
 }
 
+/**
+ * Skeleton for full page transitions (replaces PageLoader white flash)
+ */
+export function SkeletonPage() {
+  return (
+    <div className="page-container" style={{ padding: '24px 20px', minHeight: '80vh', maxWidth: '100%', boxSizing: 'border-box' }}>
+      {/* Page Header Shimmer */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <Skeleton width="220px" height="28px" style={{ marginBottom: '8px' }} />
+          <Skeleton width="140px" height="14px" />
+        </div>
+        <Skeleton width="120px" height="42px" borderRadius="10px" />
+      </div>
+
+      {/* KPI Cards Shimmer */}
+      <div className="dashboard-stats-grid" style={{ marginBottom: '24px' }}>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="card stat-card-compact" style={{ padding: '18px 20px', minHeight: '100px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <Skeleton width="50%" height="14px" />
+              <Skeleton width="28px" height="28px" borderRadius="8px" />
+            </div>
+            <Skeleton width="70%" height="24px" />
+          </div>
+        ))}
+      </div>
+
+      {/* Content Table Shimmer */}
+      <SkeletonTable rows={5} cols={4} />
+    </div>
+  );
+}
+
 export default Skeleton;

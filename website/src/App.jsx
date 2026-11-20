@@ -4,39 +4,38 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import NewBill from './pages/NewBill';
-import BillHistory from './pages/BillHistory';
 
-// Lazy-loaded pages — only fetched when navigated to (reduces initial bundle ~40%)
-const BillDetail = lazy(() => import('./pages/BillDetail'));
-const PublicInvoice = lazy(() => import('./pages/PublicInvoice'));
+// Lazy-loaded pages with prefetch capabilities
+import { loadNewBill, loadBillHistory, prefetchCoreRoutes } from './utils/routePrefetch';
+import { lazyWithRetry } from './utils/chunkLoadRecovery';
 
-const CustomerDirectory = lazy(() => import('./pages/CustomerDirectory'));
-const CustomerLedger = lazy(() => import('./pages/CustomerLedger'));
-const Reports = lazy(() => import('./pages/Reports'));
-const ActivityLog = lazy(() => import('./pages/ActivityLog'));
-const Settings = lazy(() => import('./pages/Settings'));
-const Staff = lazy(() => import('./pages/Staff'));
-const RecycleBin = lazy(() => import('./pages/RecycleBin'));
+const NewBill = lazyWithRetry(loadNewBill);
+const BillHistory = lazyWithRetry(loadBillHistory);
+export { loadNewBill, loadBillHistory, prefetchCoreRoutes };
+
+// Lazy-loaded pages with automatic stale chunk recovery & reload loop prevention
+const BillDetail = lazyWithRetry(() => import('./pages/BillDetail'));
+const PublicInvoice = lazyWithRetry(() => import('./pages/PublicInvoice'));
+
+const CustomerDirectory = lazyWithRetry(() => import('./pages/CustomerDirectory'));
+const CustomerLedger = lazyWithRetry(() => import('./pages/CustomerLedger'));
+const Reports = lazyWithRetry(() => import('./pages/Reports'));
+const ActivityLog = lazyWithRetry(() => import('./pages/ActivityLog'));
+const Settings = lazyWithRetry(() => import('./pages/Settings'));
+const Staff = lazyWithRetry(() => import('./pages/Staff'));
+const RecycleBin = lazyWithRetry(() => import('./pages/RecycleBin'));
 
 import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon, UserIcon, StaffIcon, MenuIcon, CloseIcon } from './components/Icons';
 import ErrorBoundary from './components/ErrorBoundary';
+import { SkeletonPage } from './components/Skeleton';
 import logoImg from './assets/logo.png';
 import ShedModeSyncBar from './components/ShedModeSyncBar';
 import { initSyncManager } from './services/syncManager';
 import './index.css';
 
-// Shared loading spinner for lazy-loaded pages
+// Shared structured skeleton for lazy-loaded route transitions (eliminates white flash)
 function PageLoader() {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      minHeight: '60vh', flexDirection: 'column', gap: '12px',
-    }}>
-      <div className="spinner" style={{ width: '32px', height: '32px' }}></div>
-      <span style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: 600 }}>Loading...</span>
-    </div>
-  );
+  return <SkeletonPage />;
 }
 
 function ProtectedRoute({ children }) {
@@ -238,8 +237,9 @@ function AppLayout() {
 
   const isIOS = typeof navigator !== 'undefined' && (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
-  // Initialize background and foreground sync manager for Shed Mode
+  // Initialize background and foreground sync manager for Shed Mode & prefetch core screens
   useEffect(() => {
+    prefetchCoreRoutes();
     const cleanup = initSyncManager();
     return () => {
       if (cleanup) cleanup();
@@ -266,14 +266,18 @@ function AppLayout() {
             type="button"
             onClick={toggleLang}
             style={{
-              padding: '8px 12px',
-              fontSize: '0.74rem',
+              padding: '10px 14px',
+              fontSize: '0.82rem',
               fontWeight: 800,
               background: '#f1f5f9',
               border: '1px solid #cbd5e1',
               borderRadius: '8px',
               color: '#0b5394',
-              minHeight: '36px',
+              minHeight: '48px',
+              minWidth: '48px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             {lang === 'en' ? 'తెలుగు' : 'EN'}

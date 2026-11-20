@@ -9,7 +9,6 @@ const { sanitizeMongoInput, generalLimiter } = require('./middleware/security');
 
 // Route imports
 const authRoutes = require('./routes/auth');
-const { autoSeedUsers } = require('./routes/auth');
 const settingsRoutes = require('./routes/settings');
 const itemsRoutes = require('./routes/items');
 const billsRoutes = require('./routes/bills');
@@ -42,38 +41,51 @@ app.use(helmet({
 }));
 
 // Strict Domain Whitelist for CORS
-const allowedOrigins = [
+const productionOrigins = [
   'https://billing-snowy-three.vercel.app',
+];
+
+const devOrigins = [
   'http://localhost:5173',
+  'http://localhost:4173',
   'http://localhost:3000',
   'http://localhost:5001',
   'http://127.0.0.1:5173',
+  'http://127.0.0.1:4173',
   'http://127.0.0.1:3000',
 ];
 
-if (process.env.CLIENT_URL) {
-  const envUrl = process.env.CLIENT_URL.replace(/\/$/, '');
-  if (!allowedOrigins.includes(envUrl)) {
-    allowedOrigins.push(envUrl);
+function isOriginAllowed(origin, env = process.env.NODE_ENV) {
+  // Allow non-browser requests (mobile apps, Postman, curl, server-to-server)
+  if (!origin) return true;
+
+  // Production whitelist
+  if (productionOrigins.includes(origin)) return true;
+
+  // Custom environment CLIENT_URL override
+  if (process.env.CLIENT_URL && process.env.CLIENT_URL.replace(/\/$/, '') === origin) {
+    return true;
   }
+
+  // Localhost origins allowed ONLY in non-production environments
+  if (env !== 'production' && devOrigins.includes(origin)) {
+    return true;
+  }
+
+  // Match Vercel preview deployment domains for this project strictly
+  if (/^https:\/\/billing-[a-z0-9-]+-lokeshsattinenis-projects\.vercel\.app$/.test(origin) ||
+      /^https:\/\/billing-snowy-three(-[a-z0-9-]+)?\.vercel\.app$/.test(origin)) {
+    return true;
+  }
+
+  return false;
 }
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow non-browser requests (mobile apps, Postman, curl, server-to-server)
-    if (!origin) return callback(null, true);
-
-    // Exact whitelist match
-    if (allowedOrigins.includes(origin)) {
+    if (isOriginAllowed(origin)) {
       return callback(null, true);
     }
-
-    // Match Vercel preview deployment domains for this project strictly
-    if (/^https:\/\/billing-[a-z0-9-]+-lokeshsattinenis-projects\.vercel\.app$/.test(origin) ||
-        /^https:\/\/billing-snowy-three(-[a-z0-9-]+)?\.vercel\.app$/.test(origin)) {
-      return callback(null, true);
-    }
-
     return callback(new Error(`CORS blocked for unauthorized origin: ${origin}`));
   },
   credentials: true,
@@ -81,6 +93,8 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   optionsSuccessStatus: 200,
 };
+
+app.isOriginAllowed = isOriginAllowed;
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
@@ -92,8 +106,8 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // NoSQL / MongoDB Operator Injection Sanitization
 app.use(sanitizeMongoInput);
 
-// General API Rate Limiting
-app.use('/api', generalLimiter);
+// General Application Rate Limiting across all routes (with or without /api prefix)
+app.use(generalLimiter);
 
 // Request logger for serverless observability
 app.use((req, res, next) => {
@@ -101,20 +115,10 @@ app.use((req, res, next) => {
   next();
 });
 
-let isDbSeeded = false;
-
 // Middleware to ensure DB is connected for serverless invocations
 app.use(async (req, res, next) => {
   try {
     await connectDB();
-    if (!isDbSeeded) {
-      isDbSeeded = true;
-      try {
-        await autoSeedUsers();
-      } catch (e) {
-        console.log('Seed note:', e.message);
-      }
-    }
     next();
   } catch (err) {
     console.error('Database connection error in middleware:', err);

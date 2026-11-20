@@ -10,8 +10,10 @@ const protect = async (req, res, next) => {
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
-    } else if (req.query && req.query.token && req.method === 'GET') {
-      token = req.query.token;
+    } else if (req.query && req.query.token) {
+      return res.status(401).json({
+        message: 'Security policy: Token in query parameters (?token=) is disabled. Provide Authorization header or use a short-lived download ticket.',
+      });
     }
 
     if (!token) {

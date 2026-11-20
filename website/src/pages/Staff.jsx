@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { staffAPI } from '../services/api';
 import { formatCurrency, formatDate, numberToWords, useToast, Toast, playSuccessSound } from '../utils/helpers';
 import { useLanguage } from '../context/LanguageContext';
@@ -19,10 +19,13 @@ import {
   RefreshIcon,
   PrintIcon,
 } from '../components/Icons';
-import IceTracker from '../components/operations/IceTracker';
-import WastageTracker from '../components/operations/WastageTracker';
-import DailyNetSummary from '../components/operations/DailyNetSummary';
-import StaffAttendanceCalendar from '../components/StaffAttendanceCalendar';
+import { lazyWithRetry } from '../utils/chunkLoadRecovery';
+
+// Lazy-loaded secondary operations tabs with stale chunk recovery & reload loop prevention
+const IceTracker = lazyWithRetry(() => import('../components/operations/IceTracker'));
+const WastageTracker = lazyWithRetry(() => import('../components/operations/WastageTracker'));
+const DailyNetSummary = lazyWithRetry(() => import('../components/operations/DailyNetSummary'));
+const StaffAttendanceCalendar = lazyWithRetry(() => import('../components/StaffAttendanceCalendar'));
 import { SkeletonTable } from '../components/Skeleton';
 import ganeshaImg from '../assets/ganesha.jpg';
 import durgaImg from '../assets/durga.jpg';
@@ -2026,21 +2029,35 @@ export default function Staff() {
       )}
 
       {/* TAB 3: ICE BLOCKS USED TRACKER */}
-      {activeTab === 'ice' && <IceTracker />}
+      {activeTab === 'ice' && (
+        <Suspense fallback={<div className="spinner" style={{ minHeight: '200px' }} />}>
+          <IceTracker />
+        </Suspense>
+      )}
 
       {/* TAB 4: PRAWN HEAD WASTAGE SALES TRACKER */}
-      {activeTab === 'wastage' && <WastageTracker />}
+      {activeTab === 'wastage' && (
+        <Suspense fallback={<div className="spinner" style={{ minHeight: '200px' }} />}>
+          <WastageTracker />
+        </Suspense>
+      )}
 
       {/* TAB 5: CONSOLIDATED DAILY OPERATIONS & NET SUMMARY */}
-      {activeTab === 'net' && <DailyNetSummary />}
+      {activeTab === 'net' && (
+        <Suspense fallback={<div className="spinner" style={{ minHeight: '200px' }} />}>
+          <DailyNetSummary />
+        </Suspense>
+      )}
 
       {/* TAB 6: WORKER ATTENDANCE CALENDAR */}
       {activeTab === 'calendar' && (
-        <StaffAttendanceCalendar
-          entries={entries}
-          staffNames={staffNames}
-          defaultWorker={selectedWorkerFilter}
-        />
+        <Suspense fallback={<div className="spinner" style={{ minHeight: '200px' }} />}>
+          <StaffAttendanceCalendar
+            entries={entries}
+            staffNames={staffNames}
+            defaultWorker={selectedWorkerFilter}
+          />
+        </Suspense>
       )}
 
       {/* MODAL: SINGLE WORK ENTRY (CREATE / EDIT) */}

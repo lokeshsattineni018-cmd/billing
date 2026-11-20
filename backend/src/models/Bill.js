@@ -115,6 +115,12 @@ const billSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  sharedAt: {
+    type: Date,
+  },
+  printedAt: {
+    type: Date,
+  },
   voidReason: {
     type: String,
     default: '',
@@ -165,5 +171,6 @@ billSchema.index({ paymentStatus: 1, isVoided: 1, date: -1 });
 billSchema.index({ isDeleted: 1 });
 billSchema.index({ isDeleted: 1, date: -1, billNo: -1 });
 billSchema.index({ isDeleted: 1, isVoided: 1, date: -1 });
+billSchema.index({ isDeleted: 1, isVoided: 1, companyName: 1 });
 
 module.exports = mongoose.model('Bill', billSchema);

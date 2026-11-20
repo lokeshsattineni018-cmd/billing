@@ -219,9 +219,9 @@ function ProfitLossWidget() {
             onClick={handleRefresh}
             disabled={refreshing || loading}
             title="Refresh P&L calculation"
-            style={{ height: '34px', width: '34px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ minHeight: '48px', minWidth: '48px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <RefreshIcon size={14} color="#0b5394" spinning={refreshing || loading} />
+            <RefreshIcon size={16} color="#0b5394" spinning={refreshing || loading} />
           </button>
 
           <div
@@ -229,10 +229,10 @@ function ProfitLossWidget() {
             style={{
               display: 'flex',
               background: '#f1f5f9',
-              padding: '3px',
-              borderRadius: '10px',
+              padding: '6px',
+              borderRadius: '12px',
               border: '1px solid #e2e8f0',
-              gap: '2px',
+              gap: '8px',
               flexWrap: 'wrap',
             }}
           >
@@ -254,8 +254,9 @@ function ProfitLossWidget() {
                     background: active ? '#ffffff' : 'transparent',
                     border: 'none',
                     borderRadius: '8px',
-                    padding: '6px 12px',
-                    fontSize: '0.78rem',
+                    padding: '10px 16px',
+                    minHeight: '48px',
+                    fontSize: '0.82rem',
                     fontWeight: active ? 800 : 600,
                     color: active ? '#0b5394' : '#64748b',
                     cursor: 'pointer',

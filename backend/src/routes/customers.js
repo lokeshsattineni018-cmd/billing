@@ -21,7 +21,6 @@ router.get('/', protect, restrictTo('admin', 'owner'), async (req, res) => {
         $match: {
           companyName: { $exists: true, $ne: null, $nin: ['', 'null', 'undefined'] },
           isVoided: { $ne: true },
-      isDeleted: { $ne: true },
           isDeleted: { $ne: true },
         },
       },
@@ -277,7 +276,6 @@ router.get('/export/csv', protect, restrictTo('owner', 'admin'), async (req, res
         $match: {
           companyName: { $exists: true, $ne: null, $nin: ['', 'null', 'undefined'] },
           isVoided: { $ne: true },
-      isDeleted: { $ne: true },
           isDeleted: { $ne: true },
         },
       },

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { isChunkLoadError, ChunkLoadFallback } from '../utils/chunkLoadRecovery';
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
@@ -28,6 +29,10 @@ export default class ErrorBoundary extends Component {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
+      }
+
+      if (isChunkLoadError(this.state.error)) {
+        return <ChunkLoadFallback onReload={() => window.location.reload()} />;
       }
 
       return (

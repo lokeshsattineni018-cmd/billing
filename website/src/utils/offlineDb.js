@@ -21,6 +21,10 @@ export const STORES = {
 
 let dbInstance = null;
 
+export function setDbInstance(db) {
+  dbInstance = db;
+}
+
 export function openOfflineDB() {
   if (dbInstance) return Promise.resolve(dbInstance);
 
@@ -410,6 +414,116 @@ export async function getMasterCache(key) {
     });
   } catch (e) {
     return null;
+  }
+}
+
+/**
+ * Generate user- and role-scoped cache key to prevent cross-account cache leaks
+ */
+export function getUserCacheKey(baseKey, user) {
+  const userId = user?._id || user?.id || 'anon';
+  const role = user?.role || 'guest';
+  return `${baseKey}_${userId}_${role}`;
+}
+
+/**
+ * Delete a specific key from IndexedDB masterCache
+ */
+export async function deleteMasterCache(key) {
+  try {
+    const db = await openOfflineDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORES.MASTER_CACHE, 'readwrite');
+      const store = tx.objectStore(STORES.MASTER_CACHE);
+      const req = store.delete(key);
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => reject(req.error);
+    });
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Clear all or matching keys in masterCache
+ * If prefix is supplied, only keys starting with that prefix are deleted.
+ * If no prefix is supplied, clears the entire masterCache store.
+ */
+export async function clearMasterCache(prefix = null) {
+  try {
+    const db = await openOfflineDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORES.MASTER_CACHE, 'readwrite');
+      const store = tx.objectStore(STORES.MASTER_CACHE);
+
+      if (!prefix) {
+        const req = store.clear();
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+        return;
+      }
+
+      const req = store.openCursor();
+      req.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor) {
+          if (String(cursor.key).startsWith(prefix)) {
+            cursor.delete();
+          }
+          cursor.continue();
+        } else {
+          resolve(true);
+        }
+      };
+      req.onerror = () => reject(req.error);
+    });
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Invalidate cached bills, history and dashboard data after any bill mutation
+ * (create, edit, payment-status, void, delete)
+ */
+export async function invalidateBillCaches(reason = 'mutation') {
+  const targetPrefixes = [
+    'historyPage1',
+    'dashboardSummary',
+    'dashboardAnalytics',
+    'dashboardCombined',
+  ];
+
+  try {
+    const db = await openOfflineDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORES.MASTER_CACHE, 'readwrite');
+      const store = tx.objectStore(STORES.MASTER_CACHE);
+      const req = store.openCursor();
+      req.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor) {
+          const keyStr = String(cursor.key);
+          const shouldDelete = targetPrefixes.some(
+            (p) => keyStr === p || keyStr.startsWith(`${p}_`)
+          );
+          if (shouldDelete) {
+            cursor.delete();
+          }
+          cursor.continue();
+        } else {
+          resolve(true);
+        }
+      };
+      req.onerror = () => reject(req.error);
+    });
+  } catch {
+    // ignore
+  }
+
+  // Notify active components to revalidate
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+    window.dispatchEvent(new CustomEvent('vda-cache-invalidated', { detail: { reason } }));
   }
 }
 

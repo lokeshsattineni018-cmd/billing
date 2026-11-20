@@ -22,6 +22,8 @@ const activityLogSchema = new mongoose.Schema({
       'CREATE_BILL',
       'EDIT_BILL',
       'VOID_BILL',
+      'DELETE_BILL',
+      'RESTORE_BILL',
       'UPDATE_PAYMENT_STATUS',
       'SET_CREDIT_LIMIT',
       'UPDATE_SETTINGS',

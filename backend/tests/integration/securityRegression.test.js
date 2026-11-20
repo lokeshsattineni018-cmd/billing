@@ -5,8 +5,8 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 
 process.env.NODE_ENV = 'test';
-process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/srsf_test_suite';
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_key_production_readiness_32b';
+process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/srsf_test_suite';
+process.env.JWT_SECRET = 'test_jwt_secret_key_production_readiness_32b';
 
 const app = require('../../src/app');
 const User = require('../../src/models/User');
@@ -68,12 +68,20 @@ describe('Security Regression Tests (CORS, IDOR & Access Control)', () => {
       assert.strictEqual(res.headers['access-control-allow-credentials'], 'true');
     });
 
-    it('allows requests from local development frontend', async () => {
+    it('allows requests from local development frontend in non-production mode', async () => {
       const res = await request(app)
         .get('/api/health')
         .set('Origin', 'http://localhost:5173');
 
       assert.strictEqual(res.headers['access-control-allow-origin'], 'http://localhost:5173');
+    });
+
+    it('blocks localhost origins when NODE_ENV is production, but allows production URL', () => {
+      assert.strictEqual(app.isOriginAllowed('http://localhost:5173', 'production'), false);
+      assert.strictEqual(app.isOriginAllowed('http://localhost:3000', 'production'), false);
+      assert.strictEqual(app.isOriginAllowed('http://127.0.0.1:5173', 'production'), false);
+      assert.strictEqual(app.isOriginAllowed('https://billing-snowy-three.vercel.app', 'production'), true);
+      assert.strictEqual(app.isOriginAllowed('http://localhost:5173', 'development'), true);
     });
 
     it('allows requests from Vercel preview deployment pattern', async () => {
@@ -91,6 +99,20 @@ describe('Security Regression Tests (CORS, IDOR & Access Control)', () => {
 
       // Unauthorized origin must NOT be reflected in CORS allow header
       assert.notStrictEqual(res.headers['access-control-allow-origin'], 'https://malicious-attacker-site.com');
+    });
+  });
+
+  describe('General Rate Limiter App Root Coverage', () => {
+    it('applies general rate limiter headers to non-/api routes (e.g. /health)', async () => {
+      const res = await request(app).get('/health');
+      assert.ok(res.headers['ratelimit-limit'], 'RateLimit-Limit header must be present on non-/api routes');
+      assert.strictEqual(res.headers['ratelimit-limit'], '400');
+    });
+
+    it('applies general rate limiter headers to /api routes', async () => {
+      const res = await request(app).get('/api/health');
+      assert.ok(res.headers['ratelimit-limit'], 'RateLimit-Limit header must be present on /api routes');
+      assert.strictEqual(res.headers['ratelimit-limit'], '400');
     });
   });
 

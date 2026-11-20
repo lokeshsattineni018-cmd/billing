@@ -23,6 +23,9 @@ export default function Login() {
 
     try {
       await login(email, password);
+      // Prefetch primary operational screens into browser cache immediately after login
+      import('./NewBill');
+      import('./BillHistory');
     } catch (err) {
       const msg = err.response?.data?.error || err.response?.data?.message || err.message || 'Login failed. Please try again.';
       setError(msg);
@@ -105,12 +108,14 @@ export default function Login() {
                 onClick={() => setShowPassword(!showPassword)}
                 style={{
                   position: 'absolute',
-                  right: '12px',
+                  right: '4px',
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
                   color: '#64748b',
-                  padding: '4px',
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  padding: '12px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

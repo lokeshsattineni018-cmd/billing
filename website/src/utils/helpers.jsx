@@ -192,6 +192,14 @@ Thank you for your business!`;
 
   if (showToast) showToast('Preparing Invoice PDF for WhatsApp...');
 
+  // Hook share event on backend to track sharedAt timestamp
+  if (bill._id && !String(bill._id).startsWith('offline_')) {
+    fetch(`${window.location.origin}/api/bills/${bill._id}/mark-shared`, {
+      method: 'POST',
+      headers: fetchHeaders,
+    }).catch(() => {});
+  }
+
   try {
     const response = await fetch(pdfUrl, { headers: fetchHeaders });
     if (!response.ok) throw new Error('PDF fetch failed');

@@ -44,6 +44,8 @@ export default function Settings() {
     pushNotificationsEnabled: true,
     smtpUser: '',
     smtpConfigured: false,
+    smtpDecryptionFailed: false,
+    smtpWarning: '',
     invoicePrefix: 'VDA/',
   });
   const [newSmtpPass, setNewSmtpPass] = useState('');
@@ -133,6 +135,8 @@ export default function Settings() {
         pushNotificationsEnabled: response.data.pushNotificationsEnabled !== undefined ? response.data.pushNotificationsEnabled : true,
         smtpUser: response.data.smtpUser || '',
         smtpConfigured: !!response.data.smtpConfigured,
+        smtpDecryptionFailed: !!response.data.smtpDecryptionFailed,
+        smtpWarning: response.data.smtpWarning || '',
         invoicePrefix: response.data.invoicePrefix || 'VDA/',
       });
       setNewSmtpPass('');
@@ -883,7 +887,20 @@ export default function Settings() {
 
                 <div className="form-group" style={{ marginBottom: '6px' }}>
                   <label className="form-label" style={{ fontWeight: 700 }}>Gmail App Password</label>
-                  {form.smtpConfigured && !newSmtpPass ? (
+                  {form.smtpDecryptionFailed ? (
+                    <div style={{ marginBottom: '10px', padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#dc2626', marginBottom: '8px' }}>
+                        ⚠️ {form.smtpWarning || 'SMTP password could not be decrypted (encryption key changed or invalid). Please re-enter your SMTP password.'}
+                      </div>
+                      <input
+                        type="password"
+                        className="form-input"
+                        value={newSmtpPass.trim()}
+                        onChange={(e) => setNewSmtpPass(e.target.value)}
+                        placeholder="Re-enter 16-letter app password"
+                      />
+                    </div>
+                  ) : form.smtpConfigured && !newSmtpPass ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px' }}>
                       <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#16a34a' }}>✓ Password saved securely</span>
                       <button

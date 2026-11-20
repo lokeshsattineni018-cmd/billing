@@ -175,7 +175,7 @@ export default function CustomerDirectory() {
           <button
             type="button"
             className="btn btn-secondary"
-            onClick={() => window.open(customersAPI.exportCSVUrl(), '_blank')}
+            onClick={() => customersAPI.exportCSV()}
             style={{ fontWeight: 700, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
             title="Export complete customer directory as CSV"
           >
@@ -223,8 +223,34 @@ export default function CustomerDirectory() {
       {loading ? (
         <div className="spinner" style={{ minHeight: '300px' }}></div>
       ) : customers.length === 0 ? (
-        <div className="card" style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-          No customer records found matching your search.
+        <div className="card" style={{ padding: '48px 20px', textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '12px', opacity: 0.4 }}>👥</div>
+          <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            No customer records found
+          </p>
+          {search && (
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+              Try adjusting your search
+            </p>
+          )}
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {search && (
+              <button
+                className="btn btn-secondary"
+                style={{ minHeight: '44px', padding: '10px 20px', fontSize: '0.9rem' }}
+                onClick={() => { setSearch(''); loadCustomers(''); }}
+              >
+                Clear Filters
+              </button>
+            )}
+            <button
+              className="btn btn-primary"
+              style={{ minHeight: '44px', padding: '10px 20px', fontSize: '0.9rem' }}
+              onClick={() => navigate('/new-bill')}
+            >
+              + New Invoice
+            </button>
+          </div>
         </div>
       ) : (
         <div className="card" style={{ padding: '0', overflow: 'hidden', borderRadius: '16px', border: '1px solid rgba(226, 232, 240, 0.9)' }}>

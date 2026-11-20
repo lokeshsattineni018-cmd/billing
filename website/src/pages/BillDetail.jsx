@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { billsAPI, settingsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -10,7 +10,7 @@ import ShareModal from '../components/ShareModal';
 import ganeshaImg from '../assets/ganesha.jpg';
 import durgaImg from '../assets/durga.jpg';
 import ramDarbarImg from '../assets/ram_darbar.jpg';
-import { getOfflineBill, saveOfflineBill, getMasterCache } from '../utils/offlineDb';
+import { getOfflineBill, saveOfflineBill, getMasterCache, invalidateBillCaches } from '../utils/offlineDb';
 import { flushSyncQueue } from '../services/syncManager';
 import { useLanguage } from '../context/LanguageContext';
 import ConfirmModal from '../components/ConfirmModal';
@@ -49,28 +49,36 @@ export default function BillDetail() {
   const canSeeSales = user?.role === 'owner' || user?.role === 'admin';
   const canUpdateStatus = user?.role === 'owner' || user?.role === 'admin';
   const { lang, t } = useLanguage();
+  const autoprintTimerRef = useRef(null);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
     loadBill();
     loadSettings();
 
     const handleSyncComplete = () => {
-      loadBill();
+      if (isMountedRef.current) loadBill();
     };
     window.addEventListener('vda-sync-completed', handleSyncComplete);
-    return () => window.removeEventListener('vda-sync-completed', handleSyncComplete);
+
+    return () => {
+      isMountedRef.current = false;
+      if (autoprintTimerRef.current) clearTimeout(autoprintTimerRef.current);
+      window.removeEventListener('vda-sync-completed', handleSyncComplete);
+    };
   }, [id]);
 
   const loadSettings = async () => {
     try {
       const response = await settingsAPI.get();
-      if (response.data) {
+      if (response.data && isMountedRef.current) {
         setBusinessSettings(response.data);
       }
     } catch (error) {
       try {
         const cached = await getMasterCache('settings');
-        if (cached) setBusinessSettings(cached);
+        if (cached && isMountedRef.current) setBusinessSettings(cached);
       } catch (e) {}
       if (import.meta.env.DEV) { console.error('Failed to load settings:', error); }
     }
@@ -79,8 +87,14 @@ export default function BillDetail() {
   const checkAutoprint = () => {
     const searchParams = new URLSearchParams(location.search);
     if (searchParams.get('autoprint') === 'true') {
-      setTimeout(() => {
-        window.print();
+      if (autoprintTimerRef.current) clearTimeout(autoprintTimerRef.current);
+      autoprintTimerRef.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          if (id && !String(id).startsWith('offline_')) {
+            billsAPI.markPrinted(id).catch(() => {});
+          }
+          window.print();
+        }
       }, 450);
     }
   };
@@ -89,7 +103,7 @@ export default function BillDetail() {
     try {
       if (id && id.startsWith('offline_')) {
         const offlineData = await getOfflineBill(id);
-        if (offlineData) {
+        if (offlineData && isMountedRef.current) {
           setBill(offlineData);
           checkAutoprint();
           setLoading(false);
@@ -98,13 +112,15 @@ export default function BillDetail() {
       }
 
       const response = await billsAPI.getById(id);
-      setBill(response.data);
-      saveOfflineBill({ ...response.data, isOffline: false, synced: true }).catch(() => {});
-      checkAutoprint();
+      if (isMountedRef.current) {
+        setBill(response.data);
+        saveOfflineBill({ ...response.data, isOffline: false, synced: true }).catch(() => {});
+        checkAutoprint();
+      }
     } catch (error) {
       try {
         const cached = await getOfflineBill(id);
-        if (cached) {
+        if (cached && isMountedRef.current) {
           setBill(cached);
           checkAutoprint();
           setLoading(false);
@@ -113,7 +129,9 @@ export default function BillDetail() {
       } catch (e) {}
       if (import.meta.env.DEV) { console.error('Failed to load invoice:', error); }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -141,6 +159,9 @@ export default function BillDetail() {
   }, []);
 
   const handlePrint = () => {
+    if (bill?._id && !String(bill._id).startsWith('offline_')) {
+      billsAPI.markPrinted(bill._id).catch(() => {});
+    }
     window.print();
   };
 
@@ -149,10 +170,8 @@ export default function BillDetail() {
     setDownloadingPdf(true);
     showToast('Generating official PDF...', 'info');
     try {
-      const pdfUrl = billsAPI.getPDF(id);
-      const response = await fetch(pdfUrl);
-      if (!response.ok) throw new Error('PDF generation failed');
-      const blob = await response.blob();
+      const response = await billsAPI.getPDFBlob(id);
+      const blob = response.data;
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -193,6 +212,7 @@ export default function BillDetail() {
     try {
       const response = await billsAPI.updatePaymentStatus(id, newStatus);
       setBill(response.data);
+      invalidateBillCaches('payment').catch(() => {});
       showToast(`Invoice #${bill.billNo} marked as ${newStatus}!`);
     } catch (error) {
       if (import.meta.env.DEV) { console.error('Failed to update status:', error); }
@@ -209,6 +229,7 @@ export default function BillDetail() {
       const res = await billsAPI.void(id, voidReason);
       setBill(res.data.bill);
       setShowVoidModal(false);
+      invalidateBillCaches('void').catch(() => {});
       showToast(
         lang === 'te'
           ? `ఇన్‌వాయిస్ #${bill.billNo} రద్దు చేయబడింది`
@@ -227,6 +248,7 @@ export default function BillDetail() {
     setDeleting(true);
     try {
       const res = await billsAPI.delete(id, confirmationCode, reason);
+      invalidateBillCaches('delete').catch(() => {});
       showToast(
         res.data?.message ||
           (lang === 'te'
@@ -675,7 +697,7 @@ export default function BillDetail() {
         </div>
 
         {/* Grand Total */}
-        <div className="invoice-total-section">
+        <div className="invoice-total-section print-keep-together">
           <div className="invoice-total-box" style={{ background: '#f8fafc', border: '1px solid var(--border-color)', padding: '16px 20px', borderRadius: '10px' }}>
             <div className="invoice-total-label" style={{ fontSize: '0.85rem' }}>TOTAL AMOUNT</div>
             <div className="invoice-total-value" style={{ fontSize: '1.75rem', fontWeight: 800, color: bill.isVoided ? '#dc2626' : '#0b5394', textDecoration: bill.isVoided ? 'line-through' : 'none' }}>
@@ -996,7 +1018,7 @@ export default function BillDetail() {
           </table>
 
           {/* 8. TAX BREAKDOWN TABLE (Vehicle No. replacing Taxable Value) */}
-          <div style={{ borderBottom: '1.5px solid #0b5394' }}>
+          <div className="print-keep-together" style={{ borderBottom: '1.5px solid #0b5394' }}>
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1.2fr 1fr 1fr 1fr',
@@ -1049,7 +1071,7 @@ export default function BillDetail() {
           </div>
 
           {/* 9. GRAND TOTAL HIGHLIGHT ROW */}
-          <div style={{
+          <div className="print-keep-together" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 125px',
             borderBottom: '1.5px solid #0b5394',
@@ -1065,7 +1087,7 @@ export default function BillDetail() {
           </div>
 
           {/* 10. BANK PAYMENT DETAILS & SIGNATURE */}
-          <div style={{
+          <div className="print-keep-together" style={{
             display: 'grid',
             gridTemplateColumns: '1.4fr 1fr',
             fontSize: '0.74rem',

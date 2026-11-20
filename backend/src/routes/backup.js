@@ -63,6 +63,7 @@ router.get('/daily-summary', async (req, res) => {
     const bills = await Bill.find({
       createdAt: { $gte: startOfDay, $lt: endOfDay },
       isVoided: { $ne: true },
+      isDeleted: { $ne: true },
     }).sort({ billNo: 1 }).lean();
 
     const totalRevenue = bills.reduce((sum, b) => sum + (b.grandTotal || b.total || 0), 0);
@@ -115,6 +116,7 @@ router.post('/send-now', protect, restrictTo('admin', 'owner'), async (req, res)
     const bills = await Bill.find({
       createdAt: { $gte: startOfDay, $lt: endOfDay },
       isVoided: { $ne: true },
+      isDeleted: { $ne: true },
     }).sort({ billNo: 1 }).lean();
 
     const totalRevenue = bills.reduce((sum, b) => sum + (b.grandTotal || b.total || 0), 0);

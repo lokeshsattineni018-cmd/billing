@@ -372,7 +372,7 @@ export default function PublicInvoice() {
         </div>
 
         {/* 7. Footer: Words, Bank Details, Signature */}
-        <div className="invoice-footer-grid">
+        <div className="invoice-footer-grid print-keep-together">
           <div className="invoice-footer-left">
             <div className="invoice-words-row">
               <span className="invoice-words-label">Rs. (in words):</span>
