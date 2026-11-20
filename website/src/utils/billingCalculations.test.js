@@ -120,6 +120,9 @@ describe('Frontend Billing Calculations Unit Tests (Vitest)', () => {
 
       expect(totals.itemsSubtotal).toBe(93705);
       expect(totals.iceAmount).toBe(1200);
+      expect(totals.iceQuantityNum).toBe(10);
+      expect(totals.iceRateNum).toBe(120);
+      expect(totals.hasIce).toBe(true);
       expect(totals.subtotal).toBe(94905); // 93705 + 1200
       expect(totals.totalTax).toBe(4735.26); // 2367.63 * 2
       expect(totals.grandTotal).toBe(99640.26); // 94905 + 4735.26
@@ -130,6 +133,9 @@ describe('Frontend Billing Calculations Unit Tests (Vitest)', () => {
       const totals = calculateBillTotals({ items: [], ice: null });
       expect(totals.itemsSubtotal).toBe(0);
       expect(totals.iceAmount).toBe(0);
+      expect(totals.iceQuantityNum).toBe(0);
+      expect(totals.iceRateNum).toBe(0);
+      expect(totals.hasIce).toBe(false);
       expect(totals.subtotal).toBe(0);
       expect(totals.totalTax).toBe(0);
       expect(totals.grandTotal).toBe(0);

@@ -601,7 +601,16 @@ export default function NewBill() {
     showToast('Draft cleared');
   };
 
-  const { subtotal, totalTax, grandTotal, totalWeight } = useMemo(() => {
+  const {
+    subtotal,
+    totalTax,
+    grandTotal,
+    totalWeight,
+    hasIce,
+    iceAmount,
+    iceQuantityNum,
+    iceRateNum,
+  } = useMemo(() => {
     return calculateBillTotals({
       items,
       ice,

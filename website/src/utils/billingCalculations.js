@@ -137,6 +137,9 @@ export function calculateBillTotals({
   return {
     itemsSubtotal,
     iceAmount,
+    iceQuantityNum: iceQty,
+    iceRateNum: iceRate,
+    hasIce,
     subtotal,
     totalTax,
     grandTotal,
