@@ -1,53 +1,73 @@
 /**
- * Voice Billing Speech Parser for Seafood / Prawn Billing
- * Handles Telugu (te-IN) and English (en-IN / en-US) speech transcripts
+ * Advanced Multi-Item Voice Billing Speech Parser for Seafood & Prawn Agencies
+ * Supports:
+ * - Multi-item dictation in a single sentence
+ * - Telugu (te-IN) and English (en-IN / en-US) spoken numbers and words
+ * - Hands-free voice action commands (Save, Add Item, Clear)
+ * - Ice blocks extraction
  */
 
-const TELUGU_DIGITS = {
-  '౦': '0', '౧': '1', '౨': '2', '౩': '3', '౪': '4',
-  '౫': '5', '౬': '6', '౭': '7', '౮': '8', '౯': '9'
-};
-
-const TELUGU_WORDS_TO_NUM = {
-  'ఒకటి': 1, 'రెండు': 2, 'మూడు': 3, 'నాలుగు': 4, 'ఐదు': 5,
-  'ఆరు': 6, 'ఏడు': 7, 'ఎనిమిది': 8, 'తొమ్మిది': 9, 'పది': 10,
-  'ఇరవై': 20, 'ముప్పై': 30, 'నలభై': 40, 'యాభై': 50,
-  'అరవై': 60, 'డెబ్బై': 70, 'ఎనభై': 80, 'తొంబై': 90, 'వంద': 100
-};
-
-export function normalizeVoiceDigits(rawText = '') {
-  if (!rawText || typeof rawText !== 'string') return '';
-  let text = rawText;
-  for (const [tDigit, aDigit] of Object.entries(TELUGU_DIGITS)) {
-    text = text.replaceAll(tDigit, aDigit);
-  }
-  return text;
-}
+import { normalizeSpokenNumbers } from './teluguNumberParser.js';
 
 /**
- * Parses spoken weighment text into structured bill fields:
- * - partyName: Customer / Company name
- * - count: Prawn count (pieces per kg)
- * - weight: Net weight in KG
- * - rate: Rate per KG in INR
- * - iceQty: Ice blocks quantity
+ * Recognized Voice Commands
  */
-export function parseVoiceBillingText(rawText = '') {
-  const text = normalizeVoiceDigits(rawText).trim();
-  if (!text) {
-    return { partyName: null, count: null, weight: null, rate: null, iceQty: null, rawText: '' };
-  }
+export const VOICE_COMMANDS = {
+  SAVE_BILL: 'SAVE_BILL',
+  ADD_ITEM: 'ADD_ITEM',
+  CLEAR_DRAFT: 'CLEAR_DRAFT',
+};
 
-  // 1. Extract Count: e.g. "40 count" or "40 కౌంట్" or "కౌంట్ 40" or "count 40"
+const COMMAND_PATTERNS = [
+  {
+    type: VOICE_COMMANDS.SAVE_BILL,
+    patterns: [
+      /\b(?:save\s*bill|save\s*and\s*print|save\s*invoice|print\s*bill)\b/i,
+      /(?:సేవ్\s*బిల్|బిల్\s*సేవ్|సేవ్\s*చేయి|సేవ్\s*చెయ్|ప్రింట్\s*బిల్)/i,
+    ],
+  },
+  {
+    type: VOICE_COMMANDS.ADD_ITEM,
+    patterns: [
+      /\b(?:add\s*item|next\s*item|new\s*item)\b/i,
+      /(?:కొత్త\s*ఐటం|మరో\s*ఐటం|ఇంకో\s*ఐటం|తర్వాతి\s*ఐటం)/i,
+    ],
+  },
+  {
+    type: VOICE_COMMANDS.CLEAR_DRAFT,
+    patterns: [
+      /\b(?:clear\s*bill|clear\s*draft|clear\s*all|reset\s*bill)\b/i,
+      /(?:మొత్తం\s*క్లియర్|క్లియర్\s*చేయి|బిల్\s*రద్దు|రద్దు\s*చేయి)/i,
+    ],
+  },
+];
+
+export function detectVoiceCommand(text = '') {
+  if (!text) return null;
+  for (const cmd of COMMAND_PATTERNS) {
+    for (const pat of cmd.patterns) {
+      if (pat.test(text)) {
+        return cmd.type;
+      }
+    }
+  }
+  return null;
+}
+
+function parseSingleItemSegment(segment = '') {
+  const text = segment.trim();
+  if (!text) return null;
+
+  // 1. Count
   let count = null;
   const countMatch =
-    text.match(/(\d+)\s*(?:count|కౌంట్|కౌంటు|pieces)/i) ||
+    text.match(/(\d+)\s*(?:count|కౌంట్|కౌంటు|pieces|పీసెస్)/i) ||
     text.match(/(?:count|కౌంట్|కౌంటు)\s*:?\s*(\d+)/i);
   if (countMatch) {
     count = countMatch[1];
   }
 
-  // 2. Extract Weight: e.g. "85.5 kg" or "85 కిలోలు" or "బరువు 85" or "weight 85"
+  // 2. Weight
   let weight = null;
   const weightMatch =
     text.match(/(\d+(?:\.\d+)?)\s*(?:kg|kgs|kilo|kilos|కిలోలు|కిలో|కేజీలు|కేజీ)/i) ||
@@ -56,51 +76,102 @@ export function parseVoiceBillingText(rawText = '') {
     weight = weightMatch[1];
   }
 
-  // 3. Extract Rate: e.g. "rate 420" or "రేటు 420" or "420 rate" or "ధర 420"
+  // 3. Rate
   let rate = null;
   const rateMatch =
     text.match(/(?:rate|రేటు|రేట్|ధర|price)\s*:?\s*(\d+(?:\.\d+)?)/i) ||
-    text.match(/(\d+(?:\.\d+)?)\s*(?:rate|రేటు|రేట్|rupees)/i);
+    text.match(/(\d+(?:\.\d+)?)\s*(?:rate|రేటు|రేట్|రూపాయలు|rupees)/i);
   if (rateMatch) {
     rate = rateMatch[1];
   }
 
-  // 4. Extract Ice Quantity: e.g. "2 ice" or "2 ఐస్" or "ice 2"
+  if (count || weight || rate) {
+    return { count, weight, rate };
+  }
+  return null;
+}
+
+export function parseAdvancedVoiceBillingText(rawText = '') {
+  if (!rawText || typeof rawText !== 'string') {
+    return {
+      command: null,
+      partyName: null,
+      items: [],
+      iceQty: null,
+      rawText: '',
+    };
+  }
+
+  const command = detectVoiceCommand(rawText);
+  const normalizedText = normalizeSpokenNumbers(rawText);
+
+  // Extract Ice
   let iceQty = null;
   const iceMatch =
-    text.match(/(\d+)\s*(?:ice|ఐస్|మంచు|blocks|బ్లాక్స్)/i) ||
-    text.match(/(?:ice|ఐస్)\s*:?\s*(\d+)/i);
+    normalizedText.match(/(\d+)\s*(?:ice|ఐస్|మంచు|blocks|బ్లాక్స్)/i) ||
+    normalizedText.match(/(?:ice|ఐస్)\s*:?\s*(\d+)/i);
   if (iceMatch) {
     iceQty = iceMatch[1];
   }
 
-  // 5. Extract Party Name: everything before the first numeric attribute keyword
+  // Extract Party Name
   let partyName = null;
-  const keywordMatch = text.match(/(?:(?:\d+\s*)?(?:count|కౌంట్|కౌంటు|kg|kgs|kilo|కిలోలు|కేజీలు|బరువు|rate|రేటు|రేట్|ధర|ice|ఐస్))/i);
-  let prefix = text;
-  if (keywordMatch && keywordMatch.index !== undefined) {
-    prefix = text.slice(0, keywordMatch.index);
+  const firstItemMatch = normalizedText.match(
+    /(?:(?:\d+\s*)?(?:count|కౌంట్|కౌంటు|kg|kgs|kilo|కిలోలు|కేజీలు|బరువు|rate|రేటు|రేట్|ధర|ice|ఐస్))/i
+  );
+
+  let remainingText = normalizedText;
+  if (firstItemMatch && firstItemMatch.index !== undefined) {
+    const rawPrefix = normalizedText.slice(0, firstItemMatch.index);
+    let cleanedPrefix = rawPrefix
+      .replace(/[,;:\-_.]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    cleanedPrefix = cleanedPrefix
+      .replace(/^(?:to|party|customer|buyer|పేరు|పార్టీ)\s*:?/i, '')
+      .replace(/[.\s,]+$/, '')
+      .trim();
+
+    if (cleanedPrefix && cleanedPrefix.length > 1 && !/^\d+$/.test(cleanedPrefix)) {
+      partyName = cleanedPrefix;
+    }
+
+    remainingText = normalizedText.slice(firstItemMatch.index);
   }
 
-  // Clean punctuation and common spoken fillers
-  let cleanedPrefix = prefix
-    .replace(/[,;:\-_]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const textWithoutIce = remainingText.replace(/(?:\d+\s*)?(?:ice|ఐస్|మంచు|blocks|బ్లాక్స్)\s*(?:\d+)?/gi, '');
 
-  // Strip leading filler words like "To", "Party", "Customer", "పేరు"
-  cleanedPrefix = cleanedPrefix.replace(/^(?:to|party|customer|buyer|పేరు|పార్టీ)\s*:?/i, '').trim();
+  // Multi-item splitting: Unicode & English safe
+  const itemSplitPattern = /(?:(?:^|\s+)(?:and|మళ్లీ|మరియు|ఇంకో|తరువాత|నెక్స్ట్)(?:\s+|$)|[,;]|\.\s+)(?=\s*(?:\d+\s*(?:count|కౌంట్)|(?:count|కౌంట్)))/i;
 
-  if (cleanedPrefix && cleanedPrefix.length > 1) {
-    partyName = cleanedPrefix;
+  let rawSegments = textWithoutIce.split(itemSplitPattern);
+
+  if (rawSegments.length <= 1) {
+    const countSplitRegex = /(?<=\d+\s*(?:rate|రేటు|రేట్|ధర)?\s+)(?=\d+\s*(?:count|కౌంట్)|(?:count|కౌంట్)\s*\d+)/gi;
+    rawSegments = textWithoutIce.split(countSplitRegex);
   }
+
+  const items = [];
+  for (const seg of rawSegments) {
+    const parsedSeg = parseSingleItemSegment(seg);
+    if (parsedSeg && (parsedSeg.count || parsedSeg.weight || parsedSeg.rate)) {
+      items.push(parsedSeg);
+    }
+  }
+
+  const primaryItem = items[0] || {};
 
   return {
+    command,
     partyName,
-    count,
-    weight,
-    rate,
+    items,
+    count: primaryItem.count || null,
+    weight: primaryItem.weight || null,
+    rate: primaryItem.rate || null,
     iceQty,
-    rawText: text,
+    rawText,
+    normalizedText,
   };
 }
+
+export const parseVoiceBillingText = parseAdvancedVoiceBillingText;

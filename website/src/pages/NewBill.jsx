@@ -13,6 +13,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { PrintIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
 import VoiceBillingAssistant from '../components/VoiceBillingAssistant';
+import { findBestMatchingCustomer } from '../utils/fuzzyMatch';
 import { saveOfflineBill, getMasterCache, setMasterCache, getUserCacheKey, invalidateBillCaches } from '../utils/offlineDb';
 import { enqueueShedAction } from '../services/syncManager';
 import { notifyNewBillCreated } from '../utils/notifications';
@@ -557,64 +558,6 @@ export default function NewBill() {
     setIce((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Hands-Free Voice Billing Handler (Admin-Only)
-  const handleApplyVoiceData = useCallback(
-    (parsed) => {
-      if (!parsed) return;
-
-      // 1. Customer / Party Name Matching
-      if (parsed.partyName) {
-        const q = parsed.partyName.toLowerCase().trim();
-        const matched = customersList.find(
-          (c) =>
-            c.companyName?.toLowerCase() === q ||
-            c.companyName?.toLowerCase().includes(q) ||
-            q.includes(c.companyName?.toLowerCase())
-        );
-        if (matched) {
-          handleSelectCustomer(matched);
-        } else {
-          setCompanyName(parsed.partyName);
-        }
-      }
-
-      // 2. Count, Weight, and Rate Row Population
-      if (parsed.count || parsed.weight || parsed.rate) {
-        setItems((prev) => {
-          const next = [...prev];
-          const targetIdx =
-            next.length === 1 && !next[0].quantity && !next[0].rate
-              ? 0
-              : next.length - 1;
-          const current = next[targetIdx];
-          const newCount = parsed.count || current.count || '';
-          const newQty = parsed.weight || current.quantity || '';
-          const newRate = parsed.rate || current.rate || '';
-          const newAmount = calculateItemAmount(newQty, newRate);
-
-          next[targetIdx] = {
-            ...current,
-            count: newCount,
-            quantity: newQty,
-            rate: newRate,
-            amount: newAmount,
-          };
-          return next;
-        });
-      }
-
-      // 3. Ice Quantity Auto-fill
-      if (parsed.iceQty) {
-        setIce((prev) => ({
-          ...prev,
-          quantity: parsed.iceQty,
-          rate: prev.rate || '150',
-        }));
-      }
-    },
-    [customersList, handleSelectCustomer]
-  );
-
   const handleAddItem = useCallback(() => {
     setItems((prev) => [
       ...prev,
@@ -885,6 +828,91 @@ export default function NewBill() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [companyName, customerPhone, items, date, paymentStatus, cgstRate, cgstAmount, sgstRate, sgstAmount, igstAmount, companyGstin]);
 
+  // Advanced Hands-Free Voice Billing & Multi-Item Handler (Admin-Only)
+  const handleApplyVoiceData = useCallback(
+    (parsed) => {
+      if (!parsed) return;
+
+      // 1. Intelligent Fuzzy Customer Matching against directory
+      if (parsed.partyName) {
+        const fuzzyResult = findBestMatchingCustomer(parsed.partyName, customersList, 0.55);
+        if (fuzzyResult.match) {
+          handleSelectCustomer(fuzzyResult.match);
+        } else {
+          setCompanyName(parsed.partyName);
+        }
+      }
+
+      // 2. Multi-Item Row Population
+      const voiceItems =
+        parsed.items && parsed.items.length > 0
+          ? parsed.items
+          : (parsed.count || parsed.weight || parsed.rate)
+            ? [{ count: parsed.count, weight: parsed.weight, rate: parsed.rate }]
+            : [];
+
+      if (voiceItems.length > 0) {
+        setItems((prev) => {
+          const updated = [...prev];
+          const startIdx =
+            updated.length === 1 && !updated[0].quantity && !updated[0].rate
+              ? 0
+              : updated.length;
+
+          voiceItems.forEach((vItem, offset) => {
+            const idx = startIdx + offset;
+            const newCount = vItem.count || '';
+            const newQty = vItem.weight || '';
+            const newRate = vItem.rate || '';
+            const newAmount = calculateItemAmount(newQty, newRate);
+
+            const rowData = {
+              sno: idx + 1,
+              count: newCount,
+              particulars: 'HEAD-ON',
+              hsn: '0306',
+              quantity: newQty,
+              rate: newRate,
+              taxRate: '0',
+              amount: newAmount,
+            };
+
+            if (idx < updated.length) {
+              updated[idx] = { ...updated[idx], ...rowData, sno: idx + 1 };
+            } else {
+              updated.push(rowData);
+            }
+          });
+
+          return updated;
+        });
+      }
+
+      // 3. Ice Quantity Auto-fill
+      if (parsed.iceQty) {
+        setIce((prev) => ({
+          ...prev,
+          quantity: parsed.iceQty,
+          rate: prev.rate || '150',
+        }));
+      }
+    },
+    [customersList, handleSelectCustomer]
+  );
+
+  const handleVoiceCommand = useCallback(
+    (command) => {
+      if (command === 'SAVE_BILL') {
+        handleSave('save');
+      } else if (command === 'ADD_ITEM') {
+        handleAddItem();
+      } else if (command === 'CLEAR_DRAFT') {
+        handleClearDraft();
+      }
+    },
+    [handleSave, handleAddItem, handleClearDraft]
+  );
+
   const matchingCustomers = useMemo(() => {
     if (!companyName || !companyName.trim() || customersList.length === 0) return [];
     const q = companyName.toLowerCase();
@@ -948,9 +976,11 @@ export default function NewBill() {
         {isAdmin && (
           <VoiceBillingAssistant
             isAdmin={isAdmin}
+            customersList={customersList}
             currentLang={lang}
             showToast={showToast}
             onApplyVoiceData={handleApplyVoiceData}
+            onVoiceCommand={handleVoiceCommand}
           />
         )}
 

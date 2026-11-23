@@ -1,34 +1,46 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { parseVoiceBillingText } from '../utils/voiceBillingParser';
+import { parseAdvancedVoiceBillingText, VOICE_COMMANDS } from '../utils/voiceBillingParser.js';
+import { findBestMatchingCustomer } from '../utils/fuzzyMatch.js';
 
 /**
- * Hands-Free Voice Billing Assistant (Admin-Only)
- * Supports real-time speech-to-text in Telugu (te-IN) and English (en-IN)
+ * Advanced Hands-Free Voice Billing Suite (Admin-Only)
+ * Features:
+ * - Multi-item dictation in a single sentence
+ * - Continuous Scale Mode (Always-listening for weighing batches)
+ * - Text-To-Speech Voice Readback confirmation (Telugu & English)
+ * - Intelligent Fuzzy Customer Name Matching
+ * - Voice Commands (Save Bill, Add Item, Clear)
  */
 export default function VoiceBillingAssistant({
   isAdmin,
+  customersList = [],
   onApplyVoiceData,
+  onVoiceCommand,
   currentLang = 'en',
   showToast,
 }) {
-  // Strict admin-only access check
   if (!isAdmin) return null;
 
   const [isListening, setIsListening] = useState(false);
   const [voiceLang, setVoiceLang] = useState(currentLang === 'te' ? 'te-IN' : 'en-IN');
+  const [isContinuousScaleMode, setIsContinuousScaleMode] = useState(false);
+  const [isVoiceReadbackOn, setIsVoiceReadbackOn] = useState(true);
+
   const [transcript, setTranscript] = useState('');
   const [parsedPreview, setParsedPreview] = useState(null);
+  const [fuzzyMatchInfo, setFuzzyMatchInfo] = useState(null);
   const [isSupported, setIsSupported] = useState(true);
 
   const recognitionRef = useRef(null);
+  const continuousModeRef = useRef(isContinuousScaleMode);
+  continuousModeRef.current = isContinuousScaleMode;
 
-  // Sync default voice language when user switches app language
   useEffect(() => {
     setVoiceLang(currentLang === 'te' ? 'te-IN' : 'en-IN');
   }, [currentLang]);
 
   // Audio tone helper for hands-free audio confirmation
-  const playChime = useCallback((freq = 580, duration = 180) => {
+  const playTone = useCallback((freq = 580, duration = 180) => {
     try {
       if (navigator.vibrate) navigator.vibrate(100);
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -43,12 +55,21 @@ export default function VoiceBillingAssistant({
       osc.start();
       osc.stop(audioCtx.currentTime + duration / 1000);
       setTimeout(() => audioCtx.close(), duration + 100);
-    } catch {
-      // AudioContext not allowed before user gesture
-    }
+    } catch {}
   }, []);
 
-  // Initialize Web Speech API
+  // Text-to-Speech voice confirmation readback
+  const speakReadback = useCallback((text, langCode = 'te-IN') => {
+    if (!isVoiceReadbackOn || !('speechSynthesis' in window) || !text) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = langCode;
+      utterance.rate = 1.05;
+      window.speechSynthesis.speak(utterance);
+    } catch {}
+  }, [isVoiceReadbackOn]);
+
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -63,7 +84,7 @@ export default function VoiceBillingAssistant({
 
     recognition.onstart = () => {
       setIsListening(true);
-      playChime(440, 100);
+      playTone(440, 100);
     };
 
     recognition.onresult = (event) => {
@@ -82,16 +103,53 @@ export default function VoiceBillingAssistant({
       setTranscript(activeText);
 
       if (activeText.trim()) {
-        const parsed = parseVoiceBillingText(activeText);
+        const parsed = parseAdvancedVoiceBillingText(activeText);
         setParsedPreview(parsed);
 
+        // Run fuzzy customer matching
+        if (parsed.partyName && customersList.length > 0) {
+          const matchResult = findBestMatchingCustomer(parsed.partyName, customersList);
+          setFuzzyMatchInfo(matchResult);
+        } else {
+          setFuzzyMatchInfo(null);
+        }
+
+        // On complete final phrase:
         if (finalTranscript.trim()) {
-          playChime(880, 200);
+          playTone(880, 200);
+
+          // 1. Check Voice Command
+          if (parsed.command) {
+            if (onVoiceCommand) onVoiceCommand(parsed.command);
+            if (showToast) showToast(`Voice Command: ${parsed.command} ⚡`, 'info');
+            if (parsed.command === VOICE_COMMANDS.SAVE_BILL) {
+              speakReadback(voiceLang === 'te-IN' ? 'బిల్ సేవ్ అవుతోంది' : 'Saving invoice', voiceLang);
+            }
+            return;
+          }
+
+          // 2. Apply structured items & customer
           if (onApplyVoiceData) {
             onApplyVoiceData(parsed);
           }
+
           if (showToast) {
-            showToast('Voice data applied to invoice ✅', 'success');
+            const itemCount = parsed.items?.length || 0;
+            showToast(
+              `Voice: ${parsed.partyName || 'Invoice'} • ${itemCount} ${itemCount === 1 ? 'item' : 'items'} auto-filled ✅`,
+              'success'
+            );
+          }
+
+          // 3. Audio Voice Readback
+          if (parsed.items && parsed.items.length > 0) {
+            const first = parsed.items[0];
+            const name = parsed.partyName || '';
+            const readbackText =
+              voiceLang === 'te-IN'
+                ? `${name ? name + ' ' : ''}${first.count ? first.count + ' కౌంట్ ' : ''}${first.weight ? first.weight + ' కేజీలు ' : ''}${first.rate ? 'రేటు ' + first.rate : ''} జోడించబడింది.`
+                : `${name ? name + ': ' : ''}${first.count ? first.count + ' count, ' : ''}${first.weight ? first.weight + ' kg at ' : ''}${first.rate ? first.rate + ' rupees' : ''} added.`;
+            speakReadback(readbackText, voiceLang);
           }
         }
       }
@@ -99,13 +157,21 @@ export default function VoiceBillingAssistant({
 
     recognition.onerror = (event) => {
       if (event.error !== 'no-speech' && event.error !== 'aborted') {
-        if (showToast) showToast(`Voice input error: ${event.error}`, 'error');
+        if (showToast) showToast(`Mic error: ${event.error}`, 'error');
       }
       setIsListening(false);
     };
 
     recognition.onend = () => {
       setIsListening(false);
+      // Continuous Scale Mode: restart automatically for the next crate/tub
+      if (continuousModeRef.current && recognitionRef.current) {
+        setTimeout(() => {
+          try {
+            recognitionRef.current.start();
+          } catch {}
+        }, 250);
+      }
     };
 
     recognitionRef.current = recognition;
@@ -115,7 +181,7 @@ export default function VoiceBillingAssistant({
         recognition.abort();
       } catch {}
     };
-  }, [onApplyVoiceData, playChime, showToast]);
+  }, [customersList, onApplyVoiceData, onVoiceCommand, playTone, showToast, speakReadback, voiceLang]);
 
   const toggleListening = () => {
     if (!recognitionRef.current) return;
@@ -128,11 +194,11 @@ export default function VoiceBillingAssistant({
     } else {
       setTranscript('');
       setParsedPreview(null);
+      setFuzzyMatchInfo(null);
       recognitionRef.current.lang = voiceLang;
       try {
         recognitionRef.current.start();
-      } catch (err) {
-        // If already started, restart
+      } catch {
         try {
           recognitionRef.current.stop();
           setTimeout(() => recognitionRef.current.start(), 150);
@@ -163,17 +229,17 @@ export default function VoiceBillingAssistant({
     <div
       style={{
         background: isListening ? '#f0fdf4' : '#f8fafc',
-        border: isListening ? '2px solid #22c55e' : '1px solid #cbd5e1',
-        borderRadius: '12px',
-        padding: '12px 16px',
-        marginBottom: '16px',
-        boxShadow: isListening ? '0 0 16px rgba(34, 197, 94, 0.2)' : '0 2px 4px rgba(0, 0, 0, 0.02)',
+        border: isListening ? '2px solid #16a34a' : '1px solid #cbd5e1',
+        borderRadius: '14px',
+        padding: '14px 18px',
+        marginBottom: '18px',
+        boxShadow: isListening ? '0 0 20px rgba(22, 163, 74, 0.22)' : '0 2px 6px rgba(0, 0, 0, 0.03)',
         transition: 'all 0.25s ease',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Big Tap Mic Button */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {/* Big Master Mic Button */}
           <button
             type="button"
             onClick={toggleListening}
@@ -182,29 +248,29 @@ export default function VoiceBillingAssistant({
               color: '#ffffff',
               border: 'none',
               borderRadius: '50px',
-              padding: '10px 18px',
-              fontSize: '0.9rem',
+              padding: '10px 20px',
+              fontSize: '0.92rem',
               fontWeight: 800,
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
               cursor: 'pointer',
-              minHeight: '46px',
+              minHeight: '48px',
               boxShadow: isListening
-                ? '0 0 12px rgba(220, 38, 38, 0.5)'
-                : '0 2px 6px rgba(11, 83, 148, 0.3)',
+                ? '0 0 14px rgba(220, 38, 38, 0.55)'
+                : '0 2px 8px rgba(11, 83, 148, 0.35)',
               transition: 'all 0.2s ease',
             }}
             title={isListening ? 'Click to Stop Listening' : 'Click to Speak Weighment'}
           >
-            <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{isListening ? '⏹️' : '🎙️'}</span>
-            <span>{isListening ? 'Stop Listening' : 'Voice Billing'}</span>
+            <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>{isListening ? '⏹️' : '🎙️'}</span>
+            <span>{isListening ? 'Stop' : 'Voice Billing'}</span>
             {isListening && (
               <span
                 style={{
                   display: 'inline-block',
-                  width: '8px',
-                  height: '8px',
+                  width: '9px',
+                  height: '9px',
                   borderRadius: '50%',
                   background: '#ffffff',
                   animation: 'pulse 1s infinite',
@@ -213,19 +279,17 @@ export default function VoiceBillingAssistant({
             )}
           </button>
 
-          {/* Language Switcher Pill for Speech */}
+          {/* Language Switcher */}
           <div style={{ display: 'flex', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden' }}>
             <button
               type="button"
               onClick={() => {
                 setVoiceLang('te-IN');
-                if (isListening && recognitionRef.current) {
-                  recognitionRef.current.lang = 'te-IN';
-                }
+                if (isListening && recognitionRef.current) recognitionRef.current.lang = 'te-IN';
               }}
               style={{
-                padding: '6px 12px',
-                fontSize: '0.78rem',
+                padding: '7px 12px',
+                fontSize: '0.8rem',
                 fontWeight: 800,
                 border: 'none',
                 cursor: 'pointer',
@@ -233,19 +297,17 @@ export default function VoiceBillingAssistant({
                 color: voiceLang === 'te-IN' ? '#ffffff' : '#475569',
               }}
             >
-              తెలుగు (Telugu)
+              తెలుగు
             </button>
             <button
               type="button"
               onClick={() => {
                 setVoiceLang('en-IN');
-                if (isListening && recognitionRef.current) {
-                  recognitionRef.current.lang = 'en-IN';
-                }
+                if (isListening && recognitionRef.current) recognitionRef.current.lang = 'en-IN';
               }}
               style={{
-                padding: '6px 12px',
-                fontSize: '0.78rem',
+                padding: '7px 12px',
+                fontSize: '0.8rem',
                 fontWeight: 800,
                 border: 'none',
                 cursor: 'pointer',
@@ -257,58 +319,144 @@ export default function VoiceBillingAssistant({
             </button>
           </div>
 
-          <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 600 }}>
-            {isListening
-              ? voiceLang === 'te-IN'
-                ? 'వింటున్నారు... "సూర్య ప్రాన్స్, 40 కౌంట్, 85 కిలోలు, రేటు 420" అని చెప్పండి'
-                : 'Listening... say e.g. "Kalyani, 60 count, 120 kg, rate 310"'
-              : 'Hands-free voice weighment (Admin)'}
-          </span>
+          {/* Continuous Scale Mode Switch */}
+          <button
+            type="button"
+            onClick={() => {
+              const next = !isContinuousScaleMode;
+              setIsContinuousScaleMode(next);
+              if (showToast) showToast(next ? 'Scale Mode Active: Mic stays open' : 'Scale Mode Off', 'info');
+            }}
+            style={{
+              padding: '6px 12px',
+              fontSize: '0.78rem',
+              fontWeight: 800,
+              borderRadius: '8px',
+              border: isContinuousScaleMode ? '1.5px solid #16a34a' : '1px solid #cbd5e1',
+              background: isContinuousScaleMode ? '#dcfce7' : '#ffffff',
+              color: isContinuousScaleMode ? '#15803d' : '#64748b',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+            title="Keeps the microphone active continuously without needing to tap after each tub"
+          >
+            <span>⚖️ Continuous Scale Mode:</span>
+            <strong>{isContinuousScaleMode ? 'ON' : 'OFF'}</strong>
+          </button>
+
+          {/* Voice Readback Audio Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsVoiceReadbackOn(!isVoiceReadbackOn)}
+            style={{
+              padding: '6px 12px',
+              fontSize: '0.78rem',
+              fontWeight: 800,
+              borderRadius: '8px',
+              border: isVoiceReadbackOn ? '1.5px solid #2563eb' : '1px solid #cbd5e1',
+              background: isVoiceReadbackOn ? '#eff6ff' : '#ffffff',
+              color: isVoiceReadbackOn ? '#1d4ed8' : '#64748b',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+            title="Speaks back the weighed prawn details as audio confirmation"
+          >
+            <span>🔊 Readback:</span>
+            <strong>{isVoiceReadbackOn ? 'ON' : 'OFF'}</strong>
+          </button>
         </div>
 
+        {/* Live Audio Status */}
         {isListening && (
-          <span style={{ fontSize: '0.76rem', color: '#16a34a', fontWeight: 800 }}>
-            ● LIVE RECORDING
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '0.76rem', color: '#16a34a', fontWeight: 900, letterSpacing: '0.5px' }}>
+              ● LIVE SCALING
+            </span>
+          </div>
         )}
       </div>
 
-      {/* Live Transcript & Parsed Data Preview */}
+      {/* Live Transcript & Real-Time Extracted Entities Card */}
       {(transcript || parsedPreview) && (
-        <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #e2e8f0' }}>
+        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e2e8f0' }}>
           {transcript && (
-            <div style={{ fontSize: '0.84rem', color: '#1e293b', marginBottom: '6px' }}>
-              🗣️ <em>"{transcript}"</em>
+            <div style={{ fontSize: '0.86rem', color: '#1e293b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '1rem' }}>🗣️</span>
+              <em>"{transcript}"</em>
             </div>
           )}
 
-          {parsedPreview && (parsedPreview.partyName || parsedPreview.count || parsedPreview.weight || parsedPreview.rate) && (
+          {/* Voice Command Confirmation */}
+          {parsedPreview?.command && (
+            <div style={{
+              background: '#fef3c7',
+              border: '1px solid #fde68a',
+              borderRadius: '6px',
+              padding: '6px 10px',
+              fontSize: '0.82rem',
+              fontWeight: 800,
+              color: '#92400e',
+              marginBottom: '8px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}>
+              ⚡ Action Command Recognized: <strong>{parsedPreview.command}</strong>
+            </div>
+          )}
+
+          {/* Extracted Items & Customer Details */}
+          {parsedPreview && (parsedPreview.partyName || (parsedPreview.items && parsedPreview.items.length > 0)) && (
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0b5394', textTransform: 'uppercase' }}>
                 Extracted:
               </span>
+
               {parsedPreview.partyName && (
-                <span style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '4px', padding: '2px 8px', fontSize: '0.78rem', fontWeight: 700, color: '#1e40af' }}>
+                <span style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '3px 10px', fontSize: '0.82rem', fontWeight: 700, color: '#1e40af' }}>
                   👤 {parsedPreview.partyName}
                 </span>
               )}
-              {parsedPreview.count && (
-                <span style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '4px', padding: '2px 8px', fontSize: '0.78rem', fontWeight: 700, color: '#92400e' }}>
-                  🦐 Count: {parsedPreview.count}
+
+              {/* Fuzzy Customer Match Badge */}
+              {fuzzyMatchInfo?.match && (
+                <span style={{
+                  background: fuzzyMatchInfo.isHighConfidence ? '#f0fdf4' : '#fffbeb',
+                  border: `1px solid ${fuzzyMatchInfo.isHighConfidence ? '#bbf7d0' : '#fde68a'}`,
+                  borderRadius: '6px',
+                  padding: '3px 8px',
+                  fontSize: '0.76rem',
+                  fontWeight: 800,
+                  color: fuzzyMatchInfo.isHighConfidence ? '#15803d' : '#b45309',
+                }}>
+                  🎯 Matched: <strong>{fuzzyMatchInfo.match.companyName}</strong> ({Math.round(fuzzyMatchInfo.score * 100)}%)
                 </span>
               )}
-              {parsedPreview.weight && (
-                <span style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '4px', padding: '2px 8px', fontSize: '0.78rem', fontWeight: 700, color: '#166534' }}>
-                  ⚖️ {parsedPreview.weight} kg
+
+              {/* Multi-Item Badges */}
+              {parsedPreview.items?.map((it, idx) => (
+                <span
+                  key={idx}
+                  style={{
+                    background: '#f8fafc',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '6px',
+                    padding: '3px 10px',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    color: '#334155',
+                  }}
+                >
+                  Item #{idx + 1}: {it.count ? `🦐 ${it.count} Count` : ''} {it.weight ? `• ⚖️ ${it.weight} kg` : ''} {it.rate ? `• 💰 ₹${it.rate}/kg` : ''}
                 </span>
-              )}
-              {parsedPreview.rate && (
-                <span style={{ background: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: '4px', padding: '2px 8px', fontSize: '0.78rem', fontWeight: 700, color: '#5b21b6' }}>
-                  💰 ₹{parsedPreview.rate}/kg
-                </span>
-              )}
+              ))}
+
               {parsedPreview.iceQty && (
-                <span style={{ background: '#ecfeff', border: '1px solid #a5f3fc', borderRadius: '4px', padding: '2px 8px', fontSize: '0.78rem', fontWeight: 700, color: '#155e75' }}>
+                <span style={{ background: '#ecfeff', border: '1px solid #a5f3fc', borderRadius: '6px', padding: '3px 8px', fontSize: '0.8rem', fontWeight: 700, color: '#155e75' }}>
                   🧊 {parsedPreview.iceQty} Ice
                 </span>
               )}
@@ -316,6 +464,11 @@ export default function VoiceBillingAssistant({
           )}
         </div>
       )}
+
+      {/* Helper guide with examples */}
+      <div style={{ marginTop: '10px', fontSize: '0.72rem', color: '#64748b' }}>
+        💡 <strong>Try speaking:</strong> <em>"Surya Prawns, 40 count 85 kg rate 420 and 60 count 110 kg rate 320, 2 ice"</em> | Voice commands: <em>"Save Bill"</em>, <em>"Add Item"</em>, <em>"Clear Bill"</em>
+      </div>
     </div>
   );
 }

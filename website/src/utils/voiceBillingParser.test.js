@@ -1,67 +1,101 @@
 import { describe, it, expect } from 'vitest';
-import { parseVoiceBillingText, normalizeVoiceDigits } from './voiceBillingParser';
+import {
+  parseAdvancedVoiceBillingText,
+  detectVoiceCommand,
+  VOICE_COMMANDS,
+} from './voiceBillingParser';
+import { convertTeluguWordsToNumber, normalizeSpokenNumbers } from './teluguNumberParser';
+import { findBestMatchingCustomer } from './fuzzyMatch';
 
-describe('Voice Billing Speech Parser Unit Tests', () => {
-  it('converts Telugu numeral glyphs to ASCII Arabic digits', () => {
-    expect(normalizeVoiceDigits('౪౦ కౌంట్ ౮౫ కిలోలు')).toBe('40 కౌంట్ 85 కిలోలు');
+describe('Advanced Voice Billing Suite Unit Tests', () => {
+  describe('Word-to-Number Converter', () => {
+    it('converts Telugu words to numbers (tens + units)', () => {
+      expect(convertTeluguWordsToNumber('నలభై ఐదు')).toBe('45');
+      expect(convertTeluguWordsToNumber('ఎనభై ఐదు')).toBe('85');
+      expect(convertTeluguWordsToNumber('అరవై')).toBe('60');
+    });
+
+    it('converts hundreds with tens e.g. నాలుగు వందల ఇరవై -> 420', () => {
+      expect(convertTeluguWordsToNumber('నాలుగు వందల ఇరవై')).toBe('420');
+      expect(convertTeluguWordsToNumber('మూడు వందల పది')).toBe('310');
+    });
+
+    it('handles colloquial Telugu fractional half (న్నర -> .5)', () => {
+      expect(convertTeluguWordsToNumber('ఎనభై ఐదున్నర')).toBe('85.5');
+    });
+
+    it('converts English spoken number words', () => {
+      expect(normalizeSpokenNumbers('forty count eighty five kg rate four twenty')).toContain('40 count 85 kg rate 420');
+    });
   });
 
-  it('correctly parses Telugu spoken weighment string from prompt', () => {
-    const input = 'సూర్య ప్రాన్స్, 40 కౌంట్, 85 కిలోలు, రేటు 420';
-    const res = parseVoiceBillingText(input);
+  describe('Voice Commands Detection', () => {
+    it('detects Save Bill voice command in English and Telugu', () => {
+      expect(detectVoiceCommand('save bill')).toBe(VOICE_COMMANDS.SAVE_BILL);
+      expect(detectVoiceCommand('సేవ్ బిల్')).toBe(VOICE_COMMANDS.SAVE_BILL);
+      expect(detectVoiceCommand('బిల్ సేవ్ చేయి')).toBe(VOICE_COMMANDS.SAVE_BILL);
+    });
 
-    expect(res.partyName).toBe('సూర్య ప్రాన్స్');
-    expect(res.count).toBe('40');
-    expect(res.weight).toBe('85');
-    expect(res.rate).toBe('420');
-    expect(res.iceQty).toBeNull();
+    it('detects Add Item voice command', () => {
+      expect(detectVoiceCommand('add item')).toBe(VOICE_COMMANDS.ADD_ITEM);
+      expect(detectVoiceCommand('మరో ఐటం')).toBe(VOICE_COMMANDS.ADD_ITEM);
+      expect(detectVoiceCommand('కొత్త ఐటం')).toBe(VOICE_COMMANDS.ADD_ITEM);
+    });
+
+    it('detects Clear Draft voice command', () => {
+      expect(detectVoiceCommand('clear bill')).toBe(VOICE_COMMANDS.CLEAR_DRAFT);
+      expect(detectVoiceCommand('మొత్తం క్లియర్')).toBe(VOICE_COMMANDS.CLEAR_DRAFT);
+    });
   });
 
-  it('correctly parses English spoken weighment string from prompt', () => {
-    const input = 'Kalyani, 60 count, 120 kg, rate 310';
-    const res = parseVoiceBillingText(input);
+  describe('Multi-Item Dictation in One Breath', () => {
+    it('parses multiple prawn items + ice in a single sentence', () => {
+      const input = 'Surya Prawns... 40 count 85 kg rate 420... and 60 count 110 kg rate 320... and 100 count 45 kg rate 210... 3 ice';
+      const res = parseAdvancedVoiceBillingText(input);
 
-    expect(res.partyName).toBe('Kalyani');
-    expect(res.count).toBe('60');
-    expect(res.weight).toBe('120');
-    expect(res.rate).toBe('310');
+      expect(res.partyName).toBe('Surya Prawns');
+      expect(res.items.length).toBe(3);
+
+      expect(res.items[0]).toEqual({ count: '40', weight: '85', rate: '420' });
+      expect(res.items[1]).toEqual({ count: '60', weight: '110', rate: '320' });
+      expect(res.items[2]).toEqual({ count: '100', weight: '45', rate: '210' });
+      expect(res.iceQty).toBe('3');
+    });
+
+    it('parses multi-item Telugu spoken stream with spoken words', () => {
+      const input = 'సూర్య ప్రాన్స్ 40 కౌంట్ 85 కేజీలు రేటు 420 మరియు 60 కౌంట్ 120 కేజీలు రేటు 310 2 ఐస్';
+      const res = parseAdvancedVoiceBillingText(input);
+
+      expect(res.partyName).toBe('సూర్య ప్రాన్స్');
+      expect(res.items.length).toBe(2);
+      expect(res.items[0]).toEqual({ count: '40', weight: '85', rate: '420' });
+      expect(res.items[1]).toEqual({ count: '60', weight: '120', rate: '310' });
+      expect(res.iceQty).toBe('2');
+    });
   });
 
-  it('correctly parses decimal weights and ice blocks', () => {
-    const input = 'Surya Prawns, 40 count, 85.5 kgs, rate 420, 2 ice';
-    const res = parseVoiceBillingText(input);
+  describe('Fuzzy Customer Matching', () => {
+    const mockCustomers = [
+      { companyName: 'Surya Seafoods & Agencies', customerPhone: '9848012345' },
+      { companyName: 'Kalyani Prawns Export', customerPhone: '9441400000' },
+      { companyName: 'Royal Fisheries', customerPhone: '9988776655' },
+    ];
 
-    expect(res.partyName).toBe('Surya Prawns');
-    expect(res.count).toBe('40');
-    expect(res.weight).toBe('85.5');
-    expect(res.rate).toBe('420');
-    expect(res.iceQty).toBe('2');
-  });
+    it('matches "Surya" or "Surya Prawns" to "Surya Seafoods & Agencies"', () => {
+      const res = findBestMatchingCustomer('Surya', mockCustomers);
+      expect(res.match?.companyName).toBe('Surya Seafoods & Agencies');
+      expect(res.score).toBeGreaterThan(0.7);
+    });
 
-  it('handles item-only voice entry without party name', () => {
-    const input = 'count 40, weight 80.25, rate 400';
-    const res = parseVoiceBillingText(input);
+    it('matches "Kalyan" with typo to "Kalyani Prawns Export"', () => {
+      const res = findBestMatchingCustomer('Kalyan', mockCustomers);
+      expect(res.match?.companyName).toBe('Kalyani Prawns Export');
+      expect(res.score).toBeGreaterThan(0.6);
+    });
 
-    expect(res.partyName).toBeNull();
-    expect(res.count).toBe('40');
-    expect(res.weight).toBe('80.25');
-    expect(res.rate).toBe('400');
-  });
-
-  it('handles Telugu keywords with alternative words (బరువు, ధర)', () => {
-    const input = 'రాయల్ సీ ఫుడ్స్ కౌంట్ 50 బరువు 90 ధర 380';
-    const res = parseVoiceBillingText(input);
-
-    expect(res.partyName).toBe('రాయల్ సీ ఫుడ్స్');
-    expect(res.count).toBe('50');
-    expect(res.weight).toBe('90');
-    expect(res.rate).toBe('380');
-  });
-
-  it('safely handles empty or blank speech inputs', () => {
-    const res = parseVoiceBillingText('');
-    expect(res.partyName).toBeNull();
-    expect(res.count).toBeNull();
-    expect(res.weight).toBeNull();
+    it('returns null match for completely unrelated names', () => {
+      const res = findBestMatchingCustomer('Random Unknown Person', mockCustomers);
+      expect(res.match).toBeNull();
+    });
   });
 });
