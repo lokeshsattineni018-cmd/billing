@@ -85,8 +85,26 @@ function parseSingleItemSegment(segment = '') {
     rate = rateMatch[1];
   }
 
-  if (count || weight || rate) {
-    return { count, weight, rate };
+  // 4. Standalone bare number without keywords (e.g. user said "32" or "260")
+  let bareNumber = null;
+  if (!count && !weight && !rate) {
+    const bareMatch = text.match(/^\s*(\d+(?:\.\d+)?)\s*$/);
+    if (bareMatch) {
+      bareNumber = bareMatch[1];
+    }
+  }
+
+  const result = {
+    count: count || null,
+    weight: weight || null,
+    rate: rate || null,
+  };
+  if (bareNumber) {
+    result.bareNumber = bareNumber;
+  }
+
+  if (count || weight || rate || bareNumber) {
+    return result;
   }
   return null;
 }

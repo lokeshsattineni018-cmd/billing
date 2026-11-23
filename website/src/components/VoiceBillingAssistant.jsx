@@ -32,6 +32,7 @@ export default function VoiceBillingAssistant({
   const [isSupported, setIsSupported] = useState(true);
 
   const recognitionRef = useRef(null);
+  const shouldBeListeningRef = useRef(false);
   const continuousModeRef = useRef(isContinuousScaleMode);
   continuousModeRef.current = isContinuousScaleMode;
 
@@ -78,7 +79,7 @@ export default function VoiceBillingAssistant({
     }
 
     const recognition = new SpeechRecognition();
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
@@ -163,20 +164,26 @@ export default function VoiceBillingAssistant({
     };
 
     recognition.onend = () => {
-      setIsListening(false);
-      // Continuous Scale Mode: restart automatically for the next crate/tub
-      if (continuousModeRef.current && recognitionRef.current) {
-        setTimeout(() => {
-          try {
-            recognitionRef.current.start();
-          } catch {}
-        }, 250);
+      // If continuous scale mode or active listening, keep connection alive seamlessly
+      if (shouldBeListeningRef.current && recognitionRef.current) {
+        try {
+          recognitionRef.current.start();
+        } catch {
+          setTimeout(() => {
+            if (shouldBeListeningRef.current && recognitionRef.current) {
+              try { recognitionRef.current.start(); } catch {}
+            }
+          }, 200);
+        }
+      } else {
+        setIsListening(false);
       }
     };
 
     recognitionRef.current = recognition;
 
     return () => {
+      shouldBeListeningRef.current = false;
       try {
         recognition.abort();
       } catch {}
@@ -187,11 +194,13 @@ export default function VoiceBillingAssistant({
     if (!recognitionRef.current) return;
 
     if (isListening) {
+      shouldBeListeningRef.current = false;
       try {
         recognitionRef.current.stop();
       } catch {}
       setIsListening(false);
     } else {
+      shouldBeListeningRef.current = true;
       setTranscript('');
       setParsedPreview(null);
       setFuzzyMatchInfo(null);
@@ -201,8 +210,12 @@ export default function VoiceBillingAssistant({
       } catch {
         try {
           recognitionRef.current.stop();
-          setTimeout(() => recognitionRef.current.start(), 150);
-        } catch (e) {
+          setTimeout(() => {
+            if (shouldBeListeningRef.current && recognitionRef.current) {
+              recognitionRef.current.start();
+            }
+          }, 150);
+        } catch {
           if (showToast) showToast('Mic access failed. Check browser permissions.', 'error');
         }
       }

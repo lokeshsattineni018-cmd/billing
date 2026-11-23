@@ -843,7 +843,7 @@ export default function NewBill() {
         }
       }
 
-      // 2. Multi-Item Row Population
+      // 2. Multi-Item Row Population with Smart Active-Row Merging
       const voiceItems =
         parsed.items && parsed.items.length > 0
           ? parsed.items
@@ -854,6 +854,75 @@ export default function NewBill() {
       if (voiceItems.length > 0) {
         setItems((prev) => {
           const updated = [...prev];
+
+          // If a single voice item/fragment was spoken (e.g. user said "32 kg", or "260 rupees", or "40 count")
+          if (voiceItems.length === 1) {
+            const vItem = voiceItems[0];
+            const lastIdx = updated.length - 1;
+            const lastRow = updated[lastIdx];
+
+            // Check if the current row is incomplete (missing weight OR missing rate)
+            const isLastRowIncomplete =
+              !lastRow.quantity ||
+              parseFloat(lastRow.quantity) <= 0 ||
+              !lastRow.rate ||
+              parseFloat(lastRow.rate) <= 0;
+
+            if (isLastRowIncomplete) {
+              // MERGE INTO THE ACTIVE ROW instead of creating an empty new row
+              let mergedCount = vItem.count || lastRow.count || '';
+              let mergedQty = vItem.weight || lastRow.quantity || '';
+              let mergedRate = vItem.rate || lastRow.rate || '';
+
+              // Support bare number heuristic if spoken without units
+              if (vItem.bareNumber) {
+                const n = parseFloat(vItem.bareNumber);
+                if (!mergedQty && n < 150) {
+                  mergedQty = vItem.bareNumber;
+                } else if (!mergedRate) {
+                  mergedRate = vItem.bareNumber;
+                } else if (!mergedCount) {
+                  mergedCount = vItem.bareNumber;
+                }
+              }
+
+              const mergedAmount = calculateItemAmount(mergedQty, mergedRate);
+
+              updated[lastIdx] = {
+                ...lastRow,
+                count: mergedCount,
+                quantity: mergedQty,
+                rate: mergedRate,
+                amount: mergedAmount,
+              };
+              return updated;
+            } else {
+              // Current row is already complete with both valid weight AND rate!
+              // Now add a new row for the next tub/consignment item.
+              let newCount = vItem.count || '';
+              let newQty = vItem.weight || '';
+              let newRate = vItem.rate || '';
+
+              if (vItem.bareNumber) {
+                newQty = vItem.bareNumber;
+              }
+
+              const newAmount = calculateItemAmount(newQty, newRate);
+              updated.push({
+                sno: updated.length + 1,
+                count: newCount,
+                particulars: 'HEAD-ON',
+                hsn: '0306',
+                quantity: newQty,
+                rate: newRate,
+                taxRate: '0',
+                amount: newAmount,
+              });
+              return updated;
+            }
+          }
+
+          // If multiple voice items were spoken in one breath:
           const startIdx =
             updated.length === 1 && !updated[0].quantity && !updated[0].rate
               ? 0
