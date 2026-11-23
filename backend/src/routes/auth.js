@@ -12,8 +12,12 @@ const router = express.Router();
 // Generate JWT with secure secret and tokenVersion (7d lifespan with server-side revocation)
 const signToken = (id, tokenVersion = 0) => {
   const secret = getJwtSecret();
-  // Standard 7d operational lifespan per security baseline
-  const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+  // Standard 7d operational lifespan per security baseline (defensive against quoted or malformed env vars)
+  let expiresIn = '7d';
+  if (process.env.JWT_EXPIRES_IN && typeof process.env.JWT_EXPIRES_IN === 'string') {
+    const clean = process.env.JWT_EXPIRES_IN.trim().replace(/^["']+|["']+$/g, '').trim();
+    if (clean) expiresIn = clean;
+  }
   return jwt.sign({ id, tokenVersion: tokenVersion ?? 0 }, secret, { expiresIn });
 };
 

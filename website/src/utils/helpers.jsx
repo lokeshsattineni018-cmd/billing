@@ -183,12 +183,11 @@ export async function shareInvoicePDFOnWhatsApp(bill, showToast) {
   const rawPhone = bill.customerPhone ? bill.customerPhone.replace(/[^0-9]/g, '') : '';
   const cleanPhone = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
 
+  const customerName = bill.companyName || 'Valued Customer';
   const caption = `VIJAYA DURGA SEA FOODS
-Tax Invoice #${bill.billNo} ${bill.isVoided ? '(VOIDED)' : ''}
+TO: ${customerName}
 📅 Date: ${formattedDate}
-💰 Total: ${amountStr}
-
-Thank you for your business!`;
+💰 Total: ${amountStr}`;
 
   if (showToast) showToast('Preparing Invoice PDF for WhatsApp...');
 

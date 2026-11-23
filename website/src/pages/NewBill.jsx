@@ -12,6 +12,7 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { PrintIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
+import VoiceBillingAssistant from '../components/VoiceBillingAssistant';
 import { saveOfflineBill, getMasterCache, setMasterCache, getUserCacheKey, invalidateBillCaches } from '../utils/offlineDb';
 import { enqueueShedAction } from '../services/syncManager';
 import { notifyNewBillCreated } from '../utils/notifications';
@@ -210,7 +211,8 @@ export default function NewBill() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const isAdmin = user?.role === 'admin';
   const { toast, showToast } = useToast();
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -555,6 +557,64 @@ export default function NewBill() {
     setIce((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Hands-Free Voice Billing Handler (Admin-Only)
+  const handleApplyVoiceData = useCallback(
+    (parsed) => {
+      if (!parsed) return;
+
+      // 1. Customer / Party Name Matching
+      if (parsed.partyName) {
+        const q = parsed.partyName.toLowerCase().trim();
+        const matched = customersList.find(
+          (c) =>
+            c.companyName?.toLowerCase() === q ||
+            c.companyName?.toLowerCase().includes(q) ||
+            q.includes(c.companyName?.toLowerCase())
+        );
+        if (matched) {
+          handleSelectCustomer(matched);
+        } else {
+          setCompanyName(parsed.partyName);
+        }
+      }
+
+      // 2. Count, Weight, and Rate Row Population
+      if (parsed.count || parsed.weight || parsed.rate) {
+        setItems((prev) => {
+          const next = [...prev];
+          const targetIdx =
+            next.length === 1 && !next[0].quantity && !next[0].rate
+              ? 0
+              : next.length - 1;
+          const current = next[targetIdx];
+          const newCount = parsed.count || current.count || '';
+          const newQty = parsed.weight || current.quantity || '';
+          const newRate = parsed.rate || current.rate || '';
+          const newAmount = calculateItemAmount(newQty, newRate);
+
+          next[targetIdx] = {
+            ...current,
+            count: newCount,
+            quantity: newQty,
+            rate: newRate,
+            amount: newAmount,
+          };
+          return next;
+        });
+      }
+
+      // 3. Ice Quantity Auto-fill
+      if (parsed.iceQty) {
+        setIce((prev) => ({
+          ...prev,
+          quantity: parsed.iceQty,
+          rate: prev.rate || '150',
+        }));
+      }
+    },
+    [customersList, handleSelectCustomer]
+  );
+
   const handleAddItem = useCallback(() => {
     setItems((prev) => [
       ...prev,
@@ -883,6 +943,16 @@ export default function NewBill() {
 
       {/* Structured Billing Form Card */}
       <div className="card new-bill-card" style={{ padding: '20px 16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
+
+        {/* ── Hands-Free Voice Billing Assistant (Strictly Admin-Only) ── */}
+        {isAdmin && (
+          <VoiceBillingAssistant
+            isAdmin={isAdmin}
+            currentLang={lang}
+            showToast={showToast}
+            onApplyVoiceData={handleApplyVoiceData}
+          />
+        )}
 
         {/* ── STEP 1: CUSTOMER DETAILS ── */}
         <div style={{ marginBottom: '22px' }}>
