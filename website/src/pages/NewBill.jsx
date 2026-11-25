@@ -12,8 +12,6 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { PrintIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
-import VoiceBillingAssistant from '../components/VoiceBillingAssistant';
-import { findBestMatchingCustomer } from '../utils/fuzzyMatch';
 import { saveOfflineBill, getMasterCache, setMasterCache, getUserCacheKey, invalidateBillCaches } from '../utils/offlineDb';
 import { enqueueShedAction } from '../services/syncManager';
 import { notifyNewBillCreated } from '../utils/notifications';
@@ -212,8 +210,7 @@ export default function NewBill() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { t, lang } = useLanguage();
-  const isAdmin = user?.role === 'admin';
+  const { t } = useLanguage();
   const { toast, showToast } = useToast();
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -828,160 +825,6 @@ export default function NewBill() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [companyName, customerPhone, items, date, paymentStatus, cgstRate, cgstAmount, sgstRate, sgstAmount, igstAmount, companyGstin]);
 
-  // Advanced Hands-Free Voice Billing & Multi-Item Handler (Admin-Only)
-  const handleApplyVoiceData = useCallback(
-    (parsed) => {
-      if (!parsed) return;
-
-      // 1. Intelligent Fuzzy Customer Matching against directory
-      if (parsed.partyName) {
-        const fuzzyResult = findBestMatchingCustomer(parsed.partyName, customersList, 0.55);
-        if (fuzzyResult.match) {
-          handleSelectCustomer(fuzzyResult.match);
-        } else {
-          setCompanyName(parsed.partyName);
-        }
-      }
-
-      // 2. Multi-Item Row Population with Smart Active-Row Merging
-      const voiceItems =
-        parsed.items && parsed.items.length > 0
-          ? parsed.items
-          : (parsed.count || parsed.weight || parsed.rate)
-            ? [{ count: parsed.count, weight: parsed.weight, rate: parsed.rate }]
-            : [];
-
-      if (voiceItems.length > 0) {
-        setItems((prev) => {
-          const updated = [...prev];
-
-          // If a single voice item/fragment was spoken (e.g. user said "32 kg", or "260 rupees", or "40 count")
-          if (voiceItems.length === 1) {
-            const vItem = voiceItems[0];
-            const lastIdx = updated.length - 1;
-            const lastRow = updated[lastIdx];
-
-            // Check if the current row is incomplete (missing weight OR missing rate)
-            const isLastRowIncomplete =
-              !lastRow.quantity ||
-              parseFloat(lastRow.quantity) <= 0 ||
-              !lastRow.rate ||
-              parseFloat(lastRow.rate) <= 0;
-
-            if (isLastRowIncomplete) {
-              // MERGE INTO THE ACTIVE ROW instead of creating an empty new row
-              let mergedCount = vItem.count || lastRow.count || '';
-              let mergedQty = vItem.weight || lastRow.quantity || '';
-              let mergedRate = vItem.rate || lastRow.rate || '';
-
-              // Support bare number heuristic if spoken without units
-              if (vItem.bareNumber) {
-                const n = parseFloat(vItem.bareNumber);
-                if (!mergedQty && n < 150) {
-                  mergedQty = vItem.bareNumber;
-                } else if (!mergedRate) {
-                  mergedRate = vItem.bareNumber;
-                } else if (!mergedCount) {
-                  mergedCount = vItem.bareNumber;
-                }
-              }
-
-              const mergedAmount = calculateItemAmount(mergedQty, mergedRate);
-
-              updated[lastIdx] = {
-                ...lastRow,
-                count: mergedCount,
-                quantity: mergedQty,
-                rate: mergedRate,
-                amount: mergedAmount,
-              };
-              return updated;
-            } else {
-              // Current row is already complete with both valid weight AND rate!
-              // Now add a new row for the next tub/consignment item.
-              let newCount = vItem.count || '';
-              let newQty = vItem.weight || '';
-              let newRate = vItem.rate || '';
-
-              if (vItem.bareNumber) {
-                newQty = vItem.bareNumber;
-              }
-
-              const newAmount = calculateItemAmount(newQty, newRate);
-              updated.push({
-                sno: updated.length + 1,
-                count: newCount,
-                particulars: 'HEAD-ON',
-                hsn: '0306',
-                quantity: newQty,
-                rate: newRate,
-                taxRate: '0',
-                amount: newAmount,
-              });
-              return updated;
-            }
-          }
-
-          // If multiple voice items were spoken in one breath:
-          const startIdx =
-            updated.length === 1 && !updated[0].quantity && !updated[0].rate
-              ? 0
-              : updated.length;
-
-          voiceItems.forEach((vItem, offset) => {
-            const idx = startIdx + offset;
-            const newCount = vItem.count || '';
-            const newQty = vItem.weight || '';
-            const newRate = vItem.rate || '';
-            const newAmount = calculateItemAmount(newQty, newRate);
-
-            const rowData = {
-              sno: idx + 1,
-              count: newCount,
-              particulars: 'HEAD-ON',
-              hsn: '0306',
-              quantity: newQty,
-              rate: newRate,
-              taxRate: '0',
-              amount: newAmount,
-            };
-
-            if (idx < updated.length) {
-              updated[idx] = { ...updated[idx], ...rowData, sno: idx + 1 };
-            } else {
-              updated.push(rowData);
-            }
-          });
-
-          return updated;
-        });
-      }
-
-      // 3. Ice Quantity Auto-fill
-      if (parsed.iceQty) {
-        setIce((prev) => ({
-          ...prev,
-          quantity: parsed.iceQty,
-          rate: prev.rate || '150',
-        }));
-      }
-    },
-    [customersList, handleSelectCustomer]
-  );
-
-  const handleVoiceCommand = useCallback(
-    (command) => {
-      if (command === 'SAVE_BILL') {
-        handleSave('save');
-      } else if (command === 'ADD_ITEM') {
-        handleAddItem();
-      } else if (command === 'CLEAR_DRAFT') {
-        handleClearDraft();
-      }
-    },
-    [handleSave, handleAddItem, handleClearDraft]
-  );
-
   const matchingCustomers = useMemo(() => {
     if (!companyName || !companyName.trim() || customersList.length === 0) return [];
     const q = companyName.toLowerCase();
@@ -1040,18 +883,6 @@ export default function NewBill() {
 
       {/* Structured Billing Form Card */}
       <div className="card new-bill-card" style={{ padding: '20px 16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
-
-        {/* ── Hands-Free Voice Billing Assistant (Strictly Admin-Only) ── */}
-        {isAdmin && (
-          <VoiceBillingAssistant
-            isAdmin={isAdmin}
-            customersList={customersList}
-            currentLang={lang}
-            showToast={showToast}
-            onApplyVoiceData={handleApplyVoiceData}
-            onVoiceCommand={handleVoiceCommand}
-          />
-        )}
 
         {/* ── STEP 1: CUSTOMER DETAILS ── */}
         <div style={{ marginBottom: '22px' }}>
