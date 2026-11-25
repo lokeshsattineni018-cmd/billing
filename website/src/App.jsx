@@ -58,14 +58,14 @@ function Sidebar({ onInstall, onLogout }) {
     { path: '/', label: t('dashboard'), icon: <DashboardIcon size={18} /> },
     { path: '/new-bill', label: t('newInvoice'), icon: <PlusIcon size={18} /> },
     { path: '/bills', label: t('invoiceHistory'), icon: <InvoiceIcon size={18} /> },
-    { path: '/staff', label: t('staff') || 'Staff & Daily Operations', icon: <StaffIcon size={18} /> },
+    { path: '/staff', label: t('navStaff'), icon: <StaffIcon size={18} /> },
     ...(isAdmin
       ? [
           { path: '/reports', label: t('salesReports'), icon: <TrendingUpIcon size={18} /> },
           { path: '/customers', label: t('customers'), icon: <UserIcon size={18} /> },
-          { path: '/ledger', label: 'Customer Ledger', icon: <InvoiceIcon size={18} /> },
+          { path: '/ledger', label: t('customerLedger'), icon: <InvoiceIcon size={18} /> },
           { path: '/activity-log', label: t('activityLog'), icon: <SettingsIcon size={18} /> },
-          { path: '/recycle-bin', label: 'Recycle Bin', icon: <span style={{ fontSize: '15px' }}>🗑️</span> },
+          { path: '/recycle-bin', label: t('recycleBin'), icon: <span style={{ fontSize: '15px' }}>🗑️</span> },
           { path: '/settings', label: t('settings'), icon: <SettingsIcon size={18} /> },
         ]
       : []),
@@ -118,7 +118,7 @@ function Sidebar({ onInstall, onLogout }) {
             transition: 'all 0.2s ease',
           }}
         >
-          <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700 }}>Language</span>
+          <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700 }}>{t('language')}</span>
           <span style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '2px 8px', borderRadius: '6px', color: '#0b5394' }}>
             {lang === 'en' ? 'తెలుగు' : 'English'}
           </span>
@@ -183,14 +183,14 @@ function AppLayout() {
     { path: '/', label: t('dashboard'), icon: <DashboardIcon size={18} /> },
     { path: '/new-bill', label: t('newInvoice'), icon: <PlusIcon size={18} /> },
     { path: '/bills', label: t('invoiceHistory'), icon: <InvoiceIcon size={18} /> },
-    { path: '/staff', label: t('staff') || 'Staff & Daily Operations', icon: <StaffIcon size={18} /> },
+    { path: '/staff', label: t('navStaff'), icon: <StaffIcon size={18} /> },
     ...(isAdmin
       ? [
           { path: '/reports', label: t('salesReports'), icon: <TrendingUpIcon size={18} /> },
           { path: '/customers', label: t('customers'), icon: <UserIcon size={18} /> },
-          { path: '/ledger', label: 'Customer Ledger', icon: <InvoiceIcon size={18} /> },
+          { path: '/ledger', label: t('customerLedger'), icon: <InvoiceIcon size={18} /> },
           { path: '/activity-log', label: t('activityLog'), icon: <InvoiceIcon size={18} /> },
-          { path: '/recycle-bin', label: 'Recycle Bin', icon: <span style={{ fontSize: '15px' }}>🗑️</span> },
+          { path: '/recycle-bin', label: t('recycleBin'), icon: <span style={{ fontSize: '15px' }}>🗑️</span> },
           { path: '/settings', label: t('settings'), icon: <SettingsIcon size={18} /> },
         ]
       : []),
@@ -247,7 +247,7 @@ function AppLayout() {
   }, []);
 
   return (
-    <div className="app-layout">
+    <div className="app-layout ui-redesign-shell">
       {/* True Offline-First Shed Mode & Cloud Sync Bar */}
       <ShedModeSyncBar />
       {/* Clean Fixed Mobile Top Header */}
@@ -347,19 +347,6 @@ function AppLayout() {
             </div>
 
             {/* Menu Header Label */}
-            <div
-              style={{
-                padding: '12px 18px 4px 18px',
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                color: '#94a3b8',
-                textTransform: 'uppercase',
-                letterSpacing: '0.6px',
-              }}
-            >
-              All Features & Options
-            </div>
-
             {/* All Navigation Links */}
             <nav className="mobile-drawer-nav">
               {drawerNavItems.map((item) => (
@@ -435,21 +422,21 @@ function AppLayout() {
       <nav className="mobile-bottom-nav">
         <NavLink to="/" end className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
           <DashboardIcon size={18} />
-          <span>Home</span>
+          <span>{t('navHome')}</span>
         </NavLink>
         <NavLink to="/bills" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
           <InvoiceIcon size={18} />
-          <span>Bills</span>
+          <span>{t('bills')}</span>
         </NavLink>
         <NavLink to="/new-bill" className={({ isActive }) => `mobile-bottom-tab mobile-bottom-tab-center ${isActive ? 'active' : ''}`}>
           <div className="mobile-add-btn">
             <PlusIcon size={20} color="#ffffff" />
           </div>
-          <span>New</span>
+          <span>{t('navNew')}</span>
         </NavLink>
         <NavLink to="/staff" className={({ isActive }) => `mobile-bottom-tab ${isActive ? 'active' : ''}`}>
           <StaffIcon size={18} />
-          <span>Staff</span>
+          <span>{t('navStaff')}</span>
         </NavLink>
         <button
           type="button"
@@ -458,7 +445,7 @@ function AppLayout() {
           style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
         >
           <MenuIcon size={18} />
-          <span>More</span>
+          <span>{t('more')}</span>
         </button>
       </nav>
 

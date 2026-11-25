@@ -5,6 +5,11 @@ const LanguageContext = createContext();
 export const translations = {
   en: {
     // Nav & Common
+    navHome: 'Home',
+    navNew: 'New',
+    navStaff: 'Staff',
+    more: 'More',
+    recycleBin: 'Recycle Bin',
     dashboard: 'Dashboard',
     newInvoice: 'New Invoice',
     invoiceHistory: 'Invoice History',
@@ -272,6 +277,11 @@ export const translations = {
   },
   te: {
     // Nav & Common
+    navHome: 'హోమ్',
+    navNew: 'కొత్త బిల్లు',
+    navStaff: 'సిబ్బంది',
+    more: 'మరిన్ని',
+    recycleBin: 'తొలగించినవి',
     dashboard: 'డ్యాష్‌బోర్డ్',
     newInvoice: 'కొత్త బిల్లు',
     invoiceHistory: 'బిల్లుల చరిత్ర',
@@ -539,6 +549,10 @@ export function LanguageProvider({ children }) {
   const [lang, setLang] = useState(() => {
     return localStorage.getItem('srsf_lang') || 'en';
   });
+
+  useEffect(() => {
+    document.documentElement.lang = lang === 'te' ? 'te' : 'en';
+  }, [lang]);
 
   const toggleLang = () => {
     const nextLang = lang === 'en' ? 'te' : 'en';
