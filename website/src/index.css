@@ -1,8 +1,8 @@
 /* System fonts keep the app available offline; Telugu uses device fallbacks. */
 
 :root {
-  /* ── Shed-ready palette ── */
-  --bg-primary: #ffffff;
+  /* ── Shed-ready calm operations palette ── */
+  --bg-primary: #f7f8fa;
   --bg-secondary: #ffffff;
   --bg-card: #ffffff;
   --bg-card-hover: #f4f7fa;
@@ -13,19 +13,19 @@
   --accent-primary: #0b5394;
   --accent-secondary: #083b6b;
   --accent-teal: #087e8b;
-  --accent-gradient: linear-gradient(135deg, #0b5394 0%, #2563eb 100%);
+  --accent-gradient: #0b5394;
   --accent-light: #e8f1fa;
-  
+
   --text-primary: #102a43;
   --text-secondary: #334e68;
   --text-muted: #52606d;
-  
-  --border-color: #d7e0e8;
+
+  --border-color: rgba(16, 42, 67, 0.10);
   --border-control: #7c8d9f;
   --border-active: #0b5394;
   --border-hover: #7c8d9f;
   --status-success: #166534;
-  --status-warning: #854d0e;
+  --status-warning: #92400e;
   --status-danger: #b42318;
 
   --space-1: 4px;
@@ -57,8 +57,8 @@
   --radius-xl: 20px;
 
   /* ── Transitions ── */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-normal: 250ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ── Accessibility Utilities (WCAG 2.2 AA) ── */
@@ -179,7 +179,7 @@ a:hover {
 .sidebar-brand h1 {
   font-family: var(--font-heading);
   font-size: 1.15rem;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--accent-primary);
   letter-spacing: -0.3px;
   line-height: 1.3;
@@ -191,8 +191,8 @@ a:hover {
   font-size: 0.72rem;
   color: #64748b;
   margin-top: 3px;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
+  text-transform: none;
+  letter-spacing: 0;
   font-weight: 700;
 }
 
@@ -219,7 +219,7 @@ a:hover {
   line-height: 1.35;
   white-space: normal;
   overflow-wrap: anywhere;
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   cursor: pointer;
   border: none;
   background: none;
@@ -351,7 +351,7 @@ a:hover {
   border-radius: var(--radius-lg);
   padding: 24px 28px;
   box-shadow: var(--shadow-sm);
-  transition: all var(--transition-normal);
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .card:hover {
@@ -390,7 +390,7 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  transition: all var(--transition-normal);
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .stat-card:hover {
@@ -464,7 +464,7 @@ a:hover {
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   text-decoration: none;
 }
 
@@ -545,7 +545,7 @@ a:hover {
   border-radius: 8px;
   font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .btn-install-sidebar:hover {
@@ -591,7 +591,7 @@ a:hover {
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 0.95rem;
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   outline: none;
 }
 
@@ -959,7 +959,7 @@ a:hover {
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .pagination button:hover:not(:disabled) {
@@ -993,7 +993,7 @@ a:hover {
   font-weight: 700;
   cursor: pointer;
   border-radius: 8px;
-  transition: all 0.2s ease;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .logout-btn:hover {
@@ -1137,7 +1137,7 @@ a:hover {
   overflow-wrap: anywhere;
   font-weight: 700;
   border-radius: 8px;
-  transition: all 0.15s ease;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .mobile-drawer-link:hover {
@@ -2402,7 +2402,7 @@ body:has(.modal-backdrop) {
 
   .stat-card-compact.stat-hero .stat-value {
     font-size: 1.55rem !important;
-    font-weight: 900 !important;
+    font-weight: 700 !important;
   }
 
   .stat-card-compact .stat-label {
@@ -2722,7 +2722,7 @@ body:has(.modal-backdrop) {
   min-width: 0;
   position: relative;
   overflow: hidden;
-  transition: all 0.2s ease;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .report-metric-card:hover {
@@ -2762,7 +2762,7 @@ body:has(.modal-backdrop) {
 .report-metric-value {
   font-family: var(--font-heading);
   font-size: 1.55rem;
-  font-weight: 900;
+  font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.02em;
   margin-bottom: 8px;
@@ -2815,7 +2815,7 @@ body:has(.modal-backdrop) {
   border: none;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s ease;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .report-tab-btn:hover {
@@ -2829,14 +2829,16 @@ body:has(.modal-backdrop) {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
-/* Reports Hero Executive Card */
+/* Reports Hero Executive Card — calm surface with 3px semantic left rule */
 .report-hero-card {
-  border-radius: 16px;
-  padding: 26px 28px;
+  border-radius: 12px;
+  padding: 22px 24px;
   margin-bottom: 24px;
   position: relative;
-  overflow: hidden;
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.15);
+  background: #ffffff;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2845,26 +2847,15 @@ body:has(.modal-backdrop) {
 }
 
 .report-hero-card.surplus {
-  background: linear-gradient(135deg, #022c22 0%, #065f46 60%, #047857 100%);
-  color: #ffffff;
-  border: 1px solid rgba(52, 211, 153, 0.25);
+  border-left: 3px solid var(--status-success);
 }
 
 .report-hero-card.deficit {
-  background: linear-gradient(135deg, #4c0519 0%, #881337 60%, #9f1239 100%);
-  color: #ffffff;
-  border: 1px solid rgba(244, 63, 94, 0.25);
+  border-left: 3px solid var(--status-danger);
 }
 
 .report-hero-glow {
-  position: absolute;
-  top: -60px;
-  right: -60px;
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
-  border-radius: 50%;
-  pointer-events: none;
+  display: none;
 }
 
 .report-hero-tag {
@@ -2872,44 +2863,48 @@ body:has(.modal-backdrop) {
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  border-radius: 6px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
   margin-bottom: 10px;
 }
 
 .report-hero-amount {
   font-family: var(--font-heading);
-  font-size: 2.5rem;
-  font-weight: 900;
+  font-size: 2.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   line-height: 1.15;
   letter-spacing: -0.02em;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  color: var(--text-primary);
+}
+
+.report-hero-card.surplus .report-hero-amount {
+  color: var(--status-success);
+}
+
+.report-hero-card.deficit .report-hero-amount {
+  color: var(--status-danger);
 }
 
 .report-hero-desc {
   margin-top: 8px;
   font-size: 0.88rem;
-  opacity: 0.92;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
 .report-hero-summary-box {
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 14px;
-  padding: 16px 20px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 14px 18px;
   min-width: 250px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .report-hero-row {
@@ -2920,22 +2915,21 @@ body:has(.modal-backdrop) {
 }
 
 .report-hero-row-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  opacity: 0.85;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
 .report-hero-row-val {
   font-family: var(--font-heading);
-  font-size: 1.25rem;
-  font-weight: 900;
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .report-hero-divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--border-color);
   margin: 10px 0;
 }
 
@@ -2957,7 +2951,7 @@ body:has(.modal-backdrop) {
   cursor: pointer;
   background: #f8fafc;
   color: #475569;
-  transition: all 0.15s ease;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .report-pill-btn:hover {
@@ -3060,7 +3054,7 @@ body:has(.modal-backdrop) {
 
   .report-glance-metric-lg {
     font-size: 1.55rem;
-    font-weight: 900;
+    font-weight: 700;
     line-height: 1.1;
     margin-top: 3px;
     color: #0b5394;
@@ -3134,7 +3128,7 @@ body:has(.modal-backdrop) {
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .staff-tab-btn:hover {
@@ -3155,7 +3149,7 @@ body:has(.modal-backdrop) {
   border-radius: 12px;
   font-size: 0.72rem;
   font-weight: 700;
-  transition: all 0.15s ease;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .staff-tab-btn.active .staff-tab-badge {
@@ -3215,7 +3209,7 @@ body:has(.modal-backdrop) {
   color: #64748b;
   background: transparent;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   white-space: nowrap;
 }
 
@@ -3324,7 +3318,7 @@ body:has(.modal-backdrop) {
     border: none !important;
     color: #64748b !important;
     background: transparent !important;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
     display: inline-flex !important;
     align-items: center !important;
     gap: 5px !important;
@@ -3370,7 +3364,7 @@ body:has(.modal-backdrop) {
 
   .staff-glance-metric-lg {
     font-size: 1.55rem;
-    font-weight: 900;
+    font-weight: 700;
     line-height: 1.1;
     margin-top: 3px;
     color: #0f172a;
@@ -3600,7 +3594,7 @@ body:has(.modal-backdrop) {
 
   .worker-wage-val {
     font-size: 1.15rem;
-    font-weight: 900;
+    font-weight: 700;
     color: #0b5394;
     line-height: 1.2;
   }

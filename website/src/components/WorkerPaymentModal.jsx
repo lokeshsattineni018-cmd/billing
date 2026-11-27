@@ -202,7 +202,7 @@ export default function WorkerPaymentModal({
             <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
               Total Wage
             </div>
-            <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0b5394', marginTop: '3px' }}>
+            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0b5394', marginTop: '3px' }}>
               {formatCurrency(totalAmount)}
             </div>
           </div>
@@ -211,7 +211,7 @@ export default function WorkerPaymentModal({
             <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
               Already Paid
             </div>
-            <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#16a34a', marginTop: '3px' }}>
+            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#16a34a', marginTop: '3px' }}>
               {formatCurrency(currentPaid)}
             </div>
           </div>
@@ -220,7 +220,7 @@ export default function WorkerPaymentModal({
             <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
               Balance Due
             </div>
-            <div style={{ fontSize: '1.15rem', fontWeight: 900, color: balanceDue > 0 ? '#ea580c' : '#16a34a', marginTop: '3px' }}>
+            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: balanceDue > 0 ? '#ea580c' : '#16a34a', marginTop: '3px' }}>
               {formatCurrency(balanceDue)}
             </div>
           </div>
@@ -230,7 +230,7 @@ export default function WorkerPaymentModal({
         <form onSubmit={handleSubmit} style={{ padding: '20px 22px' }}>
           {error && (
             <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', fontSize: '0.85rem', marginBottom: '16px', fontWeight: 600 }}>
-              ⚠️ {error}
+              {error}
             </div>
           )}
 
@@ -316,25 +316,26 @@ export default function WorkerPaymentModal({
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
               {[
-                { id: 'Cash', label: '💵 Cash' },
-                { id: 'UPI', label: '📱 PhonePe / UPI' },
-                { id: 'Bank Transfer', label: '🏦 Bank Transfer' },
+                { id: 'Cash', label: 'Cash' },
+                { id: 'UPI', label: 'PhonePe / UPI' },
+                { id: 'Bank Transfer', label: 'Bank Transfer' },
               ].map((m) => (
                 <button
                   key={m.id}
                   type="button"
                   onClick={() => setPayMode(m.id)}
                   style={{
-                    padding: '8px 6px',
+                    padding: '10px 6px',
+                    minHeight: '44px',
                     borderRadius: '8px',
                     border: payMode === m.id ? '2px solid #0b5394' : '1px solid #cbd5e1',
                     background: payMode === m.id ? '#eff6ff' : '#ffffff',
-                    color: payMode === m.id ? '#0b5394' : '#475569',
-                    fontWeight: payMode === m.id ? 800 : 600,
-                    fontSize: '0.78rem',
+                    color: payMode === m.id ? '#0b5394' : '#334e68',
+                    fontWeight: payMode === m.id ? 700 : 600,
+                    fontSize: '0.8rem',
                     cursor: 'pointer',
                     textAlign: 'center',
-                    transition: 'all 0.15s ease',
+                    transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1), color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 >
                   {m.label}
@@ -402,7 +403,7 @@ export default function WorkerPaymentModal({
               <div
                 style={{
                   fontSize: '0.95rem',
-                  fontWeight: 900,
+                  fontWeight: 700,
                   color:
                     resultingStatus === 'Paid'
                       ? '#047857'
@@ -413,7 +414,7 @@ export default function WorkerPaymentModal({
                 }}
               >
                 {resultingStatus === 'Paid' && '✓ Full Wage Paid (Settled)'}
-                {resultingStatus === 'Partial' && `⚡ Partial Payment (₹${resultingRemaining.toFixed(2)} Remaining Due)`}
+                {resultingStatus === 'Partial' && `Partial Payment (₹${resultingRemaining.toFixed(2)} Remaining Due)`}
                 {resultingStatus === 'Pending' && '⏳ Unpaid / Pending'}
               </div>
             </div>

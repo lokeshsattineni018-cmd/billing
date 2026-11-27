@@ -26,7 +26,7 @@ const Settings = lazyWithRetry(() => import('./pages/Settings'));
 const Staff = lazyWithRetry(() => import('./pages/Staff'));
 const RecycleBin = lazyWithRetry(() => import('./pages/RecycleBin'));
 
-import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon, UserIcon, StaffIcon, MenuIcon, CloseIcon } from './components/Icons';
+import { DashboardIcon, PlusIcon, InvoiceIcon, TrendingUpIcon, SettingsIcon, LogoutIcon, DownloadIcon, UserIcon, StaffIcon, MenuIcon, CloseIcon, TrashIcon, LedgerIcon, ActivityIcon } from './components/Icons';
 import ErrorBoundary from './components/ErrorBoundary';
 import { SkeletonPage } from './components/Skeleton';
 import logoImg from './assets/logo.png';
@@ -64,9 +64,9 @@ function Sidebar({ onInstall, onLogout }) {
       ? [
           { path: '/reports', label: t('salesReports'), icon: <TrendingUpIcon size={18} /> },
           { path: '/customers', label: t('customers'), icon: <UserIcon size={18} /> },
-          { path: '/ledger', label: t('customerLedger'), icon: <InvoiceIcon size={18} /> },
-          { path: '/activity-log', label: t('activityLog'), icon: <SettingsIcon size={18} /> },
-          { path: '/recycle-bin', label: t('recycleBin'), icon: <span style={{ fontSize: '15px' }}>🗑️</span> },
+          { path: '/ledger', label: t('customerLedger'), icon: <LedgerIcon size={18} /> },
+          { path: '/activity-log', label: t('activityLog'), icon: <ActivityIcon size={18} /> },
+          { path: '/recycle-bin', label: t('recycleBin'), icon: <TrashIcon size={18} /> },
           { path: '/settings', label: t('settings'), icon: <SettingsIcon size={18} /> },
         ]
       : []),
@@ -160,7 +160,7 @@ function Sidebar({ onInstall, onLogout }) {
 
       <div className="sidebar-footer">
         <div className="sidebar-user">
-          <div className="user-avatar" style={{ background: '#0b5394', color: '#ffffff', fontWeight: 900, borderRadius: '8px' }}>
+          <div className="user-avatar" style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, borderRadius: '8px' }}>
             {user?.name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
           <div className="user-info">
@@ -196,9 +196,9 @@ function AppLayout() {
       ? [
           { path: '/reports', label: t('salesReports'), icon: <TrendingUpIcon size={18} /> },
           { path: '/customers', label: t('customers'), icon: <UserIcon size={18} /> },
-          { path: '/ledger', label: t('customerLedger'), icon: <InvoiceIcon size={18} /> },
-          { path: '/activity-log', label: t('activityLog'), icon: <InvoiceIcon size={18} /> },
-          { path: '/recycle-bin', label: t('recycleBin'), icon: <span style={{ fontSize: '15px' }}>🗑️</span> },
+          { path: '/ledger', label: t('customerLedger'), icon: <LedgerIcon size={18} /> },
+          { path: '/activity-log', label: t('activityLog'), icon: <ActivityIcon size={18} /> },
+          { path: '/recycle-bin', label: t('recycleBin'), icon: <TrashIcon size={18} /> },
           { path: '/settings', label: t('settings'), icon: <SettingsIcon size={18} /> },
         ]
       : []),
@@ -382,7 +382,7 @@ function AppLayout() {
                   height: '36px',
                   background: '#0b5394',
                   color: '#ffffff',
-                  fontWeight: 900,
+                  fontWeight: 700,
                   borderRadius: '8px',
                   display: 'flex',
                   alignItems: 'center',

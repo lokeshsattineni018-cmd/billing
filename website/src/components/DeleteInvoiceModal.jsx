@@ -246,7 +246,7 @@ export default function DeleteInvoiceModal({
               }}
             >
               <p style={{ margin: '0 0 8px 0', fontSize: '1rem', fontWeight: 800, color: '#991b1b' }}>
-                ⚠️ {isTe ? `ఇన్‌వాయిస్ #${billNo}ను ఖచ్చితంగా తొలగించాలా?` : `Are you sure you want to delete Invoice #${billNo}?`}
+                {isTe ? `ఇన్‌వాయిస్ #${billNo}ను ఖచ్చితంగా తొలగించాలా?` : `Are you sure you want to delete Invoice #${billNo}?`}
               </p>
               <p style={{ margin: 0, fontSize: '0.86rem', color: '#7f1d1d', fontWeight: 600 }}>
                 {isTe ? 'కారణం:' : 'Reason:'} <strong>{getFullReasonText()}</strong>
@@ -289,51 +289,50 @@ export default function DeleteInvoiceModal({
                   cursor: selectedReasonId ? 'pointer' : 'not-allowed',
                 }}
               >
-                {isTe ? 'ముందుకు వెళ్ళు ➔' : 'Next Step ➔'}
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setStep(1)}
-                disabled={loading}
-                style={{ minHeight: '48px', minWidth: '90px', fontWeight: 700, padding: '10px 18px' }}
-              >
-                {isTe ? '⬅ వెనుకకు' : '⬅ Back'}
-              </button>
-              <button
-                type="button"
-                className="btn"
-                onClick={handleFinalConfirm}
-                disabled={loading}
-                style={{
-                  minHeight: '48px',
-                  background: '#dc2626',
-                  color: '#ffffff',
-                  fontWeight: 800,
-                  padding: '10px 24px',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 2px 10px rgba(220, 38, 38, 0.3)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                {loading ? (
-                  <>
-                    <span className="btn-spinner" style={{ width: '16px', height: '16px' }}></span>
-                    <span>{isTe ? 'తొలగిస్తోంది...' : 'Deleting...'}</span>
-                  </>
-                ) : (
-                  <>
-                    <span>🗑️</span>
-                    <span>{isTe ? 'ఖచ్చితంగా తొలగించు' : 'Confirm Delete'}</span>
-                  </>
-                )}
+                  {isTe ? 'ముందుకు వెళ్ళు' : 'Next Step'}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setStep(1)}
+                  disabled={loading}
+                  style={{ minHeight: '48px', minWidth: '90px', fontWeight: 600, padding: '10px 18px' }}
+                >
+                  {isTe ? 'వెనుకకు' : 'Back'}
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={handleFinalConfirm}
+                  disabled={loading}
+                  style={{
+                    minHeight: '48px',
+                    background: '#b42318',
+                    color: '#ffffff',
+                    fontWeight: 600,
+                    padding: '10px 24px',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  {loading ? (
+                    <>
+                      <span className="btn-spinner" style={{ width: '16px', height: '16px' }}></span>
+                      <span>{isTe ? 'తొలగిస్తోంది...' : 'Deleting...'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <TrashIcon size={16} color="#ffffff" />
+                      <span>{isTe ? 'ఖచ్చితంగా తొలగించు' : 'Confirm Delete'}</span>
+                    </>
+                  )}
               </button>
             </>
           )}

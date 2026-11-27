@@ -181,7 +181,7 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
                 <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#d97706', textTransform: 'uppercase' }}>
                   Balance Due
                 </div>
-                <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#d97706', marginTop: '2px' }}>
+                <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#d97706', marginTop: '2px' }}>
                   {formatCurrency(billData.balanceDue)}
                 </div>
               </div>

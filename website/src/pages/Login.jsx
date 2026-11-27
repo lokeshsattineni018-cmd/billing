@@ -51,7 +51,7 @@ export default function Login() {
               marginBottom: '12px',
             }}
           />
-          <h1 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0b5394', letterSpacing: '0.5px', lineHeight: '1.2' }}>
+          <h1 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0b5394', letterSpacing: '0.5px', lineHeight: '1.2' }}>
             VIJAYA DURGA AGENCIES
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '4px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>

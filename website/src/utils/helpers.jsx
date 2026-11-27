@@ -213,7 +213,7 @@ TO: ${customerName}
         title: `Invoice-${bill.billNo}.pdf`,
         text: caption,
       });
-      if (showToast) showToast('Invoice PDF shared successfully!');
+      if (showToast) showToast('Invoice PDF shared successfully');
       return;
     }
   } catch (err) {

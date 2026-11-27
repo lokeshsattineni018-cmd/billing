@@ -63,7 +63,7 @@ export default function ReminderModal({ billId, onClose }) {
   const handleCopy = () => {
     if (!customMsg) return;
     navigator.clipboard.writeText(customMsg);
-    showToast('Reminder copied to clipboard!', 'success');
+    showToast('Reminder copied to clipboard', 'success');
   };
 
   return (

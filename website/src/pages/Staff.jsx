@@ -506,7 +506,7 @@ export default function Staff() {
 
           setEntries((prev) => [offlineEntry, ...prev]);
           playSuccessSound();
-          showToast(`⚡ Shed Mode: Recorded ${formData.staffName}'s peeling labor offline!`, 'info');
+          showToast(`Shed Mode: Recorded ${formData.staffName}'s peeling labor offline`, 'info');
           setModalOpen(false);
           return;
         }
@@ -546,7 +546,7 @@ export default function Staff() {
 
           setEntries((prev) => [offlineEntry, ...prev]);
           playSuccessSound();
-          showToast(`⚡ Shed Mode: Recorded ${formData.staffName}'s peeling labor offline!`, 'info');
+          showToast(`Shed Mode: Recorded ${formData.staffName}'s peeling labor offline`, 'info');
           setModalOpen(false);
           return;
         } catch (offlineErr) {}
@@ -702,7 +702,7 @@ export default function Staff() {
           };
         });
         setBulkRows(rows);
-        showToast(`Loaded ${rows.length} workers from registry!`, 'success');
+        showToast(`Loaded ${rows.length} workers from registry`, 'success');
         return;
       }
       showToast('No previous worker records found to copy', 'error');
@@ -725,7 +725,7 @@ export default function Staff() {
     }
 
     setBulkRows(rows);
-    showToast(t('copyYesterdaySuccess') || `Loaded ${rows.length} workers from previous team!`, 'success');
+    showToast(t('copyYesterdaySuccess') || `Loaded ${rows.length} workers from previous team`, 'success');
   };
 
   const handleClearDraft = () => {
@@ -785,7 +785,7 @@ export default function Staff() {
 
         setEntries((prev) => [...newOfflineEntries, ...prev]);
         playSuccessSound();
-        showToast(`⚡ Shed Mode: Saved ${validRows.length} peeling entries offline!`, 'info');
+        showToast(`Shed Mode: Saved ${validRows.length} peeling entries offline`, 'info');
         localStorage.removeItem(BULK_DRAFT_KEY);
         setBulkModalOpen(false);
         setBulkRows([
@@ -800,7 +800,7 @@ export default function Staff() {
         date: bulkDate,
         entries: validRows,
       });
-      showToast(res.data.message || `Saved ${validRows.length} entries!`, 'success');
+      showToast(res.data.message || `Saved ${validRows.length} entries`, 'success');
       localStorage.removeItem(BULK_DRAFT_KEY);
       setBulkModalOpen(false);
       setBulkRows([
@@ -844,7 +844,7 @@ export default function Staff() {
 
           setEntries((prev) => [...newOfflineEntries, ...prev]);
           playSuccessSound();
-          showToast(`⚡ Shed Mode: Saved ${validRows.length} peeling entries offline!`, 'info');
+          showToast(`Shed Mode: Saved ${validRows.length} peeling entries offline`, 'info');
           localStorage.removeItem(BULK_DRAFT_KEY);
           setBulkModalOpen(false);
           setBulkRows([
@@ -989,7 +989,7 @@ export default function Staff() {
           className={`staff-tab-btn ${activeTab === 'entries' ? 'active' : ''}`}
           onClick={() => setActiveTab('entries')}
         >
-          <span>👥 {t('workerLaborTitle') || 'Workers Labor'}</span>
+          <span>{t('workerLaborTitle') || 'Workers Labor'}</span>
           <span className="staff-tab-badge">
             {entries.length}
           </span>
@@ -1000,7 +1000,7 @@ export default function Staff() {
           className={`staff-tab-btn ${activeTab === 'ice' ? 'active' : ''}`}
           onClick={() => setActiveTab('ice')}
         >
-          <span>🧊 {t('iceBlocks') || 'Ice Blocks'}</span>
+          <span>{t('iceBlocks') || 'Ice Blocks'}</span>
         </button>
 
         <button
@@ -1008,7 +1008,7 @@ export default function Staff() {
           className={`staff-tab-btn ${activeTab === 'wastage' ? 'active' : ''}`}
           onClick={() => setActiveTab('wastage')}
         >
-          <span>🦐 {t('prawnHeadWastage') || 'Wastage'}</span>
+          <span>{t('prawnHeadWastage') || 'Wastage'}</span>
         </button>
 
         <button
@@ -1027,7 +1027,7 @@ export default function Staff() {
           className={`staff-tab-btn ${activeTab === 'net' ? 'active' : ''}`}
           onClick={() => setActiveTab('net')}
         >
-          <span>📊 {t('dailyOperations') || 'Net Summary'}</span>
+          <span>{t('dailyOperations') || 'Net Summary'}</span>
         </button>
 
         <button
@@ -1035,7 +1035,7 @@ export default function Staff() {
           className={`staff-tab-btn ${activeTab === 'calendar' ? 'active' : ''}`}
           onClick={() => setActiveTab('calendar')}
         >
-          <span>📅 {t('attendanceCalendar') || 'Calendar'}</span>
+          <span>{t('attendanceCalendar') || 'Calendar'}</span>
         </button>
       </div>
 
@@ -1090,7 +1090,7 @@ export default function Staff() {
                         </span>
                         <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{badgeLabel}</span>
                       </div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#0b5394', marginTop: '6px' }}>
                         {workersCount}
                         <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b', marginLeft: '6px' }}>present</span>
                       </div>
@@ -1107,7 +1107,7 @@ export default function Staff() {
                         </span>
                         <ScaleIcon size={16} color="#0891b2" />
                       </div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0891b2', marginTop: '6px' }}>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#0891b2', marginTop: '6px' }}>
                         {processedKg.toLocaleString('en-IN')}
                         <span style={{ fontSize: '0.9rem', fontWeight: 700, marginLeft: '4px' }}>kg</span>
                       </div>
@@ -1124,7 +1124,7 @@ export default function Staff() {
                         </span>
                         <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>Earned</span>
                       </div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#16a34a', marginTop: '6px' }}>
                         {formatCurrency(totalWages)}
                       </div>
                       <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
@@ -1140,7 +1140,7 @@ export default function Staff() {
                         </span>
                         <span className="badge badge-amber" style={{ fontSize: '0.7rem' }}>To Pay</span>
                       </div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '6px' }}>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#ea580c', marginTop: '6px' }}>
                         {formatCurrency(pendingWages)}
                       </div>
                       <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
@@ -1167,7 +1167,7 @@ export default function Staff() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0b5394', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    <span>⚡ {t('bulkStaffAttendanceEntry') || 'Bulk Staff Attendance Entry'}</span>
+                    <span>{t('bulkStaffAttendanceEntry') || 'Bulk Staff Attendance Entry'}</span>
                     {bulkRows.some((r) => r.staffName?.trim() || r.quantity) && (
                       <span style={{ fontSize: '0.72rem', color: '#16a34a', background: '#dcfce7', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>
                         ✓ {t('draftSaved') || 'Draft Auto-Saved'}
@@ -1215,7 +1215,7 @@ export default function Staff() {
                   }}
                   title="Auto-fill worker names from yesterday's attendance team"
                 >
-                  <span>{t('copyYesterdayTeam') || "⚡ Copy Yesterday's Team"}</span>
+                  <span>{t('copyYesterdayTeam') || "Copy Yesterday's Team"}</span>
                 </button>
               </div>
 
@@ -1314,7 +1314,7 @@ export default function Staff() {
                       onClick={handleClearDraft}
                       style={{ color: '#ef4444', fontWeight: 700, fontSize: '0.8rem' }}
                     >
-                      🗑️ {t('clearDraft') || 'Clear Draft'}
+                      {t('clearDraft') || 'Clear Draft'}
                     </button>
                   )}
                   <button
@@ -1369,9 +1369,9 @@ export default function Staff() {
                   onClick={() => handlePrintWorkerStatement(selectedWorkerFilter)}
                   disabled={printingStatement}
                   style={{
-                    background: '#7c3aed',
+                    background: '#0b5394',
                     color: '#ffffff',
-                    fontWeight: 800,
+                    fontWeight: 600,
                     fontSize: '0.8rem',
                     display: 'flex',
                     alignItems: 'center',
@@ -1379,7 +1379,6 @@ export default function Staff() {
                     border: 'none',
                     padding: '6px 12px',
                     borderRadius: '6px',
-                    boxShadow: '0 2px 4px rgba(124, 58, 237, 0.2)',
                   }}
                   title={`Print official settlement / wage bill for ${selectedWorkerFilter}`}
                 >
@@ -1525,7 +1524,7 @@ export default function Staff() {
                   {search ? 'No Matching Work Entries' : 'No Work Entries Found'}
                 </h4>
                 <p style={{ margin: 0, fontSize: '0.85rem' }}>
-                  {search ? `No entries matched "${search}". Clear search or try another worker name.` : 'Click "+ Add Work Entry" or "⚡ Bulk Attendance" above to record staff labor.'}
+                  {search ? `No entries matched "${search}". Clear search or try another worker name.` : 'Click "+ Add Work Entry" or "Bulk Attendance" above to record staff labor.'}
                 </p>
               </div>
             ) : (
@@ -1558,7 +1557,7 @@ export default function Staff() {
                               </span>
                               {entry.isOffline && (
                                 <span style={{ fontSize: '0.65rem', background: '#fef3c7', color: '#92400e', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
-                                  ⚡ Offline
+                                  Offline
                                 </span>
                               )}
                               <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>• {formatDate(entry.date)}</span>
@@ -1621,9 +1620,9 @@ export default function Staff() {
                           type="button"
                           className="btn btn-secondary btn-sm"
                           onClick={() => handlePrintEntryBill(entry, index)}
-                          style={{ color: '#7c3aed', borderColor: '#ddd6fe', fontWeight: 700, background: '#f5f3ff', flex: '0 0 auto', padding: '0 12px' }}
+                          style={{ color: '#0b5394', borderColor: '#cbd5e1', fontWeight: 600, background: '#f8fafc', flex: '0 0 auto', padding: '0 12px' }}
                         >
-                          <PrintIcon size={14} color="#7c3aed" />
+                          <PrintIcon size={14} color="#0b5394" />
                           <span>Bill</span>
                         </button>
 
@@ -1728,7 +1727,7 @@ export default function Staff() {
                             </strong>
                             {entry.isOffline && (
                               <span style={{ fontSize: '0.68rem', background: '#fef3c7', color: '#92400e', padding: '1px 5px', borderRadius: '4px', fontWeight: 800, marginLeft: '6px' }}>
-                                ⚡ Offline
+                                Offline
                               </span>
                             )}
                             {entry.staffPhone && (
@@ -1776,10 +1775,10 @@ export default function Staff() {
                                 style={{
                                   padding: '4px 8px',
                                   fontSize: '0.75rem',
-                                  background: '#f5f3ff',
-                                  color: '#7c3aed',
-                                  border: '1px solid #ddd6fe',
-                                  fontWeight: 800,
+                                  background: '#e8f1fa',
+                                  color: '#0b5394',
+                                  border: '1px solid #bfdbfe',
+                                  fontWeight: 600,
                                   display: 'inline-flex',
                                   alignItems: 'center',
                                   gap: '4px',
@@ -1787,7 +1786,7 @@ export default function Staff() {
                                 onClick={() => handlePrintEntryBill(entry, index)}
                                 title="Generate & View Worker Wage Bill"
                               >
-                                <PrintIcon size={13} color="#7c3aed" /> Bill
+                                <PrintIcon size={13} color="#0b5394" /> Bill
                               </button>
                               <button
                                 className={`btn btn-sm ${entry.paymentStatus === 'Paid' ? 'btn-ghost' : 'btn-primary'}`}
@@ -1916,18 +1915,18 @@ export default function Staff() {
                         style={{
                           flex: 1,
                           fontSize: '0.8rem',
-                          fontWeight: 800,
-                          background: '#f5f3ff',
-                          color: '#7c3aed',
-                          border: '1px solid #ddd6fe',
+                          fontWeight: 600,
+                          background: '#e8f1fa',
+                          color: '#0b5394',
+                          border: '1px solid #bfdbfe',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '6px',
-                          height: '36px',
+                          minHeight: '48px',
                         }}
                       >
-                        <PrintIcon size={14} color="#7c3aed" /> Wage Statement
+                        <PrintIcon size={14} color="#0b5394" /> Wage Statement
                       </button>
                     </div>
                   </div>
@@ -2012,17 +2011,17 @@ export default function Staff() {
                               onClick={() => handlePrintWorkerStatement(acc.staffName)}
                               style={{
                                 fontSize: '0.78rem',
-                                fontWeight: 800,
-                                background: '#f5f3ff',
-                                color: '#7c3aed',
-                                border: '1px solid #ddd6fe',
+                                fontWeight: 600,
+                                background: '#e8f1fa',
+                                color: '#0b5394',
+                                border: '1px solid #bfdbfe',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '4px',
                               }}
                               title={`Print complete wage statement bill for ${acc.staffName}`}
                             >
-                              <PrintIcon size={13} color="#7c3aed" /> Bill
+                              <PrintIcon size={13} color="#0b5394" /> Bill
                             </button>
                           </div>
                         </td>
@@ -2205,7 +2204,7 @@ export default function Staff() {
                     {liveQty || 0} kg × ₹{livePrice || 0}/kg
                   </div>
                 </div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0b5394' }}>
+                <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0b5394' }}>
                   {formatCurrency(liveTotal)}
                 </div>
               </div>
@@ -2289,7 +2288,7 @@ export default function Staff() {
             {/* Top Bar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #0b5394', padding: '4px 12px', fontSize: '0.82rem', fontWeight: 'bold', color: '#0b5394' }}>
               <div>WORKER BILL</div>
-              <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 900, letterSpacing: '1px' }}>॥ జై శ్రీరామ్ ॥</div>
+              <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 700, letterSpacing: '1px' }}>॥ జై శ్రీరామ్ ॥</div>
               <div>Cell: 9441429745</div>
             </div>
 
@@ -2319,7 +2318,7 @@ export default function Staff() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.85rem' }}>
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
-                <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                   {activeBillEntry.voucherNo || (viewingVoucher?.voucherNo || 'WB-1')}
                 </span>
               </div>
@@ -2394,10 +2393,10 @@ export default function Staff() {
               </tbody>
               <tfoot>
                 <tr style={{ background: '#e8f1f8', borderTop: '1.5px solid #0b5394', fontWeight: 'bold' }}>
-                  <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 900 }}>
+                  <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 700 }}>
                     TOTAL WAGE AMOUNT:
                   </td>
-                  <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 900, color: '#000000' }}>
+                  <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 700, color: '#000000' }}>
                     ₹{Number(activeBillEntry.totalAmount).toFixed(2)}
                   </td>
                 </tr>
@@ -2448,7 +2447,7 @@ export default function Staff() {
             {/* Top Bar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #0b5394', padding: '4px 12px', fontSize: '0.82rem', fontWeight: 'bold', color: '#0b5394' }}>
               <div>WORKER WAGE STATEMENT & SETTLEMENT BILL</div>
-              <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 900, letterSpacing: '1px' }}>॥ జై శ్రీరామ్ ॥</div>
+              <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 700, letterSpacing: '1px' }}>॥ జై శ్రీరామ్ ॥</div>
               <div>Cell: 9441429745</div>
             </div>
 
@@ -2478,7 +2477,7 @@ export default function Staff() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.85rem' }}>
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Statement No.</span>
-                <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                   STMT-{statementWorker.replace(/\s+/g, '').slice(0, 4).toUpperCase()}-{Date.now().toString().slice(-4)}
                 </span>
               </div>
@@ -2544,16 +2543,16 @@ export default function Staff() {
               <tfoot>
                 {/* Grand Total Row */}
                 <tr style={{ background: '#e8f1f8', borderTop: '1.5px solid #0b5394', fontWeight: 'bold' }}>
-                  <td colSpan={3} style={{ textAlign: 'right', padding: '6px 10px', color: '#0b5394', fontSize: '0.88rem', fontWeight: 900 }}>
+                  <td colSpan={3} style={{ textAlign: 'right', padding: '6px 10px', color: '#0b5394', fontSize: '0.88rem', fontWeight: 700 }}>
                     TOTAL PROCESSED:
                   </td>
-                  <td style={{ textAlign: 'right', padding: '6px', fontWeight: 900, color: '#0b5394', borderRight: '1.5px solid #0b5394' }}>
+                  <td style={{ textAlign: 'right', padding: '6px', fontWeight: 700, color: '#0b5394', borderRight: '1.5px solid #0b5394' }}>
                     {statementSummary.totalKg} kg
                   </td>
-                  <td style={{ textAlign: 'right', padding: '6px 8px', color: '#0b5394', fontWeight: 900, borderRight: '1.5px solid #0b5394' }}>
+                  <td style={{ textAlign: 'right', padding: '6px 8px', color: '#0b5394', fontWeight: 700, borderRight: '1.5px solid #0b5394' }}>
                     TOTAL:
                   </td>
-                  <td style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.95rem', fontWeight: 900, color: '#000000', borderRight: '1.5px solid #0b5394' }}>
+                  <td style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.95rem', fontWeight: 700, color: '#000000', borderRight: '1.5px solid #0b5394' }}>
                     ₹{statementSummary.totalEarned.toFixed(2)}
                   </td>
                   <td></td>
@@ -2564,7 +2563,7 @@ export default function Staff() {
                   <td colSpan={3} style={{ textAlign: 'right', padding: '5px 10px', color: '#16a34a', fontWeight: 'bold' }}>
                     Amount Paid: ₹{statementSummary.totalPaid.toFixed(2)}
                   </td>
-                  <td colSpan={4} style={{ textAlign: 'right', padding: '6px 10px', fontWeight: 900, fontSize: '0.95rem', color: statementSummary.pendingBalance > 0 ? '#b12704' : '#16a34a' }}>
+                  <td colSpan={4} style={{ textAlign: 'right', padding: '6px 10px', fontWeight: 700, fontSize: '0.95rem', color: statementSummary.pendingBalance > 0 ? '#b12704' : '#16a34a' }}>
                     NET BALANCE PAYABLE: ₹{statementSummary.pendingBalance.toFixed(2)}
                   </td>
                 </tr>
@@ -2660,7 +2659,7 @@ export default function Staff() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Total Wage Amount:</span>
-                <span style={{ fontSize: '1.1rem', fontWeight: 900, color: '#16a34a' }}>
+                <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#16a34a' }}>
                   {formatCurrency(selectedEntryIds.length > 0 ? selectedPendingTotal : pendingTotalWage)}
                 </span>
               </div>

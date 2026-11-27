@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { billsAPI, settingsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDateTime, useToast, Toast, shareInvoicePDFOnWhatsApp } from '../utils/helpers';
-import { PrintIcon, DownloadIcon, WhatsAppIcon, PlusIcon, ArrowLeftIcon, ShareIcon } from '../components/Icons';
+import { PrintIcon, DownloadIcon, WhatsAppIcon, PlusIcon, ArrowLeftIcon, ShareIcon, EditIcon, TrashIcon } from '../components/Icons';
 import ReminderModal from '../components/ReminderModal';
 import PaymentModal from '../components/PaymentModal';
 import ShareModal from '../components/ShareModal';
@@ -137,7 +137,7 @@ export default function BillDetail() {
     showToast('Syncing offline invoice to MongoDB Atlas cloud...', 'info');
     const result = await flushSyncQueue();
     if (result.synced > 0) {
-      showToast('Successfully synced to MongoDB Atlas!', 'success');
+      showToast('Successfully synced to MongoDB Atlas', 'success');
       loadBill();
     } else {
       showToast('Could not connect to MongoDB Atlas. Retrying when signal strengthens.', 'error');
@@ -178,7 +178,7 @@ export default function BillDetail() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      showToast('PDF downloaded successfully!', 'success');
+      showToast('PDF downloaded successfully', 'success');
     } catch (error) {
       if (import.meta.env.DEV) { console.error('PDF error:', error); }
       showToast('Failed to download PDF', 'error');
@@ -211,7 +211,7 @@ export default function BillDetail() {
       const response = await billsAPI.updatePaymentStatus(id, newStatus);
       setBill(response.data);
       invalidateBillCaches('payment').catch(() => {});
-      showToast(`Invoice #${bill.billNo} marked as ${newStatus}!`);
+      showToast(`Invoice #${bill.billNo} marked as ${newStatus}`);
     } catch (error) {
       if (import.meta.env.DEV) { console.error('Failed to update status:', error); }
       showToast(error.response?.data?.message || 'Failed to update status', 'error');
@@ -307,13 +307,13 @@ export default function BillDetail() {
               Invoice <span className="tabular-num" style={{ color: bill.isVoided ? '#b42318' : '#0b5394' }}>#{bill.billNo}</span>
             </h1>
             {bill.isVoided && (
-              <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800, fontSize: '0.85rem' }}>
-                ⛔ VOIDED / CANCELLED
+              <span className="badge" style={{ background: '#fee2e2', color: '#b42318', fontWeight: 700, fontSize: '0.85rem' }}>
+                VOIDED / CANCELLED
               </span>
             )}
             {bill.isOffline && (
-              <span className="badge" style={{ background: '#fef3c7', color: '#92400e', fontWeight: 800, fontSize: '0.82rem', border: '1px solid #fcd34d' }}>
-                ⚡ SHED MODE VOUCHER
+              <span className="badge" style={{ background: '#fef3c7', color: '#92400e', fontWeight: 700, fontSize: '0.82rem', border: '1px solid #fcd34d' }}>
+                SHED MODE VOUCHER
               </span>
             )}
           </div>
@@ -420,20 +420,22 @@ export default function BillDetail() {
             <div style={{ display: 'flex', gap: '8px' }}>
               {canEditBill && (
                 <button
+                  type="button"
                   className="btn btn-secondary btn-sm"
-                  style={{ flex: 1, fontWeight: 700, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                  style={{ flex: 1, fontWeight: 600, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                   onClick={() => navigate('/new-bill', { state: { editBill: bill } })}
                 >
-                  ✏️ Edit
+                  <EditIcon size={15} /> Edit
                 </button>
               )}
               {canDeleteBill && (
                 <button
+                  type="button"
                   className="btn btn-secondary btn-sm"
-                  style={{ flex: 1, color: '#dc2626', border: '1px solid #fecaca', background: '#fff5f5', fontWeight: 700, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                  style={{ flex: 1, color: '#b42318', border: '1px solid #fecaca', background: '#fff5f5', fontWeight: 600, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                   onClick={() => setShowDeleteModal(true)}
                 >
-                  🗑️ Delete
+                  <TrashIcon size={15} color="#b42318" /> Delete
                 </button>
               )}
             </div>
@@ -487,7 +489,7 @@ export default function BillDetail() {
                 boxShadow: '0 2px 6px rgba(217, 119, 6, 0.3)',
               }}
             >
-              🔄 Sync to Atlas Cloud Now
+              Sync to Atlas Cloud Now
             </button>
           )}
         </div>
@@ -534,7 +536,7 @@ export default function BillDetail() {
               <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#d97706', textTransform: 'uppercase' }}>
                 Balance Due
               </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#d97706' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#d97706' }}>
                 {formatCurrency(Math.max(0, (bill.grandTotal || bill.total) - (bill.paidAmount || (bill.paymentStatus === 'Paid' ? (bill.grandTotal || bill.total) : 0))))}
               </div>
             </div>

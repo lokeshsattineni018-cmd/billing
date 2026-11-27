@@ -103,7 +103,7 @@ export default function ShedModeSyncBar() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {!isOnline ? (
             <>
-              <span style={{ fontSize: '1rem', animation: 'pulse 1.5s infinite' }}>⚡</span>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#fef08a', display: 'inline-block', flexShrink: 0 }} />
               <span>
                 <strong>SHED MODE (OFFLINE)</strong> &bull; Factory floor uninterrupted &bull; {pendingCounts.total} records queued
               </span>
@@ -379,7 +379,7 @@ export default function ShedModeSyncBar() {
             {/* Error Message */}
             {syncError && (
               <div style={{ padding: '8px 24px', background: '#fee2e2', color: '#dc2626', fontSize: '0.8rem', fontWeight: 600 }}>
-                ⚠️ {syncError}
+                {syncError}
               </div>
             )}
 
@@ -394,8 +394,8 @@ export default function ShedModeSyncBar() {
                 justifyContent: 'space-between',
               }}
             >
-              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                🔒 Data is safely stored in browser IndexedDB
+              <div style={{ fontSize: '0.75rem', color: '#52606d' }}>
+                Data is safely stored in browser IndexedDB
               </div>
 
               <div style={{ display: 'flex', gap: '8px' }}>

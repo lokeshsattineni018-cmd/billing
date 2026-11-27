@@ -110,7 +110,7 @@ export const RevenueTrendChart = memo(function RevenueTrendChart({ data = [], ti
           <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             {title}
           </div>
-          <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#0f172a', marginTop: '2px', letterSpacing: '-0.5px' }}>
+          <div style={{ fontSize: '1.45rem', fontWeight: 700, color: '#0f172a', marginTop: '2px', letterSpacing: '-0.5px' }}>
             {formatCurrency(totalPeriodRevenue)}
             <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600, marginLeft: '8px' }}>
               period total
@@ -377,7 +377,7 @@ export const PaymentStatusDonut = memo(function PaymentStatusDonut({ paid = 0, p
         <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           Payment Health
         </div>
-        <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', marginTop: '2px' }}>
+        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>
           Collection Ratio
         </div>
       </div>
@@ -426,7 +426,7 @@ export const PaymentStatusDonut = memo(function PaymentStatusDonut({ paid = 0, p
               textAlign: 'center',
             }}
           >
-            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', lineHeight: 1 }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', lineHeight: 1 }}>
               {paidPct}%
             </div>
             <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#16a34a', textTransform: 'uppercase', marginTop: '3px' }}>
@@ -453,7 +453,7 @@ export const PaymentStatusDonut = memo(function PaymentStatusDonut({ paid = 0, p
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#16a34a' }} />
             <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#166534' }}>Cleared (Paid)</span>
           </div>
-          <span style={{ fontSize: '0.84rem', fontWeight: 900, color: '#15803d' }}>
+          <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#15803d' }}>
             {formatCurrency(paid)} ({paidPct}%)
           </span>
         </div>
@@ -473,7 +473,7 @@ export const PaymentStatusDonut = memo(function PaymentStatusDonut({ paid = 0, p
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#d97706' }} />
             <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#92400e' }}>Pending (Credit)</span>
           </div>
-          <span style={{ fontSize: '0.84rem', fontWeight: 900, color: '#b45309' }}>
+          <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#b45309' }}>
             {formatCurrency(pending)} ({pendingPct}%)
           </span>
         </div>
@@ -523,7 +523,7 @@ export const TopCustomersBarChart = memo(function TopCustomersBarChart({ data = 
           <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Leaderboard
           </div>
-          <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', marginTop: '2px' }}>
+          <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>
             Top Buyers Ranking
           </div>
         </div>
@@ -555,7 +555,7 @@ export const TopCustomersBarChart = memo(function TopCustomersBarChart({ data = 
                       border: `1px solid ${rank.border}`,
                       color: rank.text,
                       fontSize: '0.75rem',
-                      fontWeight: 900,
+                      fontWeight: 700,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -569,7 +569,7 @@ export const TopCustomersBarChart = memo(function TopCustomersBarChart({ data = 
                   </span>
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <span style={{ fontWeight: 900, color: '#0b5394', fontSize: '0.92rem' }}>
+                  <span style={{ fontWeight: 700, color: '#0b5394', fontSize: '0.92rem' }}>
                     {formatCurrency(item.revenue)}
                   </span>
                 </div>

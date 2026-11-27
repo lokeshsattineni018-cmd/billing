@@ -156,10 +156,10 @@ export const translations = {
 
     // Staff & Operations Extensions
     addWorkEntry: '+ Add Work Entry',
-    bulkAttendance: '⚡ Bulk Attendance',
+    bulkAttendance: 'Bulk Attendance',
     hideBulkEntry: 'Hide Bulk Entry',
-    copyYesterdayTeam: "⚡ Copy Yesterday's Team",
-    copyYesterdaySuccess: 'Loaded workers from previous team!',
+    copyYesterdayTeam: "Copy Yesterday's Team",
+    copyYesterdaySuccess: 'Loaded workers from previous team.',
     attendanceCalendar: 'Attendance Calendar',
     monthlyCalendar: 'Monthly Attendance Calendar',
     workerAccounts: 'Worker Accounts & Ledgers',
@@ -424,10 +424,10 @@ export const translations = {
 
     // Staff & Operations Extensions (Telugu)
     addWorkEntry: '+ కూలీ పని నమోదు',
-    bulkAttendance: '⚡ బల్క్ హాజరు',
+    bulkAttendance: 'బల్క్ హాజరు',
     hideBulkEntry: 'బల్క్ నమోదు దాచండి',
-    copyYesterdayTeam: "⚡ నిన్నటి బృందాన్ని తీసుకురండి",
-    copyYesterdaySuccess: 'నిన్నటి కార్మికుల వివరాలు లోడ్ అయ్యాయి!',
+    copyYesterdayTeam: "నిన్నటి బృందాన్ని తీసుకురండి",
+    copyYesterdaySuccess: 'నిన్నటి కార్మికుల వివరాలు లోడ్ అయ్యాయి.',
     attendanceCalendar: 'హాజరు క్యాలెండర్',
     monthlyCalendar: 'నెలవారీ హాజరు క్యాలెండర్',
     workerAccounts: 'కార్మికుల ఖాతా లెడ్జర్లు',

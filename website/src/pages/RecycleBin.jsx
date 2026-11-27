@@ -103,7 +103,7 @@ export default function RecycleBin() {
       else if (type === 'ice')     res = await recycleBinAPI.restoreIce(id);
       else if (type === 'wastage') res = await recycleBinAPI.restoreWastage(id);
       else if (type === 'staff')   res = await recycleBinAPI.restoreStaff(id);
-      showToast(res?.data?.message || `${label} restored successfully!`, 'success');
+      showToast(res?.data?.message || `${label} restored successfully`, 'success');
       load();
     } catch (err) {
       showToast(err.response?.data?.message || `Failed to restore ${label}`, 'error');
@@ -158,7 +158,7 @@ export default function RecycleBin() {
             disabled={loading}
             style={{ fontWeight: 700 }}
           >
-            {loading ? '...' : '🔄 Refresh'}
+            {loading ? '...' : 'Refresh'}
           </button>
         </div>
       </div>
@@ -177,9 +177,9 @@ export default function RecycleBin() {
         }}
       >
         <TabBtn active={activeTab === 'bills'}   onClick={() => setActiveTab('bills')}   label="🧾 Invoices"            count={counts.bills} />
-        <TabBtn active={activeTab === 'ice'}     onClick={() => setActiveTab('ice')}     label="🧊 Ice Usage"           count={counts.ice} />
-        <TabBtn active={activeTab === 'wastage'} onClick={() => setActiveTab('wastage')} label="🦐 Prawn Head Wastage"  count={counts.wastage} />
-        <TabBtn active={activeTab === 'staff'}   onClick={() => setActiveTab('staff')}   label="👷 Worker Attendance"   count={counts.staff} />
+        <TabBtn active={activeTab === 'ice'}     onClick={() => setActiveTab('ice')}     label="Ice Usage"           count={counts.ice} />
+        <TabBtn active={activeTab === 'wastage'} onClick={() => setActiveTab('wastage')} label="Prawn Head Wastage"  count={counts.wastage} />
+        <TabBtn active={activeTab === 'staff'}   onClick={() => setActiveTab('staff')}   label="Worker Attendance"   count={counts.staff} />
       </div>
 
       {/* ── Content Card ── */}

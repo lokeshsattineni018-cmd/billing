@@ -161,7 +161,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
         {/* Worker Picker */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0b5394', whiteSpace: 'nowrap' }}>
-            👤 {t('selectWorker') || 'Select Worker'}:
+            {t('selectWorker') || 'Select Worker'}:
           </label>
           <select
             className="form-input"
@@ -311,9 +311,9 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
           }}
         >
           <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>
-            📅 {t('presentDays') || 'Days Present'}
+            {t('presentDays') || 'Days Present'}
           </div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', marginTop: '4px' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', marginTop: '4px' }}>
             {monthlyStats.daysPresent}{' '}
             <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>
               / {daysInMonth} days
@@ -333,9 +333,9 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
           }}
         >
           <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>
-            ⚖️ {t('totalKgProcessed') || 'Total KG Processed'}
+            {t('totalKgProcessed') || 'Total KG Processed'}
           </div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', marginTop: '4px' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', marginTop: '4px' }}>
             {monthlyStats.totalKg.toLocaleString('en-IN')}{' '}
             <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>KG</span>
           </div>
@@ -353,9 +353,9 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
           }}
         >
           <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>
-            💰 {t('totalWagesEarned') || 'Total Wages Earned'}
+            {t('totalWagesEarned') || 'Total Wages Earned'}
           </div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', marginTop: '4px' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', marginTop: '4px' }}>
             {formatCurrency(monthlyStats.totalEarnings)}
           </div>
         </div>
@@ -384,7 +384,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
           <div
             style={{
               fontSize: '1.5rem',
-              fontWeight: 900,
+              fontWeight: 700,
               color: monthlyStats.unpaidAmount > 0 ? '#dc2626' : '#16a34a',
               marginTop: '4px',
             }}
@@ -471,16 +471,16 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    boxShadow: isPresent ? '0 2px 6px rgba(34, 197, 94, 0.08)' : 'none',
-                    transition: 'all 0.15s ease',
+                    boxShadow: isPresent ? '0 1px 4px rgba(22, 101, 52, 0.08)' : 'none',
+                    transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span
                       style={{
                         fontSize: '0.92rem',
-                        fontWeight: isPresent ? 900 : 700,
-                        color: isPresent ? '#15803d' : '#94a3b8',
+                        fontWeight: isPresent ? 700 : 600,
+                        color: isPresent ? '#166534' : '#52606d',
                       }}
                     >
                       {day}
@@ -497,7 +497,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
                           alignItems: 'center',
                           justifyContent: 'center',
                           fontSize: '0.65rem',
-                          fontWeight: 900,
+                          fontWeight: 700,
                         }}
                         title="Present"
                       >
@@ -597,7 +597,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
               }}
             >
               <div style={{ textAlign: 'center', borderBottom: '2px solid #0b5394', paddingBottom: '12px', marginBottom: '14px' }}>
-                <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#0b5394' }}>
+                <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0b5394' }}>
                   VIJAYA DURGA AGENCIES
                 </h2>
                 <div style={{ fontSize: '0.78rem', color: '#475569', marginTop: '2px' }}>
@@ -641,7 +641,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
               >
                 <div>
                   <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>Total Wages Payable</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0b5394' }}>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0b5394' }}>
                     {formatCurrency(monthlyStats.totalEarnings)}
                   </div>
                 </div>

@@ -238,7 +238,7 @@ export default function BillHistory() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      showToast(`PDF downloaded successfully!`, 'success');
+      showToast(`PDF downloaded successfully`, 'success');
     } catch (error) {
       if (import.meta.env.DEV) { console.error('Download error:', error); }
       showToast('Failed to download PDF', 'error');
@@ -541,7 +541,7 @@ export default function BillHistory() {
                           )}
                           {bill.isOffline && (
                             <span className="badge" style={{ background: '#fef3c7', color: '#92400e', fontWeight: 800, fontSize: '0.72rem' }}>
-                              ⚡ Offline
+                              Offline
                             </span>
                           )}
                         </div>
@@ -664,7 +664,7 @@ export default function BillHistory() {
                         )}
                         {bill.isOffline && (
                           <span className="badge" style={{ background: '#fef3c7', color: '#92400e', fontWeight: 800, marginLeft: '6px', fontSize: '0.72rem' }}>
-                            ⚡ Offline
+                            Offline
                           </span>
                         )}
                       </td>
@@ -791,7 +791,7 @@ export default function BillHistory() {
                         cursor: 'pointer',
                       }}
                     >
-                      ⚡ {t('loadMore') || 'Load More'}
+                      {t('loadMore') || 'Load More'}
                     </button>
                     <button
                       type="button"
@@ -808,7 +808,7 @@ export default function BillHistory() {
                         cursor: 'pointer',
                       }}
                     >
-                      📄 Pages
+                      Pages
                     </button>
                   </div>
                 )}
@@ -838,7 +838,7 @@ export default function BillHistory() {
                         onClick={() => setDisplayMode('pages')}
                         style={{ minHeight: '44px', width: '100%', fontSize: '0.88rem', fontWeight: 800 }}
                       >
-                        📄 Switch to Pages Mode ({((pagination.total || 0) - bills.length)} older)
+                        Switch to Pages Mode ({((pagination.total || 0) - bills.length)} older)
                       </button>
                     </div>
                   ) : bills.length < (pagination.total || 0) ? (

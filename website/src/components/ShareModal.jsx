@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DownloadIcon, WhatsAppIcon, ShareIcon, CloseIcon } from './Icons';
+import { DownloadIcon, WhatsAppIcon, ShareIcon, CloseIcon, MailIcon } from './Icons';
 import { formatCurrency } from '../utils/helpers';
 import Modal from './Modal';
 
@@ -34,7 +34,7 @@ export default function ShareModal({ bill, onClose, showToast }) {
           files: [pdfFile],
           title: `Tax Invoice #${bill.billNo} - VIJAYA DURGA SEA FOODS`,
         });
-        if (showToast) showToast('Invoice shared successfully!');
+        if (showToast) showToast('Invoice shared successfully');
         onClose();
         navigate('/');
         return;
@@ -61,7 +61,7 @@ export default function ShareModal({ bill, onClose, showToast }) {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(fileBlobUrl);
-      if (showToast) showToast('Invoice PDF downloaded!');
+      if (showToast) showToast('Invoice PDF downloaded');
     } catch (err) {
       if (import.meta.env.DEV) { console.error('Download error:', err); }
       window.open(pdfUrl, '_blank');
@@ -95,7 +95,7 @@ export default function ShareModal({ bill, onClose, showToast }) {
   const handleCopyLink = () => {
     navigator.clipboard.writeText(publicUrl);
     setCopied(true);
-    if (showToast) showToast('Invoice link copied to clipboard!');
+    if (showToast) showToast('Invoice link copied to clipboard');
     setTimeout(() => setCopied(false), 2500);
   };
 
@@ -159,7 +159,7 @@ export default function ShareModal({ bill, onClose, showToast }) {
               fontWeight: 800,
               fontSize: '0.84rem',
               gap: '8px',
-              transition: 'all 0.15s ease',
+              transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
             <ShareIcon size={22} color="#0b5394" />
@@ -181,10 +181,10 @@ export default function ShareModal({ bill, onClose, showToast }) {
               background: '#f0fdf4',
               color: '#16a34a',
               cursor: 'pointer',
-              fontWeight: 800,
+              fontWeight: 700,
               fontSize: '0.84rem',
               gap: '8px',
-              transition: 'all 0.15s ease',
+              transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
             <WhatsAppIcon size={22} color="#16a34a" />
@@ -210,7 +210,7 @@ export default function ShareModal({ bill, onClose, showToast }) {
               fontWeight: 700,
               fontSize: '0.84rem',
               gap: '8px',
-              transition: 'all 0.15s ease',
+              transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
             <DownloadIcon size={22} color="#334155" />
@@ -235,10 +235,10 @@ export default function ShareModal({ bill, onClose, showToast }) {
               fontWeight: 700,
               fontSize: '0.84rem',
               gap: '8px',
-              transition: 'all 0.15s ease',
+              transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
-            <span style={{ fontSize: '1.35rem' }}>✉️</span>
+            <MailIcon size={22} color="#334155" />
             <span>Send Email</span>
           </button>
         </div>
@@ -261,10 +261,10 @@ export default function ShareModal({ bill, onClose, showToast }) {
               fontWeight: 800,
               cursor: 'pointer',
               whiteSpace: 'nowrap',
-              transition: 'all 0.15s ease',
+              transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
-            {copied ? 'Copied!' : 'Copy Link'}
+            {copied ? 'Copied' : 'Copy Link'}
           </button>
         </div>
       </div>

@@ -425,7 +425,7 @@ Thank you!`;
                 ? 'WORKER BILL'
                 : 'WORKER WAGE STATEMENT & SETTLEMENT BILL'}
             </div>
-            <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 900, letterSpacing: '1px' }}>
+            <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 700, letterSpacing: '1px' }}>
               ॥ జై శ్రీరామ్ ॥
             </div>
             <div>Cell: 9441429745</div>
@@ -496,7 +496,7 @@ Thank you!`;
               >
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
-                  <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                  <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                     {resolvedVoucherNo}
                   </span>
                 </div>
@@ -578,10 +578,10 @@ Thank you!`;
                 </tbody>
                 <tfoot>
                   <tr style={{ background: '#e8f1f8', borderTop: '1.5px solid #0b5394', fontWeight: 'bold' }}>
-                    <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 900 }}>
+                    <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 700 }}>
                       TOTAL AMOUNT:
                     </td>
-                    <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 900, color: '#000000' }}>
+                    <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 700, color: '#000000' }}>
                       ₹{Number(data.totalAmount).toFixed(2)}
                     </td>
                   </tr>
@@ -609,7 +609,7 @@ Thank you!`;
               >
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
-                  <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                  <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                     {resolvedVoucherNo}
                   </span>
                 </div>
@@ -698,10 +698,10 @@ Thank you!`;
                 </tbody>
                 <tfoot>
                   <tr style={{ background: '#e8f1f8', borderTop: '1.5px solid #0b5394', fontWeight: 'bold' }}>
-                    <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 900 }}>
+                    <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 700 }}>
                       TOTAL SALE AMOUNT:
                     </td>
-                    <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 900, color: '#000000' }}>
+                    <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 700, color: '#000000' }}>
                       ₹{Number(data.totalAmount).toFixed(2)}
                     </td>
                   </tr>
@@ -729,7 +729,7 @@ Thank you!`;
               >
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
-                  <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                  <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                     {resolvedVoucherNo}
                   </span>
                 </div>
@@ -819,10 +819,10 @@ Thank you!`;
                 </tbody>
                 <tfoot>
                   <tr style={{ background: '#e8f1f8', borderTop: '1.5px solid #0b5394', fontWeight: 'bold' }}>
-                    <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 900 }}>
+                    <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 700 }}>
                       TOTAL WAGE AMOUNT:
                     </td>
-                    <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 900, color: '#000000' }}>
+                    <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 700, color: '#000000' }}>
                       ₹{Number(data.totalAmount).toFixed(2)}
                     </td>
                   </tr>
@@ -850,7 +850,7 @@ Thank you!`;
               >
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Statement No.</span>
-                  <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                  <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                     {resolvedVoucherNo}
                   </span>
                 </div>
@@ -932,7 +932,7 @@ Thank you!`;
                     <td colSpan={6} style={{ textAlign: 'right', padding: '6px 12px', color: '#0b5394', fontSize: '0.85rem' }}>
                       TOTAL EARNED:
                     </td>
-                    <td style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.95rem', fontWeight: 900, color: '#000000' }}>
+                    <td style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.95rem', fontWeight: 700, color: '#000000' }}>
                       ₹{Number(data.summary?.totalEarned || 0).toFixed(2)}
                     </td>
                   </tr>
@@ -945,10 +945,10 @@ Thank you!`;
                     </td>
                   </tr>
                   <tr style={{ background: '#fef3c7', borderTop: '1.5px solid #0b5394' }}>
-                    <td colSpan={6} style={{ textAlign: 'right', padding: '6px 12px', color: '#b45309', fontSize: '0.9rem', fontWeight: 900 }}>
+                    <td colSpan={6} style={{ textAlign: 'right', padding: '6px 12px', color: '#b45309', fontSize: '0.9rem', fontWeight: 700 }}>
                       PENDING BALANCE DUE:
                     </td>
-                    <td style={{ textAlign: 'right', padding: '6px 8px', fontSize: '1.05rem', fontWeight: 900, color: '#b45309' }}>
+                    <td style={{ textAlign: 'right', padding: '6px 8px', fontSize: '1.05rem', fontWeight: 700, color: '#b45309' }}>
                       ₹{Number(data.summary?.pendingBalance || 0).toFixed(2)}
                     </td>
                   </tr>

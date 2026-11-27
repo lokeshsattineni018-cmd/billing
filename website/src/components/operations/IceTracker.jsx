@@ -258,7 +258,7 @@ export default function IceTracker() {
 
       if (editingEntry) {
         await staffAPI.updateIce(editingEntry._id, payload);
-        showToast('Ice record updated successfully!', 'success');
+        showToast('Ice record updated successfully', 'success');
       } else {
         if (typeof navigator !== 'undefined' && !navigator.onLine) {
           const tempId = `offline_ice_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
@@ -280,13 +280,13 @@ export default function IceTracker() {
 
           setEntries((prev) => [offlineIce, ...prev]);
           playSuccessSound();
-          showToast(`⚡ Shed Mode: Recorded ${payload.blocks} ice blocks offline!`, 'info');
+          showToast(`Shed Mode: Recorded ${payload.blocks} ice blocks offline`, 'info');
           setModalOpen(false);
           return;
         }
 
         await staffAPI.createIce(payload);
-        showToast('Ice usage record saved successfully!', 'success');
+        showToast('Ice usage record saved successfully', 'success');
       }
 
       setModalOpen(false);
@@ -314,7 +314,7 @@ export default function IceTracker() {
 
           setEntries((prev) => [offlineIce, ...prev]);
           playSuccessSound();
-          showToast(`⚡ Shed Mode: Recorded ${payload.blocks} ice blocks offline!`, 'info');
+          showToast(`Shed Mode: Recorded ${payload.blocks} ice blocks offline`, 'info');
           setModalOpen(false);
           return;
         } catch (e) {}
@@ -403,7 +403,7 @@ export default function IceTracker() {
               </span>
               <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{badgeLabel}</span>
             </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0284c7', marginTop: '6px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#0284c7', marginTop: '6px' }}>
               {summary?.todayBlocks || 0}
               <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b', marginLeft: '6px' }}>blocks</span>
             </div>
@@ -420,7 +420,7 @@ export default function IceTracker() {
               </span>
               <IceIcon size={16} color="#0891b2" />
             </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0891b2', marginTop: '6px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#0891b2', marginTop: '6px' }}>
               {formatCurrency(summary?.todayAmount || 0)}
             </div>
             <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
@@ -429,17 +429,17 @@ export default function IceTracker() {
           </div>
 
           {/* Average Rate / Block */}
-          <div className="staff-kpi-card" style={{ borderLeft: '4px solid #6366f1' }}>
+          <div className="staff-kpi-card" style={{ borderLeft: '3px solid #087e8b' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#52606d' }}>
                 {periodLabel} Rate / Block
               </span>
-              <span className="badge badge-purple" style={{ fontSize: '0.7rem' }}>₹ / Block</span>
+              <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>₹ / Block</span>
             </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#6366f1', marginTop: '6px' }}>
+            <div className="tabular-num" style={{ fontSize: '1.5rem', fontWeight: 700, color: '#087e8b', marginTop: '6px' }}>
               ₹{summary?.todayAvgRate?.toFixed(2) || '0.00'}
             </div>
-            <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+            <div style={{ fontSize: '0.76rem', color: '#52606d', marginTop: '4px' }}>
               Average cost per block in period
             </div>
           </div>
@@ -452,7 +452,7 @@ export default function IceTracker() {
               </span>
               <span className="badge badge-amber" style={{ fontSize: '0.7rem' }}>Lifetime</span>
             </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#d97706', marginTop: '6px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#d97706', marginTop: '6px' }}>
               {formatCurrency(summary?.totalAmount || 0)}
             </div>
             <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
@@ -670,9 +670,9 @@ export default function IceTracker() {
                     type="button"
                     className="btn btn-secondary btn-sm"
                     onClick={() => handleGenerateBill(entry, index)}
-                    style={{ color: '#7c3aed', borderColor: '#ddd6fe', fontWeight: 700, background: '#f5f3ff', flex: 1, height: '36px' }}
+                    style={{ color: '#0b5394', borderColor: '#cbd5e1', fontWeight: 600, background: '#f8fafc', flex: 1, minHeight: '48px' }}
                   >
-                    <PrintIcon size={14} color="#7c3aed" />
+                    <PrintIcon size={14} color="#0b5394" />
                     <span>Bill</span>
                   </button>
 
@@ -734,7 +734,7 @@ export default function IceTracker() {
                         {entry.iceTo || '—'}
                       </td>
                       <td className="text-right">
-                        <span style={{ fontWeight: 900, color: '#0284c7', fontSize: '0.98rem' }}>
+                        <span style={{ fontWeight: 700, color: '#0284c7', fontSize: '0.98rem' }}>
                           {entry.blocks}
                         </span>
                         <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '4px' }}>blocks</span>
@@ -764,7 +764,7 @@ export default function IceTracker() {
                             title="Generate & View Bill"
                             style={{ padding: '4px 6px' }}
                           >
-                            <PrintIcon size={14} color="#7c3aed" />
+                            <PrintIcon size={14} color="#0b5394" />
                           </button>
                           {canEditDelete && (
                             <>
@@ -842,10 +842,11 @@ export default function IceTracker() {
               {/* Ice From / To */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: 700 }}>
-                    🏭 Ice From <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>(Supplier)</span>
+                  <label htmlFor="ice-form-from" className="form-label" style={{ fontWeight: 700 }}>
+                    Ice From <span style={{ fontSize: '0.72rem', color: '#52606d', fontWeight: 500 }}>(Supplier)</span>
                   </label>
                   <input
+                    id="ice-form-from"
                     type="text"
                     className="form-input"
                     placeholder="e.g. Sri Rama Ice Plant"
@@ -854,8 +855,8 @@ export default function IceTracker() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: 700 }}>
-                    📦 Ice To <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>(Receiver)</span>
+                  <label htmlFor="ice-form-to" className="form-label" style={{ fontWeight: 700 }}>
+                    Ice To <span style={{ fontSize: '0.72rem', color: '#52606d', fontWeight: 500 }}>(Receiver)</span>
                   </label>
                   <input
                     type="text"
@@ -924,7 +925,7 @@ export default function IceTracker() {
                     {liveBlocks} blocks × ₹{liveRate.toFixed(2)}
                   </div>
                 </div>
-                <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#0b5394' }}>
+                <div style={{ fontSize: '1.45rem', fontWeight: 700, color: '#0b5394' }}>
                   {formatCurrency(liveTotal)}
                 </div>
               </div>
@@ -983,7 +984,7 @@ export default function IceTracker() {
             {/* 1. TOP BAR */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #0b5394', padding: '4px 12px', fontSize: '0.82rem', fontWeight: 'bold', color: '#0b5394' }}>
               <div>ICE BILL</div>
-              <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 900, letterSpacing: '1px' }}>॥ జై శ్రీరామ్ ॥</div>
+              <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 700, letterSpacing: '1px' }}>॥ జై శ్రీరామ్ ॥</div>
               <div>Cell: 9441429745</div>
             </div>
 
@@ -1013,7 +1014,7 @@ export default function IceTracker() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.85rem' }}>
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
-                <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                   {billEntry.voucherNo || (viewingBill?.voucherNo || 'ICE-1')}
                 </span>
               </div>
@@ -1082,10 +1083,10 @@ export default function IceTracker() {
               </tbody>
               <tfoot>
                 <tr style={{ background: '#e8f1f8', borderTop: '1.5px solid #0b5394', fontWeight: 'bold' }}>
-                  <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 900 }}>
+                  <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 700 }}>
                     TOTAL AMOUNT:
                   </td>
-                  <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 900, color: '#000000' }}>
+                  <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 700, color: '#000000' }}>
                     ₹{Number(billEntry.totalAmount).toFixed(2)}
                   </td>
                 </tr>

@@ -242,7 +242,7 @@ export default function WastageTracker() {
 
       if (editingEntry) {
         await staffAPI.updateWastage(editingEntry._id, payload);
-        showToast('Wastage sales record updated!', 'success');
+        showToast('Wastage sales record updated', 'success');
       } else {
         if (typeof navigator !== 'undefined' && !navigator.onLine) {
           const tempId = `offline_wastage_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
@@ -264,13 +264,13 @@ export default function WastageTracker() {
 
           setEntries((prev) => [offlineWastage, ...prev]);
           playSuccessSound();
-          showToast(`⚡ Shed Mode: Recorded ${payload.quantityKg} boxes wastage sales offline!`, 'info');
+          showToast(`Shed Mode: Recorded ${payload.quantityKg} boxes wastage sales offline`, 'info');
           setModalOpen(false);
           return;
         }
 
         await staffAPI.createWastage(payload);
-        showToast('Prawn head wastage sales record saved!', 'success');
+        showToast('Prawn head wastage sales record saved', 'success');
       }
 
       setModalOpen(false);
@@ -298,7 +298,7 @@ export default function WastageTracker() {
 
           setEntries((prev) => [offlineWastage, ...prev]);
           playSuccessSound();
-          showToast(`⚡ Shed Mode: Recorded ${payload.quantityKg} boxes wastage sales offline!`, 'info');
+          showToast(`Shed Mode: Recorded ${payload.quantityKg} boxes wastage sales offline`, 'info');
           setModalOpen(false);
           return;
         } catch (e) {}
@@ -382,7 +382,7 @@ export default function WastageTracker() {
               </span>
               <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>{badgeLabel}</span>
             </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#16a34a', marginTop: '6px' }}>
               {(summary?.todayKg || 0).toLocaleString('en-IN')}
               <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b', marginLeft: '6px' }}>boxes</span>
             </div>
@@ -399,7 +399,7 @@ export default function WastageTracker() {
               </span>
               <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>Income</span>
             </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#059669', marginTop: '6px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#059669', marginTop: '6px' }}>
               {formatCurrency(summary?.todayAmount || 0)}
             </div>
             <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
@@ -415,7 +415,7 @@ export default function WastageTracker() {
               </span>
               <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>₹ / BOX</span>
             </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#0b5394', marginTop: '6px' }}>
               ₹{summary?.todayAvgRate?.toFixed(2) || '0.00'}
             </div>
             <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
@@ -424,17 +424,17 @@ export default function WastageTracker() {
           </div>
 
           {/* Total Wastage Sales Income */}
-          <div className="staff-kpi-card" style={{ borderLeft: '4px solid #8b5cf6' }}>
+          <div className="staff-kpi-card" style={{ borderLeft: '3px solid #0b5394' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#52606d' }}>
                 Total Wastage Sales
               </span>
-              <span className="badge badge-purple" style={{ fontSize: '0.7rem' }}>Lifetime</span>
+              <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>Lifetime</span>
             </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#8b5cf6', marginTop: '6px' }}>
+            <div className="tabular-num" style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0b5394', marginTop: '6px' }}>
               {formatCurrency(summary?.totalAmount || 0)}
             </div>
-            <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+            <div style={{ fontSize: '0.76rem', color: '#52606d', marginTop: '4px' }}>
               From {summary?.totalEntries || 0} recorded sales batches
             </div>
           </div>
@@ -670,7 +670,7 @@ export default function WastageTracker() {
                         </span>
                       </td>
                       <td className="text-right">
-                        <span style={{ fontWeight: 900, color: '#16a34a', fontSize: '0.98rem' }}>
+                        <span style={{ fontWeight: 700, color: '#16a34a', fontSize: '0.98rem' }}>
                           {entry.quantityKg}
                         </span>
                         <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '4px' }}>boxes</span>
@@ -836,7 +836,7 @@ export default function WastageTracker() {
                     {liveBoxes} boxes × ₹{liveRate.toFixed(2)}
                   </div>
                 </div>
-                <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#15803d' }}>
+                <div style={{ fontSize: '1.45rem', fontWeight: 700, color: '#15803d' }}>
                   {formatCurrency(liveTotal)}
                 </div>
               </div>

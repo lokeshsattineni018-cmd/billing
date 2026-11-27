@@ -730,7 +730,7 @@ export default function NewBill() {
         const offlineInvoice = await saveOfflineBillComplete(invoiceData);
         localStorage.removeItem(DRAFT_KEY);
         playSuccessSound();
-        showToast(`⚡ Shed Mode: Invoice #${offlineInvoice.billNo} saved locally! Printing receipt...`, 'info');
+        showToast(`Shed Mode: Invoice #${offlineInvoice.billNo} saved locally! Printing receipt...`, 'info');
         if (actionType === 'print') {
           navigate(`/bills/${offlineInvoice._id}?autoprint=true`);
         } else {
@@ -803,7 +803,7 @@ export default function NewBill() {
 
           localStorage.removeItem(DRAFT_KEY);
           playSuccessSound();
-          showToast(`⚡ Shed Mode: Invoice #${offlineInvoice.billNo} saved locally & queued for sync!`, 'info');
+          showToast(`Shed Mode: Invoice #${offlineInvoice.billNo} saved locally & queued for sync`, 'info');
 
           if (actionType === 'print') {
             navigate(`/bills/${offlineInvoice._id}?autoprint=true`);
@@ -1576,14 +1576,14 @@ export default function NewBill() {
 
             <div style={{ borderTop: '1.5px dashed #cbd5e1', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontSize: '0.86rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#0b5394', fontWeight: 900 }}>
+                <div style={{ fontSize: '0.86rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#0b5394', fontWeight: 700 }}>
                   {t('grandTotalAfterTax')}
                 </div>
                 <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '1px' }}>
                   Final invoice payable amount
                 </div>
               </div>
-              <div style={{ fontSize: '1.9rem', fontWeight: 900, color: '#0b5394', letterSpacing: '-0.5px' }}>
+              <div style={{ fontSize: '1.9rem', fontWeight: 700, color: '#0b5394', letterSpacing: '-0.5px' }}>
                 {formatCurrency(grandTotal)}
               </div>
             </div>

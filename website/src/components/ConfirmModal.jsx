@@ -127,7 +127,6 @@ export default function ConfirmModal({
               lineHeight: '1.4',
             }}
           >
-            <span>{isPrimary ? 'ℹ️' : '⚠️'}</span>
             <span>{warningText}</span>
           </div>
         )}

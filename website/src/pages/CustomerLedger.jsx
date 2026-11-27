@@ -51,8 +51,8 @@ Dear ${customer.companyName},
 
 This is a gentle reminder regarding your outstanding balance with VIJAYA DURGA AGENCIES.
 
-💰 Total Pending Balance: ${pendingAmount}
-📄 Pending Invoices: ${customer.unpaidBillsCount} bill(s)
+Total Pending Balance: ${pendingAmount}
+Pending Invoices: ${customer.unpaidBillsCount} bill(s)
 
 🏦 Bank Account Details for Payment:
 • Bank: ${bank}

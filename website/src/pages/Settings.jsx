@@ -16,6 +16,9 @@ import {
   EditIcon,
   ShieldIcon,
   CloseIcon,
+  BankIcon,
+  StaffIcon,
+  MailIcon,
 } from '../components/Icons';
 
 export default function Settings() {
@@ -159,7 +162,7 @@ export default function Settings() {
     setResettingCounter(true);
     try {
       const res = await settingsAPI.resetCounter({ nextNumber: num });
-      showToast(res.data.message || 'Invoice counter updated!', 'success');
+      showToast(res.data.message || 'Invoice counter updated', 'success');
       setShowResetCounterModal(false);
       loadCounterStatus();
     } catch (err) {
@@ -210,7 +213,7 @@ export default function Settings() {
     setSendingBackup(true);
     try {
       const res = await backupAPI.sendNow({ email: form.backupEmail.trim() });
-      showToast(res.data.message || 'Daily summary emailed successfully!');
+      showToast(res.data.message || 'Daily summary emailed successfully');
     } catch (error) {
       showToast(error.response?.data?.message || 'Failed to send backup email', 'error');
     } finally {
@@ -248,7 +251,7 @@ export default function Settings() {
     const result = await requestNotificationPermission();
     if (result.success) {
       setNotificationPerm('granted');
-      showToast('Push notifications enabled successfully!', 'success');
+      showToast('Push notifications enabled successfully', 'success');
       sendBrowserNotification('VIJAYA DURGA AGENCIES', {
         body: 'Push notifications are now active on this device!',
       });
@@ -263,7 +266,7 @@ export default function Settings() {
       body: 'VIJAYA DURGA AGENCIES notifications are working properly!',
     });
     if (sent) {
-      showToast('Test notification sent!', 'success');
+      showToast('Test notification sent', 'success');
     } else {
       showToast('Please enable notifications first.', 'error');
     }
@@ -297,7 +300,7 @@ export default function Settings() {
     setCreatingUser(true);
     try {
       await usersAPI.create(createForm);
-      showToast(`User account "@${createForm.username}" created successfully!`, 'success');
+      showToast(`User account "@${createForm.username}" created successfully`, 'success');
       setShowCreateModal(false);
       setCreateForm({ name: '', username: '', email: '', role: 'staff', password: '' });
       setShowCreatePassword(false);
@@ -321,7 +324,7 @@ export default function Settings() {
     setUpdatingUser(true);
     try {
       await usersAPI.update(selectedUserForEdit._id, editForm);
-      showToast(`Account for @${selectedUserForEdit.username || selectedUserForEdit.name} updated successfully!`, 'success');
+      showToast(`Account for @${selectedUserForEdit.username || selectedUserForEdit.name} updated successfully`, 'success');
       setShowEditModal(false);
       setSelectedUserForEdit(null);
       loadUsers();
@@ -343,7 +346,7 @@ export default function Settings() {
     setResettingPassword(true);
     try {
       await usersAPI.resetPassword(selectedUserForPassword._id, newPassword);
-      showToast(`Password for @${selectedUserForPassword.username || selectedUserForPassword.name} updated successfully!`, 'success');
+      showToast(`Password for @${selectedUserForPassword.username || selectedUserForPassword.name} updated successfully`, 'success');
       setShowPasswordModal(false);
       setSelectedUserForPassword(null);
       setNewPassword('');
@@ -375,8 +378,8 @@ export default function Settings() {
   const getRoleBadge = (u) => {
     if (isMasterAccount(u)) {
       return (
-        <span style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', color: '#92400e', border: '1px solid #f59e0b', padding: '3px 10px', borderRadius: '20px', fontSize: '0.74rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px', boxShadow: '0 1px 3px rgba(245, 158, 11, 0.2)' }}>
-          👑 Master Admin
+        <span style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b', padding: '3px 10px', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+          <ShieldIcon size={13} color="#92400e" /> Master Admin
         </span>
       );
     }
@@ -423,26 +426,26 @@ export default function Settings() {
           <button
             type="button"
             className={`btn btn-sm ${activeTab === 'business' ? 'btn-primary' : 'btn-ghost'}`}
-            style={activeTab === 'business' ? { background: '#0b5394', color: '#ffffff', fontWeight: 800, borderRadius: '8px' } : { color: '#64748b', fontWeight: 700 }}
+            style={activeTab === 'business' ? { background: '#0b5394', color: '#ffffff', fontWeight: 600, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' } : { color: '#52606d', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             onClick={() => setActiveTab('business')}
           >
-            🏢 Business & Bank Profile
+            <BankIcon size={15} /> Business &amp; Bank Profile
           </button>
           <button
             type="button"
             className={`btn btn-sm ${activeTab === 'users' ? 'btn-primary' : 'btn-ghost'}`}
-            style={activeTab === 'users' ? { background: '#0b5394', color: '#ffffff', fontWeight: 800, borderRadius: '8px' } : { color: '#64748b', fontWeight: 700 }}
+            style={activeTab === 'users' ? { background: '#0b5394', color: '#ffffff', fontWeight: 600, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' } : { color: '#52606d', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             onClick={() => setActiveTab('users')}
           >
-            👥 Staff Accounts ({users.length})
+            <StaffIcon size={15} /> Staff Accounts ({users.length})
           </button>
           <button
             type="button"
             className={`btn btn-sm ${activeTab === 'backup' ? 'btn-primary' : 'btn-ghost'}`}
-            style={activeTab === 'backup' ? { background: '#0b5394', color: '#ffffff', fontWeight: 800, borderRadius: '8px' } : { color: '#64748b', fontWeight: 700 }}
+            style={activeTab === 'backup' ? { background: '#0b5394', color: '#ffffff', fontWeight: 600, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' } : { color: '#52606d', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             onClick={() => setActiveTab('backup')}
           >
-            📧 Daily Email Backup
+            <MailIcon size={15} /> Daily Email Backup
           </button>
         </div>
       </div>
@@ -905,7 +908,7 @@ export default function Settings() {
                   {form.smtpDecryptionFailed ? (
                     <div style={{ marginBottom: '10px', padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px' }}>
                       <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#dc2626', marginBottom: '8px' }}>
-                        ⚠️ {form.smtpWarning || 'SMTP password could not be decrypted (encryption key changed or invalid). Please re-enter your SMTP password.'}
+                        {form.smtpWarning || 'SMTP password could not be decrypted (encryption key changed or invalid). Please re-enter your SMTP password.'}
                       </div>
                       <input
                         type="password"
@@ -1119,7 +1122,7 @@ export default function Settings() {
                 <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>
                   Permission Status:{' '}
                   <span style={{ color: notificationPerm === 'granted' ? '#16a34a' : notificationPerm === 'denied' ? '#dc2626' : '#d97706' }}>
-                    {notificationPerm === 'granted' ? '✅ Active / Granted' : notificationPerm === 'denied' ? '❌ Blocked in Browser' : '⚠️ Not Enabled'}
+                    {notificationPerm === 'granted' ? '✅ Active / Granted' : notificationPerm === 'denied' ? '❌ Blocked in Browser' : 'Not Enabled'}
                   </span>
                 </div>
                 <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
@@ -1380,7 +1383,7 @@ export default function Settings() {
                 </select>
                 {isMasterAccount(selectedUserForEdit) && (
                   <small style={{ color: '#d97706', fontSize: '0.72rem', display: 'block', marginTop: '4px' }}>
-                    👑 Master Admin role is locked and protected.
+                    Master Admin role is locked and protected.
                   </small>
                 )}
               </div>

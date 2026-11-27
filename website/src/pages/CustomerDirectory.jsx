@@ -289,7 +289,7 @@ export default function CustomerDirectory() {
                       <div style={{ fontSize: '0.74rem', color: '#64748b' }}>{c.gstin || 'No GSTIN'}</div>
                     </td>
                     <td className="text-right">
-                      <span style={{ fontWeight: 900, fontSize: '0.95rem', color: c.outstandingBalance > 0 ? '#d97706' : '#16a34a' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.95rem', color: c.outstandingBalance > 0 ? '#d97706' : '#16a34a' }}>
                         {formatCurrency(c.outstandingBalance)}
                       </span>
                     </td>
@@ -410,7 +410,7 @@ export default function CustomerDirectory() {
                 <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                   Total Invoiced
                 </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', marginTop: '2px' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>
                   {formatCurrency(ledgerCustomer.totalInvoiced)}
                 </div>
               </div>
@@ -418,7 +418,7 @@ export default function CustomerDirectory() {
                 <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                   Total Collected
                 </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#16a34a', marginTop: '2px' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#16a34a', marginTop: '2px' }}>
                   {formatCurrency(ledgerCustomer.totalPaid)}
                 </div>
               </div>
@@ -426,7 +426,7 @@ export default function CustomerDirectory() {
                 <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#d97706', textTransform: 'uppercase' }}>
                   Current Outstanding Due
                 </div>
-                <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#d97706', marginTop: '2px' }}>
+                <div style={{ fontSize: '1.35rem', fontWeight: 700, color: '#d97706', marginTop: '2px' }}>
                   {formatCurrency(ledgerCustomer.outstandingBalance)}
                 </div>
               </div>
@@ -518,7 +518,7 @@ export default function CustomerDirectory() {
             )}
 
             {/* Invoices List */}
-            <h4 style={{ margin: '0 0 12px 0', fontSize: '1rem', fontWeight: 900, color: '#0f172a' }}>
+            <h4 style={{ margin: '0 0 12px 0', fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>
               Invoice Breakdown ({customerBills.length})
             </h4>
 
@@ -558,7 +558,7 @@ export default function CustomerDirectory() {
                         <td className="text-right" style={{ fontWeight: 800, color: '#16a34a' }}>
                           {formatCurrency(b.paidAmount)}
                         </td>
-                        <td className="text-right" style={{ fontWeight: 900, color: b.balanceDue > 0 ? '#d97706' : '#16a34a' }}>
+                        <td className="text-right" style={{ fontWeight: 700, color: b.balanceDue > 0 ? '#d97706' : '#16a34a' }}>
                           {formatCurrency(b.balanceDue)}
                         </td>
                         <td style={{ textAlign: 'center' }}>

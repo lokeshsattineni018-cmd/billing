@@ -235,10 +235,10 @@ export default function DailyNetSummary() {
                       fontWeight: 800,
                     }}
                   >
-                    {isProfit ? 'PROFIT / SURPLUS ✨' : isLoss ? 'NET EXPENSE' : 'BREAK-EVEN'}
+                    {isProfit ? 'PROFIT / SURPLUS' : isLoss ? 'NET EXPENSE' : 'BREAK-EVEN'}
                   </span>
                 </div>
-                <h2 style={{ margin: '10px 0 4px 0', fontSize: '1.45rem', fontWeight: 900, color: '#0f172a' }}>
+                <h2 style={{ margin: '10px 0 4px 0', fontSize: '1.45rem', fontWeight: 700, color: '#102a43' }}>
                   {isProfit ? 'Net Factory Profit' : isLoss ? 'Net Factory Operating Cost' : 'Factory Break-Even'}
                 </h2>
                 <p style={{ margin: 0, color: '#64748b', fontSize: '0.84rem' }}>
@@ -257,7 +257,7 @@ export default function DailyNetSummary() {
                 <div
                   style={{
                     fontSize: '1.9rem',
-                    fontWeight: 900,
+                    fontWeight: 700,
                     marginTop: '4px',
                     letterSpacing: '-0.5px',
                     color: isProfit ? '#16a34a' : isLoss ? '#dc2626' : '#0f172a',
@@ -321,7 +321,7 @@ export default function DailyNetSummary() {
                 <span className="badge badge-amber">Expense</span>
               </div>
 
-              <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', marginBottom: '10px' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', marginBottom: '10px' }}>
                 {formatCurrency(laborWages)}
               </div>
 
@@ -349,7 +349,7 @@ export default function DailyNetSummary() {
                 <span className="badge badge-amber">Expense</span>
               </div>
 
-              <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', marginBottom: '10px' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', marginBottom: '10px' }}>
                 {formatCurrency(iceCost)}
               </div>
 
@@ -381,7 +381,7 @@ export default function DailyNetSummary() {
                 <span className="badge badge-green">Revenue</span>
               </div>
 
-              <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#16a34a', marginBottom: '10px' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16a34a', marginBottom: '10px' }}>
                 + {formatCurrency(wastageRevenue)}
               </div>
 

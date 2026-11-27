@@ -4,36 +4,36 @@ import { useToast, Toast } from '../utils/helpers';
 import { useLanguage } from '../context/LanguageContext';
 
 const ACTION_CONFIG = {
-  CREATE_BILL: { emoji: '📝', color: '#16a34a', bg: '#dcfce7', label: 'created Invoice', labelTe: 'ఇన్వాయిస్ బిల్లు తయారు చేశారు' },
-  EDIT_BILL: { emoji: '✏️', color: '#0284c7', bg: '#e0f2fe', label: 'edited Invoice', labelTe: 'ఇన్వాయిస్ బిల్లు సవరించారు' },
-  VOID_BILL: { emoji: '⛔', color: '#dc2626', bg: '#fee2e2', label: 'voided Invoice', labelTe: 'ఇన్వాయిస్ బిల్లు రద్దు చేశారు' },
-  UPDATE_PAYMENT_STATUS: { emoji: '💰', color: '#d97706', bg: '#fef3c7', label: 'updated payment for Invoice', labelTe: 'ఇన్వాయిస్ చెల్లింపు స్థితి మార్చారు' },
-  SET_CREDIT_LIMIT: { emoji: '🏦', color: '#9333ea', bg: '#f3e8ff', label: 'set credit limit for', labelTe: 'క్రెడిట్ పరిమితి నిర్ణయించారు:' },
-  UPDATE_SETTINGS: { emoji: '⚙️', color: '#475569', bg: '#f1f5f9', label: 'updated settings', labelTe: 'సిస్టమ్ సెట్టింగ్స్ సవరించారు' },
-  EXPORT_CSV: { emoji: '📊', color: '#475569', bg: '#f1f5f9', label: 'exported CSV report', labelTe: 'CSV నివేదిక ఎగుమతి చేశారు' },
-  EXPORT_TALLY: { emoji: '📑', color: '#0b5394', bg: '#dbeafe', label: 'exported Tally data', labelTe: 'టాలీ XML ఎగుమతి చేశారు' },
-  SEND_REMINDER: { emoji: '📲', color: '#059669', bg: '#dcfce7', label: 'sent payment reminder for Invoice', labelTe: 'చెల్లింపు రిమైండర్ పంపారు: ఇన్వాయిస్' },
-  CREATE_USER: { emoji: '👤', color: '#16a34a', bg: '#dcfce7', label: 'created user account', labelTe: 'వినియోగదారు ఖాతా సృష్టించారు' },
-  DELETE_USER: { emoji: '🗑️', color: '#dc2626', bg: '#fee2e2', label: 'deleted user account', labelTe: 'వినియోగదారు ఖాతా తొలగించారు' },
-  UPDATE_USER: { emoji: '👤', color: '#0284c7', bg: '#e0f2fe', label: 'updated user account', labelTe: 'వినియోగదారు ఖాతా సవరించారు' },
-  RESET_PASSWORD: { emoji: '🔑', color: '#d97706', bg: '#fef3c7', label: 'reset password for', labelTe: 'పాస్‌వర్డ్ రీసెట్ చేశారు:' },
+  CREATE_BILL: { emoji: '', color: '#166534', bg: '#dcfce7', label: 'created Invoice', labelTe: 'ఇన్వాయిస్ బిల్లు తయారు చేశారు' },
+  EDIT_BILL: { emoji: '', color: '#0b5394', bg: '#e8f1fa', label: 'edited Invoice', labelTe: 'ఇన్వాయిస్ బిల్లు సవరించారు' },
+  VOID_BILL: { emoji: '', color: '#b42318', bg: '#fee2e2', label: 'voided Invoice', labelTe: 'ఇన్వాయిస్ బిల్లు రద్దు చేశారు' },
+  UPDATE_PAYMENT_STATUS: { emoji: '', color: '#92400e', bg: '#fef3c7', label: 'updated payment for Invoice', labelTe: 'ఇన్వాయిస్ చెల్లింపు స్థితి మార్చారు' },
+  SET_CREDIT_LIMIT: { emoji: '', color: '#087e8b', bg: '#e0f2fe', label: 'set credit limit for', labelTe: 'క్రెడిట్ పరిమితి నిర్ణయించారు:' },
+  UPDATE_SETTINGS: { emoji: '', color: '#334e68', bg: '#f1f5f9', label: 'updated settings', labelTe: 'సిస్టమ్ సెట్టింగ్స్ సవరించారు' },
+  EXPORT_CSV: { emoji: '', color: '#334e68', bg: '#f1f5f9', label: 'exported CSV report', labelTe: 'CSV నివేదిక ఎగుమతి చేశారు' },
+  EXPORT_TALLY: { emoji: '', color: '#0b5394', bg: '#dbeafe', label: 'exported Tally data', labelTe: 'టాలీ XML ఎగుమతి చేశారు' },
+  SEND_REMINDER: { emoji: '', color: '#166534', bg: '#dcfce7', label: 'sent payment reminder for Invoice', labelTe: 'చెల్లింపు రిమైండర్ పంపారు: ఇన్వాయిస్' },
+  CREATE_USER: { emoji: '', color: '#166534', bg: '#dcfce7', label: 'created user account', labelTe: 'వినియోగదారు ఖాతా సృష్టించారు' },
+  DELETE_USER: { emoji: '', color: '#b42318', bg: '#fee2e2', label: 'deleted user account', labelTe: 'వినియోగదారు ఖాతా తొలగించారు' },
+  UPDATE_USER: { emoji: '', color: '#0b5394', bg: '#e8f1fa', label: 'updated user account', labelTe: 'వినియోగదారు ఖాతా సవరించారు' },
+  RESET_PASSWORD: { emoji: '', color: '#92400e', bg: '#fef3c7', label: 'reset password for', labelTe: 'పాస్‌వర్డ్ రీసెట్ చేశారు:' },
 
   // Staff & Daily Operations Actions
-  STAFF_WORK_RECORDED: { emoji: '👷', color: '#0b5394', bg: '#dbeafe', label: 'recorded Worker Wage entry', labelTe: 'కార్మికుని కూలీ పని నమోదు చేశారు' },
-  STAFF_WORK_BULK_RECORDED: { emoji: '⚡', color: '#7c3aed', bg: '#ede9fe', label: 'recorded Bulk Staff Attendance', labelTe: 'బల్క్ సిబ్బంది హాజరు నమోదు చేశారు' },
-  STAFF_WORK_UPDATED: { emoji: '✏️', color: '#0284c7', bg: '#e0f2fe', label: 'updated Worker Wage entry', labelTe: 'కార్మికుని కూలీ పని వివరాలు సవరించారు' },
-  STAFF_WORK_PAYMENT_TOGGLED: { emoji: '💵', color: '#059669', bg: '#d1fae5', label: 'updated Wage Payment status', labelTe: 'కూలీ చెల్లింపు స్థితి మార్చారు' },
-  STAFF_WORK_DELETED: { emoji: '🗑️', color: '#dc2626', bg: '#fee2e2', label: 'deleted Worker Wage entry', labelTe: 'కార్మికుని కూలీ ఎంట్రీ తొలగించారు' },
+  STAFF_WORK_RECORDED: { emoji: '', color: '#0b5394', bg: '#dbeafe', label: 'recorded Worker Wage entry', labelTe: 'కార్మికుని కూలీ పని నమోదు చేశారు' },
+  STAFF_WORK_BULK_RECORDED: { emoji: '', color: '#0b5394', bg: '#e8f1fa', label: 'recorded Bulk Staff Attendance', labelTe: 'బల్క్ సిబ్బంది హాజరు నమోదు చేశారు' },
+  STAFF_WORK_UPDATED: { emoji: '', color: '#0b5394', bg: '#e0f2fe', label: 'updated Worker Wage entry', labelTe: 'కార్మికుని కూలీ పని వివరాలు సవరించారు' },
+  STAFF_WORK_PAYMENT_TOGGLED: { emoji: '', color: '#166534', bg: '#d1fae5', label: 'updated Wage Payment status', labelTe: 'కూలీ చెల్లింపు స్థితి మార్చారు' },
+  STAFF_WORK_DELETED: { emoji: '', color: '#b42318', bg: '#fee2e2', label: 'deleted Worker Wage entry', labelTe: 'కార్మికుని కూలీ ఎంట్రీ తొలగించారు' },
 
   // Ice Blocks Tracking Actions
-  ICE_RECORDED: { emoji: '🧊', color: '#0284c7', bg: '#e0f2fe', label: 'recorded Ice Blocks purchase', labelTe: 'ఐస్ బ్లాకుల కొనుగోలు నమోదు చేశారు' },
-  ICE_UPDATED: { emoji: '✏️', color: '#0284c7', bg: '#e0f2fe', label: 'updated Ice Blocks record', labelTe: 'ఐస్ బ్లాకుల రికార్డు సవరించారు' },
-  ICE_DELETED: { emoji: '🗑️', color: '#dc2626', bg: '#fee2e2', label: 'deleted Ice Blocks record', labelTe: 'ఐస్ బ్లాకుల రికార్డు తొలగించారు' },
+  ICE_RECORDED: { emoji: '', color: '#087e8b', bg: '#e0f2fe', label: 'recorded Ice Blocks purchase', labelTe: 'ఐస్ బ్లాకుల కొనుగోలు నమోదు చేశారు' },
+  ICE_UPDATED: { emoji: '', color: '#087e8b', bg: '#e0f2fe', label: 'updated Ice Blocks record', labelTe: 'ఐస్ బ్లాకుల రికార్డు సవరించారు' },
+  ICE_DELETED: { emoji: '', color: '#b42318', bg: '#fee2e2', label: 'deleted Ice Blocks record', labelTe: 'ఐస్ బ్లాకుల రికార్డు తొలగించారు' },
 
   // Prawn Head Wastage Tracking Actions
-  WASTAGE_RECORDED: { emoji: '🦐', color: '#16a34a', bg: '#dcfce7', label: 'recorded Prawn Head Wastage sale', labelTe: 'రొయ్య తలల వేస్టేజ్ అమ్మకం నమోదు చేశారు' },
-  WASTAGE_UPDATED: { emoji: '✏️', color: '#16a34a', bg: '#dcfce7', label: 'updated Wastage sale record', labelTe: 'వేస్టేజ్ అమ్మకం రికార్డు సవరించారు' },
-  WASTAGE_DELETED: { emoji: '🗑️', color: '#dc2626', bg: '#fee2e2', label: 'deleted Wastage sale record', labelTe: 'వేస్టేజ్ అమ్మకం రికార్డు తొలగించారు' },
+  WASTAGE_RECORDED: { emoji: '', color: '#166534', bg: '#dcfce7', label: 'recorded Prawn Head Wastage sale', labelTe: 'రొయ్య తలల వేస్టేజ్ అమ్మకం నమోదు చేశారు' },
+  WASTAGE_UPDATED: { emoji: '', color: '#166534', bg: '#dcfce7', label: 'updated Wastage sale record', labelTe: 'వేస్టేజ్ అమ్మకం రికార్డు సవరించారు' },
+  WASTAGE_DELETED: { emoji: '', color: '#b42318', bg: '#fee2e2', label: 'deleted Wastage sale record', labelTe: 'వేస్టేజ్ అమ్మకం రికార్డు తొలగించారు' },
 };
 
 function getRelativeDate(dateStr, lang) {

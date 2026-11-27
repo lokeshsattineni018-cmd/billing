@@ -230,14 +230,6 @@ export default function Dashboard() {
     year: 'numeric',
   });
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return { en: 'Good Morning', te: 'శుభోదయం', icon: '🌅' };
-    if (hour < 17) return { en: 'Good Afternoon', te: 'శుభ మధ్యాహ్నం', icon: '☀️' };
-    return { en: 'Good Evening', te: 'శుభ సాయంత్రం', icon: '🌆' };
-  };
-  const greeting = getGreeting();
-
   if (loading) {
     return (
       <div className="page-container fade-in" style={{ maxWidth: '1440px', margin: '0 auto' }}>
@@ -283,11 +275,11 @@ export default function Dashboard() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
             <div className="dashboard-hero-title-area" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h1 className="dashboard-hero-title" style={{ fontSize: '1.65rem', fontWeight: 900, margin: 0, letterSpacing: '-0.5px', color: '#0f172a' }}>
-                  {greeting.icon} {greeting.en}, {user?.name || 'Owner'}
+                <h1 className="dashboard-hero-title" style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, letterSpacing: '-0.3px', color: '#102a43' }}>
+                  Vijaya Durga Agencies
                 </h1>
-                <p className="dashboard-hero-subtitle" style={{ margin: '3px 0 0 0', fontSize: '0.84rem', color: '#64748b', fontWeight: 600 }}>
-                  VIJAYA DURGA AGENCIES • {greeting.te} • {currentDateStr}
+                <p className="dashboard-hero-subtitle" style={{ margin: '3px 0 0 0', fontSize: '0.84rem', color: '#52606d', fontWeight: 500 }}>
+                  {user?.name || 'Operations'} • Daily Billing &amp; Settlement Overview • {currentDateStr}
                 </p>
               </div>
               <button
@@ -335,10 +327,9 @@ export default function Dashboard() {
                   gap: '8px',
                   cursor: 'pointer',
                   fontSize: '0.82rem',
-                  fontWeight: 700,
+                  fontWeight: 600,
                   color: '#0b5394',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                  transition: 'all 0.15s ease',
+                  transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
                 }}
                 title="Click to refresh dashboard data"
               >
@@ -378,8 +369,7 @@ export default function Dashboard() {
                   borderRadius: '10px',
                   border: 'none',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(11, 83, 148, 0.25)',
-                  transition: 'all 0.2s ease',
+                  transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
                 }}
               >
                 <PlusIcon size={18} color="#ffffff" /> Create Invoice
@@ -481,7 +471,7 @@ export default function Dashboard() {
                   <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     {t('todaysSales')}
                   </span>
-                  <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#0b5394', marginTop: '4px', letterSpacing: '-0.5px' }}>
+                  <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 700, color: '#0b5394', marginTop: '4px', letterSpacing: '-0.5px' }}>
                     <CountUp value={data?.today?.totalSales ?? data?.selectedPeriod?.totalSales ?? 0} isCurrency />
                   </div>
                 </div>
@@ -521,7 +511,7 @@ export default function Dashboard() {
                 <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t('thisMonthSales')}
                 </span>
-                <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#10b981', marginTop: '4px', letterSpacing: '-0.5px' }}>
+                <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 700, color: '#10b981', marginTop: '4px', letterSpacing: '-0.5px' }}>
                   <CountUp value={data?.month?.totalSales || 0} isCurrency />
                 </div>
               </div>
@@ -561,7 +551,7 @@ export default function Dashboard() {
                 <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t('outstandingReceivables')}
                 </span>
-                <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#d97706', marginTop: '4px', letterSpacing: '-0.5px' }}>
+                <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 700, color: '#d97706', marginTop: '4px', letterSpacing: '-0.5px' }}>
                   <CountUp value={data?.receivables?.totalPending || 0} isCurrency />
                 </div>
               </div>
@@ -601,7 +591,7 @@ export default function Dashboard() {
                 <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {t('totalLifetimeInvoices')}
                 </span>
-                <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 900, color: '#4338ca', marginTop: '4px', letterSpacing: '-0.5px' }}>
+                <div className="stat-value" style={{ fontSize: '1.55rem', fontWeight: 700, color: '#4338ca', marginTop: '4px', letterSpacing: '-0.5px' }}>
                   <CountUp value={data?.totalBills || 0} />
                 </div>
               </div>
@@ -612,9 +602,9 @@ export default function Dashboard() {
                   width: '40px',
                   height: '40px',
                   borderRadius: '10px',
-                  background: '#f5f3ff',
-                  border: '1px solid #ede9fe',
-                  color: '#6366f1',
+                  background: '#e8f1fa',
+                  border: '1px solid rgba(11, 83, 148, 0.18)',
+                  color: '#0b5394',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -627,10 +617,10 @@ export default function Dashboard() {
 
 
             <div className="stat-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
-              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+              <span style={{ fontSize: '0.75rem', color: '#52606d', fontWeight: 600 }}>
                 Lifetime
               </span>
-              <span style={{ background: '#ede9fe', color: '#6366f1', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
+              <span style={{ background: '#e8f1fa', color: '#0b5394', fontSize: '0.72rem', fontWeight: 600, padding: '2px 8px', borderRadius: '6px' }}>
                 All Time
               </span>
             </div>
@@ -656,8 +646,8 @@ export default function Dashboard() {
           {/* Section Toolbar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
-                Business Revenue & Analytics
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#102a43', margin: 0, letterSpacing: '-0.2px' }}>
+                Business Revenue &amp; Analytics
               </h3>
               <div style={{ display: 'flex', background: '#f1f5f9', padding: '3px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                 <button
@@ -669,11 +659,11 @@ export default function Dashboard() {
                     borderRadius: '6px',
                     padding: '5px 12px',
                     fontSize: '0.76rem',
-                    fontWeight: 800,
-                    color: trendView === 'daily' ? '#0b5394' : '#64748b',
+                    fontWeight: 600,
+                    color: trendView === 'daily' ? '#0b5394' : '#52606d',
                     cursor: 'pointer',
-                    boxShadow: trendView === 'daily' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
-                    transition: 'all 0.2s ease',
+                    boxShadow: trendView === 'daily' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                    transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 >
                   7 Days Daily
@@ -687,11 +677,11 @@ export default function Dashboard() {
                     borderRadius: '6px',
                     padding: '5px 12px',
                     fontSize: '0.76rem',
-                    fontWeight: 800,
-                    color: trendView === 'monthly' ? '#0b5394' : '#64748b',
+                    fontWeight: 600,
+                    color: trendView === 'monthly' ? '#0b5394' : '#52606d',
                     cursor: 'pointer',
-                    boxShadow: trendView === 'monthly' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
-                    transition: 'all 0.2s ease',
+                    boxShadow: trendView === 'monthly' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                    transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 >
                   6 Months Trend
@@ -744,7 +734,7 @@ export default function Dashboard() {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 900, margin: 0, color: '#0f172a', letterSpacing: '-0.3px' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: '#0f172a', letterSpacing: '-0.3px' }}>
               {t('recentInvoices')}
             </h3>
             <p style={{ margin: '2px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
@@ -901,7 +891,7 @@ export default function Dashboard() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
                   <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                     <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Today's Sales</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0b5394', marginTop: '2px' }}>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0b5394', marginTop: '2px' }}>
                       {formatCurrency(dailySummary.today.totalSales)}
                     </div>
                     <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{dailySummary.today.billCount} bills</div>
@@ -909,7 +899,7 @@ export default function Dashboard() {
 
                   <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                     <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Month Total</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#10b981', marginTop: '2px' }}>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#10b981', marginTop: '2px' }}>
                       {formatCurrency(dailySummary.month.totalSales)}
                     </div>
                     <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{dailySummary.month.billCount} bills</div>
