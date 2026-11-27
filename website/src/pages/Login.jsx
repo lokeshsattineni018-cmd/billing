@@ -15,7 +15,7 @@ export default function Login() {
 
   useEffect(() => {
     // Quietly pre-warm the serverless backend function and DB connection pool while user is on login screen
-    fetch('/api/health').catch(() => { });
+    fetch('/api/health').catch(() => {});
   }, []);
 
   const handleSubmit = async (e) => {
@@ -76,7 +76,7 @@ export default function Login() {
             }}
           />
           <h1 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#0b5394', lineHeight: '1.2', margin: 0 }}>
-            {t('VIJAYA DURGA AGENCIES') || 'VIJAYA DURGA AGENCIES'}
+            {t('companyTitle') || 'VIJAYA DURGA AGENCIES'}
           </h1>
           <p style={{ color: '#52606d', fontSize: '0.84rem', marginTop: '4px', fontWeight: 500 }}>
             {lang === 'te' ? 'ఇన్‌వాయిస్ & బిల్లింగ్ పోర్టల్' : 'Invoice & Billing Portal'}

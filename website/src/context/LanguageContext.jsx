@@ -5,6 +5,7 @@ const LanguageContext = createContext();
 export const translations = {
   en: {
     // Nav & Common
+    companyTitle: 'VIJAYA DURGA AGENCIES',
     navHome: 'Home',
     navNew: 'New',
     navStaff: 'Staff',
@@ -572,6 +573,7 @@ export const translations = {
     sendPaymentReminderTitle: 'చెల్లింపు రిమైండర్ పంపండి',
     recordPaymentTitle: 'చెల్లింపు నమోదు చేయండి',
     shareTaxInvoiceTitle: 'ట్యాక్స్ ఇన్వాయిస్ షేర్ చేయండి',
+    companyTitle: 'VIJAYA DURGA AGENCIES',
   },
 };
 
@@ -591,6 +593,11 @@ export function LanguageProvider({ children }) {
   };
 
   const t = (key) => {
+    const hasLangKey = Boolean(translations[lang] && Object.prototype.hasOwnProperty.call(translations[lang], key));
+    const hasEnKey = Boolean(translations['en'] && Object.prototype.hasOwnProperty.call(translations['en'], key));
+    if (import.meta.env.DEV && (!hasLangKey || !hasEnKey)) {
+      console.warn(`Missing translation key "${key}" for lang "${lang}"`);
+    }
     return translations[lang]?.[key] || translations['en']?.[key] || key;
   };
 
