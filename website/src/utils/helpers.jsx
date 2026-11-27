@@ -238,7 +238,14 @@ TO: ${customerName}
     if (import.meta.env.DEV) { console.error('Download fallback error:', e); }
   }
 
-  if (showToast) showToast('Invoice PDF downloaded! Opening WhatsApp to attach and send.');
+  if (showToast) {
+    const lang = typeof window !== 'undefined' ? localStorage.getItem('srsf_lang') : 'en';
+    showToast(
+      lang === 'te'
+        ? 'ఇన్‌వాయిస్ PDF డౌన్‌లోడ్ అయింది. పంపడానికి వాట్సాప్ తెరవబడుతోంది'
+        : 'Invoice PDF downloaded. Opening WhatsApp to attach and send.'
+    );
+  }
 
   // 2. Open WhatsApp chat directly without creating blank Safari popup tab
   const waUrl = cleanPhone

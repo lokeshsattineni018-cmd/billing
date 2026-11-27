@@ -240,20 +240,19 @@ export default function OfficialInvoiceSheet({
               <>
                 <tr className="official-invoice-prawn-subtotal">
                   <td></td>
-                  <td className="text-center font-bold" style={{ color: '#0b5394' }}>
+                  <td className="text-center u-inv-label">
                     TOTAL
                   </td>
                   <td
-                    className="text-center tabular-num"
-                    style={{ fontWeight: 800, color: '#000000' }}
+                    className="text-center tabular-num u-text-ink-bold"
                   >
                     {Number(prawnTotalQty.toFixed(2))} kg
                   </td>
                   <td></td>
                   <td></td>
                   <td
-                    className="text-right tabular-num official-invoice-td-amount"
-                    style={{ paddingRight: '8px', fontWeight: 800, color: '#000000' }}
+                    className="text-right tabular-num official-invoice-td-amount u-text-ink-bold"
+                    style={{ paddingRight: '8px' }}
                   >
                     {prawnSubtotal.toFixed(2)}
                   </td>
@@ -323,7 +322,7 @@ export default function OfficialInvoiceSheet({
               <div>Amount</div>
             </div>
             <div className="official-invoice-taxgrid-val tabular-num">
-              <div style={{ fontWeight: 'bold', color: '#000000' }}>
+              <div className="u-text-ink-bold">
                 {bill.vehicleNo || ''}
               </div>
               <div>{bill.cgstRate || ''}</div>
@@ -354,7 +353,7 @@ export default function OfficialInvoiceSheet({
           <div className="official-invoice-bankbox">
             {bankDetails.accountName ? (
               <>
-                <div style={{ fontWeight: 'bold', color: '#0b5394' }}>
+                <div className="u-inv-label">
                   {bankDetails.title}
                 </div>
                 <div>
@@ -373,7 +372,7 @@ export default function OfficialInvoiceSheet({
               </>
             ) : (
               <>
-                <div style={{ fontWeight: 'bold', color: '#0b5394' }}>
+                <div className="u-inv-label">
                   {bankDetails.title}
                 </div>
                 <div>
@@ -398,7 +397,7 @@ export default function OfficialInvoiceSheet({
 
       {/* Amount in Words */}
       <div className="official-invoice-words">
-        <span style={{ fontWeight: 'bold', color: '#0b5394' }}>
+        <span className="u-inv-label">
           Amount in Words: &nbsp;
         </span>
         <span style={{ fontWeight: 'bold' }}>{amountInWordsText}</span>

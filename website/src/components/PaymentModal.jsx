@@ -96,7 +96,7 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
     >
       <div>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div className="u-flex-between-mb">
           <div>
             <h3 id="payment-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>
               {t('recordPaymentTitle')}

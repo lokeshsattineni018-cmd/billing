@@ -29,7 +29,8 @@ export default function Login() {
       import('./NewBill');
       import('./BillHistory');
     } catch (err) {
-      const msg = err.response?.data?.error || err.response?.data?.message || err.message || 'Login failed. Please try again.';
+      const fallback = lang === 'te' ? 'లాగిన్ విఫలమైంది. దయచేసి మళ్ళీ ప్రయత్నించండి' : 'Login failed. Please try again.';
+      const msg = err.response?.data?.error || err.response?.data?.message || err.message || fallback;
       setError(msg);
     } finally {
       setLoading(false);
@@ -102,7 +103,7 @@ export default function Login() {
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="login-email" className="form-label" style={{ fontWeight: 600 }}>
+            <label htmlFor="login-email" className="form-label u-fw-semibold" >
               {lang === 'te' ? 'యూజర్ నేమ్ లేదా ఇమెయిల్' : 'Username or Email'}
             </label>
             <input
@@ -120,7 +121,7 @@ export default function Login() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="login-password" className="form-label" style={{ fontWeight: 600 }}>
+            <label htmlFor="login-password" className="form-label u-fw-semibold" >
               {lang === 'te' ? 'పాస్‌వర్డ్' : 'Password'}
             </label>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -139,7 +140,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? (lang === 'te' ? 'పాస్‌వర్డ్ దాచు' : 'Hide password') : (lang === 'te' ? 'పాస్‌వర్డ్ చూపు' : 'Show password')}
                 aria-pressed={showPassword}
                 style={{
                   position: 'absolute',
@@ -155,7 +156,7 @@ export default function Login() {
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
-                title={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? (lang === 'te' ? 'పాస్‌వర్డ్ దాచు' : 'Hide password') : (lang === 'te' ? 'పాస్‌వర్డ్ చూపు' : 'Show password')}
               >
                 {showPassword ? <EyeOffIcon size={20} color="#0b5394" /> : <EyeIcon size={20} color="#52606d" />}
               </button>

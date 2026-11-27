@@ -5,7 +5,7 @@ import { getMasterCache, setMasterCache, getUserCacheKey } from '../utils/offlin
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
-import { TrendingUpIcon, CalendarIcon, PlusIcon, WhatsAppIcon, InvoiceIcon, RefreshIcon, CloseIcon } from '../components/Icons';
+import { TrendingUpIcon, CalendarIcon, PlusIcon, WhatsAppIcon, InvoiceIcon, RefreshIcon, CloseIcon, WarningIcon } from '../components/Icons';
 import { RevenueTrendChart, TopCustomersBarChart, PaymentStatusDonut } from '../components/AnalyticsCharts';
 import { SkeletonKPIGrid, SkeletonTable, SkeletonChart, SkeletonCard, Skeleton } from '../components/Skeleton';
 import CountUp from '../components/CountUp';
@@ -273,7 +273,7 @@ export default function Dashboard() {
 
           {/* Header Row: Title & Action Buttons */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-            <div className="dashboard-hero-title-area" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="dashboard-hero-title-area u-flex-between" >
               <div>
                 <h1 className="dashboard-hero-title" style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, letterSpacing: '-0.3px', color: '#102a43' }}>
                   Vijaya Durga Agencies
@@ -341,14 +341,13 @@ export default function Dashboard() {
                 className="btn btn-whatsapp"
                 onClick={handleOpenDailySummary}
                 style={{
-                  fontWeight: 800,
+                  fontWeight: 600,
                   padding: '10px 16px',
                   fontSize: '0.85rem',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
                   borderRadius: '10px',
-                  boxShadow: '0 4px 12px rgba(37, 211, 102, 0.25)',
                 }}
               >
                 <WhatsAppIcon size={16} color="#ffffff" /> Daily Summary
@@ -396,9 +395,9 @@ export default function Dashboard() {
                   fontSize: '0.8rem',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, overflow: 'hidden' }}>
-                  <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>⚠️</span>
-                  <span style={{ color: '#92400e', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div className="u-flex-row" style={{ gap: '6px', minWidth: 0, overflow: 'hidden' }}>
+                  <WarningIcon size={16} color="#92400e" />
+                  <span style={{ color: '#92400e', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {data.receivables.pendingCount} Invoices Pending
                   </span>
                   <span style={{ color: '#b45309', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>
@@ -419,7 +418,7 @@ export default function Dashboard() {
               {isOwnerOrAdmin ? t('businessOverview') : t('createManageInvoices')}
             </p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="u-flex-row">
             <button
               type="button"
               onClick={handleManualRefresh}
@@ -732,7 +731,7 @@ export default function Dashboard() {
           boxShadow: '0 4px 20px -4px rgba(15, 23, 42, 0.05)',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div className="u-flex-between-mb">
           <div>
             <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: '#0f172a', letterSpacing: '-0.3px' }}>
               {t('recentInvoices')}
@@ -772,7 +771,7 @@ export default function Dashboard() {
                 onClick={() => navigate(`/bills/${bill._id}`)}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div className="u-flex-row">
                     <span style={{ background: '#eff6ff', color: '#0b5394', fontWeight: 800, padding: '2px 8px', borderRadius: '6px', fontSize: '0.82rem' }}>
                       #{bill.billNo}
                     </span>
@@ -796,15 +795,15 @@ export default function Dashboard() {
 
         {/* Desktop Table View */}
         <div className="table-container desktop-only-table">
-          <table className="table" style={{ margin: 0 }}>
+          <table className="table u-m-0" >
             <thead>
               <tr style={{ background: '#f8fafc' }}>
                 <th style={{ width: '100px' }}>{t('invoiceNo')}</th>
                 <th>{t('date')}</th>
                 <th>{t('companyName')}</th>
-                <th style={{ textAlign: 'right' }}>{t('qtyKg')}</th>
-                <th style={{ textAlign: 'center' }}>{t('status')}</th>
-                <th style={{ textAlign: 'right' }}>{t('totalAmount')}</th>
+                <th className="u-text-right">{t('qtyKg')}</th>
+                <th className="u-text-center">{t('status')}</th>
+                <th className="u-text-right">{t('totalAmount')}</th>
               </tr>
             </thead>
             <tbody>
@@ -827,7 +826,7 @@ export default function Dashboard() {
                     <td style={{ color: '#64748b', fontSize: '0.84rem' }}>{formatDate(bill.date)}</td>
                     <td style={{ fontWeight: 700, color: '#0f172a' }}>{bill.companyName}</td>
                     <td style={{ textAlign: 'right', fontWeight: 600 }}>{bill.quantity || 0} kg</td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td className="u-text-center">
                       <span className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}>
                         {bill.paymentStatus === 'Paid' ? t('paid') : t('pending')}
                       </span>
@@ -854,7 +853,7 @@ export default function Dashboard() {
         contentStyle={{ padding: '24px', borderRadius: '16px', maxHeight: '90vh', overflowY: 'auto' }}
       >
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div className="u-flex-between-mb">
             <div>
               <h3 id="daily-summary-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>
                 Daily Business Summary
@@ -916,7 +915,7 @@ export default function Dashboard() {
                 )}
 
                 {/* Message Preview */}
-                <div style={{ marginBottom: '16px' }}>
+                <div className="u-mb-16">
                   <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '4px' }}>
                     Formatted Message Preview:
                   </label>
@@ -940,7 +939,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Action Buttons */}
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <div className="u-flex-wrap-gap">
                   <button
                     type="button"
                     className="btn btn-whatsapp"

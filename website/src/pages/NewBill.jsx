@@ -11,7 +11,7 @@ import {
 } from '../utils/billingCalculations';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { PrintIcon, PlusIcon, ArrowLeftIcon } from '../components/Icons';
+import { PrintIcon, PlusIcon, ArrowLeftIcon, BoxIcon } from '../components/Icons';
 import { saveOfflineBill, getMasterCache, setMasterCache, getUserCacheKey, invalidateBillCaches } from '../utils/offlineDb';
 import { enqueueShedAction } from '../services/syncManager';
 import { notifyNewBillCreated } from '../utils/notifications';
@@ -71,7 +71,7 @@ const ItemCardMobile = memo(function ItemCardMobile({
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
-        <div className="form-group" style={{ marginBottom: 0 }}>
+        <div className="form-group u-mb-0" >
           <label htmlFor={`mobile-item-qty-${index}`} className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>{t('weightKg')} *</label>
           <input
             id={`mobile-item-qty-${index}`}
@@ -87,7 +87,7 @@ const ItemCardMobile = memo(function ItemCardMobile({
           />
         </div>
 
-        <div className="form-group" style={{ marginBottom: 0 }}>
+        <div className="form-group u-mb-0" >
           <label htmlFor={`mobile-item-rate-${index}`} className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>{t('ratePerKg')} *</label>
           <input
             id={`mobile-item-rate-${index}`}
@@ -105,7 +105,7 @@ const ItemCardMobile = memo(function ItemCardMobile({
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
-        <div className="form-group" style={{ marginBottom: 0 }}>
+        <div className="form-group u-mb-0" >
           <label htmlFor={`mobile-item-tax-${index}`} className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>Rate of Tax</label>
           <input
             id={`mobile-item-tax-${index}`}
@@ -202,7 +202,7 @@ const ItemRowDesktop = memo(function ItemRowDesktop({
       <td style={{ textAlign: 'right', fontWeight: 800, fontSize: '16px', color: '#0f172a' }}>
         {formatCurrency(item.amount || 0)}
       </td>
-      <td style={{ textAlign: 'center' }}>
+      <td className="u-text-center">
         {canRemove && (
           <button
             type="button"
@@ -861,7 +861,7 @@ export default function NewBill() {
       <Toast toast={toast} />
 
       {/* Page Title & Back */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      <div className="u-flex-between-mb">
         <div>
           <h1 style={{ fontSize: '1.45rem', fontWeight: 700, margin: 0, color: '#0f172a' }}>
             {editBillId ? `Edit Invoice #${editBillNo}` : t('newInvoiceTitle')}
@@ -920,7 +920,7 @@ export default function NewBill() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
             {/* Customer Name input with accessible combobox/listbox */}
             <div className="form-group" style={{ marginBottom: 0, position: 'relative' }} ref={dropdownRef}>
-              <label htmlFor="new-bill-company-name" className="form-label" style={{ fontWeight: 700 }}>{t('customerName')} *</label>
+              <label htmlFor="new-bill-company-name" className="form-label u-fw-bold" >{t('customerName')} *</label>
               <input
                 id="new-bill-company-name"
                 type="text"
@@ -987,7 +987,7 @@ export default function NewBill() {
                 >
                   {matchingCustomers.slice(0, 5).map((c, idx) => (
                     <div
-                      key={c._id}
+                      key={c._id || `${c.companyName}-${idx}`}
                       id={`customer-option-${idx}`}
                       role="option"
                       aria-selected={idx === activeSuggestionIdx}
@@ -1026,9 +1026,9 @@ export default function NewBill() {
               {!companyName && customersList.length > 0 && (
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '7px', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>Recent:</span>
-                  {customersList.slice(0, 4).map((c) => (
+                  {customersList.slice(0, 4).map((c, idx) => (
                     <button
-                      key={c._id}
+                      key={c._id || `${c.companyName}-${idx}`}
                       type="button"
                       onClick={() => handleSelectCustomer(c)}
                       style={{
@@ -1054,7 +1054,7 @@ export default function NewBill() {
 
             {/* Task 7: Formatted Numeric-Only Phone Number */}
             <div className="form-group" style={{ marginBottom: '8px' }}>
-              <label htmlFor="new-bill-customer-phone" className="form-label" style={{ fontWeight: 700 }}>
+              <label htmlFor="new-bill-customer-phone" className="form-label u-fw-bold" >
                 {t('customerPhone')} {customerPhone && <span style={{ fontSize: '0.72rem', color: customerPhone.length === 10 ? '#166534' : '#92400e' }}>({customerPhone.length}/10 digits)</span>}
               </label>
               <input
@@ -1071,8 +1071,8 @@ export default function NewBill() {
             </div>
 
             {/* Vehicle Number */}
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label htmlFor="new-bill-vehicle-no" className="form-label" style={{ fontWeight: 700 }}>Vehicle Number</label>
+            <div className="form-group u-mb-0" >
+              <label htmlFor="new-bill-vehicle-no" className="form-label u-fw-bold" >Vehicle Number</label>
               <input
                 id="new-bill-vehicle-no"
                 type="text"
@@ -1090,7 +1090,7 @@ export default function NewBill() {
         {/* ── STEP 2: ITEMS & WEIGHT / RATE ── */}
         <div style={{ marginBottom: '22px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="u-flex-row">
               <div style={{ background: '#eff6ff', color: '#0b5394', border: '1.5px solid #bfdbfe', width: '26px', height: '26px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.82rem', fontWeight: 800 }}>
                 2
               </div>
@@ -1126,7 +1126,7 @@ export default function NewBill() {
 
           {/* Desktop Table View */}
           <div className="table-container desktop-only-table" style={{ border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-            <table className="table" style={{ margin: 0 }}>
+            <table className="table u-m-0" >
               <thead>
                 <tr style={{ backgroundColor: '#f8fafc' }}>
                   <th style={{ width: '45px', textAlign: 'center', verticalAlign: 'middle' }}>{t('sno')}</th>
@@ -1167,8 +1167,8 @@ export default function NewBill() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.3rem' }}>🧊</span>
+              <div className="u-flex-row">
+                <BoxIcon size={20} color="#0b5394" />
                 <div>
                   <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#0b5394' }}>Ice Details (Optional)</div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Enter ice quantity & rate if supplied with load (appears on invoice as Ice item)</div>
@@ -1194,7 +1194,7 @@ export default function NewBill() {
                 alignItems: 'end',
               }}
             >
-              <div className="form-group" style={{ marginBottom: 0 }}>
+              <div className="form-group u-mb-0" >
                 <label className="form-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e293b' }}>
                   Ice Qty (Count / Blocks)
                 </label>
@@ -1210,7 +1210,7 @@ export default function NewBill() {
                 />
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
+              <div className="form-group u-mb-0" >
                 <label className="form-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e293b' }}>
                   Ice Rate (₹)
                 </label>
@@ -1226,7 +1226,7 @@ export default function NewBill() {
                 />
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
+              <div className="form-group u-mb-0" >
                 <label className="form-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e293b' }}>
                   Rate of Tax
                 </label>
@@ -1239,7 +1239,7 @@ export default function NewBill() {
                 />
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
+              <div className="form-group u-mb-0" >
                 <label className="form-label" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e293b' }}>
                   Ice Amount (₹)
                 </label>
@@ -1273,7 +1273,7 @@ export default function NewBill() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
+              <div className="form-group u-mb-0" >
                 <label htmlFor="new-bill-cgst-rate" className="form-label" style={{ fontSize: '0.74rem' }}>{t('cgstRate')}</label>
                 <input
                   id="new-bill-cgst-rate"
@@ -1286,7 +1286,7 @@ export default function NewBill() {
                 />
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
+              <div className="form-group u-mb-0" >
                 <label htmlFor="new-bill-cgst-amount" className="form-label" style={{ fontSize: '0.74rem' }}>{t('cgstAmount')}</label>
                 <input
                   id="new-bill-cgst-amount"
@@ -1300,7 +1300,7 @@ export default function NewBill() {
                 />
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
+              <div className="form-group u-mb-0" >
                 <label htmlFor="new-bill-sgst-rate" className="form-label" style={{ fontSize: '0.74rem' }}>{t('sgstRate')}</label>
                 <input
                   id="new-bill-sgst-rate"
@@ -1313,7 +1313,7 @@ export default function NewBill() {
                 />
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
+              <div className="form-group u-mb-0" >
                 <label htmlFor="new-bill-sgst-amount" className="form-label" style={{ fontSize: '0.74rem' }}>{t('sgstAmount')}</label>
                 <input
                   id="new-bill-sgst-amount"
@@ -1327,7 +1327,7 @@ export default function NewBill() {
                 />
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
+              <div className="form-group u-mb-0" >
                 <label htmlFor="new-bill-igst-amount" className="form-label" style={{ fontSize: '0.74rem' }}>{t('igstAmount')}</label>
                 <input
                   id="new-bill-igst-amount"
@@ -1358,8 +1358,8 @@ export default function NewBill() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label htmlFor="new-bill-payment-status" className="form-label" style={{ fontWeight: 700 }}>{t('paymentStatus')}</label>
+            <div className="form-group u-mb-0" >
+              <label htmlFor="new-bill-payment-status" className="form-label u-fw-bold" >{t('paymentStatus')}</label>
               <select
                 id="new-bill-payment-status"
                 className="form-input"
@@ -1372,8 +1372,8 @@ export default function NewBill() {
               </select>
             </div>
 
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label htmlFor="new-bill-invoice-date" className="form-label" style={{ fontWeight: 700 }}>{t('invoiceDate')}</label>
+            <div className="form-group u-mb-0" >
+              <label htmlFor="new-bill-invoice-date" className="form-label u-fw-bold" >{t('invoiceDate')}</label>
               <input
                 id="new-bill-invoice-date"
                 type="date"
@@ -1411,7 +1411,7 @@ export default function NewBill() {
 
             {/* 2. Tax Additions Row */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', fontSize: '0.82rem', color: '#64748b' }}>
-              <span style={{ fontWeight: 600 }}>
+              <span className="u-fw-semibold">
                 {t('totalTaxAmount')}
               </span>
               <span style={{ fontWeight: 700, color: totalTax > 0 ? '#0b5394' : '#64748b' }}>

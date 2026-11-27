@@ -521,14 +521,12 @@ a:hover {
   background: #25D366;
   color: #ffffff;
   border-color: #25D366;
-  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
 }
 
 .btn-whatsapp:hover {
   background: #20ba5a;
   border-color: #20ba5a;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
 }
 
 .btn-install-sidebar {
@@ -690,6 +688,7 @@ a:hover {
 .badge {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 0.78rem;
@@ -704,15 +703,27 @@ a:hover {
 }
 
 .badge-green {
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
-  border-color: rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  border-color: rgba(4, 120, 87, 0.25);
 }
 
 .badge-amber {
-  background: rgba(245, 158, 11, 0.1);
-  color: #b45309;
-  border-color: rgba(180, 83, 9, 0.25);
+  background: rgba(245, 158, 11, 0.12);
+  color: #92400e;
+  border-color: rgba(146, 64, 14, 0.28);
+}
+
+.badge-red {
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+.badge-gray {
+  background: #f1f5f9;
+  color: #334e68;
+  border-color: #cbd5e1;
 }
 
 /* ── Login Page (Clean White Aesthetic) ── */
@@ -3698,6 +3709,30 @@ body:has(.modal-backdrop) {
     border-top: 1px dashed #e2e8f0 !important;
   }
 }
+
+/* ── Shared Utility Classes (Phase 8: Inline Style Deduplication) ── */
+.u-fw-bold { font-weight: 700; }
+.u-fw-semibold { font-weight: 600; }
+.u-inv-label { font-weight: 700; color: #0b5394; }
+.u-flex-row { display: flex; align-items: center; gap: 8px; }
+.u-flex-row-tight { display: flex; align-items: center; gap: 4px; }
+.u-flex-between { display: flex; justify-content: space-between; align-items: center; }
+.u-flex-between-mb { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.u-flex-wrap-gap { display: flex; gap: 8px; flex-wrap: wrap; }
+.u-m-0 { margin: 0; }
+.u-mb-0 { margin-bottom: 0; }
+.u-mb-16 { margin-bottom: 16px; }
+.u-mb-20 { margin-bottom: 20px; }
+.u-flex-1 { flex: 1; }
+.u-text-right, .table th.u-text-right, .table td.u-text-right { text-align: right; }
+.u-text-center, .table th.u-text-center, .table td.u-text-center { text-align: center; }
+.u-text-brand { color: #0b5394; }
+.u-text-profit { color: #16a34a; }
+.u-text-ink-bold { font-weight: 700; color: #000000; }
+.u-text-muted-xs { font-size: 0.76rem; color: #52606d; margin-top: 4px; }
+.u-section-kicker { font-size: 0.74rem; font-weight: 700; color: #52606d; text-transform: uppercase; letter-spacing: 0.5px; }
+.u-inv-br { border-right: 1.5px solid #0b5394; }
+.u-inv-br-center { border-right: 1.5px solid #0b5394; text-align: center; font-weight: 700; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

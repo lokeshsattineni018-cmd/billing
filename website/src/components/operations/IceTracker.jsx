@@ -385,7 +385,7 @@ export default function IceTracker() {
             <span className="staff-glance-subcol-label">Avg Rate</span>
             <span className="staff-glance-subcol-val">₹{summary?.todayAvgRate?.toFixed(2) || '0.00'}</span>
           </div>
-          <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
+          <div className="staff-glance-subcol u-text-right" >
             <span className="staff-glance-subcol-label">All-Time</span>
             <span className="staff-glance-subcol-val" style={{ color: '#0284c7' }}>{formatCurrency(summary?.totalAmount || 0)}</span>
           </div>
@@ -394,10 +394,10 @@ export default function IceTracker() {
 
       {/* Desktop Detailed KPI Grid */}
       <div className="staff-desktop-stats">
-        <div className="staff-kpi-grid" style={{ marginBottom: '20px' }}>
+        <div className="staff-kpi-grid u-mb-20" >
           {/* Period Ice Blocks */}
           <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0284c7' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="u-flex-between">
               <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                 {periodLabel} Ice Blocks
               </span>
@@ -414,7 +414,7 @@ export default function IceTracker() {
 
           {/* Period Ice Cost */}
           <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0891b2' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="u-flex-between">
               <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                 {periodLabel} Ice Cost
               </span>
@@ -430,7 +430,7 @@ export default function IceTracker() {
 
           {/* Average Rate / Block */}
           <div className="staff-kpi-card" style={{ borderLeft: '3px solid #087e8b' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="u-flex-between">
               <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#52606d' }}>
                 {periodLabel} Rate / Block
               </span>
@@ -446,7 +446,7 @@ export default function IceTracker() {
 
           {/* Total Historical Ice Spend */}
           <div className="staff-kpi-card" style={{ borderLeft: '4px solid #d97706' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="u-flex-between">
               <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                 Total Ice Expense
               </span>
@@ -565,7 +565,7 @@ export default function IceTracker() {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>
           <div className="spinner" style={{ margin: '0 auto 12px auto' }}></div>
-          <p style={{ fontWeight: 600 }}>Loading Ice Records...</p>
+          <p className="u-fw-semibold">Loading Ice Records...</p>
         </div>
       ) : displayedEntries.length === 0 ? (
         <div
@@ -640,12 +640,12 @@ export default function IceTracker() {
                 </div>
 
                 <div className="worker-clean-details-bar">
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="u-flex-row-tight">
                     <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Blocks:</span>
                     <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>{entry.blocks} blocks</strong>
                   </span>
                   <span style={{ color: '#cbd5e1' }}>|</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="u-flex-row-tight">
                     <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Rate:</span>
                     <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>₹{entry.rate?.toFixed(2)} / block</strong>
                   </span>
@@ -707,7 +707,7 @@ export default function IceTracker() {
           {/* Desktop Table View */}
           <div className="card desktop-only-table" style={{ padding: 0, overflow: 'hidden' }}>
             <div className="table-responsive">
-              <table className="table" style={{ margin: 0 }}>
+              <table className="table u-m-0" >
                 <thead>
                   <tr>
                     <th style={{ width: '100px' }}>Date</th>
@@ -739,7 +739,7 @@ export default function IceTracker() {
                         </span>
                         <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '4px' }}>blocks</span>
                       </td>
-                      <td className="text-right" style={{ fontWeight: 600 }}>
+                      <td className="text-right u-fw-semibold" >
                         ₹{entry.rate?.toFixed(2)}
                       </td>
                       <td className="text-right">
@@ -807,8 +807,8 @@ export default function IceTracker() {
         labelledBy="ice-modal-title"
       >
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="u-flex-between-mb">
+            <div className="u-flex-row">
               <div style={{ background: '#e0f2fe', padding: '6px', borderRadius: '8px', color: '#0284c7' }}>
                 <IceIcon size={20} />
               </div>
@@ -829,7 +829,7 @@ export default function IceTracker() {
 
             <form onSubmit={handleSaveModal}>
               <div className="form-group">
-                <label className="form-label" style={{ fontWeight: 700 }}>Date</label>
+                <label className="form-label u-fw-bold" >Date</label>
                 <input
                   type="date"
                   className="form-input"
@@ -842,7 +842,7 @@ export default function IceTracker() {
               {/* Ice From / To */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="form-group">
-                  <label htmlFor="ice-form-from" className="form-label" style={{ fontWeight: 700 }}>
+                  <label htmlFor="ice-form-from" className="form-label u-fw-bold" >
                     Ice From <span style={{ fontSize: '0.72rem', color: '#52606d', fontWeight: 500 }}>(Supplier)</span>
                   </label>
                   <input
@@ -855,7 +855,7 @@ export default function IceTracker() {
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="ice-form-to" className="form-label" style={{ fontWeight: 700 }}>
+                  <label htmlFor="ice-form-to" className="form-label u-fw-bold" >
                     Ice To <span style={{ fontSize: '0.72rem', color: '#52606d', fontWeight: 500 }}>(Receiver)</span>
                   </label>
                   <input
@@ -871,7 +871,7 @@ export default function IceTracker() {
               {/* Dynamic Calculation Row: Blocks * Rate = Total */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: 700 }}>
+                  <label className="form-label u-fw-bold" >
                     Ice Blocks Used <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
@@ -888,7 +888,7 @@ export default function IceTracker() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: 700 }}>
+                  <label className="form-label u-fw-bold" >
                     Rate per Block (₹) <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
@@ -1013,32 +1013,32 @@ export default function IceTracker() {
             {/* 3. VOUCHER NO & DATE ROW */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.85rem' }}>
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
+                <span className="u-inv-label">Voucher No.</span>
                 <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                   {billEntry.voucherNo || (viewingBill?.voucherNo || 'ICE-1')}
                 </span>
               </div>
               <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(billEntry.date)}</span>
+                <span className="u-inv-label">Date:</span>
+                <span className="u-text-ink-bold">{formatDate(billEntry.date)}</span>
               </div>
             </div>
 
             {/* 4. FROM & TO ROW (WHO SUPPLIED & WHO RECEIVED) */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.85rem' }}>
               <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Ice From (Supplier): </span>
+                <span className="u-inv-label">Ice From (Supplier): </span>
                 <strong style={{ color: '#000000' }}>{billEntry.iceFrom || billEntry.supplierName || 'Sri Rama Ice Plant'}</strong>
               </div>
               <div style={{ padding: '6px 10px' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Ice To (Receiver): </span>
+                <span className="u-inv-label">Ice To (Receiver): </span>
                 <strong style={{ color: '#000000' }}>{billEntry.iceTo || 'Factory / Cold Storage'}</strong>
               </div>
             </div>
 
             {/* 5. STATUS ROW (Vehicle / Transport Removed) */}
             <div style={{ borderBottom: '1.5px solid #0b5394', fontSize: '0.82rem', padding: '5px 10px' }}>
-              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Payment Status: </span>
+              <span className="u-inv-label">Payment Status: </span>
               <span style={{ fontWeight: 'bold', color: billEntry.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>
                 {billEntry.paymentStatus || 'Paid'}
               </span>
@@ -1073,10 +1073,10 @@ export default function IceTracker() {
                 </tr>
                 {[1, 2].map((i) => (
                   <tr key={i} style={{ height: '22px', borderBottom: '1px solid #c8d9e8' }}>
-                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                    <td className="u-inv-br"></td>
+                    <td className="u-inv-br"></td>
+                    <td className="u-inv-br"></td>
+                    <td className="u-inv-br"></td>
                     <td></td>
                   </tr>
                 ))}
@@ -1095,14 +1095,14 @@ export default function IceTracker() {
 
             {/* Amount in Words (NO Notes / Remarks row) */}
             <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
-              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Amount in Words: </span>
-              <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(billEntry.totalAmount)}</span>
+              <span className="u-inv-label">Amount in Words: </span>
+              <span className="u-text-ink-bold">{numberToWords(billEntry.totalAmount)}</span>
             </div>
 
             {/* 7. BANK DETAILS & SIGNATURE (Exact Normal Bill Footer) */}
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', borderTop: '1.5px solid #0b5394', fontSize: '0.74rem', lineHeight: '1.4' }}>
               <div style={{ borderRight: '1.5px solid #0b5394', padding: '6px 10px' }}>
-                <div style={{ fontWeight: 'bold', color: '#0b5394' }}>BANK : KARUR VYSYA BANK</div>
+                <div className="u-inv-label">BANK : KARUR VYSYA BANK</div>
                 <div>A/c. NO : <strong>4805135000002964</strong></div>
                 <div>IFSC : <strong>KVBL0004815</strong></div>
                 <div>Branch : Narasapur</div>

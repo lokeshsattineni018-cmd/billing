@@ -288,7 +288,7 @@ export default function BillHistory() {
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h1 style={{ margin: 0 }}>{t('invoiceHistory')}</h1>
+            <h1 className="u-m-0">{t('invoiceHistory')}</h1>
             {isUpdating && (
               <span
                 style={{
@@ -320,7 +320,7 @@ export default function BillHistory() {
           <p>{t('invoiceHistorySubtitle')}</p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="u-flex-wrap-gap">
           {isAdmin && (
             <>
               <button
@@ -547,7 +547,7 @@ export default function BillHistory() {
                           borderRadius: '8px',
                           padding: '8px 10px',
                         }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <div className="u-flex-row-tight">
                             <span style={{ fontSize: '0.75rem', color: '#52606d', fontWeight: 600 }}>Weight:</span>
                             <span className="tabular-num" style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>{totalQty} kg</span>
                           </div>
@@ -898,7 +898,7 @@ export default function BillHistory() {
                         margin: '6px 0',
                       }}
                     >
-                      <span style={{ color: '#0b5394' }}>✓</span>
+                      <span className="u-text-brand">✓</span>
                       <span>
                         {t('allLoaded') || 'All invoices loaded'} ({pagination.total || bills.length} total)
                       </span>
@@ -908,7 +908,7 @@ export default function BillHistory() {
               ) : (
                 /* Paginated View */
                 pagination.pages > 1 && (
-                  <div className="pagination" style={{ margin: 0 }}>
+                  <div className="pagination u-m-0" >
                     <button
                       onClick={() => setPage(page - 1)}
                       disabled={page === 1}

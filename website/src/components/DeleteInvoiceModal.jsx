@@ -234,7 +234,7 @@ export default function DeleteInvoiceModal({
 
         {/* STEP 2: Final Confirmation Tap */}
         {step === 2 && (
-          <div style={{ marginBottom: '20px' }}>
+          <div className="u-mb-20">
             <div
               style={{
                 background: '#fef2f2',

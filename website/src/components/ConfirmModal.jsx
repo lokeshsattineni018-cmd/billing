@@ -105,7 +105,7 @@ export default function ConfirmModal({
 
         {/* Optional Custom Children (e.g. input fields, reason for voiding, notes) */}
         {children && (
-          <div style={{ marginBottom: '16px' }}>
+          <div className="u-mb-16">
             {children}
           </div>
         )}

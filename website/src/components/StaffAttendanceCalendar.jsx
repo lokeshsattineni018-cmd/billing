@@ -191,7 +191,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
         </div>
 
         {/* Month Navigator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="u-flex-row">
           <button
             type="button"
             className="btn btn-secondary btn-sm"
@@ -253,7 +253,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
             <div className="staff-glance-title">
               {activeWorker ? `${activeWorker}'s Wages` : 'Monthly Wages Earned'}
             </div>
-            <div className="staff-glance-metric-lg" style={{ color: '#0b5394' }}>
+            <div className="staff-glance-metric-lg u-text-brand" >
               {formatCurrency(monthlyStats.totalEarnings)}
             </div>
           </div>
@@ -277,7 +277,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
               <span style={{ fontSize: '0.72rem', fontWeight: 600, opacity: 0.8 }}>kg</span>
             </span>
           </div>
-          <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
+          <div className="staff-glance-subcol u-text-right" >
             <span className="staff-glance-subcol-label">Pending</span>
             <span
               className="staff-glance-subcol-val"
@@ -475,7 +475,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
                     transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="u-flex-between">
                     <span
                       style={{
                         fontSize: '0.92rem',
@@ -615,11 +615,11 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
                 </div>
                 <div>
                   <span style={{ color: '#64748b', fontWeight: 600 }}>Days Present: </span>
-                  <strong style={{ color: '#16a34a' }}>{monthlyStats.daysPresent} days</strong>
+                  <strong className="u-text-profit">{monthlyStats.daysPresent} days</strong>
                 </div>
                 <div>
                   <span style={{ color: '#64748b', fontWeight: 600 }}>Total Processed: </span>
-                  <strong style={{ color: '#0b5394' }}>{monthlyStats.totalKg} KG</strong>
+                  <strong className="u-text-brand">{monthlyStats.totalKg} KG</strong>
                 </div>
                 <div>
                   <span style={{ color: '#64748b', fontWeight: 600 }}>Daily Avg Output: </span>
@@ -646,7 +646,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
                   </div>
                 </div>
 
-                <div style={{ textAlign: 'right' }}>
+                <div className="u-text-right">
                   <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>Payment Status</div>
                   <div
                     style={{

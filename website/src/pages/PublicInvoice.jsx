@@ -102,7 +102,7 @@ export default function PublicInvoice() {
           </h1>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="u-flex-wrap-gap">
           <button
             type="button"
             onClick={handleDownloadPDF}

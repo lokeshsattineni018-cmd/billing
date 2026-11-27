@@ -102,7 +102,7 @@ export function SkeletonChart() {
 export function SkeletonCard({ height = '180px' }) {
   return (
     <div className="card" style={{ padding: '20px' }}>
-      <Skeleton width="40%" height="20px" style={{ marginBottom: '16px' }} />
+      <Skeleton width="40%" height="20px" className="u-mb-16" />
       <Skeleton width="100%" height={height} borderRadius="10px" />
     </div>
   );

@@ -66,6 +66,7 @@ export default function RecycleBin() {
   const [activeTab, setActiveTab] = useState('bills');
   const [data, setData] = useState({ bills: [], ice: [], wastage: [], staff: [], counts: {} });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [restoringId, setRestoringId] = useState(null);
 
   // Confirm-restore modal state
@@ -73,11 +74,14 @@ export default function RecycleBin() {
 
   const load = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await recycleBinAPI.list({ type: 'all' });
       setData(res.data);
     } catch (err) {
-      showToast(err.response?.data?.message || 'Failed to load recycle bin', 'error');
+      const msg = err.response?.data?.message || 'Failed to load recycle bin';
+      setLoadError(msg);
+      showToast(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -176,7 +180,7 @@ export default function RecycleBin() {
           overflowX: 'auto',
         }}
       >
-        <TabBtn active={activeTab === 'bills'}   onClick={() => setActiveTab('bills')}   label="🧾 Invoices"            count={counts.bills} />
+        <TabBtn active={activeTab === 'bills'}   onClick={() => setActiveTab('bills')}   label="Invoices"            count={counts.bills} />
         <TabBtn active={activeTab === 'ice'}     onClick={() => setActiveTab('ice')}     label="Ice Usage"           count={counts.ice} />
         <TabBtn active={activeTab === 'wastage'} onClick={() => setActiveTab('wastage')} label="Prawn Head Wastage"  count={counts.wastage} />
         <TabBtn active={activeTab === 'staff'}   onClick={() => setActiveTab('staff')}   label="Worker Attendance"   count={counts.staff} />
@@ -186,6 +190,13 @@ export default function RecycleBin() {
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {loading ? (
           <div className="spinner" style={{ minHeight: '260px' }} />
+        ) : loadError ? (
+          <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+            <p style={{ color: '#991b1b', fontWeight: 700, margin: '0 0 12px 0' }}>{loadError}</p>
+            <button type="button" className="btn btn-primary" onClick={load}>
+              Retry
+            </button>
+          </div>
         ) : (
           <>
             {/* ── TAB: INVOICES ── */}
@@ -259,7 +270,7 @@ export default function RecycleBin() {
                                   #{billNo}
                                 </span>
                               </td>
-                              <td style={{ fontWeight: 600 }}>{bill.companyName || '—'}</td>
+                              <td className="u-fw-semibold">{bill.companyName || '—'}</td>
                               <td>{formatDate(bill.date)}</td>
                               <td className="text-right tabular-num" style={{ fontWeight: 700, fontFamily: 'monospace' }}>
                                 ₹{Number(bill.grandTotal || bill.total || 0).toLocaleString('en-IN')}
@@ -321,8 +332,8 @@ export default function RecycleBin() {
                       return (
                         <div key={`mob-${rec._id}`} className="mobile-bill-card">
                           <div className="mobile-bill-header">
-                            <span style={{ fontWeight: 700 }}>{formatDate(rec.date)} • {rec.blocks} blocks</span>
-                            <span className="tabular-num" style={{ fontWeight: 700 }}>
+                            <span className="u-fw-bold">{formatDate(rec.date)} • {rec.blocks} blocks</span>
+                            <span className="tabular-num u-fw-bold" >
                               ₹{Number(rec.totalAmount || 0).toLocaleString('en-IN')}
                             </span>
                           </div>
@@ -370,7 +381,7 @@ export default function RecycleBin() {
                         return (
                           <tr key={rec._id}>
                             <td>{formatDate(rec.date)}</td>
-                            <td style={{ fontWeight: 700 }}>{rec.blocks}</td>
+                            <td className="u-fw-bold">{rec.blocks}</td>
                             <td>₹{rec.rate}</td>
                             <td className="text-right" style={{ fontWeight: 700, fontFamily: 'monospace' }}>
                               ₹{Number(rec.totalAmount || 0).toLocaleString('en-IN')}
@@ -430,8 +441,8 @@ export default function RecycleBin() {
                       return (
                         <div key={`mob-${rec._id}`} className="mobile-bill-card">
                           <div className="mobile-bill-header">
-                            <span style={{ fontWeight: 700 }}>{formatDate(rec.date)} • {rec.quantityKg} kg</span>
-                            <span className="tabular-num" style={{ fontWeight: 700 }}>
+                            <span className="u-fw-bold">{formatDate(rec.date)} • {rec.quantityKg} kg</span>
+                            <span className="tabular-num u-fw-bold" >
                               ₹{Number(rec.totalAmount || 0).toLocaleString('en-IN')}
                             </span>
                           </div>
@@ -479,7 +490,7 @@ export default function RecycleBin() {
                         return (
                           <tr key={rec._id}>
                             <td>{formatDate(rec.date)}</td>
-                            <td style={{ fontWeight: 700 }}>{rec.quantityKg} kg</td>
+                            <td className="u-fw-bold">{rec.quantityKg} kg</td>
                             <td>₹{rec.rate}</td>
                             <td className="text-right" style={{ fontWeight: 700, fontFamily: 'monospace' }}>
                               ₹{Number(rec.totalAmount || 0).toLocaleString('en-IN')}
@@ -539,8 +550,8 @@ export default function RecycleBin() {
                       return (
                         <div key={`mob-${rec._id}`} className="mobile-bill-card">
                           <div className="mobile-bill-header">
-                            <span style={{ fontWeight: 700 }}>{rec.staffName || '—'}</span>
-                            <span className="tabular-num" style={{ fontWeight: 700 }}>
+                            <span className="u-fw-bold">{rec.staffName || '—'}</span>
+                            <span className="tabular-num u-fw-bold" >
                               ₹{Number(rec.totalAmount || 0).toLocaleString('en-IN')}
                             </span>
                           </div>
@@ -588,7 +599,7 @@ export default function RecycleBin() {
                         return (
                           <tr key={rec._id}>
                             <td>{formatDate(rec.date)}</td>
-                            <td style={{ fontWeight: 600 }}>{rec.staffName || '—'}</td>
+                            <td className="u-fw-semibold">{rec.staffName || '—'}</td>
                             <td>{rec.quantity} kg</td>
                             <td>₹{rec.price}</td>
                             <td className="text-right" style={{ fontWeight: 700, fontFamily: 'monospace' }}>

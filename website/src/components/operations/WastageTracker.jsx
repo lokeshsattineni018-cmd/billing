@@ -350,7 +350,7 @@ export default function WastageTracker() {
         <div className="staff-glance-top">
           <div>
             <div className="staff-glance-title">{periodLabel} Wastage Revenue</div>
-            <div className="staff-glance-metric-lg" style={{ color: '#16a34a' }}>{formatCurrency(summary?.todayAmount || 0)}</div>
+            <div className="staff-glance-metric-lg u-text-profit" >{formatCurrency(summary?.todayAmount || 0)}</div>
           </div>
           <span className="staff-glance-pill" style={{ background: '#f0fdf4', color: '#16a34a', borderColor: '#bbf7d0' }}>{badgeLabel}</span>
         </div>
@@ -364,19 +364,19 @@ export default function WastageTracker() {
             <span className="staff-glance-subcol-label">Avg Rate</span>
             <span className="staff-glance-subcol-val">₹{summary?.todayAvgRate?.toFixed(2) || '0.00'}</span>
           </div>
-          <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
+          <div className="staff-glance-subcol u-text-right" >
             <span className="staff-glance-subcol-label">All-Time</span>
-            <span className="staff-glance-subcol-val" style={{ color: '#16a34a' }}>{formatCurrency(summary?.totalAmount || 0)}</span>
+            <span className="staff-glance-subcol-val u-text-profit" >{formatCurrency(summary?.totalAmount || 0)}</span>
           </div>
         </div>
       </div>
 
       {/* Desktop Detailed KPI Grid */}
       <div className="staff-desktop-stats">
-        <div className="staff-kpi-grid" style={{ marginBottom: '20px' }}>
+        <div className="staff-kpi-grid u-mb-20" >
           {/* Period Wastage Sold (Boxes) */}
           <div className="staff-kpi-card" style={{ borderLeft: '4px solid #16a34a' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="u-flex-between">
               <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                 {periodLabel} Prawn Head Sold
               </span>
@@ -393,7 +393,7 @@ export default function WastageTracker() {
 
           {/* Period Wastage Revenue */}
           <div className="staff-kpi-card" style={{ borderLeft: '4px solid #059669' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="u-flex-between">
               <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                 {periodLabel} Revenue
               </span>
@@ -409,7 +409,7 @@ export default function WastageTracker() {
 
           {/* Average Rate / Box */}
           <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0b5394' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="u-flex-between">
               <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                 {periodLabel} Selling Rate
               </span>
@@ -425,7 +425,7 @@ export default function WastageTracker() {
 
           {/* Total Wastage Sales Income */}
           <div className="staff-kpi-card" style={{ borderLeft: '3px solid #0b5394' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="u-flex-between">
               <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#52606d' }}>
                 Total Wastage Sales
               </span>
@@ -523,7 +523,7 @@ export default function WastageTracker() {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>
           <div className="spinner" style={{ margin: '0 auto 12px auto' }}></div>
-          <p style={{ fontWeight: 600 }}>Loading Wastage Sales Records...</p>
+          <p className="u-fw-semibold">Loading Wastage Sales Records...</p>
         </div>
       ) : displayedEntries.length === 0 ? (
         <div
@@ -588,7 +588,7 @@ export default function WastageTracker() {
                   </div>
 
                   <div className="worker-clean-right">
-                    <span className="worker-wage-val" style={{ color: '#16a34a' }}>{formatCurrency(entry.totalAmount)}</span>
+                    <span className="worker-wage-val u-text-profit" >{formatCurrency(entry.totalAmount)}</span>
                     <span
                       className={`badge ${(entry.paymentStatus || 'Paid') === 'Paid' ? 'badge-green' : 'badge-amber'}`}
                       style={{ fontSize: '0.68rem', fontWeight: 800, padding: '2px 7px', marginTop: '3px' }}
@@ -599,12 +599,12 @@ export default function WastageTracker() {
                 </div>
 
                 <div className="worker-clean-details-bar">
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="u-flex-row-tight">
                     <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Boxes Sold:</span>
                     <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>{entry.quantityKg} boxes</strong>
                   </span>
                   <span style={{ color: '#cbd5e1' }}>|</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="u-flex-row-tight">
                     <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Rate:</span>
                     <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>₹{entry.rate?.toFixed(2)} / box</strong>
                   </span>
@@ -645,7 +645,7 @@ export default function WastageTracker() {
           {/* Desktop Table */}
           <div className="card desktop-only-table" style={{ padding: 0, overflow: 'hidden' }}>
             <div className="table-responsive">
-              <table className="table" style={{ margin: 0 }}>
+              <table className="table u-m-0" >
                 <thead>
                   <tr>
                     <th style={{ width: '120px' }}>Date</th>
@@ -665,7 +665,7 @@ export default function WastageTracker() {
                         {formatDate(entry.date)}
                       </td>
                       <td>
-                        <span className="badge badge-purple" style={{ fontSize: '0.74rem' }}>
+                        <span className="badge badge-blue" style={{ fontSize: '0.74rem' }}>
                           {entry.category || 'Prawn Head'}
                         </span>
                       </td>
@@ -675,7 +675,7 @@ export default function WastageTracker() {
                         </span>
                         <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '4px' }}>boxes</span>
                       </td>
-                      <td className="text-right" style={{ fontWeight: 600 }}>
+                      <td className="text-right u-fw-semibold" >
                         ₹{entry.rate?.toFixed(2)}
                       </td>
                       <td className="text-right">
@@ -734,8 +734,8 @@ export default function WastageTracker() {
         labelledBy="wastage-modal-title"
       >
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="u-flex-between-mb">
+            <div className="u-flex-row">
               <div style={{ background: '#dcfce7', padding: '6px', borderRadius: '8px', color: '#16a34a' }}>
                 <ScaleIcon size={20} />
               </div>
@@ -757,7 +757,7 @@ export default function WastageTracker() {
             <form onSubmit={handleSaveModal}>
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
                 <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: 700 }}>Date</label>
+                  <label className="form-label u-fw-bold" >Date</label>
                   <input
                     type="date"
                     className="form-input"
@@ -768,7 +768,7 @@ export default function WastageTracker() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: 700 }}>Category</label>
+                  <label className="form-label u-fw-bold" >Category</label>
                   <input
                     type="text"
                     className="form-input"
@@ -782,7 +782,7 @@ export default function WastageTracker() {
               {/* Dynamic Calculation Row: Prawn Head * Rate = Total */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: 700 }}>
+                  <label className="form-label u-fw-bold" >
                     Prawn Head Sold (Boxes) <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
@@ -799,7 +799,7 @@ export default function WastageTracker() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: 700 }}>
+                  <label className="form-label u-fw-bold" >
                     Rate per Box (₹) <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input

@@ -235,7 +235,7 @@ export default function WorkerPaymentModal({
           )}
 
           {/* Amount Paying Input */}
-          <div style={{ marginBottom: '16px' }}>
+          <div className="u-mb-16">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
               <label htmlFor="worker-pay-amount" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>
                 Amount Paying Now (₹) *
@@ -310,7 +310,7 @@ export default function WorkerPaymentModal({
           </div>
 
           {/* Payment Mode */}
-          <div style={{ marginBottom: '16px' }}>
+          <div className="u-mb-16">
             <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', display: 'block', marginBottom: '6px' }}>
               Payment Mode
             </label>
@@ -345,7 +345,7 @@ export default function WorkerPaymentModal({
           </div>
 
           {/* Payment Date */}
-          <div style={{ marginBottom: '16px' }}>
+          <div className="u-mb-16">
             <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', display: 'block', marginBottom: '6px' }}>
               Payment Date
             </label>

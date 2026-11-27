@@ -15,6 +15,7 @@ export default function CustomerLedger() {
   const [ledgerData, setLedgerData] = useState({ customers: [], summary: {} });
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [search, setSearch] = useState('');
 
   const canSeeSales = user?.role === 'owner' || user?.role === 'admin';
@@ -25,6 +26,7 @@ export default function CustomerLedger() {
 
   const loadLedger = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [ledgerRes, settingsRes] = await Promise.all([
         billsAPI.getLedger(),
@@ -34,6 +36,7 @@ export default function CustomerLedger() {
       setSettings(settingsRes.data);
     } catch (error) {
       if (import.meta.env.DEV) { console.error('Failed to load customer ledger:', error); }
+      setLoadError('Failed to load customer ledger. Please check connection and retry.');
       showToast('Failed to load customer ledger', 'error');
     } finally {
       setLoading(false);
@@ -101,6 +104,13 @@ Phone: ${settings?.phone || '9441429745'}`;
         <p>{t('customerLedgerSubtitle')}</p>
       </div>
 
+      {loadError && (
+        <div className="card u-mb-16" style={{ padding: '16px 20px', background: '#fef2f2', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          <span style={{ color: '#991b1b', fontWeight: 700, fontSize: '0.9rem' }}>{loadError}</span>
+          <button type="button" className="btn btn-primary btn-sm" onClick={loadLedger}>Retry</button>
+        </div>
+      )}
+
       {/* Summary KPI Cards */}
       <div className="stats-grid">
         <div className="stat-card" style={{ borderLeft: '4px solid #f59e0b' }}>
@@ -162,10 +172,10 @@ Phone: ${settings?.phone || '9441429745'}`;
           <>
             {/* Mobile Cards View (<= 768px) */}
             <div className="mobile-bills-list">
-              {filteredCustomers.map((cust) => {
+              {filteredCustomers.map((cust, idx) => {
                 const hasPending = cust.outstandingBalance > 0;
                 return (
-                  <div key={`mob-${cust._id}`} className="mobile-bill-card">
+                  <div key={`mob-${cust._id || cust.companyName}-${idx}`} className="mobile-bill-card">
                     <div className="mobile-bill-header">
                       <div>
                         <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.96rem' }}>
@@ -201,7 +211,7 @@ Phone: ${settings?.phone || '9441429745'}`;
                         <div style={{ fontSize: '0.68rem', color: '#52606d', fontWeight: 600 }}>Paid</div>
                         <div className="tabular-num" style={{ fontSize: '0.84rem', fontWeight: 600, color: '#166534' }}>{formatCurrency(cust.totalPaid)}</div>
                       </div>
-                      <div style={{ textAlign: 'right' }}>
+                      <div className="u-text-right">
                         <div style={{ fontSize: '0.68rem', color: '#52606d', fontWeight: 600 }}>Balance</div>
                         <div className="tabular-num" style={{ fontSize: '0.88rem', fontWeight: 700, color: hasPending ? '#b42318' : '#166534' }}>
                           {formatCurrency(cust.outstandingBalance)}
@@ -209,7 +219,7 @@ Phone: ${settings?.phone || '9441429745'}`;
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <div className="u-flex-wrap-gap">
                       {hasPending && (
                         <button
                           type="button"
@@ -249,10 +259,10 @@ Phone: ${settings?.phone || '9441429745'}`;
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCustomers.map((cust) => {
+                  {filteredCustomers.map((cust, idx) => {
                     const hasPending = cust.outstandingBalance > 0;
                     return (
-                      <tr key={cust._id}>
+                      <tr key={`${cust._id || cust.companyName}-${idx}`}>
                         <td>
                           <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{cust.companyName}</div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -269,7 +279,7 @@ Phone: ${settings?.phone || '9441429745'}`;
                             <span className="badge badge-green">All Paid</span>
                           )}
                         </td>
-                        <td className="text-right tabular-num" style={{ fontWeight: 600 }}>
+                        <td className="text-right tabular-num u-fw-semibold" >
                           {formatCurrency(cust.totalInvoiced)}
                         </td>
                         <td className="text-right tabular-num" style={{ color: '#166534', fontWeight: 600 }}>

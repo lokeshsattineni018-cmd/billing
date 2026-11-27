@@ -261,7 +261,7 @@ export default function ShedModeSyncBar() {
                 justifyContent: 'space-between',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="u-flex-row">
                 <span
                   style={{
                     width: '10px',

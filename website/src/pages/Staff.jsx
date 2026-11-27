@@ -896,7 +896,7 @@ export default function Staff() {
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
-          transition: isPulling ? 'none' : 'all 0.25s ease',
+          transition: isPulling ? 'none' : 'height 180ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms cubic-bezier(0.22, 1, 0.36, 1)',
           gap: '8px',
           color: '#64748b',
           fontSize: '0.78rem',
@@ -936,15 +936,9 @@ export default function Staff() {
                 <span>{t('wastageTrackerTitle') || 'Prawn Head Wastage Sales'}</span>
               </>
             ) : activeTab === 'accounts' ? (
-              <>
-                <span style={{ fontSize: '1.3rem' }}>📒</span>
-                <span>{t('workerAccountsTitle') || 'Worker Accounts & Wage Ledger'}</span>
-              </>
+              <span>{t('workerAccountsTitle') || 'Worker Accounts & Wage Ledger'}</span>
             ) : activeTab === 'net' ? (
-              <>
-                <span style={{ fontSize: '1.3rem' }}>📊</span>
-                <span>{t('dailyNetTitle') || 'Daily Operations Net Summary'}</span>
-              </>
+              <span>{t('dailyNetTitle') || 'Daily Operations Net Summary'}</span>
             ) : activeTab === 'calendar' ? (
               <>
                 <span style={{ fontSize: '1.3rem' }}>📅</span>
@@ -972,7 +966,7 @@ export default function Staff() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="u-flex-wrap-gap">
           <button
             className="btn btn-secondary staff-header-refresh"
             onClick={handleRefresh}
@@ -1020,7 +1014,7 @@ export default function Staff() {
           className={`staff-tab-btn ${activeTab === 'accounts' ? 'active' : ''}`}
           onClick={() => setActiveTab('accounts')}
         >
-          <span>📒 {t('workerAccounts') || 'Accounts'}</span>
+          <span>{t('workerAccounts') || 'Accounts'}</span>
           <span className="staff-tab-badge">
             {summary?.staffAccounts?.length || 0}
           </span>
@@ -1076,7 +1070,7 @@ export default function Staff() {
                       <span className="staff-glance-subcol-label">Processed</span>
                       <span className="staff-glance-subcol-val">{processedKg.toLocaleString('en-IN')} <span style={{ fontSize: '0.72rem', fontWeight: 600, opacity: 0.8 }}>kg</span></span>
                     </div>
-                    <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
+                    <div className="staff-glance-subcol u-text-right" >
                       <span className="staff-glance-subcol-label">To Pay</span>
                       <span className="staff-glance-subcol-val" style={{ color: '#ea580c' }}>{formatCurrency(pendingWages)}</span>
                     </div>
@@ -1085,10 +1079,10 @@ export default function Staff() {
 
                 {/* Desktop Detailed KPI Grid */}
                 <div className="staff-desktop-stats">
-                  <div className="staff-kpi-grid" style={{ marginBottom: '20px' }}>
+                  <div className="staff-kpi-grid u-mb-20" >
                     {/* Period Workers */}
                     <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0b5394' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="u-flex-between">
                         <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                           {periodLabel} Workers
                         </span>
@@ -1105,7 +1099,7 @@ export default function Staff() {
 
                     {/* Period Weight Processed */}
                     <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0891b2' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="u-flex-between">
                         <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                           {periodLabel} Processed
                         </span>
@@ -1122,7 +1116,7 @@ export default function Staff() {
 
                     {/* Period Total Wages */}
                     <div className="staff-kpi-card" style={{ borderLeft: '4px solid #16a34a' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="u-flex-between">
                         <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                           {periodLabel} Wages
                         </span>
@@ -1138,7 +1132,7 @@ export default function Staff() {
 
                     {/* Period Outstanding Wages to Pay */}
                     <div className="staff-kpi-card" style={{ borderLeft: '4px solid #ea580c' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="u-flex-between">
                         <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                           {periodLabel} Pending
                         </span>
@@ -1168,7 +1162,7 @@ export default function Staff() {
                 background: '#fafcff',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div className="u-flex-between-mb">
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0b5394', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <span>{t('bulkStaffAttendanceEntry') || 'Bulk Staff Attendance Entry'}</span>
@@ -1276,7 +1270,7 @@ export default function Staff() {
                       </div>
                       <div className="bulk-row-total-bar">
                         <span style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 700 }}>Total:</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div className="u-flex-row">
                           <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0b5394' }}>
                             {formatCurrency(rowTotal)}
                           </span>
@@ -1358,7 +1352,7 @@ export default function Staff() {
                 gap: '10px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="u-flex-row">
                 <span style={{ fontSize: '0.88rem', color: '#1e40af', fontWeight: 700 }}>
                   Showing work records for: <strong>{selectedWorkerFilter}</strong>
                 </span>
@@ -1366,7 +1360,7 @@ export default function Staff() {
                   {entries.length} entries
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="u-flex-row">
                 <button
                   type="button"
                   className="btn btn-sm"
@@ -1498,7 +1492,6 @@ export default function Staff() {
                 onClick={() => setBulkModalOpen(!bulkModalOpen)}
                 style={{ border: '1.5px solid #0b5394', color: '#0b5394' }}
               >
-                <span>⚡</span>
                 <span>{bulkModalOpen ? (t('hideBulkEntry') || 'Hide Bulk').replace(/^⚡\s*/, '') : (t('bulkAttendance') || 'Bulk Attendance').replace(/^⚡\s*/, '')}</span>
               </button>
 
@@ -1590,19 +1583,19 @@ export default function Staff() {
 
                       {/* Clean Details Strip */}
                       <div className="worker-clean-details-bar">
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span className="u-flex-row-tight">
                           <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Weight:</span>
                           <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>{entry.quantity} kg</strong>
                         </span>
                         <span style={{ color: '#cbd5e1' }}>|</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span className="u-flex-row-tight">
                           <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Rate:</span>
                           <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>₹{entry.price}/kg</strong>
                         </span>
                         {entry.paymentStatus !== 'Paid' && (
                           <>
                             <span style={{ color: '#cbd5e1' }}>|</span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span className="u-flex-row-tight">
                               <span style={{ color: '#b45309', fontSize: '0.72rem' }}>Due:</span>
                               <strong style={{ color: '#b45309', fontSize: '0.86rem' }}>
                                 ₹{Math.max(0, (entry.totalAmount || 0) - (entry.amountPaid || 0)).toFixed(0)}
@@ -1708,7 +1701,7 @@ export default function Staff() {
                     <tbody>
                       {displayedEntries.map((entry, index) => (
                         <tr key={entry._id}>
-                          <td style={{ textAlign: 'center' }}>
+                          <td className="u-text-center">
                             {entry.paymentStatus !== 'Paid' ? (
                               <input
                                 type="checkbox"
@@ -1748,7 +1741,7 @@ export default function Staff() {
                               </span>
                             )}
                           </td>
-                          <td className="text-right" style={{ fontWeight: 700 }}>
+                          <td className="text-right u-fw-bold" >
                             {entry.quantity} kg
                           </td>
                           <td className="text-right">₹{entry.price?.toFixed(2)}</td>
@@ -1889,17 +1882,17 @@ export default function Staff() {
                     </div>
 
                     <div className="worker-clean-details-bar">
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span className="u-flex-row-tight">
                         <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Total Weight:</span>
                         <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>{acc.totalKg} kg</strong>
                       </span>
                       <span style={{ color: '#cbd5e1' }}>|</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span className="u-flex-row-tight">
                         <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Avg Rate:</span>
                         <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>₹{acc.avgRate}/kg</strong>
                       </span>
                       <span style={{ color: '#cbd5e1' }}>|</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span className="u-flex-row-tight">
                         <span style={{ color: '#16a34a', fontSize: '0.72rem' }}>Paid:</span>
                         <strong style={{ color: '#16a34a', fontSize: '0.86rem' }}>{formatCurrency(acc.totalPaid)}</strong>
                       </span>
@@ -1973,7 +1966,7 @@ export default function Staff() {
                         <td className="text-center">
                           <span className="badge badge-blue">{acc.daysWorkedCount} days</span>
                         </td>
-                        <td className="text-right" style={{ fontWeight: 700 }}>
+                        <td className="text-right u-fw-bold" >
                           {acc.totalKg} kg
                         </td>
                         <td className="text-right">₹{acc.avgRate?.toFixed(2)}</td>
@@ -2079,7 +2072,7 @@ export default function Staff() {
         labelledBy="staff-work-modal-title"
       >
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div className="u-flex-between-mb">
             <h3 id="staff-work-modal-title" style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               {editingEntry ? 'Edit Work Entry' : 'Record Staff Work'}
             </h3>
@@ -2154,7 +2147,7 @@ export default function Staff() {
 
               {/* Quantity (KG) and Price (₹/KG) */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-                <div className="form-group" style={{ margin: 0 }}>
+                <div className="form-group u-m-0" >
                   <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem' }}>
                     Quantity (KG) *
                   </label>
@@ -2170,7 +2163,7 @@ export default function Staff() {
                   />
                 </div>
 
-                <div className="form-group" style={{ margin: 0 }}>
+                <div className="form-group u-m-0" >
                   <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem' }}>
                     Price / KG (₹) *
                   </label>
@@ -2215,7 +2208,7 @@ export default function Staff() {
 
               {/* Work Type & Payment Status */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-                <div className="form-group" style={{ margin: 0 }}>
+                <div className="form-group u-m-0" >
                   <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem' }}>
                     Work Type
                   </label>
@@ -2233,7 +2226,7 @@ export default function Staff() {
                   </select>
                 </div>
 
-                <div className="form-group" style={{ margin: 0 }}>
+                <div className="form-group u-m-0" >
                   <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem' }}>
                     Payment Status
                   </label>
@@ -2249,7 +2242,7 @@ export default function Staff() {
               </div>
 
               {/* Optional Notes */}
-              <div className="form-group" style={{ marginBottom: '16px' }}>
+              <div className="form-group u-mb-16" >
                 <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem' }}>
                   Remarks / Notes (Optional)
                 </label>
@@ -2321,20 +2314,20 @@ export default function Staff() {
             {/* Voucher No & Date Row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.85rem' }}>
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
+                <span className="u-inv-label">Voucher No.</span>
                 <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                   {activeBillEntry.voucherNo || (viewingVoucher?.voucherNo || 'WB-1')}
                 </span>
               </div>
               <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(activeBillEntry.date)}</span>
+                <span className="u-inv-label">Date:</span>
+                <span className="u-text-ink-bold">{formatDate(activeBillEntry.date)}</span>
               </div>
             </div>
 
             {/* Worker Name Row */}
             <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1.5px solid #0b5394', padding: '6px 10px', gap: '10px', fontSize: '0.9rem' }}>
-              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Worker Name:</span>
+              <span className="u-inv-label">Worker Name:</span>
               <strong style={{ fontSize: '1.05rem', color: '#000000' }}>{activeBillEntry.staffName}</strong>
               {activeBillEntry.staffPhone && (
                 <span style={{ fontSize: '0.8rem', color: '#64748b', marginLeft: 'auto' }}>
@@ -2346,11 +2339,11 @@ export default function Staff() {
             {/* Shift & Status Row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.82rem' }}>
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Work Category & Shift: </span>
+                <span className="u-inv-label">Work Category & Shift: </span>
                 <span style={{ fontWeight: 'bold' }}>{activeBillEntry.workType || 'Processing'} ({activeBillEntry.shift || 'Full Day'})</span>
               </div>
               <div style={{ padding: '5px 10px' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Payment Status: </span>
+                <span className="u-inv-label">Payment Status: </span>
                 <span style={{ fontWeight: 'bold', color: activeBillEntry.paymentStatus === 'Paid' ? '#16a34a' : activeBillEntry.paymentStatus === 'Partial' ? '#0284c7' : '#d97706' }}>
                   {activeBillEntry.paymentStatus === 'Partial' ? `Partial (₹${activeBillEntry.amountPaid || 0})` : (activeBillEntry.paymentStatus || 'Pending')}
                 </span>
@@ -2387,10 +2380,10 @@ export default function Staff() {
                 {/* 2 Blank lines for authentic invoice layout spacing */}
                 {[1, 2].map((i) => (
                   <tr key={i} style={{ height: '22px', borderBottom: '1px solid #c8d9e8' }}>
-                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                    <td className="u-inv-br"></td>
+                    <td className="u-inv-br"></td>
+                    <td className="u-inv-br"></td>
+                    <td className="u-inv-br"></td>
                     <td></td>
                   </tr>
                 ))}
@@ -2410,14 +2403,14 @@ export default function Staff() {
             {/* Notes if present */}
             {activeBillEntry.notes && (
               <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#fafafa' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Notes / Remarks: </span>{activeBillEntry.notes}
+                <span className="u-inv-label">Notes / Remarks: </span>{activeBillEntry.notes}
               </div>
             )}
 
             {/* Amount in Words */}
             <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
-              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Amount in Words: </span>
-              <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(activeBillEntry.totalAmount)}</span>
+              <span className="u-inv-label">Amount in Words: </span>
+              <span className="u-text-ink-bold">{numberToWords(activeBillEntry.totalAmount)}</span>
             </div>
 
             {/* Bank Details & Proprietor Signature (Worker signature removed as requested) */}
@@ -2480,20 +2473,20 @@ export default function Staff() {
             {/* Statement No & Date Row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.85rem' }}>
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Statement No.</span>
+                <span className="u-inv-label">Statement No.</span>
                 <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                   STMT-{statementWorker.replace(/\s+/g, '').slice(0, 4).toUpperCase()}-{Date.now().toString().slice(-4)}
                 </span>
               </div>
               <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(new Date())}</span>
+                <span className="u-inv-label">Date:</span>
+                <span className="u-text-ink-bold">{formatDate(new Date())}</span>
               </div>
             </div>
 
             {/* Worker Name Row */}
             <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1.5px solid #0b5394', padding: '6px 10px', gap: '10px', fontSize: '0.9rem' }}>
-              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Worker Name:</span>
+              <span className="u-inv-label">Worker Name:</span>
               <strong style={{ fontSize: '1.05rem', color: '#000000' }}>{statementWorker}</strong>
               {statementSummary.staffPhone && (
                 <span style={{ fontSize: '0.8rem', color: '#64748b', marginLeft: 'auto' }}>
@@ -2505,13 +2498,13 @@ export default function Staff() {
             {/* Period & Days Worked Row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.82rem' }}>
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Period: </span>
+                <span className="u-inv-label">Period: </span>
                 <span style={{ fontWeight: 'bold' }}>
                   {dateFrom && dateTo ? `${formatDate(dateFrom)} to ${formatDate(dateTo)}` : dateFilter === 'week' ? 'Past 7 Days' : dateFilter === 'month' ? 'This Month' : 'All-Time Record'}
                 </span>
               </div>
               <div style={{ padding: '5px 10px' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Days Worked: </span>
+                <span className="u-inv-label">Days Worked: </span>
                 <span style={{ fontWeight: 'bold' }}>{statementSummary.daysWorkedCount} days ({statementEntries.length} sessions)</span>
               </div>
             </div>
@@ -2576,8 +2569,8 @@ export default function Staff() {
 
             {/* Amount in Words */}
             <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
-              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Total Earned in Words: </span>
-              <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(statementSummary.totalEarned)}</span>
+              <span className="u-inv-label">Total Earned in Words: </span>
+              <span className="u-text-ink-bold">{numberToWords(statementSummary.totalEarned)}</span>
             </div>
 
             {/* Bank Details & Signatures */}
@@ -2640,7 +2633,7 @@ export default function Staff() {
       >
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="u-flex-row">
               <h3 id="batch-worker-pay-modal-title" style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>Batch Worker Payment</h3>
             </div>
             <button
@@ -2669,7 +2662,7 @@ export default function Staff() {
               </div>
             </div>
 
-            <div className="form-group" style={{ marginBottom: '16px' }}>
+            <div className="form-group u-mb-16" >
               <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem' }}>Payment Mode</label>
               <select
                 className="form-input"

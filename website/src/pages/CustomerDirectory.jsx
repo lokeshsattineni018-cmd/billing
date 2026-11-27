@@ -12,6 +12,7 @@ export default function CustomerDirectory() {
   const { t } = useLanguage();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [search, setSearch] = useState('');
   const { toast, showToast } = useToast();
 
@@ -43,11 +44,13 @@ export default function CustomerDirectory() {
 
   const loadCustomers = async (searchQuery = '') => {
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await customersAPI.list(searchQuery);
       setCustomers(res.data || []);
     } catch (err) {
       if (import.meta.env.DEV) { console.error('Failed to load customers:', err); }
+      setLoadError('Failed to load customer records. Please check connection and retry.');
       showToast('Failed to load customer records', 'error');
     } finally {
       setLoading(false);
@@ -165,7 +168,7 @@ export default function CustomerDirectory() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="u-flex-wrap-gap">
           <button
             type="button"
             className="btn btn-secondary"
@@ -225,6 +228,13 @@ export default function CustomerDirectory() {
       {/* Customers Table */}
       {loading ? (
         <div className="spinner" style={{ minHeight: '300px' }}></div>
+      ) : loadError ? (
+        <div className="card" style={{ padding: '40px 20px', textAlign: 'center' }}>
+          <p style={{ color: '#991b1b', fontWeight: 700, margin: '0 0 12px 0' }}>{loadError}</p>
+          <button type="button" className="btn btn-primary" onClick={() => loadCustomers(search)}>
+            Retry
+          </button>
+        </div>
       ) : customers.length === 0 ? (
         <div className="card" style={{ padding: '48px 20px', textAlign: 'center' }}>
           <div style={{ fontSize: '3rem', marginBottom: '12px', opacity: 0.4 }}>👥</div>
@@ -310,7 +320,7 @@ export default function CustomerDirectory() {
                       {formatCurrency(c.outstandingBalance)}
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
+                  <div className="u-text-right">
                     <div style={{ fontSize: '0.7rem', color: '#52606d', fontWeight: 600 }}>Lifetime Sales</div>
                     <div className="tabular-num" style={{ fontSize: '0.95rem', fontWeight: 700, color: '#102a43' }}>
                       {formatCurrency(c.totalInvoiced)}
@@ -318,7 +328,7 @@ export default function CustomerDirectory() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <div className="u-flex-wrap-gap">
                   <button
                     type="button"
                     className="btn btn-primary btn-sm"
@@ -359,15 +369,15 @@ export default function CustomerDirectory() {
           {/* Desktop Table View */}
           <div className="card desktop-only-table" style={{ padding: '0', overflow: 'hidden', borderRadius: '16px', border: '1px solid rgba(226, 232, 240, 0.9)' }}>
             <div className="table-container">
-              <table className="table" style={{ margin: 0 }}>
+              <table className="table u-m-0" >
                 <thead>
                   <tr style={{ background: '#f8fafc' }}>
                     <th>Customer Name</th>
                     <th>Phone / GSTIN</th>
                     <th className="text-right">Outstanding Balance</th>
                     <th className="text-right">Lifetime Sales</th>
-                    <th style={{ textAlign: 'center' }}>Total Bills</th>
-                    <th style={{ textAlign: 'center' }}>Actions</th>
+                    <th className="u-text-center">Total Bills</th>
+                    <th className="u-text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -388,7 +398,7 @@ export default function CustomerDirectory() {
                         )}
                       </td>
                       <td>
-                        <div style={{ fontWeight: 600 }}>{c.phone ? `+91 ${c.phone}` : '—'}</div>
+                        <div className="u-fw-semibold">{c.phone ? `+91 ${c.phone}` : '—'}</div>
                         <div style={{ fontSize: '0.74rem', color: '#52606d' }}>{c.gstin || 'No GSTIN'}</div>
                       </td>
                       <td className="text-right tabular-num">
@@ -396,13 +406,13 @@ export default function CustomerDirectory() {
                           {formatCurrency(c.outstandingBalance)}
                         </span>
                       </td>
-                      <td className="text-right tabular-num" style={{ fontWeight: 700 }}>
+                      <td className="text-right tabular-num u-fw-bold" >
                         {formatCurrency(c.totalInvoiced)}
                       </td>
                       <td className="tabular-num" style={{ textAlign: 'center', fontWeight: 600 }}>
                         {c.totalBills}
                       </td>
-                      <td style={{ textAlign: 'center' }}>
+                      <td className="u-text-center">
                         <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
                           <button
                             type="button"
@@ -633,7 +643,7 @@ export default function CustomerDirectory() {
               <p style={{ color: '#64748b', fontSize: '0.85rem' }}>No bills found for this customer.</p>
             ) : (
               <div className="table-container">
-                <table className="table" style={{ margin: 0 }}>
+                <table className="table u-m-0" >
                   <thead>
                     <tr style={{ background: '#f8fafc' }}>
                       <th>Invoice #</th>
@@ -641,8 +651,8 @@ export default function CustomerDirectory() {
                       <th className="text-right">Total Amount</th>
                       <th className="text-right">Paid</th>
                       <th className="text-right">Balance Due</th>
-                      <th style={{ textAlign: 'center' }}>Status</th>
-                      <th style={{ textAlign: 'center' }}>Action</th>
+                      <th className="u-text-center">Status</th>
+                      <th className="u-text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -666,7 +676,7 @@ export default function CustomerDirectory() {
                         <td className="text-right" style={{ fontWeight: 700, color: b.balanceDue > 0 ? '#d97706' : '#16a34a' }}>
                           {formatCurrency(b.balanceDue)}
                         </td>
-                        <td style={{ textAlign: 'center' }}>
+                        <td className="u-text-center">
                           <span
                             className={`badge ${
                               b.paymentStatus === 'Paid'
@@ -680,7 +690,7 @@ export default function CustomerDirectory() {
                             {b.paymentStatus || 'Pending'}
                           </span>
                         </td>
-                        <td style={{ textAlign: 'center' }}>
+                        <td className="u-text-center">
                           {b.balanceDue > 0 ? (
                             <button
                               type="button"
@@ -721,7 +731,7 @@ export default function CustomerDirectory() {
       >
         {selectedCustomer && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div className="u-flex-between-mb">
               <h3 id="edit-customer-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>
                 Customer Contact Details
               </h3>

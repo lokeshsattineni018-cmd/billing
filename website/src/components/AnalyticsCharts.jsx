@@ -118,7 +118,7 @@ export const RevenueTrendChart = memo(function RevenueTrendChart({ data = [], ti
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="u-flex-row">
           <span
             style={{
               display: 'inline-flex',
@@ -480,22 +480,25 @@ export const PaymentStatusDonut = memo(function PaymentStatusDonut({ paid = 0, p
       </div>
       {/* Screen-reader accessible summary table */}
       <table className="sr-only">
-        <caption>Top buyers ranking summary</caption>
+        <caption>Payment health summary</caption>
         <thead>
           <tr>
-            <th>Rank</th>
-            <th>Customer</th>
-            <th>Revenue</th>
+            <th>Status</th>
+            <th>Amount</th>
+            <th>Share</th>
           </tr>
         </thead>
         <tbody>
-          {data.slice(0, 5).map((item, idx) => (
-            <tr key={idx}>
-              <td>{idx + 1}</td>
-              <td>{item.name}</td>
-              <td>{formatCurrency(item.revenue)}</td>
-            </tr>
-          ))}
+          <tr>
+            <td>Cleared (Paid)</td>
+            <td>{formatCurrency(paid)}</td>
+            <td>{paidPct}%</td>
+          </tr>
+          <tr>
+            <td>Pending (Credit)</td>
+            <td>{formatCurrency(pending)}</td>
+            <td>{pendingPct}%</td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -581,11 +584,8 @@ export const TopCustomersBarChart = memo(function TopCustomersBarChart({ data = 
                   style={{
                     height: '100%',
                     width: `${pct}%`,
-                    background: idx === 0
-                      ? 'linear-gradient(90deg, #0b5394 0%, #3b82f6 100%)'
-                      : 'linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)',
+                    background: idx === 0 ? '#0b5394' : '#3b82f6',
                     borderRadius: '4px',
-                    transition: 'width 0.8s ease',
                   }}
                 />
               </div>

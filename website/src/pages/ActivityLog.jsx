@@ -134,6 +134,7 @@ export default function ActivityLog() {
   const { toast, showToast } = useToast();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [actionFilter, setActionFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [page, setPage] = useState(1);
@@ -146,6 +147,7 @@ export default function ActivityLog() {
 
   const loadLogs = async (p = 1, act = '', role = '') => {
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await activityLogsAPI.list({ page: p, action: act, userRole: role, limit: 30 });
       setLogs(res.data.logs || []);
@@ -153,7 +155,9 @@ export default function ActivityLog() {
       setTotalLogs(res.data.total || 0);
     } catch (err) {
       if (import.meta.env.DEV) { console.error('Failed to load activity logs:', err); }
-      showToast(lang === 'te' ? 'కార్యకలాపాలను లోడ్ చేయడం విఫలమైంది' : 'Failed to load activity logs', 'error');
+      const msg = lang === 'te' ? 'కార్యకలాపాలను లోడ్ చేయడం విఫలమైంది' : 'Failed to load activity logs';
+      setLoadError(msg);
+      showToast(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -182,7 +186,7 @@ export default function ActivityLog() {
           </p>
         </div>
         <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#64748b' }}>
-          {lang === 'te' ? 'మొత్తం: ' : 'Total: '}<span style={{ color: '#0b5394' }}>{totalLogs}</span> {lang === 'te' ? 'పనులు' : 'actions'}
+          {lang === 'te' ? 'మొత్తం: ' : 'Total: '}<span className="u-text-brand">{totalLogs}</span> {lang === 'te' ? 'పనులు' : 'actions'}
         </div>
       </div>
 
@@ -247,6 +251,13 @@ export default function ActivityLog() {
       {/* Timeline */}
       {loading ? (
         <div className="spinner" style={{ minHeight: '300px' }}></div>
+      ) : loadError ? (
+        <div className="card" style={{ padding: '40px 20px', textAlign: 'center' }}>
+          <p style={{ color: '#991b1b', fontWeight: 700, margin: '0 0 12px 0' }}>{loadError}</p>
+          <button type="button" className="btn btn-primary" onClick={() => loadLogs(page, actionFilter, roleFilter)}>
+            {lang === 'te' ? 'మళ్ళీ ప్రయత్నించండి' : 'Retry'}
+          </button>
+        </div>
       ) : logs.length === 0 ? (
         <div className="card" style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
           {t('noActivityLogs') || 'No activity logs found for the selected filters.'}
@@ -288,7 +299,7 @@ export default function ActivityLog() {
                       }}></div>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '6px' }}>
-                        <div style={{ flex: 1 }}>
+                        <div className="u-flex-1">
                           {/* User + Action */}
                           <div style={{ fontSize: '0.9rem', lineHeight: 1.45 }}>
                             <span style={{ fontWeight: 800, color: '#0f172a' }}>{log.userName}</span>

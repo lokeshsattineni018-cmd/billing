@@ -319,7 +319,7 @@ function AppLayout() {
             <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0b5394' }}>VIJAYA DURGA</span>
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="u-flex-row">
             <button
               type="button"
               onClick={toggleLang}
@@ -365,7 +365,7 @@ function AppLayout() {
           <div className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
             {/* Drawer Header */}
             <div className="mobile-drawer-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="u-flex-row">
                 <img
                   src={logoImg}
                   alt="Vijaya Durga Agencies Logo"
@@ -412,7 +412,7 @@ function AppLayout() {
               >
                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}
               </div>
-              <div style={{ flex: 1 }}>
+              <div className="u-flex-1">
                 <div style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
                   {user?.name || 'User'}
                 </div>
@@ -536,7 +536,7 @@ function AppLayout() {
       >
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="u-flex-row">
               <img src={logoImg} alt="App Icon" width={32} height={32} style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
               <h3 id="install-guide-modal-title" style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>Install App on Phone</h3>
             </div>

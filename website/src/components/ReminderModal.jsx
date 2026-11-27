@@ -82,7 +82,7 @@ export default function ReminderModal({ billId, onClose }) {
     >
       <div>
         <Toast toast={toast} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div className="u-flex-between-mb">
           <div>
             <h3 id="reminder-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>
               {t('sendPaymentReminderTitle')}
@@ -147,7 +147,7 @@ export default function ReminderModal({ billId, onClose }) {
             </div>
 
             {/* Editable Message Box */}
-            <div style={{ marginBottom: '16px' }}>
+            <div className="u-mb-16">
               <label htmlFor="reminder-message-preview" style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#52606d', marginBottom: '4px' }}>
                 Message Preview (Editable):
               </label>
@@ -168,7 +168,7 @@ export default function ReminderModal({ billId, onClose }) {
             </div>
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <div className="u-flex-wrap-gap">
               {msgMode === 'whatsapp' ? (
                 <button
                   type="button"

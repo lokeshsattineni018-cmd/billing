@@ -335,7 +335,7 @@ export default function BillDetail() {
       {/* Screen Header (Hidden during Print) */}
       <div className="bill-detail-header no-print">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="u-flex-row">
             <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
               Invoice <span className="tabular-num" style={{ color: bill.isVoided ? '#b42318' : '#0b5394' }}>#{bill.billNo}</span>
             </h1>
@@ -650,7 +650,7 @@ export default function BillDetail() {
           </span>
         </div>
 
-        <div className="detail-grid" style={{ marginBottom: '20px' }}>
+        <div className="detail-grid u-mb-20" >
           <div className="detail-item">
             <span className="detail-label">Invoice Number</span>
             <span className="detail-value">#{bill.billNo}</span>
@@ -716,12 +716,12 @@ export default function BillDetail() {
               {itemsList.map((item, index) => (
                 <tr key={index}>
                   <td style={{ textAlign: 'center', fontWeight: 600 }}>{item.sno || index + 1}</td>
-                  <td style={{ fontWeight: 600 }}>{item.particulars}</td>
+                  <td className="u-fw-semibold">{item.particulars}</td>
                   <td style={{ textAlign: 'center', fontWeight: 600 }}>{item.count ? String(item.count) : (item.particulars === 'Ice' ? 'Ice' : '—')}</td>
-                  <td className="text-right" style={{ fontWeight: 600 }}>{item.quantity} kg</td>
+                  <td className="text-right u-fw-semibold" >{item.quantity} kg</td>
                   <td className="text-right">{formatCurrency(item.rate)}</td>
                   {canSeeSales && (
-                    <td className="text-right" style={{ fontWeight: 700 }}>
+                    <td className="text-right u-fw-bold" >
                       {formatCurrency(item.amount || item.quantity * item.rate)}
                     </td>
                   )}

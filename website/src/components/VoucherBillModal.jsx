@@ -297,7 +297,7 @@ Thank you!`;
                 color: '#0f172a',
               }}
             >
-              {modalTitle} <span style={{ color: '#0b5394' }}>{resolvedVoucherNo}</span>
+              {modalTitle} <span className="u-text-brand">{resolvedVoucherNo}</span>
             </h2>
             <span
               className={`badge ${isPaid ? 'badge-green' : 'badge-amber'}`}
@@ -503,14 +503,14 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
+                  <span className="u-inv-label">Voucher No.</span>
                   <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                     {resolvedVoucherNo}
                   </span>
                 </div>
                 <div style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
-                  <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(data.date)}</span>
+                  <span className="u-inv-label">Date:</span>
+                  <span className="u-text-ink-bold">{formatDate(data.date)}</span>
                 </div>
               </div>
 
@@ -524,11 +524,11 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Ice From (Supplier): </span>
+                  <span className="u-inv-label">Ice From (Supplier): </span>
                   <strong style={{ color: '#000000' }}>{data.iceFrom || data.supplierName || 'Sri Rama Ice Plant'}</strong>
                 </div>
                 <div style={{ padding: '6px 10px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Ice To (Receiver): </span>
+                  <span className="u-inv-label">Ice To (Receiver): </span>
                   <strong style={{ color: '#000000' }}>{data.iceTo || 'Factory / Cold Storage'}</strong>
                 </div>
               </div>
@@ -541,7 +541,7 @@ Thank you!`;
                   padding: '5px 10px',
                 }}
               >
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Payment Status: </span>
+                <span className="u-inv-label">Payment Status: </span>
                 <span style={{ fontWeight: 'bold', color: data.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>
                   {data.paymentStatus || 'Paid'}
                 </span>
@@ -576,10 +576,10 @@ Thank you!`;
                   </tr>
                   {[1, 2].map((i) => (
                     <tr key={i} style={{ height: '22px', borderBottom: '1px solid #c8d9e8' }}>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
                       <td></td>
                     </tr>
                   ))}
@@ -598,8 +598,8 @@ Thank you!`;
 
               {/* Amount in Words (NO Notes / Remarks row as requested) */}
               <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Amount in Words: </span>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(data.totalAmount)}</span>
+                <span className="u-inv-label">Amount in Words: </span>
+                <span className="u-text-ink-bold">{numberToWords(data.totalAmount)}</span>
               </div>
             </>
           )}
@@ -616,14 +616,14 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
+                  <span className="u-inv-label">Voucher No.</span>
                   <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                     {resolvedVoucherNo}
                   </span>
                 </div>
                 <div style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
-                  <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(data.date)}</span>
+                  <span className="u-inv-label">Date:</span>
+                  <span className="u-text-ink-bold">{formatDate(data.date)}</span>
                 </div>
               </div>
 
@@ -637,11 +637,11 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Buyer Name: </span>
+                  <span className="u-inv-label">Buyer Name: </span>
                   <strong style={{ color: '#000000' }}>{data.buyerName || '—'}</strong>
                 </div>
                 <div style={{ padding: '6px 10px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Category: </span>
+                  <span className="u-inv-label">Category: </span>
                   <strong style={{ color: '#000000' }}>{data.category || 'Prawn Head'}</strong>
                 </div>
               </div>
@@ -656,11 +656,11 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Vehicle No: </span>
+                  <span className="u-inv-label">Vehicle No: </span>
                   <span style={{ fontWeight: 'bold' }}>{data.vehicleNo || '—'}</span>
                 </div>
                 <div style={{ padding: '5px 10px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Payment Status: </span>
+                  <span className="u-inv-label">Payment Status: </span>
                   <span style={{ fontWeight: 'bold', color: data.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>
                     {data.paymentStatus || 'Paid'}
                   </span>
@@ -696,10 +696,10 @@ Thank you!`;
                   </tr>
                   {[1, 2].map((i) => (
                     <tr key={i} style={{ height: '22px', borderBottom: '1px solid #c8d9e8' }}>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
                       <td></td>
                     </tr>
                   ))}
@@ -718,8 +718,8 @@ Thank you!`;
 
               {/* Amount in Words */}
               <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Amount in Words: </span>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(data.totalAmount)}</span>
+                <span className="u-inv-label">Amount in Words: </span>
+                <span className="u-text-ink-bold">{numberToWords(data.totalAmount)}</span>
               </div>
             </>
           )}
@@ -736,14 +736,14 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
+                  <span className="u-inv-label">Voucher No.</span>
                   <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                     {resolvedVoucherNo}
                   </span>
                 </div>
                 <div style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
-                  <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(data.date)}</span>
+                  <span className="u-inv-label">Date:</span>
+                  <span className="u-text-ink-bold">{formatDate(data.date)}</span>
                 </div>
               </div>
 
@@ -758,7 +758,7 @@ Thank you!`;
                   fontSize: '0.9rem',
                 }}
               >
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Worker Name:</span>
+                <span className="u-inv-label">Worker Name:</span>
                 <strong style={{ fontSize: '1.05rem', color: '#000000' }}>{data.staffName}</strong>
                 {data.staffPhone && (
                   <span style={{ fontSize: '0.8rem', color: '#64748b', marginLeft: 'auto' }}>
@@ -777,11 +777,11 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Work Category & Shift: </span>
+                  <span className="u-inv-label">Work Category & Shift: </span>
                   <span style={{ fontWeight: 'bold' }}>{data.workType || 'Processing'} ({data.shift || 'Full Day'})</span>
                 </div>
                 <div style={{ padding: '5px 10px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Payment Status: </span>
+                  <span className="u-inv-label">Payment Status: </span>
                   <span style={{ fontWeight: 'bold', color: data.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>
                     {data.paymentStatus || 'Pending'}
                   </span>
@@ -817,10 +817,10 @@ Thank you!`;
                   </tr>
                   {[1, 2].map((i) => (
                     <tr key={i} style={{ height: '22px', borderBottom: '1px solid #c8d9e8' }}>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
                       <td></td>
                     </tr>
                   ))}
@@ -839,8 +839,8 @@ Thank you!`;
 
               {/* Amount in Words */}
               <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Amount in Words: </span>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(data.totalAmount)}</span>
+                <span className="u-inv-label">Amount in Words: </span>
+                <span className="u-text-ink-bold">{numberToWords(data.totalAmount)}</span>
               </div>
             </>
           )}
@@ -857,14 +857,14 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Statement No.</span>
+                  <span className="u-inv-label">Statement No.</span>
                   <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                     {resolvedVoucherNo}
                   </span>
                 </div>
                 <div style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
-                  <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(new Date())}</span>
+                  <span className="u-inv-label">Date:</span>
+                  <span className="u-text-ink-bold">{formatDate(new Date())}</span>
                 </div>
               </div>
 
@@ -879,7 +879,7 @@ Thank you!`;
                   fontSize: '0.9rem',
                 }}
               >
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Worker Name:</span>
+                <span className="u-inv-label">Worker Name:</span>
                 <strong style={{ fontSize: '1.05rem', color: '#000000' }}>{data.workerName}</strong>
                 {data.summary?.staffPhone && (
                   <span style={{ fontSize: '0.8rem', color: '#64748b', marginLeft: 'auto' }}>
@@ -898,11 +898,11 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Days Worked: </span>
+                  <span className="u-inv-label">Days Worked: </span>
                   <span style={{ fontWeight: 'bold' }}>{data.summary?.daysWorkedCount || data.entries?.length || 0} days</span>
                 </div>
                 <div style={{ padding: '5px 10px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Total Weight Processed: </span>
+                  <span className="u-inv-label">Total Weight Processed: </span>
                   <span style={{ fontWeight: 'bold' }}>{data.summary?.totalKg || 0} kg</span>
                 </div>
               </div>

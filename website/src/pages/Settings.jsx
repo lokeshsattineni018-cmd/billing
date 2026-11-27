@@ -604,7 +604,7 @@ export default function Settings() {
                         Sequence Counter Control
                       </div>
                       <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '3px' }}>
-                        Last generated: <strong>#{counterStatus.currentNumber}</strong> | Next will be: <strong style={{ color: '#0b5394' }}>#{counterStatus.nextNumber}</strong>
+                        Last generated: <strong>#{counterStatus.currentNumber}</strong> | Next will be: <strong className="u-text-brand">#{counterStatus.nextNumber}</strong>
                       </div>
                     </div>
                     <button
@@ -671,7 +671,7 @@ export default function Settings() {
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
             <div>
-              <h3 className="card-title" style={{ margin: 0 }}>Active User Accounts</h3>
+              <h3 className="card-title u-m-0" >Active User Accounts</h3>
               <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '4px 0 0 0' }}>
                 Create login accounts for staff, update roles, reset forgotten passwords, or remove departed employees
               </p>
@@ -881,7 +881,7 @@ export default function Settings() {
                 📧
               </div>
               <div>
-                <h3 className="card-title" style={{ margin: 0 }}>Daily Automated Business Reports</h3>
+                <h3 className="card-title u-m-0" >Daily Automated Business Reports</h3>
                 <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '2px 0 0 0' }}>
                   Automatically receive a daily transaction summary + complete CSV spreadsheet in your inbox
                 </p>
@@ -895,7 +895,7 @@ export default function Settings() {
                 </h4>
 
                 <div className="form-group" style={{ marginBottom: '12px' }}>
-                  <label className="form-label" style={{ fontWeight: 700 }}>Sender Gmail Address</label>
+                  <label className="form-label u-fw-bold" >Sender Gmail Address</label>
                   <input
                     type="email"
                     className="form-input"
@@ -906,7 +906,7 @@ export default function Settings() {
                 </div>
 
                 <div className="form-group" style={{ marginBottom: '6px' }}>
-                  <label className="form-label" style={{ fontWeight: 700 }}>Gmail App Password</label>
+                  <label className="form-label u-fw-bold" >Gmail App Password</label>
                   {form.smtpDecryptionFailed ? (
                     <div style={{ marginBottom: '10px', padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px' }}>
                       <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#dc2626', marginBottom: '8px' }}>
@@ -963,7 +963,7 @@ export default function Settings() {
                 </h4>
 
                 <div className="form-group" style={{ marginBottom: '12px' }}>
-                  <label className="form-label" style={{ fontWeight: 700 }}>Recipient Email Address (Where to receive backups)</label>
+                  <label className="form-label u-fw-bold" >Recipient Email Address (Where to receive backups)</label>
                   <input
                     type="email"
                     className="form-input"
@@ -974,7 +974,7 @@ export default function Settings() {
                 </div>
 
                 <div className="form-group" style={{ marginBottom: '14px' }}>
-                  <label className="form-label" style={{ fontWeight: 700 }}>
+                  <label className="form-label u-fw-bold" >
                     ⏰ {t('scheduledTime') || 'Automated Daily Backup Time'}
                   </label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1132,7 +1132,7 @@ export default function Settings() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div className="u-flex-wrap-gap">
                 {notificationPerm !== 'granted' && (
                   <button
                     type="button"
@@ -1166,7 +1166,7 @@ export default function Settings() {
       >
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="u-flex-row">
               <div style={{ background: '#eff6ff', padding: '8px', borderRadius: '8px', color: '#0b5394' }}>
                 <UserIcon size={18} />
               </div>
@@ -1187,7 +1187,7 @@ export default function Settings() {
 
           <form onSubmit={handleCreateUser}>
             <div className="form-group" style={{ marginBottom: '14px' }}>
-              <label htmlFor="create-user-name" className="form-label" style={{ fontWeight: 700 }}>Employee / Full Name *</label>
+              <label htmlFor="create-user-name" className="form-label u-fw-bold" >Employee / Full Name *</label>
               <input
                 id="create-user-name"
                 type="text"
@@ -1200,7 +1200,7 @@ export default function Settings() {
             </div>
 
             <div className="form-group" style={{ marginBottom: '14px' }}>
-              <label htmlFor="create-user-username" className="form-label" style={{ fontWeight: 700 }}>Username * (for login)</label>
+              <label htmlFor="create-user-username" className="form-label u-fw-bold" >Username * (for login)</label>
               <input
                 id="create-user-username"
                 type="text"
@@ -1217,7 +1217,7 @@ export default function Settings() {
             </div>
 
             <div className="form-group" style={{ marginBottom: '14px' }}>
-              <label htmlFor="create-user-email" className="form-label" style={{ fontWeight: 700 }}>Email Address (Optional)</label>
+              <label htmlFor="create-user-email" className="form-label u-fw-bold" >Email Address (Optional)</label>
               <input
                 id="create-user-email"
                 type="email"
@@ -1230,7 +1230,7 @@ export default function Settings() {
             </div>
 
             <div className="form-group" style={{ marginBottom: '14px' }}>
-              <label htmlFor="create-user-role" className="form-label" style={{ fontWeight: 700 }}>Account Role *</label>
+              <label htmlFor="create-user-role" className="form-label u-fw-bold" >Account Role *</label>
               <select
                 id="create-user-role"
                 className="form-select"
@@ -1243,8 +1243,8 @@ export default function Settings() {
               </select>
             </div>
 
-            <div className="form-group" style={{ marginBottom: '20px' }}>
-              <label htmlFor="create-user-password" className="form-label" style={{ fontWeight: 700 }}>Password *</label>
+            <div className="form-group u-mb-20" >
+              <label htmlFor="create-user-password" className="form-label u-fw-bold" >Password *</label>
               <div style={{ position: 'relative' }}>
                 <input
                   id="create-user-password"
@@ -1318,7 +1318,7 @@ export default function Settings() {
         {selectedUserForEdit && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="u-flex-row">
                 <div style={{ background: '#eff6ff', padding: '8px', borderRadius: '8px', color: '#0b5394' }}>
                   <EditIcon size={18} />
                 </div>
@@ -1348,7 +1348,7 @@ export default function Settings() {
 
             <form onSubmit={handleUpdateUser}>
               <div className="form-group" style={{ marginBottom: '14px' }}>
-                <label htmlFor="edit-user-name" className="form-label" style={{ fontWeight: 700 }}>Employee / Full Name *</label>
+                <label htmlFor="edit-user-name" className="form-label u-fw-bold" >Employee / Full Name *</label>
                 <input
                   id="edit-user-name"
                   type="text"
@@ -1360,7 +1360,7 @@ export default function Settings() {
               </div>
 
               <div className="form-group" style={{ marginBottom: '14px' }}>
-                <label htmlFor="edit-user-email" className="form-label" style={{ fontWeight: 700 }}>Email Address (Optional)</label>
+                <label htmlFor="edit-user-email" className="form-label u-fw-bold" >Email Address (Optional)</label>
                 <input
                   id="edit-user-email"
                   type="email"
@@ -1371,8 +1371,8 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="form-group" style={{ marginBottom: '20px' }}>
-                <label className="form-label" style={{ fontWeight: 700 }}>Account Role *</label>
+              <div className="form-group u-mb-20" >
+                <label className="form-label u-fw-bold" >Account Role *</label>
                 <select
                   className="form-select"
                   value={editForm.role}
@@ -1422,7 +1422,7 @@ export default function Settings() {
         {selectedUserForPassword && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="u-flex-row">
                 <div style={{ background: '#eff6ff', padding: '8px', borderRadius: '8px', color: '#0b5394' }}>
                   <KeyIcon size={18} />
                 </div>
@@ -1451,8 +1451,8 @@ export default function Settings() {
             </div>
 
             <form onSubmit={handleResetPassword}>
-              <div className="form-group" style={{ marginBottom: '20px' }}>
-                <label htmlFor="reset-user-new-password" className="form-label" style={{ fontWeight: 700 }}>New Password *</label>
+              <div className="form-group u-mb-20" >
+                <label htmlFor="reset-user-new-password" className="form-label u-fw-bold" >New Password *</label>
                 <div style={{ position: 'relative' }}>
                   <input
                     id="reset-user-new-password"
@@ -1600,7 +1600,7 @@ export default function Settings() {
               </p>
             </div>
 
-            <div className="form-group" style={{ marginBottom: '16px' }}>
+            <div className="form-group u-mb-16" >
               <label htmlFor="settings-next-invoice-no" className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem', display: 'block', marginBottom: '4px' }}>
                 Next Invoice Number
               </label>

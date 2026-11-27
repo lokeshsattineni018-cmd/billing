@@ -426,7 +426,7 @@ function ProfitLossWidget() {
             <div className="staff-glance-grid">
               <div className="staff-glance-subcol">
                 <span className="staff-glance-subcol-label">Revenue</span>
-                <span className="staff-glance-subcol-val" style={{ color: '#16a34a' }}>
+                <span className="staff-glance-subcol-val u-text-profit" >
                   {formatCurrency(revenue.totalRevenue)}
                 </span>
                 <span style={{ fontSize: '0.66rem', color: '#64748b', marginTop: '2px' }}>
@@ -442,9 +442,9 @@ function ProfitLossWidget() {
                   {expenses.iceBlocks || 0} Blocks
                 </span>
               </div>
-              <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
+              <div className="staff-glance-subcol u-text-right" >
                 <span className="staff-glance-subcol-label">Margin</span>
-                <span className="staff-glance-subcol-val" style={{ color: '#0b5394' }}>
+                <span className="staff-glance-subcol-val u-text-brand" >
                   {pnl.marginPercent}%
                 </span>
                 <span style={{ fontSize: '0.66rem', color: '#64748b', marginTop: '2px' }}>
@@ -474,7 +474,7 @@ function ProfitLossWidget() {
 
           {/* Desktop Detailed Bento KPI Grid */}
           <div className="staff-desktop-stats">
-            <div className="dashboard-stats-grid" style={{ marginBottom: '20px' }}>
+            <div className="dashboard-stats-grid u-mb-20" >
             {/* 1. Total Revenue Card */}
             <div className="stat-card-compact">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -771,7 +771,7 @@ function ProfitLossWidget() {
           ) : (
             <>
               {/* Mobile Collapsible Daily Timeline Accordion Dropdown */}
-              <div className="staff-mobile-glance" style={{ marginBottom: '16px' }}>
+              <div className="staff-mobile-glance u-mb-16" >
                 <button
                   type="button"
                   onClick={() => setTimelineOpen(!timelineOpen)}
@@ -793,7 +793,7 @@ function ProfitLossWidget() {
                     transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="u-flex-row">
                     <span>Daily Timeline</span>
                     <span style={{ fontSize: '0.7rem', background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
                       {data?.timeline?.length || 0} active days
