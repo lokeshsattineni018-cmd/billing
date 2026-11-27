@@ -133,7 +133,7 @@ export default function PublicInvoice() {
       </div>
 
       {/* Official Authentic Invoice Frame (Shared with BillDetail) */}
-      <div style={{ maxWidth: '860px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
         <OfficialInvoiceSheet
           bill={bill}
           watermarkText="CANCELLED"
