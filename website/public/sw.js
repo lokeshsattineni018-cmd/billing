@@ -1,10 +1,8 @@
-const CACHE_NAME = 'vda-shed-mode-v9';
+const CACHE_NAME = 'vda-shed-mode-v10';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/favicon.svg',
-  '/icons.svg',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
 ];

@@ -447,6 +447,8 @@ Thank you!`;
               <img
                 src={ganeshaImg}
                 alt="Lord Ganesha"
+                width={80}
+                height={80}
                 style={{ width: '80px', height: '80px', objectFit: 'contain' }}
               />
             </div>
@@ -454,6 +456,8 @@ Thank you!`;
               <img
                 src={durgaImg}
                 alt="Durga Maa"
+                width={52}
+                height={52}
                 style={{ width: '52px', height: '52px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }}
               />
               <div
@@ -479,6 +483,8 @@ Thank you!`;
               <img
                 src={ramDarbarImg}
                 alt="Ram Darbar"
+                width={80}
+                height={80}
                 style={{ width: '80px', height: '80px', objectFit: 'contain' }}
               />
             </div>

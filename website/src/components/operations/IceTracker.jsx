@@ -991,10 +991,10 @@ export default function IceTracker() {
             {/* 2. COMPANY HEADER WITH 3 DIVINE EMBLEMS */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1.5px solid #0b5394', padding: '8px 16px' }}>
               <div style={{ width: '88px', textAlign: 'left', flexShrink: 0 }}>
-                <img src={ganeshaImg} alt="Lord Ganesha" style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
+                <img src={ganeshaImg} alt="Lord Ganesha" width={84} height={84} style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
               </div>
               <div style={{ flex: 1, textAlign: 'center', padding: '0 8px' }}>
-                <img src={durgaImg} alt="Durga Maa" style={{ width: '54px', height: '54px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }} />
+                <img src={durgaImg} alt="Durga Maa" width={54} height={54} style={{ width: '54px', height: '54px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }} />
                 <div style={{ color: '#0b5394', fontSize: '1.6rem', fontWeight: 800, letterSpacing: '0.8px', margin: '0 0 2px 0', fontFamily: 'Arial, sans-serif' }}>
                   VIJAYA DURGA SEA FOODS
                 </div>
@@ -1006,7 +1006,7 @@ export default function IceTracker() {
                 </div>
               </div>
               <div style={{ width: '88px', textAlign: 'right', flexShrink: 0 }}>
-                <img src={ramDarbarImg} alt="Ram Darbar" style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
+                <img src={ramDarbarImg} alt="Ram Darbar" width={84} height={84} style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
               </div>
             </div>
 
