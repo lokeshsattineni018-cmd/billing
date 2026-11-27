@@ -79,9 +79,12 @@ export default function Login() {
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label" style={{ fontWeight: 700 }}>Username or Email</label>
+            <label htmlFor="login-email" className="form-label" style={{ fontWeight: 700 }}>Username or Email</label>
             <input
+              id="login-email"
+              name="username"
               type="text"
+              autoComplete="username"
               className="form-input form-input-lg"
               placeholder="Enter username or email"
               value={email}
@@ -92,27 +95,32 @@ export default function Login() {
           </div>
 
           <div className="form-group">
-            <label className="form-label" style={{ fontWeight: 700 }}>Password</label>
+            <label htmlFor="login-password" className="form-label" style={{ fontWeight: 700 }}>Password</label>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <input
+                id="login-password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
                 className="form-input form-input-lg"
                 placeholder="Enter password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                style={{ paddingRight: '44px', width: '100%' }}
+                style={{ paddingRight: '52px', width: '100%' }}
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
                 style={{
                   position: 'absolute',
                   right: '4px',
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  color: '#64748b',
+                  color: '#52606d',
                   minWidth: '48px',
                   minHeight: '48px',
                   padding: '12px',

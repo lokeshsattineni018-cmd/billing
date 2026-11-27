@@ -4,6 +4,7 @@ import { useToast, Toast, formatDate } from '../utils/helpers';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { requestNotificationPermission, sendBrowserNotification, getNotificationPermission } from '../utils/notifications';
+import Modal from '../components/Modal';
 import {
   LogoutIcon,
   PlusIcon,
@@ -14,6 +15,7 @@ import {
   EyeOffIcon,
   EditIcon,
   ShieldIcon,
+  CloseIcon,
 } from '../components/Icons';
 
 export default function Settings() {
@@ -408,9 +410,9 @@ export default function Settings() {
       {/* Header & Tabs */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', marginBottom: '20px' }}>
         <div>
-          <h2 style={{ fontSize: '1.45rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-            System Settings & User Control
-          </h2>
+          <h1 style={{ fontSize: '1.45rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+            System Settings &amp; User Control
+          </h1>
           <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0' }}>
             Configure trade invoice details and manage staff login accounts, roles & passwords
           </p>
@@ -453,8 +455,9 @@ export default function Settings() {
             <h3 className="card-title" style={{ marginBottom: '18px' }}>Business Details</h3>
             <form onSubmit={handleSave}>
               <div className="form-group">
-                <label className="form-label">Trade / Business Name</label>
+                <label htmlFor="settings-business-name" className="form-label">Trade / Business Name</label>
                 <input
+                  id="settings-business-name"
                   type="text"
                   className="form-input form-input-lg"
                   value={form.businessName}
@@ -464,8 +467,9 @@ export default function Settings() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Legal Name / Proprietor</label>
+                <label htmlFor="settings-legal-name" className="form-label">Legal Name / Proprietor</label>
                 <input
+                  id="settings-legal-name"
                   type="text"
                   className="form-input"
                   value={form.legalName}
@@ -475,8 +479,9 @@ export default function Settings() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Address of Principal Place of Business</label>
+                <label htmlFor="settings-address" className="form-label">Address of Principal Place of Business</label>
                 <textarea
+                  id="settings-address"
                   className="form-input"
                   rows="3"
                   value={form.address}
@@ -487,9 +492,12 @@ export default function Settings() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Phone / Cell Number</label>
+                <label htmlFor="settings-phone" className="form-label">Phone / Cell Number</label>
                 <input
+                  id="settings-phone"
                   type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
                   className="form-input"
                   value={form.phone}
                   onChange={(e) => handleChange('phone', e.target.value)}
@@ -498,8 +506,9 @@ export default function Settings() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">GSTIN (Registration Number)</label>
+                <label htmlFor="settings-gstin" className="form-label">GSTIN (Registration Number)</label>
                 <input
+                  id="settings-gstin"
                   type="text"
                   className="form-input"
                   value={form.gstin}
@@ -513,8 +522,9 @@ export default function Settings() {
               </h3>
 
               <div className="form-group">
-                <label className="form-label">Bank Name</label>
+                <label htmlFor="settings-bank-name" className="form-label">Bank Name</label>
                 <input
+                  id="settings-bank-name"
                   type="text"
                   className="form-input"
                   value={form.bankName}
@@ -524,9 +534,11 @@ export default function Settings() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Account Number</label>
+                <label htmlFor="settings-account-no" className="form-label">Account Number</label>
                 <input
+                  id="settings-account-no"
                   type="text"
+                  inputMode="numeric"
                   className="form-input"
                   value={form.accountNo}
                   onChange={(e) => handleChange('accountNo', e.target.value)}
@@ -536,8 +548,9 @@ export default function Settings() {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">IFSC Code</label>
+                  <label htmlFor="settings-ifsc" className="form-label">IFSC Code</label>
                   <input
+                    id="settings-ifsc"
                     type="text"
                     className="form-input"
                     value={form.ifsc}
@@ -547,8 +560,9 @@ export default function Settings() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Branch</label>
+                  <label htmlFor="settings-branch" className="form-label">Branch</label>
                   <input
+                    id="settings-branch"
                     type="text"
                     className="form-input"
                     value={form.branch}
@@ -559,12 +573,13 @@ export default function Settings() {
               </div>
 
               <h3 className="card-title" style={{ margin: '22px 0 14px 0', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-                Invoice Numbering & Prefix
+                Invoice Numbering &amp; Prefix
               </h3>
 
               <div className="form-group">
-                <label className="form-label">Invoice Number Prefix</label>
+                <label htmlFor="settings-invoice-prefix" className="form-label">Invoice Number Prefix</label>
                 <input
+                  id="settings-invoice-prefix"
                   type="text"
                   className="form-input"
                   value={form.invoicePrefix || ''}
@@ -747,8 +762,8 @@ export default function Settings() {
                           </code>
                         </td>
                         <td>
-                          <span style={{ fontSize: '0.84rem', color: '#475569' }}>
-                            {u.email && !u.email.endsWith('.local') ? u.email : <em style={{ color: '#94a3b8' }}>None</em>}
+                          <span style={{ fontSize: '0.84rem', color: '#334e68' }}>
+                            {u.email && !u.email.endsWith('.local') ? u.email : <em style={{ color: '#52606d' }}>None</em>}
                           </span>
                         </td>
                         <td>{getRoleBadge(u)}</td>
@@ -1138,161 +1153,199 @@ export default function Settings() {
       )}
 
       {/* MODAL 1: CREATE NEW USER ACCOUNT */}
-      {showCreateModal && (
-        <div className="modal-backdrop" onClick={() => setShowCreateModal(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ background: '#eff6ff', padding: '8px', borderRadius: '8px', color: '#0b5394' }}>
-                  <UserIcon size={18} />
-                </div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
-                  Create User Account
-                </h3>
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="440px"
+        labelledBy="settings-create-user-title"
+      >
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ background: '#eff6ff', padding: '8px', borderRadius: '8px', color: '#0b5394' }}>
+                <UserIcon size={18} />
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowCreateModal(false)}>✕</button>
+              <h3 id="settings-create-user-title" style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#0f172a' }}>
+                Create User Account
+              </h3>
+            </div>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShowCreateModal(false)}
+              aria-label="Close create user dialog"
+              style={{ minWidth: '48px', minHeight: '48px' }}
+            >
+              <CloseIcon size={18} />
+            </button>
+          </div>
+
+          <form onSubmit={handleCreateUser}>
+            <div className="form-group" style={{ marginBottom: '14px' }}>
+              <label htmlFor="create-user-name" className="form-label" style={{ fontWeight: 700 }}>Employee / Full Name *</label>
+              <input
+                id="create-user-name"
+                type="text"
+                className="form-input"
+                placeholder="e.g. Ramesh Kumar"
+                value={createForm.name}
+                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                required
+              />
             </div>
 
-            <form onSubmit={handleCreateUser}>
-              <div className="form-group" style={{ marginBottom: '14px' }}>
-                <label className="form-label" style={{ fontWeight: 700 }}>Employee / Full Name *</label>
+            <div className="form-group" style={{ marginBottom: '14px' }}>
+              <label htmlFor="create-user-username" className="form-label" style={{ fontWeight: 700 }}>Username * (for login)</label>
+              <input
+                id="create-user-username"
+                type="text"
+                autoComplete="username"
+                className="form-input"
+                placeholder="e.g. ramesh1"
+                value={createForm.username}
+                onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
+                required
+              />
+              <small style={{ color: '#52606d', fontSize: '0.72rem', display: 'block', marginTop: '3px' }}>
+                Can be any text (letters, numbers). No '@' required.
+              </small>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '14px' }}>
+              <label htmlFor="create-user-email" className="form-label" style={{ fontWeight: 700 }}>Email Address (Optional)</label>
+              <input
+                id="create-user-email"
+                type="email"
+                autoComplete="email"
+                className="form-input"
+                placeholder="e.g. ramesh@gmail.com (optional)"
+                value={createForm.email}
+                onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+              />
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '14px' }}>
+              <label htmlFor="create-user-role" className="form-label" style={{ fontWeight: 700 }}>Account Role *</label>
+              <select
+                id="create-user-role"
+                className="form-select"
+                value={createForm.role}
+                onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
+              >
+                <option value="staff">Staff (Daily Billing, History, WhatsApp Sharing)</option>
+                <option value="owner">Owner (Full Billing + Reports &amp; Customers)</option>
+                <option value="admin">Admin (Full System Control &amp; Settings)</option>
+              </select>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '20px' }}>
+              <label htmlFor="create-user-password" className="form-label" style={{ fontWeight: 700 }}>Password *</label>
+              <div style={{ position: 'relative' }}>
                 <input
-                  type="text"
+                  id="create-user-password"
+                  type={showCreatePassword ? 'text' : 'password'}
+                  autoComplete="new-password"
                   className="form-input"
-                  placeholder="e.g. Ramesh Kumar"
-                  value={createForm.name}
-                  onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                  placeholder="Min 6 characters"
+                  value={createForm.password}
+                  onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
                   required
+                  style={{ paddingRight: '52px' }}
                 />
-              </div>
-
-              <div className="form-group" style={{ marginBottom: '14px' }}>
-                <label className="form-label" style={{ fontWeight: 700 }}>Username * (for login)</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="e.g. ramesh1"
-                  value={createForm.username}
-                  onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
-                  required
-                />
-                <small style={{ color: '#64748b', fontSize: '0.72rem', display: 'block', marginTop: '3px' }}>
-                  Can be any text (letters, numbers). No '@' required.
-                </small>
-              </div>
-
-              <div className="form-group" style={{ marginBottom: '14px' }}>
-                <label className="form-label" style={{ fontWeight: 700 }}>Email Address (Optional)</label>
-                <input
-                  type="email"
-                  className="form-input"
-                  placeholder="e.g. ramesh@gmail.com (optional)"
-                  value={createForm.email}
-                  onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                />
-              </div>
-
-              <div className="form-group" style={{ marginBottom: '14px' }}>
-                <label className="form-label" style={{ fontWeight: 700 }}>Account Role *</label>
-                <select
-                  className="form-select"
-                  value={createForm.role}
-                  onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
-                >
-                  <option value="staff">Staff (Daily Billing, History, WhatsApp Sharing)</option>
-                  <option value="owner">Owner (Full Billing + Reports & Customers)</option>
-                  <option value="admin">Admin (Full System Control & Settings)</option>
-                </select>
-              </div>
-
-              <div className="form-group" style={{ marginBottom: '20px' }}>
-                <label className="form-label" style={{ fontWeight: 700 }}>Password *</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type={showCreatePassword ? 'text' : 'password'}
-                    className="form-input"
-                    placeholder="Min 6 characters"
-                    value={createForm.password}
-                    onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                    required
-                    style={{ paddingRight: '40px' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCreatePassword(!showCreatePassword)}
-                    style={{
-                      position: 'absolute',
-                      right: '10px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: '#64748b',
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}
-                    title={showCreatePassword ? 'Hide password' : 'View password'}
-                  >
-                    {showCreatePassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
-                  </button>
-                </div>
-                <small style={{ color: '#64748b', fontSize: '0.72rem', display: 'block', marginTop: '4px' }}>
-                  Click the 👁️ eye icon to view and verify the password as you type.
-                </small>
-              </div>
-
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                 <button
                   type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => setShowCreatePassword(!showCreatePassword)}
+                  aria-label={showCreatePassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showCreatePassword}
+                  style={{
+                    position: 'absolute',
+                    right: '4px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#52606d',
+                    minWidth: '44px',
+                    minHeight: '44px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  title={showCreatePassword ? 'Hide password' : 'View password'}
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={creatingUser}
-                  style={{ background: '#0b5394', fontWeight: 700 }}
-                >
-                  {creatingUser ? 'Creating...' : 'Create Account'}
+                  {showCreatePassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
                 </button>
               </div>
-            </form>
-          </div>
+              <small style={{ color: '#52606d', fontSize: '0.72rem', display: 'block', marginTop: '4px' }}>
+                Use the eye icon to toggle password visibility while typing.
+              </small>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowCreateModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={creatingUser}
+                style={{ background: '#0b5394', fontWeight: 700 }}
+              >
+                {creatingUser ? 'Creating...' : 'Create Account'}
+              </button>
+            </div>
+          </form>
         </div>
-      )}
+      </Modal>
 
       {/* MODAL 2: EDIT USER ROLE & DETAILS */}
-      {showEditModal && selectedUserForEdit && (
-        <div className="modal-backdrop" onClick={() => setShowEditModal(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+      <Modal
+        isOpen={Boolean(showEditModal && selectedUserForEdit)}
+        onClose={() => setShowEditModal(false)}
+        maxWidth="440px"
+        labelledBy="settings-edit-user-title"
+      >
+        {selectedUserForEdit && (
+          <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ background: '#eff6ff', padding: '8px', borderRadius: '8px', color: '#0b5394' }}>
                   <EditIcon size={18} />
                 </div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
-                  Edit User Account & Role
+                <h3 id="settings-edit-user-title" style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#0f172a' }}>
+                  Edit User Account &amp; Role
                 </h3>
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowEditModal(false)}>✕</button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowEditModal(false)}
+                aria-label="Close edit user dialog"
+                style={{ minWidth: '48px', minHeight: '48px' }}
+              >
+                <CloseIcon size={18} />
+              </button>
             </div>
 
             <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '16px' }}>
-              <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>
+              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>
                 @{selectedUserForEdit.username || selectedUserForEdit.name}
               </div>
-              <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+              <div style={{ fontSize: '0.78rem', color: '#52606d' }}>
                 Current Role: {selectedUserForEdit.role?.toUpperCase()}
               </div>
             </div>
 
             <form onSubmit={handleUpdateUser}>
               <div className="form-group" style={{ marginBottom: '14px' }}>
-                <label className="form-label" style={{ fontWeight: 700 }}>Employee / Full Name *</label>
+                <label htmlFor="edit-user-name" className="form-label" style={{ fontWeight: 700 }}>Employee / Full Name *</label>
                 <input
+                  id="edit-user-name"
                   type="text"
                   className="form-input"
                   value={editForm.name}
@@ -1302,8 +1355,9 @@ export default function Settings() {
               </div>
 
               <div className="form-group" style={{ marginBottom: '14px' }}>
-                <label className="form-label" style={{ fontWeight: 700 }}>Email Address (Optional)</label>
+                <label htmlFor="edit-user-email" className="form-label" style={{ fontWeight: 700 }}>Email Address (Optional)</label>
                 <input
+                  id="edit-user-email"
                   type="email"
                   className="form-input"
                   placeholder="e.g. employee@gmail.com"
@@ -1350,70 +1404,90 @@ export default function Settings() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* MODAL 3: CHANGE / RESET USER PASSWORD */}
-      {showPasswordModal && selectedUserForPassword && (
-        <div className="modal-backdrop" onClick={() => setShowPasswordModal(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+      <Modal
+        isOpen={Boolean(showPasswordModal && selectedUserForPassword)}
+        onClose={() => setShowPasswordModal(false)}
+        maxWidth="420px"
+        labelledBy="settings-password-modal-title"
+      >
+        {selectedUserForPassword && (
+          <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ background: '#eff6ff', padding: '8px', borderRadius: '8px', color: '#0b5394' }}>
                   <KeyIcon size={18} />
                 </div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
+                <h3 id="settings-password-modal-title" style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#0f172a' }}>
                   Change User Password
                 </h3>
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowPasswordModal(false)}>✕</button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowPasswordModal(false)}
+                aria-label="Close change password dialog"
+                style={{ minWidth: '48px', minHeight: '48px' }}
+              >
+                <CloseIcon size={18} />
+              </button>
             </div>
 
             <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '16px' }}>
-              <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>
+              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>
                 {selectedUserForPassword.name}
               </div>
-              <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+              <div style={{ fontSize: '0.78rem', color: '#52606d' }}>
                 @{selectedUserForPassword.username || selectedUserForPassword.email} • {selectedUserForPassword.role?.toUpperCase()}
               </div>
             </div>
 
             <form onSubmit={handleResetPassword}>
               <div className="form-group" style={{ marginBottom: '20px' }}>
-                <label className="form-label" style={{ fontWeight: 700 }}>New Password *</label>
+                <label htmlFor="reset-user-new-password" className="form-label" style={{ fontWeight: 700 }}>New Password *</label>
                 <div style={{ position: 'relative' }}>
                   <input
+                    id="reset-user-new-password"
                     type={showResetPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
                     className="form-input"
                     placeholder="Enter new password (min 6 chars)"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
-                    style={{ paddingRight: '40px' }}
+                    style={{ paddingRight: '52px' }}
                     autoFocus
                   />
                   <button
                     type="button"
                     onClick={() => setShowResetPassword(!showResetPassword)}
+                    aria-label={showResetPassword ? 'Hide password' : 'Show password'}
+                    aria-pressed={showResetPassword}
                     style={{
                       position: 'absolute',
-                      right: '10px',
+                      right: '4px',
                       top: '50%',
                       transform: 'translateY(-50%)',
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      color: '#64748b',
+                      color: '#52606d',
+                      minWidth: '44px',
+                      minHeight: '44px',
                       display: 'flex',
                       alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                     title={showResetPassword ? 'Hide password' : 'View password'}
                   >
                     {showResetPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
                   </button>
                 </div>
-                <small style={{ color: '#64748b', fontSize: '0.72rem', display: 'block', marginTop: '4px' }}>
-                  Click the 👁️ eye icon to view and verify the new password.
+                <small style={{ color: '#52606d', fontSize: '0.72rem', display: 'block', marginTop: '4px' }}>
+                  Use the eye icon to toggle password visibility.
                 </small>
               </div>
 
@@ -1436,27 +1510,33 @@ export default function Settings() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* MODAL 4: DELETE USER CONFIRMATION */}
-      {showDeleteModal && selectedUserForDelete && (
-        <div className="modal-backdrop" onClick={() => setShowDeleteModal(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+      <Modal
+        isOpen={Boolean(showDeleteModal && selectedUserForDelete)}
+        onClose={() => setShowDeleteModal(false)}
+        disableBackdropClose={deletingUser}
+        maxWidth="400px"
+        labelledBy="settings-delete-user-title"
+      >
+        {selectedUserForDelete && (
+          <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-              <div style={{ background: '#fee2e2', padding: '10px', borderRadius: '50%', color: '#dc2626' }}>
-                <TrashIcon size={20} color="#dc2626" />
+              <div style={{ background: '#fee2e2', padding: '10px', borderRadius: '50%', color: '#b42318' }}>
+                <TrashIcon size={20} color="#b42318" />
               </div>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#991b1b' }}>
+              <h3 id="settings-delete-user-title" style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#991b1b' }}>
                 Delete User Account?
               </h3>
             </div>
 
-            <p style={{ fontSize: '0.88rem', color: '#475569', lineHeight: '1.5', margin: '0 0 16px 0' }}>
+            <p style={{ fontSize: '0.88rem', color: '#334e68', lineHeight: '1.5', margin: '0 0 16px 0' }}>
               Are you sure you want to permanently delete the account for <strong>{selectedUserForDelete.name}</strong> (<code>@{selectedUserForDelete.username || selectedUserForDelete.email}</code>)?
             </p>
-            <p style={{ fontSize: '0.78rem', color: '#dc2626', background: '#fff5f5', border: '1px solid #fecaca', padding: '8px 12px', borderRadius: '6px', margin: '0 0 20px 0' }}>
-              ⚠️ This user will immediately lose login access to the billing system.
+            <p style={{ fontSize: '0.78rem', color: '#b42318', background: '#fff5f5', border: '1px solid #fecaca', padding: '8px 12px', borderRadius: '6px', margin: '0 0 20px 0' }}>
+              Warning: This user will immediately lose login access to the billing system.
             </p>
 
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
@@ -1470,7 +1550,7 @@ export default function Settings() {
               <button
                 type="button"
                 className="btn"
-                style={{ background: '#dc2626', color: '#ffffff', fontWeight: 700, border: 'none' }}
+                style={{ background: '#b42318', color: '#ffffff', fontWeight: 700, border: 'none' }}
                 disabled={deletingUser}
                 onClick={handleDeleteUser}
               >
@@ -1478,78 +1558,85 @@ export default function Settings() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* MODAL 5: RESET INVOICE COUNTER */}
-      {showResetCounterModal && (
-        <div className="modal-backdrop" onClick={() => setShowResetCounterModal(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
-                Reset Invoice Sequence Number
-              </h3>
-              <button
-                type="button"
-                className="modal-close"
-                onClick={() => setShowResetCounterModal(false)}
-                style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b' }}
-              >
-                ✕
-              </button>
+      <Modal
+        isOpen={showResetCounterModal}
+        onClose={() => setShowResetCounterModal(false)}
+        disableBackdropClose={resettingCounter}
+        maxWidth="420px"
+        labelledBy="settings-reset-counter-title"
+      >
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <h3 id="settings-reset-counter-title" style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: '#0f172a' }}>
+              Reset Invoice Sequence Number
+            </h3>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShowResetCounterModal(false)}
+              aria-label="Close reset sequence dialog"
+              style={{ minWidth: '48px', minHeight: '48px', color: '#52606d' }}
+            >
+              <CloseIcon size={18} />
+            </button>
+          </div>
+
+          <form onSubmit={handleResetCounter}>
+            <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '8px', padding: '12px', marginBottom: '14px' }}>
+              <div style={{ fontSize: '0.82rem', color: '#92400e', fontWeight: 700 }}>
+                Sequence Counter Override
+              </div>
+              <p style={{ fontSize: '0.76rem', color: '#92400e', margin: '4px 0 0 0', lineHeight: '1.4' }}>
+                Setting this will force the next generated invoice to have this exact number. Existing invoices will not be modified or renumbered.
+              </p>
             </div>
 
-            <form onSubmit={handleResetCounter}>
-              <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '8px', padding: '12px', marginBottom: '14px' }}>
-                <div style={{ fontSize: '0.82rem', color: '#b45309', fontWeight: 700 }}>
-                  ⚠️ Sequence Counter Override
-                </div>
-                <p style={{ fontSize: '0.76rem', color: '#92400e', margin: '4px 0 0 0', lineHeight: '1.4' }}>
-                  Setting this will force the next generated invoice to have this exact number. Existing invoices will not be modified or renumbered.
-                </p>
-              </div>
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label htmlFor="settings-next-invoice-no" className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem', display: 'block', marginBottom: '4px' }}>
+                Next Invoice Number
+              </label>
+              <input
+                id="settings-next-invoice-no"
+                type="number"
+                inputMode="numeric"
+                min="1"
+                className="form-input"
+                value={newNextNumber}
+                onChange={(e) => setNewNextNumber(e.target.value)}
+                placeholder="e.g. 101"
+                required
+                style={{ fontSize: '1rem', fontWeight: 700 }}
+              />
+              <span style={{ fontSize: '0.74rem', color: '#52606d', display: 'block', marginTop: '4px' }}>
+                The next invoice will be #{newNextNumber || '...'}
+              </span>
+            </div>
 
-              <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem', display: 'block', marginBottom: '4px' }}>
-                  Next Invoice Number
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  className="form-input"
-                  value={newNextNumber}
-                  onChange={(e) => setNewNextNumber(e.target.value)}
-                  placeholder="e.g. 101"
-                  required
-                  style={{ fontSize: '1rem', fontWeight: 700 }}
-                />
-                <span style={{ fontSize: '0.74rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
-                  The next invoice will be #{newNextNumber || '...'}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowResetCounterModal(false)}
-                  disabled={resettingCounter}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  style={{ background: '#0b5394', fontWeight: 700 }}
-                  disabled={resettingCounter}
-                >
-                  {resettingCounter ? 'Updating...' : 'Set Next Number'}
-                </button>
-              </div>
-            </form>
-          </div>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowResetCounterModal(false)}
+                disabled={resettingCounter}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                style={{ background: '#0b5394', fontWeight: 700 }}
+                disabled={resettingCounter}
+              >
+                {resettingCounter ? 'Updating...' : 'Set Next Number'}
+              </button>
+            </div>
+          </form>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

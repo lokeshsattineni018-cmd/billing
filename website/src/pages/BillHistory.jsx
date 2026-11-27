@@ -289,7 +289,7 @@ export default function BillHistory() {
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h2 style={{ margin: 0 }}>Invoice History</h2>
+            <h1 style={{ margin: 0 }}>Invoice History</h1>
             {isUpdating && (
               <span
                 style={{
@@ -368,8 +368,9 @@ export default function BillHistory() {
             {search && (
               <button
                 type="button"
+                aria-label="Clear search"
                 onClick={() => { setSearch(''); setTimeout(() => loadBills(true), 0); }}
-                style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#94a3b8', fontSize: '1rem', cursor: 'pointer', padding: '4px' }}
+                style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#52606d', fontSize: '1rem', cursor: 'pointer', padding: '4px', minWidth: '40px', minHeight: '40px' }}
               >
                 ✕
               </button>
@@ -545,7 +546,7 @@ export default function BillHistory() {
                           )}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 500 }}>{formatDate(bill.date)}</span>
+                          <span style={{ fontSize: '0.78rem', color: '#52606d', fontWeight: 500 }}>{formatDate(bill.date)}</span>
                           {!bill.isVoided && (
                             <span
                               className={`badge ${bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`}
@@ -605,6 +606,7 @@ export default function BillHistory() {
                             onClick={(e) => { e.stopPropagation(); handleShareWhatsApp(e, bill); }}
                             style={{ background: '#25D366', border: 'none', borderRadius: '10px', minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: '10px' }}
                             title="Share on WhatsApp"
+                            aria-label={`Share invoice #${bill.billNo} on WhatsApp`}
                           >
                             <WhatsAppIcon size={20} color="#ffffff" />
                           </button>
@@ -614,6 +616,7 @@ export default function BillHistory() {
                           onClick={(e) => { e.stopPropagation(); handlePrint(e, bill._id); }}
                           style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '10px', minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: '10px' }}
                           title="Print Invoice"
+                          aria-label={`Print invoice #${bill.billNo}`}
                         >
                           <PrintIcon size={18} color="#0b5394" />
                         </button>
@@ -623,8 +626,9 @@ export default function BillHistory() {
                             onClick={(e) => { e.stopPropagation(); setDeleteBillTarget(bill); }}
                             style={{ background: '#fee2e2', border: '1px solid #fecaca', borderRadius: '10px', minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: '10px' }}
                             title="Delete Invoice"
+                            aria-label={`Delete invoice #${bill.billNo}`}
                           >
-                            <TrashIcon size={18} color="#dc2626" />
+                            <TrashIcon size={18} color="#b42318" />
                           </button>
                         )}
                       </div>
@@ -706,27 +710,33 @@ export default function BillHistory() {
                         <div className="action-buttons" style={{ justifyContent: 'center', display: 'flex', gap: '6px' }}>
                           {!bill.isVoided && (
                             <button
+                              type="button"
                               className="btn btn-whatsapp btn-sm"
                               onClick={(e) => handleShareWhatsApp(e, bill)}
                               title="Share on WhatsApp"
+                              aria-label={`Share invoice #${bill.billNo} on WhatsApp`}
                               style={{ padding: '6px 10px' }}
                             >
                               <WhatsAppIcon size={14} color="#ffffff" />
                             </button>
                           )}
                           <button
+                            type="button"
                             className="btn btn-secondary btn-sm"
                             onClick={(e) => handlePrint(e, bill._id)}
                             title="Print Invoice"
+                            aria-label={`Print invoice #${bill.billNo}`}
                             style={{ padding: '6px 10px' }}
                           >
                             <PrintIcon size={14} />
                           </button>
                           <button
+                            type="button"
                             className="btn btn-secondary btn-sm"
                             onClick={(e) => handleDownloadPDF(e, bill._id, bill.formattedBillNo || bill.billNumber || bill.billNo)}
                             disabled={downloadingPdfId === bill._id}
                             title="Download PDF"
+                            aria-label={`Download PDF for invoice #${bill.billNo}`}
                             style={{ padding: '6px 10px' }}
                           >
                             {downloadingPdfId === bill._id ? (

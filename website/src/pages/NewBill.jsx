@@ -54,8 +54,9 @@ const ItemCardMobile = memo(function ItemCardMobile({
       </div>
 
       <div style={{ marginBottom: '8px' }}>
-        <label className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>Prawn Count</label>
+        <label htmlFor={`mobile-item-count-${index}`} className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>Prawn Count</label>
         <input
+          id={`mobile-item-count-${index}`}
           type="text"
           className="form-input"
           value={item.count || ''}
@@ -67,13 +68,15 @@ const ItemCardMobile = memo(function ItemCardMobile({
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
         <div className="form-group" style={{ marginBottom: 0 }}>
-          <label className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>{t('weightKg')} *</label>
+          <label htmlFor={`mobile-item-qty-${index}`} className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>{t('weightKg')} *</label>
           <input
+            id={`mobile-item-qty-${index}`}
             type="number"
+            inputMode="decimal"
             step="0.01"
             min="0.01"
             className="form-input form-input-lg"
-            style={{ fontWeight: 800, fontSize: '16px', textAlign: 'right', color: '#0f172a', minHeight: '48px' }}
+            style={{ fontWeight: 700, fontSize: '16px', textAlign: 'right', color: '#0f172a', minHeight: '48px' }}
             value={item.quantity}
             onChange={(e) => onItemChange(index, 'quantity', e.target.value)}
             placeholder="0.00"
@@ -81,13 +84,15 @@ const ItemCardMobile = memo(function ItemCardMobile({
         </div>
 
         <div className="form-group" style={{ marginBottom: 0 }}>
-          <label className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>{t('ratePerKg')} *</label>
+          <label htmlFor={`mobile-item-rate-${index}`} className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>{t('ratePerKg')} *</label>
           <input
+            id={`mobile-item-rate-${index}`}
             type="number"
+            inputMode="decimal"
             step="0.01"
             min="0.01"
             className="form-input form-input-lg"
-            style={{ fontWeight: 800, fontSize: '16px', textAlign: 'right', color: '#0f172a', minHeight: '48px' }}
+            style={{ fontWeight: 700, fontSize: '16px', textAlign: 'right', color: '#0f172a', minHeight: '48px' }}
             value={item.rate}
             onChange={(e) => onItemChange(index, 'rate', e.target.value)}
             placeholder="0.00"
@@ -97,9 +102,11 @@ const ItemCardMobile = memo(function ItemCardMobile({
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
         <div className="form-group" style={{ marginBottom: 0 }}>
-          <label className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>Rate of Tax</label>
+          <label htmlFor={`mobile-item-tax-${index}`} className="form-label" style={{ fontSize: '0.76rem', fontWeight: 700 }}>Rate of Tax</label>
           <input
+            id={`mobile-item-tax-${index}`}
             type="text"
+            inputMode="decimal"
             className="form-input"
             value={item.taxRate || ''}
             onChange={(e) => onItemChange(index, 'taxRate', e.target.value)}
@@ -251,6 +258,7 @@ export default function NewBill() {
   const [customersList, setCustomersList] = useState([]);
   const [customerLastItems, setCustomerLastItems] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeSuggestionIdx, setActiveSuggestionIdx] = useState(-1);
   const [saving, setSaving] = useState(false);
   const [hasDraftNotice, setHasDraftNotice] = useState(false);
   const dropdownRef = useRef(null);
@@ -998,9 +1006,9 @@ export default function NewBill() {
       {/* Page Title & Back */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>
+          <h1 style={{ fontSize: '1.45rem', fontWeight: 700, margin: 0, color: '#0f172a' }}>
             {editBillId ? `Edit Invoice #${editBillNo}` : t('newInvoiceTitle')}
-          </h2>
+          </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', margin: '2px 0 0 0' }}>
             GSTIN: <span style={{ fontWeight: 700, color: '#0b5394' }}>{companyGstin || 'Loading settings...'}</span>
           </p>
@@ -1065,24 +1073,59 @@ export default function NewBill() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
-            {/* Customer Name input with dropdown */}
+            {/* Customer Name input with accessible combobox/listbox */}
             <div className="form-group" style={{ marginBottom: 0, position: 'relative' }} ref={dropdownRef}>
-              <label className="form-label" style={{ fontWeight: 700 }}>{t('customerName')} *</label>
+              <label htmlFor="new-bill-company-name" className="form-label" style={{ fontWeight: 700 }}>{t('customerName')} *</label>
               <input
+                id="new-bill-company-name"
                 type="text"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={showSuggestions && matchingCustomers.length > 0}
+                aria-controls="customer-suggestions-listbox"
+                aria-activedescendant={
+                  showSuggestions && activeSuggestionIdx >= 0 && matchingCustomers.slice(0, 5)[activeSuggestionIdx]
+                    ? `customer-option-${activeSuggestionIdx}`
+                    : undefined
+                }
                 className="form-input form-input-lg"
                 placeholder={t('customerNamePlaceholder')}
                 value={companyName}
                 onChange={(e) => {
                   setCompanyName(e.target.value);
                   setShowSuggestions(true);
+                  setActiveSuggestionIdx(-1);
                 }}
-                onFocus={() => setShowSuggestions(true)}
+                onFocus={() => {
+                  setShowSuggestions(true);
+                  setActiveSuggestionIdx(-1);
+                }}
+                onKeyDown={(e) => {
+                  const visibleSuggestions = matchingCustomers.slice(0, 5);
+                  if (!showSuggestions || visibleSuggestions.length === 0) return;
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setActiveSuggestionIdx((prev) => (prev + 1) % visibleSuggestions.length);
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setActiveSuggestionIdx((prev) => (prev <= 0 ? visibleSuggestions.length - 1 : prev - 1));
+                  } else if (e.key === 'Enter' && activeSuggestionIdx >= 0 && visibleSuggestions[activeSuggestionIdx]) {
+                    e.preventDefault();
+                    handleSelectCustomer(visibleSuggestions[activeSuggestionIdx]);
+                    setActiveSuggestionIdx(-1);
+                  } else if (e.key === 'Escape') {
+                    setShowSuggestions(false);
+                    setActiveSuggestionIdx(-1);
+                  }
+                }}
                 autoFocus
               />
 
               {showSuggestions && matchingCustomers.length > 0 && (
                 <div
+                  id="customer-suggestions-listbox"
+                  role="listbox"
+                  aria-label="Matching customers"
                   style={{
                     position: 'absolute',
                     top: '100%',
@@ -1097,9 +1140,12 @@ export default function NewBill() {
                     overflowY: 'auto',
                   }}
                 >
-                  {matchingCustomers.slice(0, 5).map((c) => (
+                  {matchingCustomers.slice(0, 5).map((c, idx) => (
                     <div
                       key={c._id}
+                      id={`customer-option-${idx}`}
+                      role="option"
+                      aria-selected={idx === activeSuggestionIdx}
                       style={{
                         padding: '10px 14px',
                         cursor: 'pointer',
@@ -1107,18 +1153,20 @@ export default function NewBill() {
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
+                        background: idx === activeSuggestionIdx ? '#eff6ff' : '#ffffff',
                       }}
+                      onMouseEnter={() => setActiveSuggestionIdx(idx)}
                       onMouseDown={() => handleSelectCustomer(c)}
                     >
                       <div>
                         <strong style={{ color: '#0f172a', fontSize: '0.92rem' }}>{c.companyName}</strong>
                         {c.customerPhone && (
-                          <span style={{ fontSize: '0.78rem', color: '#64748b', marginLeft: '8px' }}>
+                          <span style={{ fontSize: '0.78rem', color: '#52606d', marginLeft: '8px' }}>
                             Cell: {c.customerPhone}
                           </span>
                         )}
                         {c.vehicleNo && (
-                          <span style={{ fontSize: '0.72rem', color: '#059669', marginLeft: '6px', background: '#ecfdf5', padding: '1px 5px', borderRadius: '4px' }}>
+                          <span style={{ fontSize: '0.72rem', color: '#166534', marginLeft: '6px', background: '#ecfdf5', padding: '1px 5px', borderRadius: '4px' }}>
                             {c.vehicleNo}
                           </span>
                         )}
@@ -1161,11 +1209,14 @@ export default function NewBill() {
 
             {/* Task 7: Formatted Numeric-Only Phone Number */}
             <div className="form-group" style={{ marginBottom: '8px' }}>
-              <label className="form-label" style={{ fontWeight: 700 }}>
-                {t('customerPhone')} {customerPhone && <span style={{ fontSize: '0.72rem', color: customerPhone.length === 10 ? '#059669' : '#d97706' }}>({customerPhone.length}/10 digits)</span>}
+              <label htmlFor="new-bill-customer-phone" className="form-label" style={{ fontWeight: 700 }}>
+                {t('customerPhone')} {customerPhone && <span style={{ fontSize: '0.72rem', color: customerPhone.length === 10 ? '#166534' : '#92400e' }}>({customerPhone.length}/10 digits)</span>}
               </label>
               <input
+                id="new-bill-customer-phone"
                 type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 className="form-input"
                 placeholder="10-digit mobile number"
                 value={customerPhone}
@@ -1176,8 +1227,9 @@ export default function NewBill() {
 
             {/* Vehicle Number */}
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontWeight: 700 }}>Vehicle Number</label>
+              <label htmlFor="new-bill-vehicle-no" className="form-label" style={{ fontWeight: 700 }}>Vehicle Number</label>
               <input
+                id="new-bill-vehicle-no"
                 type="text"
                 className="form-input"
                 placeholder="e.g. AP37TF 2633"
@@ -1377,9 +1429,11 @@ export default function NewBill() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '0.74rem' }}>{t('cgstRate')}</label>
+                <label htmlFor="new-bill-cgst-rate" className="form-label" style={{ fontSize: '0.74rem' }}>{t('cgstRate')}</label>
                 <input
+                  id="new-bill-cgst-rate"
                   type="text"
+                  inputMode="decimal"
                   className="form-input"
                   value={cgstRate}
                   onChange={(e) => setCgstRate(e.target.value)}
@@ -1388,9 +1442,11 @@ export default function NewBill() {
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '0.74rem' }}>{t('cgstAmount')}</label>
+                <label htmlFor="new-bill-cgst-amount" className="form-label" style={{ fontSize: '0.74rem' }}>{t('cgstAmount')}</label>
                 <input
+                  id="new-bill-cgst-amount"
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   className="form-input"
                   value={cgstAmount}
@@ -1400,9 +1456,11 @@ export default function NewBill() {
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '0.74rem' }}>{t('sgstRate')}</label>
+                <label htmlFor="new-bill-sgst-rate" className="form-label" style={{ fontSize: '0.74rem' }}>{t('sgstRate')}</label>
                 <input
+                  id="new-bill-sgst-rate"
                   type="text"
+                  inputMode="decimal"
                   className="form-input"
                   value={sgstRate}
                   onChange={(e) => setSgstRate(e.target.value)}
@@ -1411,9 +1469,11 @@ export default function NewBill() {
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '0.74rem' }}>{t('sgstAmount')}</label>
+                <label htmlFor="new-bill-sgst-amount" className="form-label" style={{ fontSize: '0.74rem' }}>{t('sgstAmount')}</label>
                 <input
+                  id="new-bill-sgst-amount"
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   className="form-input"
                   value={sgstAmount}
@@ -1423,9 +1483,11 @@ export default function NewBill() {
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ fontSize: '0.74rem' }}>{t('igstAmount')}</label>
+                <label htmlFor="new-bill-igst-amount" className="form-label" style={{ fontSize: '0.74rem' }}>{t('igstAmount')}</label>
                 <input
+                  id="new-bill-igst-amount"
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   className="form-input"
                   value={igstAmount}
@@ -1442,31 +1504,33 @@ export default function NewBill() {
         {/* ── STEP 3: PAYMENT STATUS & GRAND TOTAL ── */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-            <div style={{ background: '#eff6ff', color: '#0b5394', border: '1.5px solid #bfdbfe', width: '26px', height: '26px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.82rem', fontWeight: 800 }}>
+            <div style={{ background: '#eff6ff', color: '#0b5394', border: '1.5px solid #bfdbfe', width: '26px', height: '26px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.82rem', fontWeight: 700 }}>
               3
             </div>
-            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>
               {t('step3Payment')}
             </h3>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontWeight: 700 }}>{t('paymentStatus')}</label>
+              <label htmlFor="new-bill-payment-status" className="form-label" style={{ fontWeight: 700 }}>{t('paymentStatus')}</label>
               <select
+                id="new-bill-payment-status"
                 className="form-input"
                 value={paymentStatus}
                 onChange={(e) => setPaymentStatus(e.target.value)}
                 style={{ fontWeight: 700 }}
               >
-                <option value="Pending">⏳ {t('pending')}</option>
-                <option value="Paid">✅ {t('paid')}</option>
+                <option value="Pending">{t('pending')}</option>
+                <option value="Paid">{t('paid')}</option>
               </select>
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontWeight: 700 }}>{t('invoiceDate')}</label>
+              <label htmlFor="new-bill-invoice-date" className="form-label" style={{ fontWeight: 700 }}>{t('invoiceDate')}</label>
               <input
+                id="new-bill-invoice-date"
                 type="date"
                 className="form-input"
                 value={date}

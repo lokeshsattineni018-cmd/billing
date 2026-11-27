@@ -1,9 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, NavLink, Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Modal from './components/Modal';
 
 // Lazy-loaded pages with prefetch capabilities
 import { loadNewBill, loadBillHistory, prefetchCoreRoutes } from './utils/routePrefetch';
@@ -74,10 +75,17 @@ function Sidebar({ onInstall, onLogout }) {
   return (
     <aside className="sidebar desktop-only-sidebar">
       {/* Brand Header */}
-      <div className="sidebar-brand" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '20px 18px 18px 18px' }}>
+      <Link
+        to="/"
+        className="sidebar-brand"
+        aria-label="Vijaya Durga Agencies Home"
+        style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '20px 18px 18px 18px', textDecoration: 'none' }}
+      >
         <img
           src={logoImg}
-          alt="VIJAYA DURGA AGENCIES Logo"
+          alt="Vijaya Durga Agencies Logo"
+          width={44}
+          height={44}
           style={{
             width: '44px',
             height: '44px',
@@ -88,14 +96,14 @@ function Sidebar({ onInstall, onLogout }) {
           }}
         />
         <div style={{ minWidth: 0, flex: 1 }}>
-          <h1 style={{ fontSize: '0.96rem', fontWeight: 900, color: '#0b5394', letterSpacing: '-0.3px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div style={{ fontSize: '0.96rem', fontWeight: 700, color: '#0b5394', letterSpacing: '-0.2px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             VIJAYA DURGA
-          </h1>
-          <p style={{ fontSize: '0.66rem', color: '#64748b', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.6px', fontWeight: 800 }}>
-            AGENCIES • BILLING
+          </div>
+          <p style={{ fontSize: '0.7rem', color: '#52606d', marginTop: '2px', fontWeight: 600 }}>
+            Agencies • Billing
           </p>
         </div>
-      </div>
+      </Link>
 
       {/* Modern Language Switcher Pill */}
       <div style={{ padding: '10px 14px 4px 14px' }}>
@@ -246,21 +254,50 @@ function AppLayout() {
     };
   }, []);
 
+  // Close mobile drawer on Escape
+  useEffect(() => {
+    if (!mobileDrawerOpen) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setMobileDrawerOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [mobileDrawerOpen]);
+
   return (
     <div className="app-layout ui-redesign-shell">
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <div className="app-top-chrome">
         {/* True Offline-First Shed Mode & Cloud Sync Bar */}
         <ShedModeSyncBar />
         {/* Clean Mobile & Tablet Top Header */}
         <header className="mobile-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => navigate('/')}>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            aria-label="Go to Vijaya Durga Dashboard"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'none',
+              border: 'none',
+              padding: '4px 6px',
+              minHeight: '48px',
+              cursor: 'pointer',
+            }}
+          >
             <img
               src={logoImg}
-              alt="Logo"
+              alt=""
+              width={28}
+              height={28}
               style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }}
             />
-            <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0b5394' }}>VIJAYA DURGA</span>
-          </div>
+            <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0b5394' }}>VIJAYA DURGA</span>
+          </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button
@@ -298,22 +335,30 @@ function AppLayout() {
 
       {/* Mobile & Tablet Slide-Out Sidebar Drawer */}
       {mobileDrawerOpen && (
-        <div className="mobile-drawer-overlay" onClick={() => setMobileDrawerOpen(false)}>
+        <div
+          className="mobile-drawer-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation menu"
+          onClick={() => setMobileDrawerOpen(false)}
+        >
           <div className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
             {/* Drawer Header */}
             <div className="mobile-drawer-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <img
                   src={logoImg}
-                  alt="Logo"
+                  alt="Vijaya Durga Agencies Logo"
+                  width={32}
+                  height={32}
                   style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
                 />
                 <div>
-                  <div style={{ fontSize: '0.96rem', fontWeight: 900, color: '#0b5394', lineHeight: 1.2 }}>
+                  <div style={{ fontSize: '0.96rem', fontWeight: 700, color: '#0b5394', lineHeight: 1.2 }}>
                     VIJAYA DURGA
                   </div>
-                  <div style={{ fontSize: '0.66rem', color: '#64748b', fontWeight: 700, letterSpacing: '0.5px' }}>
-                    SEAFOOD & BILLING
+                  <div style={{ fontSize: '0.7rem', color: '#52606d', fontWeight: 600 }}>
+                    Seafood &amp; Billing
                   </div>
                 </div>
               </div>
@@ -321,8 +366,8 @@ function AppLayout() {
                 type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={() => setMobileDrawerOpen(false)}
-                style={{ padding: '6px', color: '#64748b' }}
-                title="Close"
+                style={{ padding: '6px', color: '#52606d', minWidth: '48px', minHeight: '48px' }}
+                aria-label="Close navigation menu"
               >
                 <CloseIcon size={20} />
               </button>
@@ -409,7 +454,7 @@ function AppLayout() {
         <Sidebar onInstall={handleInstallApp} onLogout={() => setShowLogoutModal(true)} />
 
         {/* Main Content Area */}
-        <main className="main-content">
+        <main id="main-content" tabIndex={-1} className="main-content">
           <ErrorBoundary>
             <Suspense fallback={<PageLoader />}>
               <Routes>
@@ -463,95 +508,111 @@ function AppLayout() {
       </nav>
 
       {/* Install App Helper Modal */}
-      {showInstallGuide && (
-        <div className="modal-backdrop" onClick={() => setShowInstallGuide(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <img src={logoImg} alt="App Icon" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
-                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>Install App on Phone</h3>
-              </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowInstallGuide(false)}>✕</button>
+      <Modal
+        isOpen={showInstallGuide}
+        onClose={() => setShowInstallGuide(false)}
+        maxWidth="420px"
+        labelledBy="install-guide-modal-title"
+      >
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <img src={logoImg} alt="App Icon" width={32} height={32} style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+              <h3 id="install-guide-modal-title" style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>Install App on Phone</h3>
             </div>
-
-            <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-              {isIOS ? (
-                <div>
-                  <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
-                    📱 On iPhone / Safari:
-                  </p>
-                  <ol style={{ paddingLeft: '20px', margin: 0 }}>
-                    <li style={{ marginBottom: '6px' }}>Tap the <strong>Share</strong> button (box with upward arrow) in your browser bar.</li>
-                    <li style={{ marginBottom: '6px' }}>Scroll down and tap <strong>"Add to Home Screen"</strong> (➕).</li>
-                    <li>Tap <strong>"Add"</strong> in the top right.</li>
-                  </ol>
-                </div>
-              ) : (
-                <div>
-                  <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
-                    📱 On Android / Chrome:
-                  </p>
-                  <ol style={{ paddingLeft: '20px', margin: 0 }}>
-                    <li style={{ marginBottom: '6px' }}>Tap the <strong>3 dots (⋮)</strong> menu in Chrome.</li>
-                    <li style={{ marginBottom: '6px' }}>Tap <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</li>
-                    <li>Confirm by tapping <strong>"Install"</strong>.</li>
-                  </ol>
-                </div>
-              )}
-            </div>
-
             <button
-              className="btn btn-primary"
-              style={{ width: '100%', marginTop: '16px', padding: '10px' }}
+              type="button"
+              className="btn btn-ghost btn-sm"
               onClick={() => setShowInstallGuide(false)}
+              aria-label="Close install instructions"
+              style={{ minWidth: '48px', minHeight: '48px' }}
             >
-              Got it!
+              <CloseIcon size={18} />
+            </button>
+          </div>
+
+          <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+            {isIOS ? (
+              <div>
+                <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                  On iPhone / Safari:
+                </p>
+                <ol style={{ paddingLeft: '20px', margin: 0 }}>
+                  <li style={{ marginBottom: '6px' }}>Tap the <strong>Share</strong> button (box with upward arrow) in your browser bar.</li>
+                  <li style={{ marginBottom: '6px' }}>Scroll down and tap <strong>"Add to Home Screen"</strong>.</li>
+                  <li>Tap <strong>"Add"</strong> in the top right.</li>
+                </ol>
+              </div>
+            ) : (
+              <div>
+                <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                  On Android / Chrome:
+                </p>
+                <ol style={{ paddingLeft: '20px', margin: 0 }}>
+                  <li style={{ marginBottom: '6px' }}>Tap the <strong>3 dots (⋮)</strong> menu in Chrome.</li>
+                  <li style={{ marginBottom: '6px' }}>Tap <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</li>
+                  <li>Confirm by tapping <strong>"Install"</strong>.</li>
+                </ol>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-primary"
+            style={{ width: '100%', marginTop: '16px', padding: '10px' }}
+            onClick={() => setShowInstallGuide(false)}
+          >
+            Got it
+          </button>
+        </div>
+      </Modal>
+
+      {/* Sign Out Confirmation Modal */}
+      <Modal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        maxWidth="380px"
+        labelledBy="logout-modal-title"
+        contentStyle={{ textAlign: 'center', padding: '24px 20px' }}
+      >
+        <div>
+          <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: '#fee2e2', color: '#b42318', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px auto' }}>
+            <LogoutIcon size={26} color="#b42318" />
+          </div>
+          <h3 id="logout-modal-title" style={{ margin: '0 0 8px 0', fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>
+            {t('signOut')}?
+          </h3>
+          <p style={{ margin: '0 0 22px 0', fontSize: '0.88rem', color: '#52606d', lineHeight: 1.5 }}>
+            Are you sure you want to sign out of your account?
+            <br />
+            <span style={{ fontSize: '0.82rem', color: '#0b5394', fontWeight: 600 }}>
+              మీరు లాగ్ అవుట్ అవ్వాలనుకుంటున్నారా?
+            </span>
+          </p>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ flex: 1, padding: '10px', fontWeight: 600 }}
+              onClick={() => setShowLogoutModal(false)}
+            >
+              {t('cancel') || 'Cancel'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-danger"
+              style={{ flex: 1, padding: '10px', background: '#b42318', color: '#ffffff', fontWeight: 600, border: 'none', borderRadius: '8px' }}
+              onClick={() => {
+                setShowLogoutModal(false);
+                logout(true);
+              }}
+            >
+              {t('signOut')}
             </button>
           </div>
         </div>
-      )}
-
-      {/* Sign Out Confirmation Modal */}
-      {showLogoutModal && (
-        <div className="modal-backdrop" onClick={() => setShowLogoutModal(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '380px', textAlign: 'center', padding: '24px 20px' }}>
-            <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px auto' }}>
-              <LogoutIcon size={26} color="#dc2626" />
-            </div>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
-              {t('signOut')}?
-            </h3>
-            <p style={{ margin: '0 0 22px 0', fontSize: '0.88rem', color: '#64748b', lineHeight: 1.5 }}>
-              Are you sure you want to sign out of your account?
-              <br />
-              <span style={{ fontSize: '0.82rem', color: '#0b5394', fontWeight: 600 }}>
-                మీరు లాగ్ అవుట్ అవ్వాలనుకుంటున్నారా?
-              </span>
-            </p>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ flex: 1, padding: '10px', fontWeight: 700 }}
-                onClick={() => setShowLogoutModal(false)}
-              >
-                {t('cancel') || 'Cancel'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-danger"
-                style={{ flex: 1, padding: '10px', background: '#dc2626', color: '#ffffff', fontWeight: 800, border: 'none', borderRadius: '8px' }}
-                onClick={() => {
-                  setShowLogoutModal(false);
-                  logout(true);
-                }}
-              >
-                {t('signOut')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

@@ -174,9 +174,9 @@ export default function ActivityLog() {
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
         <div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-            📋 {t('activityTimeline') || 'Activity Timeline'}
-          </h2>
+          <h1 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+            {t('activityTimeline') || 'Activity Timeline'}
+          </h1>
           <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0' }}>
             {t('liveAuditTrail') || 'Live audit trail of all staff, owner & admin actions'}
           </p>
@@ -189,10 +189,10 @@ export default function ActivityLog() {
       {/* Filter Bar */}
       <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px', marginBottom: '20px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
         <div>
-          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '3px' }}>
+          <label htmlFor="activity-action-filter" style={{ fontSize: '0.72rem', fontWeight: 700, color: '#52606d', display: 'block', marginBottom: '3px' }}>
             {t('actionType') || 'Action Type'}
           </label>
-          <select className="form-select" value={actionFilter} onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}>
+          <select id="activity-action-filter" className="form-select" value={actionFilter} onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}>
             <option value="">{t('allActions') || 'All Actions'}</option>
             <optgroup label={lang === 'te' ? 'ఇన్వాయిస్ బిల్లులు' : 'Invoices & Billing'}>
               <option value="CREATE_BILL">{lang === 'te' ? 'కొత్త బిల్లు' : 'Create Bill'}</option>
@@ -226,10 +226,10 @@ export default function ActivityLog() {
           </select>
         </div>
         <div>
-          <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '3px' }}>
+          <label htmlFor="activity-role-filter" style={{ fontSize: '0.72rem', fontWeight: 700, color: '#52606d', display: 'block', marginBottom: '3px' }}>
             {t('userRole') || 'User Role'}
           </label>
-          <select className="form-select" value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}>
+          <select id="activity-role-filter" className="form-select" value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}>
             <option value="">{t('allRoles') || 'All Roles'}</option>
             <option value="admin">{t('adminOnly') || 'Admin Only'}</option>
             <option value="owner">{t('ownerOnly') || 'Owner Only'}</option>
@@ -307,14 +307,14 @@ export default function ActivityLog() {
                         </div>
 
                         {/* Time */}
-                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                        <div className="tabular-num" style={{ fontSize: '0.75rem', color: '#52606d', fontWeight: 600, whiteSpace: 'nowrap' }}>
                           {formatTime(log.createdAt)}
                         </div>
                       </div>
 
-                      {/* IP (subtle) */}
+                      {/* IP */}
                       {log.ip && (
-                        <div style={{ fontSize: '0.68rem', color: '#cbd5e1', fontFamily: 'monospace', marginTop: '2px' }}>
+                        <div className="tabular-num" style={{ fontSize: '0.72rem', color: '#52606d', fontFamily: 'monospace', marginTop: '2px' }}>
                           {log.ip}
                         </div>
                       )}

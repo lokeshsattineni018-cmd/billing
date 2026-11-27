@@ -438,19 +438,19 @@ export default function Reports() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+          <h1 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
             {activeTab === 'ice'
-              ? (lang === 'te' ? '🧊 ఐస్ కొనుగోళ్ల నివేదిక' : '🧊 Ice Bills & Purchases Report')
+              ? (lang === 'te' ? 'ఐస్ కొనుగోళ్ల నివేదిక' : 'Ice Bills & Purchases Report')
               : activeTab === 'workers'
-              ? (lang === 'te' ? '👷 కూలీల వేతన నివేదిక' : '👷 Worker Wages & Labor Report')
+              ? (lang === 'te' ? 'కూలీల వేతన నివేదిక' : 'Worker Wages & Labor Report')
               : activeTab === 'wastage'
-              ? (lang === 'te' ? '🦐 రొయ్య తలల వేస్టేజ్ ఆదాయ నివేదిక' : '🦐 Prawn Head Wastage Revenue Report')
+              ? (lang === 'te' ? 'రొయ్య తలల వేస్టేజ్ ఆదాయ నివేదిక' : 'Prawn Head Wastage Revenue Report')
               : activeTab === 'net'
-              ? (lang === 'te' ? '⚖️ పూర్తి నికర వ్యాపార లాభనష్టాల నివేదిక' : '⚖️ Comprehensive Net Operations & Profit Statement')
+              ? (lang === 'te' ? 'పూర్తి నికర వ్యాపార లాభనష్టాల నివేదిక' : 'Comprehensive Net Operations & Profit Statement')
               : activeTab === 'outstanding'
-              ? (lang === 'te' ? '⚠️ ఖాతాదారుల బాకీల లెడ్జర్' : '⚠️ Customer Outstanding Balances Ledger')
+              ? (lang === 'te' ? 'ఖాతాదారుల బాకీల లెడ్జర్' : 'Customer Outstanding Balances Ledger')
               : (t('salesFinancialReports') || 'Sales & Financial Reports')}
-          </h2>
+          </h1>
           <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0' }}>
             {activeTab === 'ice'
               ? (t('iceBillsDesc') || 'Ice blocks procurement expenses & plant payments')
@@ -808,8 +808,8 @@ export default function Reports() {
                             <span style={{ fontSize: '1.02rem', fontWeight: 900, color: '#0b5394' }}>{formatCurrency(report.monthOverMonth.thisMonth.totalRevenue)}</span>
                           </div>
                           <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block' }}>{lang === 'te' ? 'గత నెల' : 'Last Month'}</span>
-                            <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#64748b' }}>{formatCurrency(report.monthOverMonth.lastMonth.totalRevenue)}</span>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#52606d', display: 'block' }}>{lang === 'te' ? 'గత నెల' : 'Last Month'}</span>
+                            <span style={{ fontSize: '1.02rem', fontWeight: 700, color: '#334e68' }}>{formatCurrency(report.monthOverMonth.lastMonth.totalRevenue)}</span>
                           </div>
                         </div>
                       </div>
@@ -817,21 +817,21 @@ export default function Reports() {
                       {/* Invoice Volume MoM */}
                       <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#52606d', textTransform: 'uppercase' }}>
                             {lang === 'te' ? 'ఇన్వాయిస్‌ల సంఖ్య' : 'Invoice Volume'}
                           </span>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: report.monthOverMonth.diff.bills >= 0 ? '#ecfdf5' : '#fef2f2', color: report.monthOverMonth.diff.bills >= 0 ? '#047857' : '#b91c1c' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', background: report.monthOverMonth.diff.bills >= 0 ? '#ecfdf5' : '#fef2f2', color: report.monthOverMonth.diff.bills >= 0 ? '#166534' : '#b42318' }}>
                             {report.monthOverMonth.diff.bills >= 0 ? '+' : ''}{report.monthOverMonth.diff.bills} bills
                           </span>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                           <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', display: 'block' }}>{lang === 'te' ? 'ఈ నెల' : 'This Month'}</span>
-                            <span style={{ fontSize: '1.02rem', fontWeight: 900, color: '#0b5394' }}>{report.monthOverMonth.thisMonth.totalBills ?? report.monthOverMonth.thisMonth.billCount ?? 0} bills</span>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#52606d', display: 'block' }}>{lang === 'te' ? 'ఈ నెల' : 'This Month'}</span>
+                            <span style={{ fontSize: '1.02rem', fontWeight: 700, color: '#0b5394' }}>{report.monthOverMonth.thisMonth.totalBills ?? report.monthOverMonth.thisMonth.billCount ?? 0} bills</span>
                           </div>
                           <div style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block' }}>{lang === 'te' ? 'గత నెల' : 'Last Month'}</span>
-                            <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#64748b' }}>{report.monthOverMonth.lastMonth.totalBills ?? report.monthOverMonth.lastMonth.billCount ?? 0} bills</span>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#52606d', display: 'block' }}>{lang === 'te' ? 'గత నెల' : 'Last Month'}</span>
+                            <span style={{ fontSize: '1.02rem', fontWeight: 700, color: '#334e68' }}>{report.monthOverMonth.lastMonth.totalBills ?? report.monthOverMonth.lastMonth.billCount ?? 0} bills</span>
                           </div>
                         </div>
                       </div>

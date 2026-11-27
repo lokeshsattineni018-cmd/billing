@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { PrintIcon, WhatsAppIcon, ArrowLeftIcon, DownloadIcon } from './Icons';
 import { formatDate, numberToWords } from '../utils/helpers';
 import { staffAPI } from '../services/api';
+import Modal from './Modal';
 import ganeshaImg from '../assets/ganesha.jpg';
 import durgaImg from '../assets/durga.jpg';
 import ramDarbarImg from '../assets/ram_darbar.jpg';
@@ -17,13 +18,10 @@ export default function VoucherBillModal({
   const [sharingPdf, setSharingPdf] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
 
-  // Close on Escape key press
+  // Ctrl+P shortcut for silent printing (Escape handled by shared Modal)
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) return undefined;
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
         e.preventDefault();
         handlePrint();
@@ -255,38 +253,15 @@ Thank you!`;
   const isPaid = paymentStatus === 'Paid' || paymentStatus === 'Settled';
 
   return (
-    <div
-      className="modal-backdrop"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.75)',
-        backdropFilter: 'blur(5px)',
-        zIndex: 9999,
-        overflowY: 'auto',
-        padding: '24px 16px',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-      }}
-      onClick={onClose}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="860px"
+      alignTop
+      labelledBy="voucher-modal-title"
+      contentStyle={{ background: '#f8fafc', borderRadius: '16px', padding: '20px 24px' }}
     >
-      <div
-        className="modal-content"
-        style={{
-          width: '100%',
-          maxWidth: '860px',
-          background: '#f8fafc',
-          borderRadius: '16px',
-          padding: '20px 24px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          margin: '20px auto',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div>
         {/* ── TOP ACTION HEADER (LIKE NORMAL BILL PAGE) ── */}
         <div
           className="bill-detail-header no-print"
@@ -311,10 +286,11 @@ Thank you!`;
               <ArrowLeftIcon size={16} /> Back
             </button>
             <h2
+              id="voucher-modal-title"
               style={{
                 fontFamily: 'var(--font-heading)',
                 fontSize: '1.35rem',
-                fontWeight: 800,
+                fontWeight: 700,
                 margin: 0,
                 color: '#0f172a',
               }}
@@ -478,18 +454,18 @@ Thank you!`;
                 alt="Durga Maa"
                 style={{ width: '52px', height: '52px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }}
               />
-              <h1
+              <div
                 style={{
                   color: '#0b5394',
                   fontSize: '1.55rem',
-                  fontWeight: 900,
+                  fontWeight: 800,
                   letterSpacing: '0.8px',
                   margin: '0 0 2px 0',
                   fontFamily: 'Arial, sans-serif',
                 }}
               >
                 VIJAYA DURGA SEA FOODS
-              </h1>
+              </div>
               <div style={{ fontSize: '0.78rem', fontWeight: 'bold', color: '#000000', margin: '2px 0' }}>
                 Prop: SATTINENI VENKATA DHANA LAXMI &nbsp;|&nbsp; GSTIN: 37KATPS1500Q1ZR
               </div>
@@ -1036,6 +1012,6 @@ Thank you!`;
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

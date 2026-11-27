@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrashIcon } from './Icons';
+import Modal from './Modal';
 
 const DELETE_REASONS = [
   {
@@ -89,12 +90,16 @@ export default function DeleteInvoiceModal({
   };
 
   return (
-    <div className="modal-backdrop" onClick={loading ? undefined : onClose}>
-      <div
-        className="modal-content fade-in"
-        onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '460px', padding: '24px' }}
-      >
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      disableBackdropClose={loading}
+      disableEscapeClose={loading}
+      maxWidth="460px"
+      labelledBy="delete-invoice-modal-title"
+      contentStyle={{ padding: '24px' }}
+    >
+      <div>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
           <div
@@ -112,7 +117,7 @@ export default function DeleteInvoiceModal({
             <TrashIcon size={24} color="#dc2626" />
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
+            <h3 id="delete-invoice-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>
               {isTe ? `ఇన్‌వాయిస్ #${billNo} తొలగించాలా?` : `Delete Invoice #${billNo}?`}
             </h3>
             <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
@@ -334,6 +339,6 @@ export default function DeleteInvoiceModal({
           )}
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

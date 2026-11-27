@@ -65,9 +65,9 @@ export default function PublicInvoice() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f8fafc', padding: '20px', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '32px', maxWidth: '440px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ margin: '0 0 8px 0', color: '#0f172a', fontWeight: 800 }}>Invoice Not Found</h3>
-          <p style={{ margin: '0 0 20px 0', color: '#64748b', fontSize: '0.88rem' }}>{error || 'Unable to display invoice.'}</p>
-          <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Please contact Vijaya Durga Sea Foods for assistance.</p>
+          <h1 style={{ margin: '0 0 8px 0', color: '#0f172a', fontWeight: 700, fontSize: '1.25rem' }}>Invoice Not Found</h1>
+          <p style={{ margin: '0 0 20px 0', color: '#52606d', fontSize: '0.88rem' }}>{error || 'Unable to display invoice.'}</p>
+          <p style={{ fontSize: '0.8rem', color: '#52606d' }}>Please contact Vijaya Durga Sea Foods for assistance.</p>
         </div>
       </div>
     );
@@ -97,9 +97,9 @@ export default function PublicInvoice() {
           <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#52606d', textTransform: 'uppercase' }}>
             Tax Invoice
           </div>
-          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0b5394' }}>
+          <h1 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0b5394', margin: 0 }}>
             Invoice #{bill.billNo}
-          </div>
+          </h1>
         </div>
 
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>

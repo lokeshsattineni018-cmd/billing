@@ -1,5 +1,6 @@
 import React from 'react';
 import { TrashIcon } from './Icons';
+import Modal from './Modal';
 
 export default function ConfirmModal({
   isOpen,
@@ -27,12 +28,16 @@ export default function ConfirmModal({
   const btnBg = isDanger ? '#dc2626' : isPrimary ? '#16a34a' : '#d97706';
 
   return (
-    <div className="modal-backdrop" onClick={loading ? undefined : onClose}>
-      <div
-        className="modal-content fade-in"
-        onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '440px', padding: '24px' }}
-      >
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      disableBackdropClose={loading}
+      disableEscapeClose={loading}
+      maxWidth="440px"
+      labelledBy="confirm-modal-title"
+      contentStyle={{ padding: '24px' }}
+    >
+      <div>
         {/* Header with Icon */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
           <div
@@ -51,7 +56,7 @@ export default function ConfirmModal({
             {customIcon || <TrashIcon size={22} color={iconColor} />}
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '1.18rem', fontWeight: 800, color: '#0f172a' }}>
+            <h3 id="confirm-modal-title" style={{ margin: 0, fontSize: '1.18rem', fontWeight: 700, color: '#0f172a' }}>
               {title}
             </h3>
             <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
@@ -169,6 +174,6 @@ export default function ConfirmModal({
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

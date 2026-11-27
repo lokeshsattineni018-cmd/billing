@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { formatCurrency, formatDate } from '../utils/helpers';
 import { staffAPI } from '../services/api';
-import { CheckIcon } from './Icons';
+import { CheckIcon, CloseIcon } from './Icons';
+import Modal from './Modal';
 
 export default function WorkerPaymentModal({
   isOpen,
@@ -35,18 +36,6 @@ export default function WorkerPaymentModal({
     setPayNotes(entry.notes || '');
     setError('');
   }, [isOpen, entry]);
-
-  // Close on Escape key press
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && !submitting) {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, submitting, onClose]);
 
   if (!isOpen || !entry) return null;
 
@@ -141,42 +130,21 @@ export default function WorkerPaymentModal({
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.75)',
-        backdropFilter: 'blur(5px)',
-        zIndex: 9999,
-        overflowY: 'auto',
-        padding: '24px 16px',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-      onClick={() => {
-        if (!submitting) onClose();
-      }}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      disableBackdropClose={submitting}
+      disableEscapeClose={submitting}
+      maxWidth="520px"
+      alignTop
+      labelledBy="worker-payment-modal-title"
+      contentStyle={{ padding: 0, borderRadius: '16px', overflow: 'hidden', border: '1px solid #e2e8f0' }}
     >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '520px',
-          background: '#ffffff',
-          borderRadius: '16px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          overflow: 'hidden',
-          border: '1px solid #e2e8f0',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div>
         {/* Header */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #0b5394, #083b6f)',
+            background: '#0b5394',
             color: '#ffffff',
             padding: '18px 22px',
             display: 'flex',
@@ -185,35 +153,37 @@ export default function WorkerPaymentModal({
           }}
         >
           <div>
-            <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.85, fontWeight: 700 }}>
+            <div style={{ fontSize: '0.75rem', opacity: 0.9, fontWeight: 600 }}>
               Worker Wage Payment
             </div>
-            <h3 style={{ margin: '3px 0 0 0', fontSize: '1.25rem', fontWeight: 800 }}>
+            <h3 id="worker-payment-modal-title" style={{ margin: '3px 0 0 0', fontSize: '1.25rem', fontWeight: 700 }}>
               {entry.staffName}
             </h3>
             <div style={{ fontSize: '0.78rem', opacity: 0.9, marginTop: '2px' }}>
-              📅 {formatDate(entry.date)} &nbsp;•&nbsp; {entry.quantity} kg @ ₹{entry.price}/kg
+              {formatDate(entry.date)} &nbsp;•&nbsp; {entry.quantity} kg @ ₹{entry.price}/kg
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={submitting}
+            aria-label="Close payment modal"
             style={{
-              background: 'rgba(255,255,255,0.15)',
+              background: 'rgba(255,255,255,0.16)',
               border: 'none',
-              borderRadius: '50%',
-              width: '32px',
-              height: '32px',
+              borderRadius: '8px',
+              width: '48px',
+              height: '48px',
+              minWidth: '48px',
+              minHeight: '48px',
               color: '#ffffff',
-              fontSize: '1.1rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            ✕
+            <CloseIcon size={18} color="#ffffff" />
           </button>
         </div>
 
@@ -267,7 +237,7 @@ export default function WorkerPaymentModal({
           {/* Amount Paying Input */}
           <div style={{ marginBottom: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a' }}>
+              <label htmlFor="worker-pay-amount" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>
                 Amount Paying Now (₹) *
               </label>
               <div style={{ display: 'flex', gap: '6px' }}>
@@ -313,7 +283,9 @@ export default function WorkerPaymentModal({
                 ₹
               </span>
               <input
+                id="worker-pay-amount"
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 min="0"
                 max={totalAmount}
@@ -504,6 +476,6 @@ export default function WorkerPaymentModal({
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   );
 }

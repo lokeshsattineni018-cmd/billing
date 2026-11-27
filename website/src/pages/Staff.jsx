@@ -5,6 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import VoucherBillModal from '../components/VoucherBillModal';
 import WorkerPaymentModal from '../components/WorkerPaymentModal';
+import Modal from '../components/Modal';
 import { saveOfflineStaff, getAllOfflineStaff, getMasterCache } from '../utils/offlineDb';
 import { enqueueShedAction } from '../services/syncManager';
 import {
@@ -18,6 +19,7 @@ import {
   IceIcon,
   RefreshIcon,
   PrintIcon,
+  CloseIcon,
 } from '../components/Icons';
 import { lazyWithRetry } from '../utils/chunkLoadRecovery';
 
@@ -918,7 +920,7 @@ export default function Staff() {
         }}
       >
         <div>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
             {activeTab === 'ice' ? (
               <>
                 <IceIcon size={24} color="#0284c7" />
@@ -950,7 +952,7 @@ export default function Staff() {
                 <span>{t('workerLaborTitle') || t('staff') || 'Workers Labor & Daily Operations'}</span>
               </>
             )}
-          </h2>
+          </h1>
           <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.85rem' }}>
             {activeTab === 'ice'
               ? (t('iceTrackerSubtitle') || 'Track daily ice block purchases, suppliers, recipients, factory usage & cooling expenses')
@@ -1647,23 +1649,27 @@ export default function Staff() {
                         </button>
 
                         {canEditDelete && (
-                          <div style={{ display: 'flex', gap: '4px', marginLeft: 'auto' }}>
+                          <div style={{ display: 'flex', gap: '6px', marginLeft: 'auto' }}>
                             <button
+                              type="button"
                               className="btn btn-secondary btn-sm"
-                              style={{ width: '34px', padding: 0, justifyContent: 'center' }}
+                              style={{ minWidth: '48px', minHeight: '48px', padding: 0, justifyContent: 'center' }}
                               onClick={() => handleOpenEdit(entry)}
                               title="Edit"
+                              aria-label={`Edit entry for ${entry.staffName}`}
                             >
-                              <EditIcon size={14} />
+                              <EditIcon size={16} />
                             </button>
 
                             <button
+                              type="button"
                               className="btn btn-ghost btn-sm"
-                              style={{ color: '#ef4444', width: '34px', padding: 0, justifyContent: 'center' }}
+                              style={{ color: '#b42318', minWidth: '48px', minHeight: '48px', padding: 0, justifyContent: 'center' }}
                               onClick={() => handlePromptDelete(entry)}
                               title="Delete"
+                              aria-label={`Delete entry for ${entry.staffName}`}
                             >
-                              <TrashIcon size={14} color="#ef4444" />
+                              <TrashIcon size={16} color="#b42318" />
                             </button>
                           </div>
                         )}
@@ -1808,12 +1814,14 @@ export default function Staff() {
                                     <EditIcon size={13} /> Edit
                                   </button>
                                   <button
+                                    type="button"
                                     className="btn btn-ghost btn-sm"
-                                    style={{ padding: '4px 8px', color: '#ef4444' }}
+                                    style={{ padding: '4px 8px', color: '#b42318' }}
                                     onClick={() => handlePromptDelete(entry)}
                                     title="Delete entry"
+                                    aria-label={`Delete work entry for ${entry.staffName}`}
                                   >
-                                    <TrashIcon size={13} color="#ef4444" />
+                                    <TrashIcon size={13} color="#b42318" />
                                   </button>
                                 </>
                               )}
@@ -2061,15 +2069,27 @@ export default function Staff() {
       )}
 
       {/* MODAL: SINGLE WORK ENTRY (CREATE / EDIT) */}
-      {modalOpen && (
-        <div className="modal-backdrop" onClick={() => setModalOpen(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                {editingEntry ? 'Edit Work Entry' : 'Record Staff Work'}
-              </h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setModalOpen(false)}>✕</button>
-            </div>
+      <Modal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        maxWidth="480px"
+        labelledBy="staff-work-modal-title"
+      >
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h3 id="staff-work-modal-title" style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              {editingEntry ? 'Edit Work Entry' : 'Record Staff Work'}
+            </h3>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setModalOpen(false)}
+              aria-label="Close work entry modal"
+              style={{ minWidth: '48px', minHeight: '48px' }}
+            >
+              <CloseIcon size={18} />
+            </button>
+          </div>
 
             <form onSubmit={handleSaveEntry}>
               {/* Date */}
@@ -2252,7 +2272,7 @@ export default function Staff() {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  style={{ flex: 1.5, background: '#0b5394', fontWeight: 800 }}
+                  style={{ flex: 1.5, background: '#0b5394', fontWeight: 700 }}
                   disabled={saving}
                 >
                   {saving ? 'Saving...' : editingEntry ? 'Update Entry' : 'Save Work Entry'}
@@ -2260,8 +2280,7 @@ export default function Staff() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+      </Modal>
 
       {/* ── 1. HIDDEN PRINTABLE BILL: SINGLE WORKER WAGE VOUCHER ── */}
       {activeBillEntry && (
@@ -2281,9 +2300,9 @@ export default function Staff() {
               </div>
               <div style={{ flex: 1, textAlign: 'center', padding: '0 8px' }}>
                 <img src={durgaImg} alt="Durga Maa" style={{ width: '54px', height: '54px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }} />
-                <h1 style={{ color: '#0b5394', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '0.8px', margin: '0 0 2px 0', fontFamily: 'Arial, sans-serif' }}>
+                <div style={{ color: '#0b5394', fontSize: '1.6rem', fontWeight: 800, letterSpacing: '0.8px', margin: '0 0 2px 0', fontFamily: 'Arial, sans-serif' }}>
                   VIJAYA DURGA SEA FOODS
-                </h1>
+                </div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#000000', margin: '2px 0' }}>
                   Prop: SATTINENI VENKATA DHANA LAXMI &nbsp;|&nbsp; GSTIN: 37KATPS1500Q1ZR
                 </div>
@@ -2440,9 +2459,9 @@ export default function Staff() {
               </div>
               <div style={{ flex: 1, textAlign: 'center', padding: '0 8px' }}>
                 <img src={durgaImg} alt="Durga Maa" style={{ width: '54px', height: '54px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }} />
-                <h1 style={{ color: '#0b5394', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '0.8px', margin: '0 0 2px 0', fontFamily: 'Arial, sans-serif' }}>
+                <div style={{ color: '#0b5394', fontSize: '1.6rem', fontWeight: 800, letterSpacing: '0.8px', margin: '0 0 2px 0', fontFamily: 'Arial, sans-serif' }}>
                   VIJAYA DURGA SEA FOODS
-                </h1>
+                </div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#000000', margin: '2px 0' }}>
                   Prop: SATTINENI VENKATA DHANA LAXMI &nbsp;|&nbsp; GSTIN: 37KATPS1500Q1ZR
                 </div>
@@ -2609,16 +2628,28 @@ export default function Staff() {
         />
       )}
       {/* ── BATCH WORKER PAYMENT CONFIRMATION MODAL ── */}
-      {showBatchModal && (
-        <div className="modal-backdrop" onClick={() => setShowBatchModal(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.2rem' }}>⚡</span>
-                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>Batch Worker Payment</h3>
-              </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowBatchModal(false)}>✕</button>
+      <Modal
+        isOpen={showBatchModal}
+        onClose={() => setShowBatchModal(false)}
+        disableBackdropClose={batchPaying}
+        maxWidth="440px"
+        labelledBy="batch-worker-pay-modal-title"
+      >
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 id="batch-worker-pay-modal-title" style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>Batch Worker Payment</h3>
             </div>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShowBatchModal(false)}
+              aria-label="Close batch payment modal"
+              style={{ minWidth: '48px', minHeight: '48px' }}
+            >
+              <CloseIcon size={18} />
+            </button>
+          </div>
 
             <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', marginBottom: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -2674,8 +2705,7 @@ export default function Staff() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal

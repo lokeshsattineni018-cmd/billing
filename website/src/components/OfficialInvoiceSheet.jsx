@@ -114,9 +114,9 @@ export default function OfficialInvoiceSheet({
               height={54}
               className="official-invoice-center-emblem"
             />
-            <h1 className="official-invoice-company-heading">
+            <div className="official-invoice-company-heading">
               {resolvedBusinessName}
-            </h1>
+            </div>
             <div className="official-invoice-proprietor">
               Prop: <strong>SATTINENI VENKATA DHANA LAXMI</strong> &nbsp;|&nbsp;
               GSTIN: <strong>{resolvedGstin}</strong>

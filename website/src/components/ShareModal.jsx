@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DownloadIcon, WhatsAppIcon, ShareIcon } from './Icons';
+import { DownloadIcon, WhatsAppIcon, ShareIcon, CloseIcon } from './Icons';
 import { formatCurrency } from '../utils/helpers';
+import Modal from './Modal';
 
 export default function ShareModal({ bill, onClose, showToast }) {
   const navigate = useNavigate();
@@ -99,50 +100,42 @@ export default function ShareModal({ bill, onClose, showToast }) {
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.65)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-        padding: '16px',
-        backdropFilter: 'blur(6px)',
-      }}
-      onClick={onClose}
+    <Modal
+      isOpen={Boolean(bill)}
+      onClose={onClose}
+      maxWidth="460px"
+      labelledBy="share-modal-title"
+      contentStyle={{ padding: '24px', borderRadius: '20px', border: '1px solid #e2e8f0' }}
     >
-      <div
-        style={{
-          background: '#ffffff',
-          borderRadius: '20px',
-          padding: '24px',
-          maxWidth: '460px',
-          width: '100%',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          border: '1px solid #e2e8f0',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div>
         {/* Modal Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: '#0f172a' }}>
+            <h3 id="share-modal-title" style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#0f172a' }}>
               Share Tax Invoice
             </h3>
-            <p style={{ margin: '3px 0 0 0', fontSize: '0.82rem', color: '#64748b' }}>
+            <p style={{ margin: '3px 0 0 0', fontSize: '0.82rem', color: '#52606d' }}>
               Invoice #{bill.billNo} • {bill.companyName} • {amountStr}
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#94a3b8', padding: '0 4px' }}
+            aria-label="Close share modal"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#52606d',
+              minWidth: '48px',
+              minHeight: '48px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '8px',
+            }}
           >
-            ×
+            <CloseIcon size={18} />
           </button>
         </div>
 
@@ -275,6 +268,6 @@ export default function ShareModal({ bill, onClose, showToast }) {
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

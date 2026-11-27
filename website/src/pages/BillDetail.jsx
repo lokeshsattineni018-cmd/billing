@@ -303,9 +303,9 @@ export default function BillDetail() {
       <div className="bill-detail-header no-print">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>
-              Invoice <span style={{ color: bill.isVoided ? '#dc2626' : '#0b5394' }}>#{bill.billNo}</span>
-            </h2>
+            <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
+              Invoice <span className="tabular-num" style={{ color: bill.isVoided ? '#b42318' : '#0b5394' }}>#{bill.billNo}</span>
+            </h1>
             {bill.isVoided && (
               <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800, fontSize: '0.85rem' }}>
                 ⛔ VOIDED / CANCELLED

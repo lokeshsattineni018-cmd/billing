@@ -9,9 +9,8 @@ import ConfirmModal from '../components/ConfirmModal';
 // ─── Empty State ──────────────────────────────────────────────────────────────
 function EmptyState({ label }) {
   return (
-    <div style={{ padding: '48px 24px', textAlign: 'center', color: '#94a3b8' }}>
-      <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🗑️</div>
-      <p style={{ fontWeight: 700, fontSize: '0.95rem', margin: 0 }}>{label}</p>
+    <div style={{ padding: '48px 24px', textAlign: 'center', color: '#52606d' }}>
+      <p style={{ fontWeight: 600, fontSize: '0.95rem', margin: 0 }}>{label}</p>
     </div>
   );
 }
@@ -129,9 +128,9 @@ export default function RecycleBin() {
         }}
       >
         <div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-            🗑️ {lang === 'te' ? 'రీసైకిల్ బిన్ & రికవరీ' : 'Recycle Bin & Data Recovery'}
-          </h2>
+          <h1 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+            {lang === 'te' ? 'రీసైకిల్ బిన్ & రికవరీ' : 'Recycle Bin & Data Recovery'}
+          </h1>
           <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0' }}>
             {lang === 'te'
               ? 'తొలగించబడిన ఇన్‌వాయిస్‌లు, ఐస్ ఖర్చులు, వేస్టేజ్ & కార్మికుల రికార్డులను తిరిగి పొందండి'
@@ -248,15 +247,17 @@ export default function RecycleBin() {
                                   ])
                                 }
                                 style={{
-                                  background: '#16a34a',
-                                  color: '#fff',
-                                  fontWeight: 700,
+                                  background: '#166534',
+                                  color: '#ffffff',
+                                  fontWeight: 600,
                                   fontSize: '0.8rem',
+                                  minHeight: '48px',
+                                  padding: '8px 14px',
                                   border: 'none',
                                   cursor: busy ? 'not-allowed' : 'pointer',
                                 }}
                               >
-                                {busy ? '...' : '♻️ Restore'}
+                                {busy ? 'Restoring...' : 'Restore'}
                               </button>
                             </td>
                           </tr>
@@ -320,15 +321,17 @@ export default function RecycleBin() {
                                   ])
                                 }
                                 style={{
-                                  background: '#16a34a',
-                                  color: '#fff',
-                                  fontWeight: 700,
+                                  background: '#166534',
+                                  color: '#ffffff',
+                                  fontWeight: 600,
                                   fontSize: '0.8rem',
+                                  minHeight: '48px',
+                                  padding: '8px 14px',
                                   border: 'none',
                                   cursor: busy ? 'not-allowed' : 'pointer',
                                 }}
                               >
-                                {busy ? '...' : '♻️ Restore'}
+                                {busy ? 'Restoring...' : 'Restore'}
                               </button>
                             </td>
                           </tr>
@@ -392,15 +395,17 @@ export default function RecycleBin() {
                                   ])
                                 }
                                 style={{
-                                  background: '#16a34a',
-                                  color: '#fff',
-                                  fontWeight: 700,
+                                  background: '#166534',
+                                  color: '#ffffff',
+                                  fontWeight: 600,
                                   fontSize: '0.8rem',
+                                  minHeight: '48px',
+                                  padding: '8px 14px',
                                   border: 'none',
                                   cursor: busy ? 'not-allowed' : 'pointer',
                                 }}
                               >
-                                {busy ? '...' : '♻️ Restore'}
+                                {busy ? 'Restoring...' : 'Restore'}
                               </button>
                             </td>
                           </tr>
@@ -464,15 +469,17 @@ export default function RecycleBin() {
                                   ])
                                 }
                                 style={{
-                                  background: '#16a34a',
-                                  color: '#fff',
-                                  fontWeight: 700,
+                                  background: '#166534',
+                                  color: '#ffffff',
+                                  fontWeight: 600,
                                   fontSize: '0.8rem',
+                                  minHeight: '48px',
+                                  padding: '8px 14px',
                                   border: 'none',
                                   cursor: busy ? 'not-allowed' : 'pointer',
                                 }}
                               >
-                                {busy ? '...' : '♻️ Restore'}
+                                {busy ? 'Restoring...' : 'Restore'}
                               </button>
                             </td>
                           </tr>

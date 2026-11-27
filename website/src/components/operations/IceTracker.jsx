@@ -5,6 +5,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { enqueueShedAction } from '../../services/syncManager';
 import VoucherBillModal from '../VoucherBillModal';
+import Modal from '../Modal';
 import {
   PlusIcon,
   SearchIcon,
@@ -14,6 +15,7 @@ import {
   CheckIcon,
   RefreshIcon,
   PrintIcon,
+  CloseIcon,
 } from '../Icons';
 import ganeshaImg from '../../assets/ganesha.jpg';
 import durgaImg from '../../assets/durga.jpg';
@@ -798,20 +800,32 @@ export default function IceTracker() {
       )}
 
       {/* MODAL: RECORD / EDIT ICE USAGE */}
-      {modalOpen && (
-        <div className="modal-backdrop" onClick={() => setModalOpen(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ background: '#e0f2fe', padding: '6px', borderRadius: '8px', color: '#0284c7' }}>
-                  <IceIcon size={20} />
-                </div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>
-                  {editingEntry ? 'Edit Ice Usage Record' : 'Record Ice Blocks Used'}
-                </h3>
+      <Modal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        maxWidth="520px"
+        labelledBy="ice-modal-title"
+      >
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ background: '#e0f2fe', padding: '6px', borderRadius: '8px', color: '#0284c7' }}>
+                <IceIcon size={20} />
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setModalOpen(false)}>✕</button>
+              <h3 id="ice-modal-title" style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>
+                {editingEntry ? 'Edit Ice Usage Record' : 'Record Ice Blocks Used'}
+              </h3>
             </div>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setModalOpen(false)}
+              aria-label="Close ice modal"
+              style={{ minWidth: '48px', minHeight: '48px' }}
+            >
+              <CloseIcon size={18} />
+            </button>
+          </div>
 
             <form onSubmit={handleSaveModal}>
               <div className="form-group">
@@ -960,8 +974,7 @@ export default function IceTracker() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Hidden printable bill template for ice entries (Matches Normal Bill Layout) */}
       {billEntry && (
@@ -981,9 +994,9 @@ export default function IceTracker() {
               </div>
               <div style={{ flex: 1, textAlign: 'center', padding: '0 8px' }}>
                 <img src={durgaImg} alt="Durga Maa" style={{ width: '54px', height: '54px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }} />
-                <h1 style={{ color: '#0b5394', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '0.8px', margin: '0 0 2px 0', fontFamily: 'Arial, sans-serif' }}>
+                <div style={{ color: '#0b5394', fontSize: '1.6rem', fontWeight: 800, letterSpacing: '0.8px', margin: '0 0 2px 0', fontFamily: 'Arial, sans-serif' }}>
                   VIJAYA DURGA SEA FOODS
-                </h1>
+                </div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#000000', margin: '2px 0' }}>
                   Prop: SATTINENI VENKATA DHANA LAXMI &nbsp;|&nbsp; GSTIN: 37KATPS1500Q1ZR
                 </div>

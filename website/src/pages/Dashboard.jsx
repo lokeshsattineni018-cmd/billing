@@ -5,13 +5,14 @@ import { getMasterCache, setMasterCache, getUserCacheKey } from '../utils/offlin
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
-import { TrendingUpIcon, CalendarIcon, PlusIcon, WhatsAppIcon, InvoiceIcon, RefreshIcon } from '../components/Icons';
+import { TrendingUpIcon, CalendarIcon, PlusIcon, WhatsAppIcon, InvoiceIcon, RefreshIcon, CloseIcon } from '../components/Icons';
 import { RevenueTrendChart, TopCustomersBarChart, PaymentStatusDonut } from '../components/AnalyticsCharts';
 import { SkeletonKPIGrid, SkeletonTable, SkeletonChart, SkeletonCard, Skeleton } from '../components/Skeleton';
 import CountUp from '../components/CountUp';
 import PullToRefresh from '../components/PullToRefresh';
 import ProfitLossWidget from '../components/ProfitLossWidget';
 import ErrorBoundary from '../components/ErrorBoundary';
+import Modal from '../components/Modal';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -423,7 +424,7 @@ export default function Dashboard() {
       ) : (
         <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '20px' }}>
           <div>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>{t('dashboard')}</h2>
+            <h1 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0, color: '#0f172a' }}>{t('dashboard')}</h1>
             <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
               {isOwnerOrAdmin ? t('businessOverview') : t('createManageInvoices')}
             </p>
@@ -855,53 +856,43 @@ export default function Dashboard() {
       {/* ========================================================================= */}
       {/* 5. DAILY SUMMARY MODAL                                                    */}
       {/* ========================================================================= */}
-      {showSummaryModal && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.65)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '16px',
-            backdropFilter: 'blur(4px)',
-          }}
-          onClick={() => setShowSummaryModal(false)}
-        >
-          <div
-            style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              padding: '24px',
-              maxWidth: '480px',
-              width: '100%',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
-                  Daily Business Summary
-                </h3>
-                <p style={{ margin: '2px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-                  {dailySummary?.date || currentDateStr}
-                </p>
-              </div>
-              <button
-                onClick={() => setShowSummaryModal(false)}
-                style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: '#94a3b8' }}
-              >
-                ×
-              </button>
+      <Modal
+        isOpen={showSummaryModal}
+        onClose={() => setShowSummaryModal(false)}
+        maxWidth="480px"
+        labelledBy="daily-summary-modal-title"
+        contentStyle={{ padding: '24px', borderRadius: '16px', maxHeight: '90vh', overflowY: 'auto' }}
+      >
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div>
+              <h3 id="daily-summary-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>
+                Daily Business Summary
+              </h3>
+              <p style={{ margin: '2px 0 0 0', fontSize: '0.8rem', color: '#52606d' }}>
+                {dailySummary?.date || currentDateStr}
+              </p>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowSummaryModal(false)}
+              aria-label="Close daily business summary"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#52606d',
+                minWidth: '48px',
+                minHeight: '48px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '8px',
+              }}
+            >
+              <CloseIcon size={18} />
+            </button>
+          </div>
 
             {loadingSummary ? (
               <div className="spinner" style={{ minHeight: '180px' }}></div>
@@ -980,8 +971,7 @@ export default function Dashboard() {
               </div>
             ) : null}
           </div>
-        </div>
-      )}
+      </Modal>
       </div>
     </PullToRefresh>
   );

@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { customersAPI } from '../services/api';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
-import { SearchIcon, PlusIcon, WhatsAppIcon, DownloadIcon } from '../components/Icons';
+import { SearchIcon, PlusIcon, WhatsAppIcon, DownloadIcon, CloseIcon } from '../components/Icons';
 import PaymentModal from '../components/PaymentModal';
+import Modal from '../components/Modal';
 
 export default function CustomerDirectory() {
   const navigate = useNavigate();
@@ -154,9 +155,9 @@ export default function CustomerDirectory() {
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
         <div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+          <h1 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
             Customer Master & Payment Center
-          </h2>
+          </h1>
           <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0' }}>
             Record invoice payments, track live balances & customer contact details
           </p>
@@ -351,52 +352,44 @@ export default function CustomerDirectory() {
       {/* ========================================================================= */}
       {/* CUSTOMER INVOICES & PAYMENT SETTLEMENT MODAL                              */}
       {/* ========================================================================= */}
-      {ledgerCustomer && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.65)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9990,
-            padding: '16px',
-            backdropFilter: 'blur(4px)',
-          }}
-          onClick={() => setLedgerCustomer(null)}
-        >
-          <div
-            style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              padding: '24px',
-              maxWidth: '840px',
-              width: '100%',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.25)',
-              maxHeight: '92vh',
-              overflowY: 'auto',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
+      <Modal
+        isOpen={Boolean(ledgerCustomer)}
+        onClose={() => setLedgerCustomer(null)}
+        maxWidth="840px"
+        zIndex={9990}
+        labelledBy="customer-ledger-modal-title"
+        contentStyle={{ padding: '24px', borderRadius: '16px', maxHeight: '92vh', overflowY: 'auto' }}
+      >
+        {ledgerCustomer && (
+          <div>
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 900, color: '#0f172a' }}>
+                <h3 id="customer-ledger-modal-title" style={{ margin: 0, fontSize: '1.3rem', fontWeight: 700, color: '#0f172a' }}>
                   {ledgerCustomer.name}
                 </h3>
-                <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', color: '#64748b' }}>
+                <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', color: '#52606d' }}>
                   {ledgerCustomer.phone ? `+91 ${ledgerCustomer.phone}` : 'No phone'} • {ledgerCustomer.gstin || 'No GSTIN'}
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setLedgerCustomer(null)}
-                style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#94a3b8' }}
+                aria-label="Close customer ledger modal"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#52606d',
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                }}
               >
-                ×
+                <CloseIcon size={18} />
               </button>
             </div>
 
@@ -610,62 +603,58 @@ export default function CustomerDirectory() {
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* Edit Customer Contact Modal */}
-      {editModalOpen && selectedCustomer && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.65)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '16px',
-            backdropFilter: 'blur(4px)',
-          }}
-          onClick={() => setEditModalOpen(false)}
-        >
-          <div
-            style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              padding: '24px',
-              maxWidth: '480px',
-              width: '100%',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
+      <Modal
+        isOpen={Boolean(editModalOpen && selectedCustomer)}
+        onClose={() => setEditModalOpen(false)}
+        maxWidth="480px"
+        labelledBy="edit-customer-modal-title"
+        contentStyle={{ padding: '24px', borderRadius: '16px' }}
+      >
+        {selectedCustomer && (
+          <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
+              <h3 id="edit-customer-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>
                 Customer Contact Details
               </h3>
               <button
+                type="button"
                 onClick={() => setEditModalOpen(false)}
-                style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: '#94a3b8' }}
+                aria-label="Close contact details modal"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#52606d',
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                }}
               >
-                ×
+                <CloseIcon size={18} />
               </button>
             </div>
 
-            <p style={{ margin: '0 0 16px 0', fontSize: '0.9rem', color: '#0b5394', fontWeight: 800 }}>
+            <p style={{ margin: '0 0 16px 0', fontSize: '0.9rem', color: '#0b5394', fontWeight: 700 }}>
               {selectedCustomer.name}
             </p>
 
             <form onSubmit={handleSaveContact} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                <label htmlFor="edit-customer-phone" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334e68', marginBottom: '4px' }}>
                   Customer Mobile Phone:
                 </label>
                 <input
+                  id="edit-customer-phone"
                   type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
                   className="form-input"
                   placeholder="10-digit mobile number"
                   value={customerPhone}
@@ -675,10 +664,11 @@ export default function CustomerDirectory() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                <label htmlFor="edit-customer-gstin" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334e68', marginBottom: '4px' }}>
                   Customer GSTIN:
                 </label>
                 <input
+                  id="edit-customer-gstin"
                   type="text"
                   className="form-input"
                   placeholder="e.g. 37KATPS1500Q1ZR"
@@ -693,7 +683,7 @@ export default function CustomerDirectory() {
                   type="submit"
                   className="btn btn-primary"
                   disabled={savingContact}
-                  style={{ flex: 1, fontWeight: 800, padding: '11px', background: '#0b5394', color: '#ffffff' }}
+                  style={{ flex: 1, fontWeight: 700, padding: '11px', background: '#0b5394', color: '#ffffff' }}
                 >
                   {savingContact ? 'Saving...' : 'Save Contact Details'}
                 </button>
@@ -701,15 +691,15 @@ export default function CustomerDirectory() {
                   type="button"
                   className="btn btn-ghost"
                   onClick={() => setEditModalOpen(false)}
-                  style={{ padding: '11px 16px', color: '#64748b' }}
+                  style={{ padding: '11px 16px', color: '#52606d' }}
                 >
                   Cancel
                 </button>
               </div>
             </form>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* Single Invoice Payment Modal */}
       {paymentBillId && (

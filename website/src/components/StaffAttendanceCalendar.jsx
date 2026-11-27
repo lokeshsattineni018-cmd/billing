@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { formatCurrency, formatDate } from '../utils/helpers';
 import { useLanguage } from '../context/LanguageContext';
 import { StaffIcon, PrintIcon, CheckIcon, CloseIcon } from './Icons';
+import Modal from './Modal';
 
 export default function StaffAttendanceCalendar({ entries = [], staffNames = [], defaultWorker = '' }) {
   const { t } = useLanguage();
@@ -546,41 +547,43 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
       </div>
 
       {/* Printable Wage Slip Modal */}
-      {showSlipModal && (
-        <div className="modal-backdrop" onClick={() => setShowSlipModal(false)}>
+      <Modal
+        isOpen={showSlipModal}
+        onClose={() => setShowSlipModal(false)}
+        maxWidth="640px"
+        labelledBy="wage-slip-modal-title"
+        contentStyle={{ padding: '24px' }}
+      >
+        <div>
+          {/* Modal Header */}
           <div
-            className="modal-content fade-in"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '640px', padding: '24px' }}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '16px',
+              borderBottom: '1px solid #e2e8f0',
+              paddingBottom: '12px',
+            }}
           >
-            {/* Modal Header */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '16px',
-                borderBottom: '1px solid #e2e8f0',
-                paddingBottom: '12px',
-              }}
-            >
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0b5394' }}>
-                  📑 {t('wageSlip') || 'Worker Monthly Wage Slip'}
-                </h3>
-                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                  VIJAYA DURGA AGENCIES • Labor Statement
-                </span>
-              </div>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => setShowSlipModal(false)}
-                style={{ padding: '6px' }}
-              >
-                <CloseIcon size={18} />
-              </button>
+            <div>
+              <h3 id="wage-slip-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0b5394' }}>
+                {t('wageSlip') || 'Worker Monthly Wage Slip'}
+              </h3>
+              <span style={{ fontSize: '0.78rem', color: '#52606d' }}>
+                Vijaya Durga Agencies • Labor Statement
+              </span>
             </div>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShowSlipModal(false)}
+              aria-label="Close wage slip modal"
+              style={{ padding: '6px', minWidth: '48px', minHeight: '48px' }}
+            >
+              <CloseIcon size={18} />
+            </button>
+          </div>
 
             {/* Slip Paper Content */}
             <div
@@ -688,8 +691,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
               </button>
             </div>
           </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

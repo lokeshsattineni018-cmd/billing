@@ -31,6 +31,7 @@ function getCurvedPath(points) {
  */
 export const RevenueTrendChart = memo(function RevenueTrendChart({ data = [], title = 'Revenue Analytics' }) {
   const [hoverIndex, setHoverIndex] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(null);
 
   const maxVal = useMemo(() => {
     if (!data || data.length === 0) return 10000;
@@ -49,10 +50,10 @@ export const RevenueTrendChart = memo(function RevenueTrendChart({ data = [], ti
       <div
         style={{
           background: '#ffffff',
-          borderRadius: '16px',
+          borderRadius: '12px',
           padding: '40px 20px',
           textAlign: 'center',
-          color: '#94a3b8',
+          color: '#52606d',
           border: '1px solid #e2e8f0',
         }}
       >
@@ -80,7 +81,8 @@ export const RevenueTrendChart = memo(function RevenueTrendChart({ data = [], ti
   const linePath = getCurvedPath(points);
   const areaPath = `${linePath} L ${points[points.length - 1].x.toFixed(1)},${(padTop + chartH).toFixed(1)} L ${points[0].x.toFixed(1)},${(padTop + chartH).toFixed(1)} Z`;
 
-  const activePoint = hoverIndex !== null ? points[hoverIndex] : null;
+  const activeIndex = hoverIndex !== null ? hoverIndex : selectedIndex;
+  const activePoint = activeIndex !== null ? points[activeIndex] : null;
 
   // Format compact Y-axis numbers
   const formatY = (val) => {
@@ -141,28 +143,16 @@ export const RevenueTrendChart = memo(function RevenueTrendChart({ data = [], ti
       <div style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
         <svg
           viewBox={`0 0 ${width} ${height}`}
+          role="img"
+          aria-label={`${title} trend chart totaling ${formatCurrency(totalPeriodRevenue)} across ${data.length} periods`}
           style={{ width: '100%', height: 'auto', display: 'block' }}
           onMouseLeave={() => setHoverIndex(null)}
         >
           <defs>
-            {/* Luminous Area Gradient */}
             <linearGradient id="modernAreaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0b5394" stopOpacity="0.32" />
-              <stop offset="50%" stopColor="#2563eb" stopOpacity="0.12" />
-              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
+              <stop offset="0%" stopColor="#0b5394" stopOpacity="0.16" />
+              <stop offset="100%" stopColor="#0b5394" stopOpacity="0.0" />
             </linearGradient>
-
-            {/* Line Glow Stroke Gradient */}
-            <linearGradient id="modernLineGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#0b5394" />
-              <stop offset="50%" stopColor="#2563eb" />
-              <stop offset="100%" stopColor="#0284c7" />
-            </linearGradient>
-
-            {/* Soft Drop Shadow Filter for Line */}
-            <filter id="lineShadow" x="-10%" y="-10%" width="130%" height="140%">
-              <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#0b5394" floodOpacity="0.25" />
-            </filter>
           </defs>
 
           {/* Horizontal Gridlines & Y-Axis Scale */}
@@ -176,8 +166,8 @@ export const RevenueTrendChart = memo(function RevenueTrendChart({ data = [], ti
                   y1={y}
                   x2={width - padRight}
                   y2={y}
-                  stroke="#f1f5f9"
-                  strokeWidth="1.2"
+                  stroke="#e2e8f0"
+                  strokeWidth="1"
                   strokeDasharray={i === yTicks.length - 1 ? 'none' : '4 4'}
                 />
                 <text
@@ -186,7 +176,7 @@ export const RevenueTrendChart = memo(function RevenueTrendChart({ data = [], ti
                   textAnchor="end"
                   fontSize="9.5"
                   fontWeight="600"
-                  fill="#94a3b8"
+                  fill="#52606d"
                 >
                   {formatY(val)}
                 </text>
@@ -197,18 +187,17 @@ export const RevenueTrendChart = memo(function RevenueTrendChart({ data = [], ti
           {/* Area Fill */}
           <path d={areaPath} fill="url(#modernAreaGrad)" />
 
-          {/* Smooth Bézier Curve Line */}
+          {/* Line */}
           <path
             d={linePath}
             fill="none"
-            stroke="url(#modernLineGrad)"
-            strokeWidth="3.5"
+            stroke="#0b5394"
+            strokeWidth="2.75"
             strokeLinecap="round"
             strokeLinejoin="round"
-            filter="url(#lineShadow)"
           />
 
-          {/* Vertical Crosshair Guide on Hover */}
+          {/* Vertical Crosshair Guide on Hover/Selection */}
           {activePoint && (
             <g>
               <line
@@ -225,7 +214,7 @@ export const RevenueTrendChart = memo(function RevenueTrendChart({ data = [], ti
                 cx={activePoint.x}
                 cy={activePoint.y}
                 r="7"
-                fill="rgba(11, 83, 148, 0.2)"
+                fill="rgba(11, 83, 148, 0.16)"
               />
               <circle
                 cx={activePoint.x}
@@ -238,9 +227,9 @@ export const RevenueTrendChart = memo(function RevenueTrendChart({ data = [], ti
             </g>
           )}
 
-          {/* Data Points & Interactive Touch Zones */}
+          {/* Data Points & Interactive Touch/Keyboard Zones */}
           {points.map((pt, idx) => {
-            const isHovered = hoverIndex === idx;
+            const isHovered = activeIndex === idx;
             return (
               <g key={idx}>
                 {/* Visible Node */}
@@ -261,60 +250,99 @@ export const RevenueTrendChart = memo(function RevenueTrendChart({ data = [], ti
                   y={height - 10}
                   textAnchor="middle"
                   fontSize="10"
-                  fontWeight={isHovered ? '800' : '600'}
-                  fill={isHovered ? '#0b5394' : '#64748b'}
+                  fontWeight={isHovered ? '700' : '600'}
+                  fill={isHovered ? '#0b5394' : '#52606d'}
                 >
                   {pt.data.label}
                 </text>
 
-                {/* Invisible wide hit target for seamless mouse hover */}
+                {/* Interactive hit target for hover, tap/click, and keyboard focus */}
                 <rect
                   x={pt.x - chartW / (points.length * 2)}
                   y={0}
                   width={chartW / Math.max(points.length - 1, 1)}
                   height={height}
                   fill="transparent"
-                  style={{ cursor: 'pointer' }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${pt.data.label}: ${formatCurrency(pt.data.revenue)}, ${pt.data.count || 0} invoices`}
+                  style={{ cursor: 'pointer', outline: 'none' }}
                   onMouseEnter={() => setHoverIndex(idx)}
+                  onFocus={() => setSelectedIndex(idx)}
+                  onClick={() => setSelectedIndex((prev) => (prev === idx ? null : idx))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedIndex((prev) => (prev === idx ? null : idx));
+                    } else if (e.key === 'ArrowRight') {
+                      e.preventDefault();
+                      setSelectedIndex(Math.min(points.length - 1, idx + 1));
+                    } else if (e.key === 'ArrowLeft') {
+                      e.preventDefault();
+                      setSelectedIndex(Math.max(0, idx - 1));
+                    }
+                  }}
                 />
               </g>
             );
           })}
         </svg>
 
-        {/* High-End Dark Floating Tooltip */}
+        {/* Floating Tooltip / Tap Readout */}
         {activePoint && (
           <div
+            role="status"
             style={{
               position: 'absolute',
               left: `${(activePoint.x / width) * 100}%`,
               top: `${Math.max(10, ((activePoint.y - 45) / height) * 100)}%`,
               transform: 'translate(-50%, -100%)',
-              background: '#0f172a',
+              background: '#102a43',
               color: '#ffffff',
               padding: '8px 12px',
               borderRadius: '8px',
               fontSize: '0.78rem',
-              fontWeight: 700,
-              boxShadow: '0 10px 20px rgba(0,0,0,0.25)',
+              fontWeight: 600,
+              boxShadow: '0 8px 18px rgba(16, 42, 67, 0.22)',
               pointerEvents: 'none',
               whiteSpace: 'nowrap',
               zIndex: 10,
-              border: '1px solid rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.12)',
             }}
           >
-            <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: '2px', fontWeight: 600 }}>
+            <div style={{ fontSize: '0.72rem', color: '#dbeafe', marginBottom: '2px', fontWeight: 600 }}>
               {activePoint.data.label}
             </div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#38bdf8' }}>
+            <div className="tabular-num" style={{ fontSize: '0.95rem', fontWeight: 700, color: '#ffffff' }}>
               {formatCurrency(activePoint.data.revenue)}
             </div>
-            <div style={{ fontSize: '0.7rem', color: '#cbd5e1', marginTop: '2px' }}>
+            <div className="tabular-num" style={{ fontSize: '0.72rem', color: '#e2e8f0', marginTop: '2px' }}>
               {activePoint.data.count || 0} invoices created
             </div>
           </div>
         )}
       </div>
+
+      {/* Screen-reader accessible summary table */}
+      <table className="sr-only">
+        <caption>{title} summary data</caption>
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Revenue</th>
+            <th>Invoices</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((d, idx) => (
+            <tr key={idx}>
+              <td>{d.label}</td>
+              <td>{formatCurrency(d.revenue)}</td>
+              <td>{d.count || 0}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 });
@@ -357,14 +385,12 @@ export const PaymentStatusDonut = memo(function PaymentStatusDonut({ paid = 0, p
       {/* Modern Circular Ring */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '20px 0', position: 'relative' }}>
         <div style={{ position: 'relative', width: '130px', height: '130px' }}>
-          <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-            <defs>
-              <linearGradient id="paidGaugeGrad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#10b981" />
-                <stop offset="100%" stopColor="#059669" />
-              </linearGradient>
-            </defs>
-
+          <svg
+            viewBox="0 0 100 100"
+            role="img"
+            aria-label={`Collection ratio: ${paidPct}% collected (${formatCurrency(paid)}), ${pendingPct}% pending (${formatCurrency(pending)})`}
+            style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}
+          >
             {/* Background Track (Pending) */}
             <circle
               cx="50"
@@ -381,12 +407,12 @@ export const PaymentStatusDonut = memo(function PaymentStatusDonut({ paid = 0, p
               cy="50"
               r={radius}
               fill="transparent"
-              stroke="url(#paidGaugeGrad)"
+              stroke="#166534"
               strokeWidth="9"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
-              style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+              style={{ transition: 'stroke-dashoffset 220ms cubic-bezier(0.22, 1, 0.36, 1)' }}
             />
           </svg>
 
@@ -452,6 +478,26 @@ export const PaymentStatusDonut = memo(function PaymentStatusDonut({ paid = 0, p
           </span>
         </div>
       </div>
+      {/* Screen-reader accessible summary table */}
+      <table className="sr-only">
+        <caption>Top buyers ranking summary</caption>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Customer</th>
+            <th>Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.slice(0, 5).map((item, idx) => (
+            <tr key={idx}>
+              <td>{idx + 1}</td>
+              <td>{item.name}</td>
+              <td>{formatCurrency(item.revenue)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 });
@@ -547,6 +593,26 @@ export const TopCustomersBarChart = memo(function TopCustomersBarChart({ data = 
           );
         })}
       </div>
+      {/* Screen-reader accessible summary table */}
+      <table className="sr-only">
+        <caption>Top buyers ranking summary</caption>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Customer</th>
+            <th>Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.slice(0, 5).map((item, idx) => (
+            <tr key={idx}>
+              <td>{idx + 1}</td>
+              <td>{item.name}</td>
+              <td>{formatCurrency(item.revenue)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 });

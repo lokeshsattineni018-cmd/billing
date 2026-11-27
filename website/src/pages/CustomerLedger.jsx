@@ -95,7 +95,7 @@ Phone: ${settings?.phone || '9441429745'}`;
       <Toast toast={toast} />
 
       <div className="page-header">
-        <h2>Customer Ledger & Balances</h2>
+        <h1>Customer Ledger &amp; Balances</h1>
         <p>Track receivables, outstanding balances, and send 1-click WhatsApp payment reminders</p>
       </div>
 

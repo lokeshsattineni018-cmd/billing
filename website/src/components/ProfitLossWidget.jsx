@@ -288,20 +288,21 @@ function ProfitLossWidget() {
             marginBottom: '18px',
           }}
         >
-          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#334155' }}>
+          <label htmlFor="pnl-single-date" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334e68' }}>
             Inspect Specific Date:
-          </span>
+          </label>
           <input
+            id="pnl-single-date"
             type="date"
             className="form-input"
             value={singleDate}
             onChange={(e) => setSingleDate(e.target.value)}
-            style={{ width: 'auto', height: '34px', fontSize: '0.82rem', padding: '0 10px' }}
+            style={{ width: 'auto', minHeight: '48px', fontSize: '0.88rem', padding: '0 12px' }}
           />
           <button
             type="submit"
             className="btn btn-primary btn-sm"
-            style={{ background: '#0b5394', fontWeight: 800, height: '34px', padding: '0 14px' }}
+            style={{ background: '#0b5394', fontWeight: 700, minHeight: '48px', padding: '0 16px' }}
           >
             Load Day
           </button>
@@ -313,7 +314,7 @@ function ProfitLossWidget() {
               setSingleDate(t);
               loadPnl({ period: 'single_day', startDate: t, endDate: t });
             }}
-            style={{ height: '34px', fontSize: '0.76rem', fontWeight: 700 }}
+            style={{ minHeight: '48px', fontSize: '0.8rem', fontWeight: 600 }}
           >
             Today
           </button>
@@ -327,7 +328,7 @@ function ProfitLossWidget() {
               setSingleDate(yStr);
               loadPnl({ period: 'single_day', startDate: yStr, endDate: yStr });
             }}
-            style={{ height: '34px', fontSize: '0.76rem', fontWeight: 700 }}
+            style={{ minHeight: '48px', fontSize: '0.8rem', fontWeight: 600 }}
           >
             Yesterday
           </button>
@@ -351,29 +352,31 @@ function ProfitLossWidget() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569' }}>From:</span>
+            <label htmlFor="pnl-custom-start" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334e68' }}>From:</label>
             <input
+              id="pnl-custom-start"
               type="date"
               className="form-input"
               value={customStart}
               onChange={(e) => setCustomStart(e.target.value)}
-              style={{ width: 'auto', height: '34px', fontSize: '0.82rem', padding: '0 10px' }}
+              style={{ width: 'auto', minHeight: '48px', fontSize: '0.88rem', padding: '0 12px' }}
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569' }}>To:</span>
+            <label htmlFor="pnl-custom-end" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334e68' }}>To:</label>
             <input
+              id="pnl-custom-end"
               type="date"
               className="form-input"
               value={customEnd}
               onChange={(e) => setCustomEnd(e.target.value)}
-              style={{ width: 'auto', height: '34px', fontSize: '0.82rem', padding: '0 10px' }}
+              style={{ width: 'auto', minHeight: '48px', fontSize: '0.88rem', padding: '0 12px' }}
             />
           </div>
           <button
             type="submit"
             className="btn btn-primary btn-sm"
-            style={{ background: '#0b5394', fontWeight: 800, height: '34px', padding: '0 16px' }}
+            style={{ background: '#0b5394', fontWeight: 700, minHeight: '48px', padding: '0 18px' }}
           >
             Apply Range
           </button>
@@ -384,7 +387,7 @@ function ProfitLossWidget() {
       {loading ? (
         <div style={{ padding: '36px 0', textAlign: 'center' }}>
           <div className="spinner" style={{ width: '28px', height: '28px', margin: '0 auto 10px' }} />
-          <span style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: 600 }}>Calculating profit &amp; loss metrics...</span>
+          <span style={{ fontSize: '0.82rem', color: '#52606d', fontWeight: 600 }}>Calculating profit &amp; loss metrics...</span>
         </div>
       ) : (
         <>

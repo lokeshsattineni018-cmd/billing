@@ -12,8 +12,10 @@ import {
   ScaleIcon,
   CheckIcon,
   RefreshIcon,
+  CloseIcon,
 } from '../Icons';
 import ConfirmModal from '../ConfirmModal';
+import Modal from '../Modal';
 
 export default function WastageTracker() {
   const { t } = useLanguage();
@@ -725,20 +727,32 @@ export default function WastageTracker() {
       )}
 
       {/* MODAL: RECORD / EDIT WASTAGE SALES */}
-      {modalOpen && (
-        <div className="modal-backdrop" onClick={() => setModalOpen(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '460px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ background: '#dcfce7', padding: '6px', borderRadius: '8px', color: '#16a34a' }}>
-                  <ScaleIcon size={20} />
-                </div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>
-                  {editingEntry ? 'Edit Wastage Sales Record' : 'Record Prawn Head Wastage Sold'}
-                </h3>
+      <Modal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        maxWidth="460px"
+        labelledBy="wastage-modal-title"
+      >
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ background: '#dcfce7', padding: '6px', borderRadius: '8px', color: '#16a34a' }}>
+                <ScaleIcon size={20} />
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setModalOpen(false)}>✕</button>
+              <h3 id="wastage-modal-title" style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>
+                {editingEntry ? 'Edit Wastage Sales Record' : 'Record Prawn Head Wastage Sold'}
+              </h3>
             </div>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setModalOpen(false)}
+              aria-label="Close wastage modal"
+              style={{ minWidth: '48px', minHeight: '48px' }}
+            >
+              <CloseIcon size={18} />
+            </button>
+          </div>
 
             <form onSubmit={handleSaveModal}>
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
@@ -874,8 +888,7 @@ export default function WastageTracker() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal
