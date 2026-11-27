@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { PrintIcon, WhatsAppIcon, ArrowLeftIcon, DownloadIcon } from './Icons';
 import { formatDate, numberToWords, useToast, Toast } from '../utils/helpers';
+import { CANONICAL_BANK_DETAILS } from '../constants/bankDetails';
 import { staffAPI } from '../services/api';
 import Modal from './Modal';
 import ganeshaImg from '../assets/ganesha.jpg';
@@ -984,11 +985,12 @@ Thank you!`;
               }}
             >
               <div style={{ fontWeight: 'bold', color: '#0b5394', marginBottom: '2px', fontSize: '0.76rem' }}>
-                Bank Account Details:
+                {CANONICAL_BANK_DETAILS.title}
               </div>
-              <div><strong>Bank:</strong> KARUR VYSYA BANK</div>
-              <div><strong>A/C No:</strong> 4805135000002964</div>
-              <div><strong>IFSC:</strong> KVBL0004815 &nbsp;|&nbsp; <strong>Branch:</strong> Narasapur</div>
+              <div><strong>Bank:</strong> {CANONICAL_BANK_DETAILS.bankName}</div>
+              <div><strong>A/C Name:</strong> {CANONICAL_BANK_DETAILS.accountName}</div>
+              <div><strong>A/C No:</strong> {CANONICAL_BANK_DETAILS.accountNo}</div>
+              <div><strong>IFSC:</strong> {CANONICAL_BANK_DETAILS.ifsc} &nbsp;|&nbsp; <strong>Branch:</strong> {CANONICAL_BANK_DETAILS.branch}</div>
             </div>
 
             <div

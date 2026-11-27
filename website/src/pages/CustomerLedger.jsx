@@ -4,6 +4,7 @@ import { billsAPI, settingsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
+import { CANONICAL_BANK_DETAILS } from '../constants/bankDetails';
 import { TrendingUpIcon, FileCheckIcon, WhatsAppIcon, SearchIcon } from '../components/Icons';
 
 export default function CustomerLedger() {
@@ -46,9 +47,11 @@ export default function CustomerLedger() {
   const handleSendReminder = (customer) => {
     const phone = customer.customerPhone ? customer.customerPhone.replace(/[^0-9]/g, '') : '';
     const pendingAmount = formatCurrency(customer.outstandingBalance);
-    const bank = settings?.bankName || 'KARUR VYSYA BANK';
-    const acc = settings?.accountNo || '4805135000002964';
-    const ifsc = settings?.ifsc || 'KVBL0004815';
+    const bank = CANONICAL_BANK_DETAILS.bankName;
+    const accName = CANONICAL_BANK_DETAILS.accountName;
+    const acc = CANONICAL_BANK_DETAILS.accountNo;
+    const ifsc = CANONICAL_BANK_DETAILS.ifsc;
+    const branch = CANONICAL_BANK_DETAILS.branch;
 
     const message = `PAYMENT REMINDER — VIJAYA DURGA AGENCIES
 
@@ -59,11 +62,12 @@ This is a gentle reminder regarding your outstanding balance with VIJAYA DURGA A
 Total Pending Balance: ${pendingAmount}
 Pending Invoices: ${customer.unpaidBillsCount} bill(s)
 
-🏦 Bank Account Details for Payment:
+${CANONICAL_BANK_DETAILS.title}
+• A/C Name: ${accName}
 • Bank: ${bank}
 • Account No: ${acc}
 • IFSC Code: ${ifsc}
-• Account Name: ${settings?.legalName || 'SATTINENI VENKATA DHANA LAXMI'}
+• Branch: ${branch}
 
 Kindly process the payment at your earliest convenience. If already paid, please ignore this message.
 

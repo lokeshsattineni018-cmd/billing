@@ -4,6 +4,7 @@ const { protect, restrictTo } = require('../middleware/auth');
 const { logActivity } = require('../utils/activityLogger');
 const { handleServerError } = require('../utils/errorTracker');
 const { decryptText } = require('../utils/crypto');
+const { CANONICAL_BANK_DETAILS } = require('../constants/bankDetails');
 
 const router = express.Router();
 
@@ -13,10 +14,10 @@ const DEFAULT_SETTINGS = {
   address: 'D.No. 2-41A, SATTINENI SRINIVASA TATAJI, Near Ramalayam, KOTHOTA - 534 281, Mutyalapalli, West Godavari Dist., A.P.',
   phone: '9441429745',
   gstin: '37KATPS1500Q1ZR',
-  bankName: 'KARUR VYSYA BANK',
-  accountNo: '4805135000002964',
-  ifsc: 'KVBL0004815',
-  branch: 'Narasapur',
+  bankName: CANONICAL_BANK_DETAILS.bankName,
+  accountNo: CANONICAL_BANK_DETAILS.accountNo,
+  ifsc: CANONICAL_BANK_DETAILS.ifsc,
+  branch: CANONICAL_BANK_DETAILS.branch,
 };
 
 /**

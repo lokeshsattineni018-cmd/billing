@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { staffAPI } from '../services/api';
 import { formatCurrency, formatDate, numberToWords, useToast, Toast, playSuccessSound } from '../utils/helpers';
+import { CANONICAL_BANK_DETAILS } from '../constants/bankDetails';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import VoucherBillModal from '../components/VoucherBillModal';
@@ -2417,11 +2418,12 @@ export default function Staff() {
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', borderTop: '1.5px solid #0b5394', fontSize: '0.74rem', lineHeight: '1.4' }}>
               <div style={{ borderRight: '1.5px solid #0b5394', padding: '8px 12px', background: '#fafafa' }}>
                 <div style={{ fontWeight: 'bold', color: '#0b5394', marginBottom: '2px', fontSize: '0.76rem' }}>
-                  Bank Account Details:
+                  {CANONICAL_BANK_DETAILS.title}
                 </div>
-                <div><strong>Bank:</strong> KARUR VYSYA BANK</div>
-                <div><strong>A/C No:</strong> 4805135000002964</div>
-                <div><strong>IFSC:</strong> KVBL0004815 &nbsp;|&nbsp; <strong>Branch:</strong> Narasapur</div>
+                <div><strong>Bank:</strong> {CANONICAL_BANK_DETAILS.bankName}</div>
+                <div><strong>A/C Name:</strong> {CANONICAL_BANK_DETAILS.accountName}</div>
+                <div><strong>A/C No:</strong> {CANONICAL_BANK_DETAILS.accountNo}</div>
+                <div><strong>IFSC:</strong> {CANONICAL_BANK_DETAILS.ifsc} &nbsp;|&nbsp; <strong>Branch:</strong> {CANONICAL_BANK_DETAILS.branch}</div>
               </div>
 
               <div style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center', background: '#ffffff' }}>

@@ -5,6 +5,7 @@ const { protect, restrictTo } = require('../middleware/auth');
 const { generatePeriodReportPDF } = require('../services/reportPdfService');
 const { generateGSTR1PDF } = require('../services/gstPdfService');
 const { handleServerError } = require('../utils/errorTracker');
+const { CANONICAL_BANK_DETAILS } = require('../constants/bankDetails');
 
 const router = express.Router();
 
@@ -378,12 +379,12 @@ router.get('/outstanding', protect, restrictTo('owner', 'admin', 'staff'), async
       const reminderMsg = `VIJAYA DURGA SEA FOODS\nPAYMENT REMINDER\n\nDear ${c.companyName},\nThis is a gentle reminder regarding pending dues for your account.\n\n` +
         `💰 Outstanding Balance: ${fmt(c.outstandingBalance)}\n` +
         `🧾 Unpaid Invoices: ${c.unpaidBillsCount}\n\n` +
-        `Bank Details for NEFT/RTGS/UPI:\n` +
-        `• Bank: KARUR VYSYA BANK\n` +
-        `• A/C Name: SATTINENI VENKATA DHANA LAXMI\n` +
-        `• A/C No: 4805135000002964\n` +
-        `• IFSC: KVBL0004815\n` +
-        `• Branch: Narasapur\n\n` +
+        `${CANONICAL_BANK_DETAILS.title}\n` +
+        `• Bank: ${CANONICAL_BANK_DETAILS.bankName}\n` +
+        `• A/C Name: ${CANONICAL_BANK_DETAILS.accountName}\n` +
+        `• A/C No: ${CANONICAL_BANK_DETAILS.accountNo}\n` +
+        `• IFSC: ${CANONICAL_BANK_DETAILS.ifsc}\n` +
+        `• Branch: ${CANONICAL_BANK_DETAILS.branch}\n\n` +
         `Kindly arrange the clearance at your earliest convenience. If already paid, please disregard this notice.\n\n` +
         `Thank you,\nVijaya Durga Sea Foods (Ph: 9441429745)`;
 

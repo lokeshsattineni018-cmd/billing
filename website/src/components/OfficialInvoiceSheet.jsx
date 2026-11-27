@@ -1,15 +1,9 @@
 import React from 'react';
 import { numberToWords } from '../utils/helpers';
+import { CANONICAL_BANK_DETAILS } from '../constants/bankDetails';
 import ganeshaImg from '../assets/ganesha.jpg';
 import durgaImg from '../assets/durga.jpg';
 import ramDarbarImg from '../assets/ram_darbar.jpg';
-
-const DEFAULT_BANK_DETAILS = {
-  title: 'BANK : KARUR VYSYA BANK',
-  accountNo: '4805135000002964',
-  ifsc: 'KVBL0004815',
-  branch: 'Narasapur',
-};
 
 /**
  * Shared Official Tax Invoice Sheet used by both BillDetail (authenticated)
@@ -18,7 +12,7 @@ const DEFAULT_BANK_DETAILS = {
 export default function OfficialInvoiceSheet({
   bill,
   businessSettings = {},
-  bankDetails = DEFAULT_BANK_DETAILS,
+  bankDetails = CANONICAL_BANK_DETAILS,
   watermarkText = 'VOID / CANCELLED',
   fallbackParticulars = 'Fresh Seafood / Prawns Supply',
   emptyPhoneFallback = '9441429745',

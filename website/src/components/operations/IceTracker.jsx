@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { staffAPI } from '../../services/api';
 import { formatCurrency, formatDate, numberToWords, useToast, Toast, playSuccessSound } from '../../utils/helpers';
+import { CANONICAL_BANK_DETAILS } from '../../constants/bankDetails';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { enqueueShedAction } from '../../services/syncManager';
@@ -1102,10 +1103,11 @@ export default function IceTracker() {
             {/* 7. BANK DETAILS & SIGNATURE (Exact Normal Bill Footer) */}
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', borderTop: '1.5px solid #0b5394', fontSize: '0.74rem', lineHeight: '1.4' }}>
               <div style={{ borderRight: '1.5px solid #0b5394', padding: '6px 10px' }}>
-                <div className="u-inv-label">BANK : KARUR VYSYA BANK</div>
-                <div>A/c. NO : <strong>4805135000002964</strong></div>
-                <div>IFSC : <strong>KVBL0004815</strong></div>
-                <div>Branch : Narasapur</div>
+                <div className="u-inv-label">{CANONICAL_BANK_DETAILS.title}</div>
+                <div>Bank : <strong>{CANONICAL_BANK_DETAILS.bankName}</strong></div>
+                <div>A/C Name : <strong>{CANONICAL_BANK_DETAILS.accountName}</strong></div>
+                <div>A/c. NO : <strong>{CANONICAL_BANK_DETAILS.accountNo}</strong></div>
+                <div>IFSC : <strong>{CANONICAL_BANK_DETAILS.ifsc}</strong> &nbsp;|&nbsp; Branch : <strong>{CANONICAL_BANK_DETAILS.branch}</strong></div>
               </div>
 
               <div style={{ padding: '6px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center' }}>

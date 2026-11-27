@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { PrintIcon, DownloadIcon } from '../components/Icons';
 import OfficialInvoiceSheet from '../components/OfficialInvoiceSheet';
+import { CANONICAL_BANK_DETAILS } from '../constants/bankDetails';
 
 export default function PublicInvoice() {
   const { id } = useParams();
@@ -139,14 +140,7 @@ export default function PublicInvoice() {
           fallbackParticulars="HEAD-ON"
           emptyPhoneFallback="—"
           useSettingsPhone={false}
-          bankDetails={{
-            title: 'BANK PAYMENT DETAILS:',
-            bankName: 'KARUR VYSYA BANK (KVB)',
-            accountName: 'VIJAYA DURGA SEA FOODS',
-            accountNo: '4164135000008779',
-            ifsc: 'KVBL0004164',
-            branch: 'BHIMAVARAM',
-          }}
+          bankDetails={CANONICAL_BANK_DETAILS}
         />
       </div>
     </div>

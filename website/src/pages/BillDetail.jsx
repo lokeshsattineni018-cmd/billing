@@ -8,6 +8,7 @@ import ReminderModal from '../components/ReminderModal';
 import PaymentModal from '../components/PaymentModal';
 import ShareModal from '../components/ShareModal';
 import OfficialInvoiceSheet from '../components/OfficialInvoiceSheet';
+import { CANONICAL_BANK_DETAILS } from '../constants/bankDetails';
 import { getOfflineBill, saveOfflineBill, getMasterCache, invalidateBillCaches } from '../utils/offlineDb';
 import { flushSyncQueue } from '../services/syncManager';
 import { useLanguage } from '../context/LanguageContext';
@@ -739,6 +740,7 @@ export default function BillDetail() {
       <OfficialInvoiceSheet
         bill={bill}
         businessSettings={businessSettings}
+        bankDetails={CANONICAL_BANK_DETAILS}
         watermarkText="VOID / CANCELLED"
       />
 

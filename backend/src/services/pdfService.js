@@ -3,6 +3,7 @@ const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const Settings = require('../models/Settings');
 const { numberToWords } = require('../utils/numberToWords');
+const { CANONICAL_BANK_DETAILS } = require('../constants/bankDetails');
 const {
   ganeshaBuffer,
   durgaBuffer,
@@ -35,10 +36,11 @@ async function generateBillPDFBuffer(bill) {
           address: 'D.No. 2-41A, SATTINENI SRINIVASA TATAJI, Near Ramalayam, KOTHOTA - 534 281, Mutyalapalli, West Godavari Dist., A.P.',
           phone: '9441429745',
           bankDetails: {
-            bankName: 'KARUR VYSYA BANK',
-            accountNo: '4805135000002964',
-            ifsc: 'KVBL0004815',
-            branch: 'Narasapur',
+            bankName: CANONICAL_BANK_DETAILS.bankName,
+            accountName: CANONICAL_BANK_DETAILS.accountName,
+            accountNo: CANONICAL_BANK_DETAILS.accountNo,
+            ifsc: CANONICAL_BANK_DETAILS.ifsc,
+            branch: CANONICAL_BANK_DETAILS.branch,
           },
         };
       }
@@ -506,21 +508,27 @@ async function generateBillPDFBuffer(bill) {
       doc.rect(L, y, footerLeftW, footerH).stroke();
       doc.rect(L + footerLeftW, y, footerRightW, footerH).stroke();
 
-      // Left Box: Exact Bank Details from Cheque
+      // Left Box: Canonical Bank Details
       doc.font('Helvetica-Bold').fontSize(8).fillColor(primaryBlue);
-      doc.text(`BANK : ${settings.bankName || 'KARUR VYSYA BANK'}`, L + 8, y + 7);
+      doc.text(`${CANONICAL_BANK_DETAILS.title}`, L + 8, y + 6);
 
-      doc.font('Helvetica-Bold').fontSize(7.5).fillColor(textDark);
-      doc.text(`A/c. NO : `, L + 8, y + 19, { continued: true });
-      doc.font('Helvetica').text(`${settings.accountNo || '4805135000002964'}`);
+      doc.font('Helvetica-Bold').fontSize(7.2).fillColor(textDark);
+      doc.text(`Bank: `, L + 8, y + 17, { continued: true });
+      doc.font('Helvetica').text(`${settings.bankName || CANONICAL_BANK_DETAILS.bankName}`);
 
-      doc.font('Helvetica-Bold').fontSize(7.5).fillColor(textDark);
-      doc.text(`IFSC    : `, L + 8, y + 30, { continued: true });
-      doc.font('Helvetica').text(`${settings.ifsc || 'KVBL0004815'}`);
+      doc.font('Helvetica-Bold').fontSize(7.2).fillColor(textDark);
+      doc.text(`A/C Name: `, L + 8, y + 27, { continued: true });
+      doc.font('Helvetica').text(`${CANONICAL_BANK_DETAILS.accountName}`);
 
-      doc.font('Helvetica-Bold').fontSize(7.5).fillColor(textDark);
-      doc.text(`Branch  : `, L + 8, y + 41, { continued: true });
-      doc.font('Helvetica').text(`${settings.branch || 'Narasapur'}`);
+      doc.font('Helvetica-Bold').fontSize(7.2).fillColor(textDark);
+      doc.text(`A/c. NO: `, L + 8, y + 37, { continued: true });
+      doc.font('Helvetica').text(`${settings.accountNo || CANONICAL_BANK_DETAILS.accountNo}`);
+
+      doc.font('Helvetica-Bold').fontSize(7.2).fillColor(textDark);
+      doc.text(`IFSC: `, L + 8, y + 47, { continued: true });
+      doc.font('Helvetica').text(`${settings.ifsc || CANONICAL_BANK_DETAILS.ifsc}  |  `, { continued: true });
+      doc.font('Helvetica-Bold').text(`Branch: `, { continued: true });
+      doc.font('Helvetica').text(`${settings.branch || CANONICAL_BANK_DETAILS.branch}`);
 
       // Right Box: Signature
       const sigX = L + footerLeftW;

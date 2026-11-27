@@ -3,6 +3,7 @@ import { settingsAPI, usersAPI, backupAPI } from '../services/api';
 import { useToast, Toast, formatDate } from '../utils/helpers';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { CANONICAL_BANK_DETAILS } from '../constants/bankDetails';
 import { requestNotificationPermission, sendBrowserNotification, getNotificationPermission } from '../utils/notifications';
 import Modal from '../components/Modal';
 import ConfirmModal from '../components/ConfirmModal';
@@ -534,7 +535,7 @@ export default function Settings() {
                   className="form-input"
                   value={form.bankName}
                   onChange={(e) => handleChange('bankName', e.target.value)}
-                  placeholder="e.g. KARUR VYSYA BANK"
+                  placeholder={`e.g. ${CANONICAL_BANK_DETAILS.bankName}`}
                 />
               </div>
 
@@ -547,7 +548,7 @@ export default function Settings() {
                   className="form-input"
                   value={form.accountNo}
                   onChange={(e) => handleChange('accountNo', e.target.value)}
-                  placeholder="e.g. 4805135000002964"
+                  placeholder={`e.g. ${CANONICAL_BANK_DETAILS.accountNo}`}
                 />
               </div>
 
@@ -560,7 +561,7 @@ export default function Settings() {
                     className="form-input"
                     value={form.ifsc}
                     onChange={(e) => handleChange('ifsc', e.target.value)}
-                    placeholder="e.g. KVBL0004815"
+                    placeholder={`e.g. ${CANONICAL_BANK_DETAILS.ifsc}`}
                   />
                 </div>
 
@@ -572,7 +573,7 @@ export default function Settings() {
                     className="form-input"
                     value={form.branch}
                     onChange={(e) => handleChange('branch', e.target.value)}
-                    placeholder="e.g. Narasapur"
+                    placeholder={`e.g. ${CANONICAL_BANK_DETAILS.branch}`}
                   />
                 </div>
               </div>
@@ -645,10 +646,11 @@ export default function Settings() {
               <hr style={{ margin: '14px 0', borderColor: '#e4e4e7' }} />
 
               <div style={{ fontSize: '0.82rem', color: '#333', textAlign: 'left', lineHeight: '1.6' }}>
-                <strong>Bank Details:</strong>
-                <div>Bank: {form.bankName || 'KARUR VYSYA BANK'}</div>
-                <div>A/c No: {form.accountNo || '4805135000002964'}</div>
-                <div>IFSC: {form.ifsc || 'KVBL0004815'} | Branch: {form.branch || 'Narasapur'}</div>
+                <strong>{CANONICAL_BANK_DETAILS.title}</strong>
+                <div>A/C Name: {CANONICAL_BANK_DETAILS.accountName}</div>
+                <div>Bank: {form.bankName || CANONICAL_BANK_DETAILS.bankName}</div>
+                <div>A/c No: {form.accountNo || CANONICAL_BANK_DETAILS.accountNo}</div>
+                <div>IFSC: {form.ifsc || CANONICAL_BANK_DETAILS.ifsc} | Branch: {form.branch || CANONICAL_BANK_DETAILS.branch}</div>
               </div>
             </div>
 
@@ -1047,7 +1049,7 @@ export default function Settings() {
                 <div style={{ background: '#ffffff', padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontFamily: 'monospace', fontSize: '0.78rem', margin: '6px 0', wordBreak: 'break-all', color: '#0b5394' }}>
                   {typeof window !== 'undefined' ? window.location.origin : 'https://billing-snowy-three.vercel.app'}/api/backup/daily-summary
                 </div>
-                Send request header <code>X-Cron-Secret: &lt;BACKUP_CRON_SECRET&gt;</code> and schedule it for <strong>{form.backupScheduleTime || '9:00 PM'} IST</strong> every day.
+                Vercel Cron automatically sends header <code>Authorization: Bearer &lt;CRON_SECRET&gt;</code>; external schedulers may send either <code>Authorization: Bearer &lt;CRON_SECRET&gt;</code> or <code>X-Cron-Secret: &lt;CRON_SECRET&gt;</code>. Schedule daily for <strong>{form.backupScheduleTime || '9:00 PM'} IST</strong>.
               </li>
             </ul>
           </div>
