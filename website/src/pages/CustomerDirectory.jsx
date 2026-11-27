@@ -254,99 +254,202 @@ export default function CustomerDirectory() {
           </div>
         </div>
       ) : (
-        <div className="card" style={{ padding: '0', overflow: 'hidden', borderRadius: '16px', border: '1px solid rgba(226, 232, 240, 0.9)' }}>
-          <div className="table-container">
-            <table className="table" style={{ margin: 0 }}>
-              <thead>
-                <tr style={{ background: '#f8fafc' }}>
-                  <th>Customer Name</th>
-                  <th>Phone / GSTIN</th>
-                  <th className="text-right">Outstanding Balance</th>
-                  <th className="text-right">Lifetime Sales</th>
-                  <th style={{ textAlign: 'center' }}>Total Bills</th>
-                  <th style={{ textAlign: 'center' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {customers.map((c, idx) => (
-                  <tr key={idx}>
-                    <td>
-                      <div
-                        style={{ fontWeight: 800, color: '#0b5394', fontSize: '0.95rem', cursor: 'pointer' }}
-                        onClick={() => handleOpenLedger(c)}
-                        title="Click to view all invoices and record payments"
-                      >
-                        {c.name}
+        <>
+          {/* Mobile Cards View (<= 768px) */}
+          <div className="mobile-bills-list">
+            {customers.map((c, idx) => (
+              <div key={`mob-${idx}`} className="mobile-bill-card">
+                <div className="mobile-bill-header">
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenLedger(c)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        textAlign: 'left',
+                        fontWeight: 700,
+                        color: '#0b5394',
+                        fontSize: '0.96rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {c.name}
+                    </button>
+                    {c.lastBillDate && (
+                      <div style={{ fontSize: '0.72rem', color: '#52606d', marginTop: '2px' }}>
+                        Last bill: {formatDate(c.lastBillDate)}
                       </div>
-                      {c.lastBillDate && (
-                        <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                          Last bill: {formatDate(c.lastBillDate)}
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: 600 }}>{c.phone ? `+91 ${c.phone}` : '—'}</div>
-                      <div style={{ fontSize: '0.74rem', color: '#64748b' }}>{c.gstin || 'No GSTIN'}</div>
-                    </td>
-                    <td className="text-right">
-                      <span style={{ fontWeight: 700, fontSize: '0.95rem', color: c.outstandingBalance > 0 ? '#d97706' : '#16a34a' }}>
-                        {formatCurrency(c.outstandingBalance)}
-                      </span>
-                    </td>
-                    <td className="text-right" style={{ fontWeight: 800 }}>
+                    )}
+                  </div>
+                  <span className="badge badge-blue tabular-num">{c.totalBills} bills</span>
+                </div>
+
+                <div style={{ fontSize: '0.82rem', color: '#334e68', marginBottom: '8px' }}>
+                  <div>{c.phone ? `+91 ${c.phone}` : 'No phone'}</div>
+                  <div style={{ fontSize: '0.74rem', color: '#52606d' }}>{c.gstin || 'No GSTIN'}</div>
+                </div>
+
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '8px',
+                    background: '#f8fafc',
+                    borderRadius: '8px',
+                    padding: '8px 10px',
+                    marginBottom: '10px',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: '0.7rem', color: '#52606d', fontWeight: 600 }}>Outstanding</div>
+                    <div className="tabular-num" style={{ fontSize: '0.95rem', fontWeight: 700, color: c.outstandingBalance > 0 ? '#92400e' : '#166534' }}>
+                      {formatCurrency(c.outstandingBalance)}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '0.7rem', color: '#52606d', fontWeight: 600 }}>Lifetime Sales</div>
+                    <div className="tabular-num" style={{ fontSize: '0.95rem', fontWeight: 700, color: '#102a43' }}>
                       {formatCurrency(c.totalInvoiced)}
-                    </td>
-                    <td style={{ textAlign: 'center', fontWeight: 600 }}>
-                      {c.totalBills}
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                        <button
-                          type="button"
-                          className="btn btn-primary btn-sm"
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => handleOpenLedger(c)}
+                    style={{
+                      flex: 1,
+                      background: c.outstandingBalance > 0 ? '#0b5394' : '#f1f5f9',
+                      color: c.outstandingBalance > 0 ? '#ffffff' : '#334e68',
+                      fontWeight: 600,
+                      border: 'none',
+                    }}
+                  >
+                    {c.outstandingBalance > 0 ? 'Receive Payment' : 'View Invoices'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => handleOpenEditModal(c)}
+                    style={{ fontWeight: 600 }}
+                  >
+                    Edit Contact
+                  </button>
+                  {c.phone && (
+                    <button
+                      type="button"
+                      className="btn btn-whatsapp btn-sm"
+                      onClick={() => handleWhatsAppContact(c)}
+                      aria-label={`Chat with ${c.name} on WhatsApp`}
+                    >
+                      <WhatsAppIcon size={16} color="#ffffff" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="card desktop-only-table" style={{ padding: '0', overflow: 'hidden', borderRadius: '16px', border: '1px solid rgba(226, 232, 240, 0.9)' }}>
+            <div className="table-container">
+              <table className="table" style={{ margin: 0 }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc' }}>
+                    <th>Customer Name</th>
+                    <th>Phone / GSTIN</th>
+                    <th className="text-right">Outstanding Balance</th>
+                    <th className="text-right">Lifetime Sales</th>
+                    <th style={{ textAlign: 'center' }}>Total Bills</th>
+                    <th style={{ textAlign: 'center' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customers.map((c, idx) => (
+                    <tr key={idx}>
+                      <td>
+                        <div
+                          style={{ fontWeight: 700, color: '#0b5394', fontSize: '0.95rem', cursor: 'pointer' }}
                           onClick={() => handleOpenLedger(c)}
-                          style={{
-                            background: c.outstandingBalance > 0 ? '#0b5394' : '#f1f5f9',
-                            color: c.outstandingBalance > 0 ? '#ffffff' : '#475569',
-                            fontWeight: 800,
-                            fontSize: '0.75rem',
-                            padding: '6px 12px',
-                            border: 'none',
-                          }}
-                          title="Record partial/full payments & view invoice breakdown"
+                          title="Click to view all invoices and record payments"
                         >
-                          {c.outstandingBalance > 0 ? 'Receive Payment' : 'View Invoices'}
-                        </button>
-
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => handleOpenEditModal(c)}
-                          style={{ fontWeight: 700, fontSize: '0.75rem', padding: '6px 10px' }}
-                          title="Edit Phone & GSTIN"
-                        >
-                          Edit Contact
-                        </button>
-
-                        {c.phone && (
+                          {c.name}
+                        </div>
+                        {c.lastBillDate && (
+                          <div style={{ fontSize: '0.72rem', color: '#52606d' }}>
+                            Last bill: {formatDate(c.lastBillDate)}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{c.phone ? `+91 ${c.phone}` : '—'}</div>
+                        <div style={{ fontSize: '0.74rem', color: '#52606d' }}>{c.gstin || 'No GSTIN'}</div>
+                      </td>
+                      <td className="text-right tabular-num">
+                        <span style={{ fontWeight: 700, fontSize: '0.95rem', color: c.outstandingBalance > 0 ? '#92400e' : '#166534' }}>
+                          {formatCurrency(c.outstandingBalance)}
+                        </span>
+                      </td>
+                      <td className="text-right tabular-num" style={{ fontWeight: 700 }}>
+                        {formatCurrency(c.totalInvoiced)}
+                      </td>
+                      <td className="tabular-num" style={{ textAlign: 'center', fontWeight: 600 }}>
+                        {c.totalBills}
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
                           <button
                             type="button"
-                            className="btn btn-whatsapp btn-sm"
-                            onClick={() => handleWhatsAppContact(c)}
-                            style={{ padding: '6px 10px' }}
-                            title="Chat on WhatsApp"
+                            className="btn btn-primary btn-sm"
+                            onClick={() => handleOpenLedger(c)}
+                            style={{
+                              background: c.outstandingBalance > 0 ? '#0b5394' : '#f1f5f9',
+                              color: c.outstandingBalance > 0 ? '#ffffff' : '#334e68',
+                              fontWeight: 600,
+                              fontSize: '0.75rem',
+                              padding: '6px 12px',
+                              border: 'none',
+                            }}
+                            title="Record partial/full payments & view invoice breakdown"
                           >
-                            <WhatsAppIcon size={14} color="#ffffff" />
+                            {c.outstandingBalance > 0 ? 'Receive Payment' : 'View Invoices'}
                           </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => handleOpenEditModal(c)}
+                            style={{ fontWeight: 600, fontSize: '0.75rem', padding: '6px 10px' }}
+                            title="Edit Phone & GSTIN"
+                          >
+                            Edit Contact
+                          </button>
+
+                          {c.phone && (
+                            <button
+                              type="button"
+                              className="btn btn-whatsapp btn-sm"
+                              onClick={() => handleWhatsAppContact(c)}
+                              style={{ padding: '6px 10px' }}
+                              title="Chat on WhatsApp"
+                              aria-label={`Chat with ${c.name} on WhatsApp`}
+                            >
+                              <WhatsAppIcon size={14} color="#ffffff" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* ========================================================================= */}

@@ -495,13 +495,13 @@ export default function BillDetail() {
         </div>
       )}
 
-      {/* Payment Settlement Card (if not voided) */}
+      {/* Payment Summary & Quick Settlement Bar (Single Consolidated Summary) */}
       {!bill.isVoided && (
         <div
           className="no-print"
           style={{
             background: '#ffffff',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border-color)',
             borderRadius: '12px',
             padding: '16px 20px',
             marginBottom: '20px',
@@ -510,33 +510,33 @@ export default function BillDetail() {
             alignItems: 'center',
             flexWrap: 'wrap',
             gap: '16px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+            boxShadow: 'var(--shadow-sm)',
           }}
         >
-          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#52606d' }}>
                 Invoice Total
               </div>
-              <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
+              <div className="tabular-num" style={{ fontSize: '1.15rem', fontWeight: 700, color: '#102a43' }}>
                 {formatCurrency(bill.grandTotal || bill.total)}
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#52606d' }}>
                 Paid Amount
               </div>
-              <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#16a34a' }}>
+              <div className="tabular-num" style={{ fontSize: '1.15rem', fontWeight: 700, color: '#166534' }}>
                 {formatCurrency(bill.paidAmount || (bill.paymentStatus === 'Paid' ? (bill.grandTotal || bill.total) : 0))}
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#d97706', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#92400e' }}>
                 Balance Due
               </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#d97706' }}>
+              <div className="tabular-num" style={{ fontSize: '1.2rem', fontWeight: 700, color: '#92400e' }}>
                 {formatCurrency(Math.max(0, (bill.grandTotal || bill.total) - (bill.paidAmount || (bill.paymentStatus === 'Paid' ? (bill.grandTotal || bill.total) : 0))))}
               </div>
             </div>
@@ -550,21 +550,39 @@ export default function BillDetail() {
                     ? 'badge-blue'
                     : 'badge-amber'
                 }`}
-                style={{ fontSize: '0.8rem', fontWeight: 800, padding: '4px 10px' }}
+                style={{ fontSize: '0.8rem', fontWeight: 600, padding: '4px 10px' }}
               >
-                {bill.paymentStatus}
+                {bill.paymentStatus || 'Pending'}
               </span>
             </div>
           </div>
 
-          {canUpdateStatus && bill.paymentStatus !== 'Paid' && (
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={() => setShowPaymentModal(true)}
-              style={{ background: '#16a34a', color: '#ffffff', fontWeight: 800, padding: '8px 16px' }}
-            >
-              + Record Payment
-            </button>
+          {canUpdateStatus && (
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              {bill.paymentStatus !== 'Paid' && (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setShowPaymentModal(true)}
+                  style={{ background: '#166534', color: '#ffffff', fontWeight: 600, padding: '8px 16px' }}
+                >
+                  + Record Payment
+                </button>
+              )}
+              <button
+                type="button"
+                className={`btn btn-sm ${bill.paymentStatus === 'Paid' ? 'btn-secondary' : 'btn-primary'}`}
+                style={bill.paymentStatus !== 'Paid' ? { background: '#0b5394', color: '#ffffff' } : {}}
+                onClick={() => handleUpdatePaymentStatus(bill.paymentStatus === 'Paid' ? 'Pending' : 'Paid')}
+                disabled={updatingStatus}
+              >
+                {updatingStatus
+                  ? 'Updating...'
+                  : bill.paymentStatus === 'Paid'
+                  ? 'Mark as Pending'
+                  : 'Mark as Paid'}
+              </button>
+            </div>
           )}
         </div>
       )}
@@ -679,43 +697,6 @@ export default function BillDetail() {
             </tbody>
           </table>
         </div>
-
-        {/* Grand Total */}
-        <div className="invoice-total-section print-keep-together">
-          <div className="invoice-total-box" style={{ background: '#f8fafc', border: '1px solid var(--border-color)', padding: '16px 20px', borderRadius: '10px' }}>
-            <div className="invoice-total-label" style={{ fontSize: '0.85rem' }}>TOTAL AMOUNT</div>
-            <div className="invoice-total-value" style={{ fontSize: '1.75rem', fontWeight: 800, color: bill.isVoided ? '#dc2626' : '#0b5394', textDecoration: bill.isVoided ? 'line-through' : 'none' }}>
-              {formatCurrency(bill.grandTotal || bill.total)}
-            </div>
-          </div>
-        </div>
-
-        {/* Payment Status Toggle (Owner/Admin) */}
-        {!bill.isVoided && canUpdateStatus && (
-          <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-              Update Payment Status:
-            </span>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                className={`btn btn-sm ${bill.paymentStatus === 'Paid' ? 'btn-primary' : 'btn-secondary'}`}
-                style={bill.paymentStatus === 'Paid' ? { background: '#16a34a', color: '#ffffff' } : {}}
-                onClick={() => handleUpdatePaymentStatus('Paid')}
-                disabled={updatingStatus || bill.paymentStatus === 'Paid'}
-              >
-                {updatingStatus && bill.paymentStatus !== 'Paid' ? 'Updating...' : 'Mark as Paid'}
-              </button>
-              <button
-                className={`btn btn-sm ${bill.paymentStatus !== 'Paid' ? 'btn-primary' : 'btn-secondary'}`}
-                style={bill.paymentStatus !== 'Paid' ? { background: '#d97706', color: '#ffffff' } : {}}
-                onClick={() => handleUpdatePaymentStatus('Pending')}
-                disabled={updatingStatus || bill.paymentStatus === 'Pending'}
-              >
-                {updatingStatus && bill.paymentStatus === 'Paid' ? 'Updating...' : 'Mark as Pending'}
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════════

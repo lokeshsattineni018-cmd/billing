@@ -193,79 +193,119 @@ export default function RecycleBin() {
               data.bills.length === 0 ? (
                 <EmptyState label={lang === 'te' ? 'తొలగించబడిన ఇన్‌వాయిస్‌లు లేవు' : 'No deleted invoices in recycle bin.'} />
               ) : (
-                <div className="table-container">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>{lang === 'te' ? 'బిల్లు నం' : 'Invoice No'}</th>
-                        <th>{lang === 'te' ? 'కస్టమర్ పేరు' : 'Customer'}</th>
-                        <th>{lang === 'te' ? 'తేదీ' : 'Date'}</th>
-                        <th className="text-right">{lang === 'te' ? 'మొత్తం' : 'Amount'}</th>
-                        <th>{lang === 'te' ? 'తొలగించిన తేదీ' : 'Deleted On'}</th>
-                        <th>{lang === 'te' ? 'తొలగించినవారు' : 'Deleted By'}</th>
-                        <th>{lang === 'te' ? 'కారణం' : 'Reason'}</th>
-                        <th className="text-center" style={{ width: '110px' }}>
-                          {lang === 'te' ? 'చర్య' : 'Action'}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.bills.map((bill) => {
-                        const billNo = bill.originalBillNo || Math.abs(bill.billNo);
-                        const busy = restoringId === bill._id;
-                        return (
-                          <tr key={bill._id}>
-                            <td>
-                              <span style={{ fontWeight: 800, fontFamily: 'monospace', color: '#dc2626' }}>
-                                #{billNo}
-                              </span>
-                            </td>
-                            <td style={{ fontWeight: 600 }}>{bill.companyName || '—'}</td>
-                            <td>{formatDate(bill.date)}</td>
-                            <td className="text-right" style={{ fontWeight: 700, fontFamily: 'monospace' }}>
+                <>
+                  <div className="mobile-bills-list" style={{ padding: '12px' }}>
+                    {data.bills.map((bill) => {
+                      const billNo = bill.originalBillNo || Math.abs(bill.billNo);
+                      const busy = restoringId === bill._id;
+                      return (
+                        <div key={`mob-${bill._id}`} className="mobile-bill-card">
+                          <div className="mobile-bill-header">
+                            <span className="tabular-num" style={{ fontWeight: 700, fontFamily: 'monospace', color: '#b42318' }}>
+                              #{billNo}
+                            </span>
+                            <span className="tabular-num" style={{ fontWeight: 700, color: '#102a43' }}>
                               ₹{Number(bill.grandTotal || bill.total || 0).toLocaleString('en-IN')}
-                            </td>
-                            <td style={{ fontSize: '0.82rem', color: '#64748b' }}>
-                              {bill.deletedAt
-                                ? new Date(bill.deletedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-                                : '—'}
-                            </td>
-                            <td style={{ fontSize: '0.84rem' }}>{bill.deletedBy?.name || 'Admin'}</td>
-                            <td style={{ fontSize: '0.82rem', color: '#64748b', fontStyle: 'italic' }}>
-                              {bill.deletedReason || '—'}
-                            </td>
-                            <td className="text-center">
-                              <button
-                                type="button"
-                                className="btn btn-sm"
-                                disabled={busy}
-                                onClick={() =>
-                                  askRestore('bills', bill._id, `Invoice #${billNo}`, [
-                                    { label: 'Customer', value: bill.companyName || '—' },
-                                    { label: 'Amount', value: `₹${Number(bill.grandTotal || 0).toLocaleString('en-IN')}`, isMono: true },
-                                    { label: 'Original Bill No', value: `#${billNo}`, isMono: true },
-                                  ])
-                                }
-                                style={{
-                                  background: '#166534',
-                                  color: '#ffffff',
-                                  fontWeight: 600,
-                                  fontSize: '0.8rem',
-                                  minHeight: '48px',
-                                  padding: '8px 14px',
-                                  border: 'none',
-                                  cursor: busy ? 'not-allowed' : 'pointer',
-                                }}
-                              >
-                                {busy ? 'Restoring...' : 'Restore'}
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                            </span>
+                          </div>
+                          <div style={{ fontWeight: 600, marginBottom: '4px' }}>{bill.companyName || '—'}</div>
+                          <div style={{ fontSize: '0.78rem', color: '#52606d', marginBottom: '10px' }}>
+                            <div>Date: {formatDate(bill.date)} • By: {bill.deletedBy?.name || 'Admin'}</div>
+                            {bill.deletedReason && <div>Reason: {bill.deletedReason}</div>}
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-sm"
+                            disabled={busy}
+                            onClick={() =>
+                              askRestore('bills', bill._id, `Invoice #${billNo}`, [
+                                { label: 'Customer', value: bill.companyName || '—' },
+                                { label: 'Amount', value: `₹${Number(bill.grandTotal || 0).toLocaleString('en-IN')}`, isMono: true },
+                                { label: 'Original Bill No', value: `#${billNo}`, isMono: true },
+                              ])
+                            }
+                            style={{ width: '100%', background: '#166534', color: '#ffffff', fontWeight: 600, minHeight: '48px', border: 'none' }}
+                          >
+                            {busy ? 'Restoring...' : 'Restore'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="table-container desktop-only-table">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>{lang === 'te' ? 'బిల్లు నం' : 'Invoice No'}</th>
+                          <th>{lang === 'te' ? 'కస్టమర్ పేరు' : 'Customer'}</th>
+                          <th>{lang === 'te' ? 'తేదీ' : 'Date'}</th>
+                          <th className="text-right">{lang === 'te' ? 'మొత్తం' : 'Amount'}</th>
+                          <th>{lang === 'te' ? 'తొలగించిన తేదీ' : 'Deleted On'}</th>
+                          <th>{lang === 'te' ? 'తొలగించినవారు' : 'Deleted By'}</th>
+                          <th>{lang === 'te' ? 'కారణం' : 'Reason'}</th>
+                          <th className="text-center" style={{ width: '110px' }}>
+                            {lang === 'te' ? 'చర్య' : 'Action'}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.bills.map((bill) => {
+                          const billNo = bill.originalBillNo || Math.abs(bill.billNo);
+                          const busy = restoringId === bill._id;
+                          return (
+                            <tr key={bill._id}>
+                              <td>
+                                <span className="tabular-num" style={{ fontWeight: 700, fontFamily: 'monospace', color: '#b42318' }}>
+                                  #{billNo}
+                                </span>
+                              </td>
+                              <td style={{ fontWeight: 600 }}>{bill.companyName || '—'}</td>
+                              <td>{formatDate(bill.date)}</td>
+                              <td className="text-right tabular-num" style={{ fontWeight: 700, fontFamily: 'monospace' }}>
+                                ₹{Number(bill.grandTotal || bill.total || 0).toLocaleString('en-IN')}
+                              </td>
+                              <td style={{ fontSize: '0.82rem', color: '#52606d' }}>
+                                {bill.deletedAt
+                                  ? new Date(bill.deletedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                  : '—'}
+                              </td>
+                              <td style={{ fontSize: '0.84rem' }}>{bill.deletedBy?.name || 'Admin'}</td>
+                              <td style={{ fontSize: '0.82rem', color: '#52606d', fontStyle: 'italic' }}>
+                                {bill.deletedReason || '—'}
+                              </td>
+                              <td className="text-center">
+                                <button
+                                  type="button"
+                                  className="btn btn-sm"
+                                  disabled={busy}
+                                  onClick={() =>
+                                    askRestore('bills', bill._id, `Invoice #${billNo}`, [
+                                      { label: 'Customer', value: bill.companyName || '—' },
+                                      { label: 'Amount', value: `₹${Number(bill.grandTotal || 0).toLocaleString('en-IN')}`, isMono: true },
+                                      { label: 'Original Bill No', value: `#${billNo}`, isMono: true },
+                                    ])
+                                  }
+                                  style={{
+                                    background: '#166534',
+                                    color: '#ffffff',
+                                    fontWeight: 600,
+                                    fontSize: '0.8rem',
+                                    minHeight: '48px',
+                                    padding: '8px 14px',
+                                    border: 'none',
+                                    cursor: busy ? 'not-allowed' : 'pointer',
+                                  }}
+                                >
+                                  {busy ? 'Restoring...' : 'Restore'}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )
             )}
 
@@ -274,7 +314,41 @@ export default function RecycleBin() {
               data.ice.length === 0 ? (
                 <EmptyState label={lang === 'te' ? 'తొలగించబడిన ఐస్ రికార్డులు లేవు' : 'No deleted ice records in recycle bin.'} />
               ) : (
-                <div className="table-container">
+                <>
+                  <div className="mobile-bills-list" style={{ padding: '12px' }}>
+                    {data.ice.map((rec) => {
+                      const busy = restoringId === rec._id;
+                      return (
+                        <div key={`mob-${rec._id}`} className="mobile-bill-card">
+                          <div className="mobile-bill-header">
+                            <span style={{ fontWeight: 700 }}>{formatDate(rec.date)} • {rec.blocks} blocks</span>
+                            <span className="tabular-num" style={{ fontWeight: 700 }}>
+                              ₹{Number(rec.totalAmount || 0).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.8rem', color: '#52606d', marginBottom: '10px' }}>
+                            From: {rec.iceFrom || '—'} • Deleted by {rec.deletedBy?.name || 'Admin'}
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-sm"
+                            disabled={busy}
+                            onClick={() =>
+                              askRestore('ice', rec._id, `Ice record (${rec.blocks} blocks)`, [
+                                { label: 'Date', value: formatDate(rec.date) },
+                                { label: 'Blocks', value: rec.blocks },
+                                { label: 'Amount', value: `₹${Number(rec.totalAmount || 0).toLocaleString('en-IN')}`, isMono: true },
+                              ])
+                            }
+                            style={{ width: '100%', background: '#166534', color: '#ffffff', fontWeight: 600, minHeight: '48px', border: 'none' }}
+                          >
+                            {busy ? 'Restoring...' : 'Restore'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="table-container desktop-only-table">
                   <table className="table">
                     <thead>
                       <tr>
@@ -340,6 +414,7 @@ export default function RecycleBin() {
                     </tbody>
                   </table>
                 </div>
+                </>
               )
             )}
 
@@ -348,7 +423,41 @@ export default function RecycleBin() {
               data.wastage.length === 0 ? (
                 <EmptyState label={lang === 'te' ? 'తొలగించబడిన వేస్టేజ్ రికార్డులు లేవు' : 'No deleted wastage records in recycle bin.'} />
               ) : (
-                <div className="table-container">
+                <>
+                  <div className="mobile-bills-list" style={{ padding: '12px' }}>
+                    {data.wastage.map((rec) => {
+                      const busy = restoringId === rec._id;
+                      return (
+                        <div key={`mob-${rec._id}`} className="mobile-bill-card">
+                          <div className="mobile-bill-header">
+                            <span style={{ fontWeight: 700 }}>{formatDate(rec.date)} • {rec.quantityKg} kg</span>
+                            <span className="tabular-num" style={{ fontWeight: 700 }}>
+                              ₹{Number(rec.totalAmount || 0).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.8rem', color: '#52606d', marginBottom: '10px' }}>
+                            Buyer: {rec.buyerName || '—'} • Deleted by {rec.deletedBy?.name || 'Admin'}
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-sm"
+                            disabled={busy}
+                            onClick={() =>
+                              askRestore('wastage', rec._id, `Wastage record (${rec.quantityKg} kg)`, [
+                                { label: 'Date', value: formatDate(rec.date) },
+                                { label: 'Quantity', value: `${rec.quantityKg} kg` },
+                                { label: 'Amount', value: `₹${Number(rec.totalAmount || 0).toLocaleString('en-IN')}`, isMono: true },
+                              ])
+                            }
+                            style={{ width: '100%', background: '#166534', color: '#ffffff', fontWeight: 600, minHeight: '48px', border: 'none' }}
+                          >
+                            {busy ? 'Restoring...' : 'Restore'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="table-container desktop-only-table">
                   <table className="table">
                     <thead>
                       <tr>
@@ -414,6 +523,7 @@ export default function RecycleBin() {
                     </tbody>
                   </table>
                 </div>
+                </>
               )
             )}
 
@@ -422,7 +532,41 @@ export default function RecycleBin() {
               data.staff.length === 0 ? (
                 <EmptyState label={lang === 'te' ? 'తొలగించబడిన కార్మికుల రికార్డులు లేవు' : 'No deleted worker attendance records.'} />
               ) : (
-                <div className="table-container">
+                <>
+                  <div className="mobile-bills-list" style={{ padding: '12px' }}>
+                    {data.staff.map((rec) => {
+                      const busy = restoringId === rec._id;
+                      return (
+                        <div key={`mob-${rec._id}`} className="mobile-bill-card">
+                          <div className="mobile-bill-header">
+                            <span style={{ fontWeight: 700 }}>{rec.staffName || '—'}</span>
+                            <span className="tabular-num" style={{ fontWeight: 700 }}>
+                              ₹{Number(rec.totalAmount || 0).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.8rem', color: '#52606d', marginBottom: '10px' }}>
+                            {formatDate(rec.date)} • {rec.quantity} kg @ ₹{rec.price} • By {rec.deletedBy?.name || 'Admin'}
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-sm"
+                            disabled={busy}
+                            onClick={() =>
+                              askRestore('staff', rec._id, `Worker record (${rec.staffName})`, [
+                                { label: 'Worker', value: rec.staffName || '—' },
+                                { label: 'Date', value: formatDate(rec.date) },
+                                { label: 'Amount', value: `₹${Number(rec.totalAmount || 0).toLocaleString('en-IN')}`, isMono: true },
+                              ])
+                            }
+                            style={{ width: '100%', background: '#166534', color: '#ffffff', fontWeight: 600, minHeight: '48px', border: 'none' }}
+                          >
+                            {busy ? 'Restoring...' : 'Restore'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="table-container desktop-only-table">
                   <table className="table">
                     <thead>
                       <tr>
@@ -488,6 +632,7 @@ export default function RecycleBin() {
                     </tbody>
                   </table>
                 </div>
+                </>
               )
             )}
           </>

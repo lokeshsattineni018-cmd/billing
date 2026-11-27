@@ -169,6 +169,7 @@ export default function OfficialInvoiceSheet({
         </div>
 
         {/* 6. MAIN ITEMS TABLE */}
+        <div className="official-invoice-tablewrap">
         <table className="official-invoice-table">
           <thead>
             <tr className="official-invoice-thead-top">
@@ -302,6 +303,7 @@ export default function OfficialInvoiceSheet({
             </tr>
           </tfoot>
         </table>
+        </div>
 
         {/* 7. TAX BREAKDOWN TABLE */}
         <div className="print-keep-together official-invoice-taxwrap">

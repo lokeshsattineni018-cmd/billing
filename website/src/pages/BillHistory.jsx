@@ -8,7 +8,6 @@ import { SearchIcon, PrintIcon, DownloadIcon, WhatsAppIcon, DownloadIcon as Expo
 import { SkeletonTable } from '../components/Skeleton';
 import ReminderModal from '../components/ReminderModal';
 import PaymentModal from '../components/PaymentModal';
-import SwipeableItem from '../components/SwipeableItem';
 import PullToRefresh from '../components/PullToRefresh';
 import DeleteInvoiceModal from '../components/DeleteInvoiceModal';
 import { getAllOfflineBills, getMasterCache, setMasterCache, getUserCacheKey, invalidateBillCaches } from '../utils/offlineDb';
@@ -494,38 +493,8 @@ export default function BillHistory() {
               {bills.map((bill) => {
                 const totalQty = getTotalQuantity(bill);
                 return (
-                  <SwipeableItem
-                    key={bill._id}
-                    actions={[
-                      ...(!bill.isVoided
-                        ? [
-                            {
-                              label: 'WhatsApp',
-                              icon: <WhatsAppIcon size={16} color="#ffffff" />,
-                              background: '#25D366',
-                              onClick: () => handleShareWhatsApp(null, bill),
-                            },
-                          ]
-                        : []),
-                      {
-                        label: 'Print',
-                        icon: <PrintIcon size={16} color="#ffffff" />,
-                        background: '#0b5394',
-                        onClick: () => handlePrint(null, bill._id),
-                      },
-                      ...(canDeleteBill
-                        ? [
-                            {
-                              label: 'Delete',
-                              icon: <span style={{ fontSize: '15px' }}>🗑️</span>,
-                              background: '#dc2626',
-                              onClick: () => setDeleteBillTarget(bill),
-                            },
-                          ]
-                        : []),
-                    ]}
-                  >
                     <div
+                      key={bill._id}
                       className="mobile-bill-card"
                       style={bill.isVoided ? { background: '#fef2f2', border: '1px dashed #fca5a5', opacity: 0.85 } : {}}
                       onClick={() => navigate(`/bills/${bill._id}`)}
@@ -533,14 +502,14 @@ export default function BillHistory() {
                       {/* Top Row: Bill # + Date + Status */}
                       <div className="mobile-bill-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span className="badge badge-blue" style={{ fontSize: '0.8rem', padding: '3px 8px', fontWeight: 800 }}>#{bill.billNo}</span>
+                          <span className="badge badge-blue tabular-num" style={{ fontSize: '0.8rem', padding: '3px 8px', fontWeight: 700 }}>#{bill.billNo}</span>
                           {bill.isVoided && (
-                            <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800, fontSize: '0.72rem' }}>
+                            <span className="badge" style={{ background: '#fee2e2', color: '#b42318', fontWeight: 700, fontSize: '0.72rem' }}>
                               VOIDED
                             </span>
                           )}
                           {bill.isOffline && (
-                            <span className="badge" style={{ background: '#fef3c7', color: '#92400e', fontWeight: 800, fontSize: '0.72rem' }}>
+                            <span className="badge" style={{ background: '#fef3c7', color: '#92400e', fontWeight: 700, fontSize: '0.72rem' }}>
                               Offline
                             </span>
                           )}
@@ -579,14 +548,14 @@ export default function BillHistory() {
                           padding: '8px 10px',
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Weight:</span>
-                            <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>{totalQty} kg</span>
+                            <span style={{ fontSize: '0.75rem', color: '#52606d', fontWeight: 600 }}>Weight:</span>
+                            <span className="tabular-num" style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>{totalQty} kg</span>
                           </div>
                           {canSeeSales && (
-                            <span style={{
+                            <span className="tabular-num" style={{
                               fontSize: '1.1rem',
-                              fontWeight: 800,
-                              color: bill.isVoided ? '#dc2626' : '#0b5394',
+                              fontWeight: 700,
+                              color: bill.isVoided ? '#b42318' : '#0b5394',
                               textDecoration: bill.isVoided ? 'line-through' : 'none',
                             }}>
                               {formatCurrency(bill.grandTotal || bill.total)}
@@ -595,11 +564,31 @@ export default function BillHistory() {
                         </div>
                       </div>
 
-                      {/* Footer: action buttons with >= 48px tap targets */}
+                      {/* Footer: compact explicit actions with >= 48px tap targets */}
                       <div
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingTop: '10px', borderTop: '1px solid #f1f5f9', marginTop: '10px' }}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingTop: '10px', borderTop: '1px solid #f1f5f9', marginTop: '10px', flexWrap: 'wrap' }}
                         onClick={(e) => e.stopPropagation()}
                       >
+                        {!bill.isVoided && !bill.isOffline && canUpdateStatus && bill.paymentStatus !== 'Paid' && (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn-sm"
+                              onClick={(e) => { e.stopPropagation(); setPaymentBillId(bill._id); }}
+                              style={{ background: '#ecfdf5', color: '#166534', border: '1px solid #a7f3d0', fontWeight: 600, minHeight: '48px', padding: '0 12px', borderRadius: '10px' }}
+                            >
+                              Pay
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-sm"
+                              onClick={(e) => { e.stopPropagation(); setReminderBillId(bill._id); }}
+                              style={{ background: '#fffbeb', color: '#92400e', border: '1px solid #fde68a', fontWeight: 600, minHeight: '48px', padding: '0 12px', borderRadius: '10px' }}
+                            >
+                              Remind
+                            </button>
+                          </>
+                        )}
                         {!bill.isVoided && (
                           <button
                             type="button"
@@ -633,7 +622,6 @@ export default function BillHistory() {
                         )}
                       </div>
                     </div>
-                  </SwipeableItem>
                 );
               })}
             </div>
@@ -708,6 +696,28 @@ export default function BillHistory() {
                       )}
                       <td className="text-center">
                         <div className="action-buttons" style={{ justifyContent: 'center', display: 'flex', gap: '6px' }}>
+                          {!bill.isVoided && !bill.isOffline && canUpdateStatus && bill.paymentStatus !== 'Paid' && (
+                            <>
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => setPaymentBillId(bill._id)}
+                                title="Record Payment"
+                                style={{ background: '#ecfdf5', color: '#166534', borderColor: '#a7f3d0', fontWeight: 600, padding: '6px 10px' }}
+                              >
+                                Pay
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => setReminderBillId(bill._id)}
+                                title="Send Payment Reminder"
+                                style={{ background: '#fffbeb', color: '#92400e', borderColor: '#fde68a', fontWeight: 600, padding: '6px 10px' }}
+                              >
+                                Remind
+                              </button>
+                            </>
+                          )}
                           {!bill.isVoided && (
                             <button
                               type="button"

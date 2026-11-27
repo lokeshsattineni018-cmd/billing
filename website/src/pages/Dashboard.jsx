@@ -699,8 +699,8 @@ export default function Dashboard() {
           </div>
 
           {/* Grid: Spline Area Chart (Left) + Radial Health (Right) */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px', marginBottom: '16px' }}>
-            <div style={{ gridColumn: 'span 2' }}>
+          <div className="dashboard-analytics-grid">
+            <div className="dashboard-analytics-trend">
               <ErrorBoundary inline>
                 <RevenueTrendChart
                   data={trendView === 'daily' ? analytics.dailyTrends : analytics.monthlyTrends}
@@ -708,7 +708,7 @@ export default function Dashboard() {
                 />
               </ErrorBoundary>
             </div>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <ErrorBoundary inline>
                 <PaymentStatusDonut
                   paid={data?.month?.totalSales ? Math.max(0, data.month.totalSales - (data?.receivables?.totalPending || 0)) : 0}

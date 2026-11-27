@@ -2002,6 +2002,13 @@ body:has(.modal-backdrop) {
   background: #f8fbff;
 }
 
+.official-invoice-tablewrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .official-invoice-table {
   width: 100%;
   border-collapse: collapse;
@@ -2268,6 +2275,12 @@ body:has(.modal-backdrop) {
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .official-invoice-tablewrap,
+  .official-invoice-taxwrap {
+    overflow: visible !important;
   }
 
   /* Prevent page-breaks inside totals, tax breakdown, bank details, and signature blocks */
@@ -2283,6 +2296,24 @@ body:has(.modal-backdrop) {
   .official-invoice-frame table tfoot {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+  }
+}
+
+/* ── Dashboard Analytics Grid (desktop 2:1, stacked <=1024px) ── */
+.dashboard-analytics-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.dashboard-analytics-trend {
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-analytics-grid {
+    grid-template-columns: 1fr;
   }
 }
 

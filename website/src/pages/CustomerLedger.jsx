@@ -157,75 +157,154 @@ Phone: ${settings?.phone || '9441429745'}`;
         {loading ? (
           <div className="spinner"></div>
         ) : filteredCustomers.length > 0 ? (
-          <div className="table-container">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Customer Name (M/s)</th>
-                  <th className="text-center">Total Bills</th>
-                  <th className="text-center">Pending Bills</th>
-                  <th className="text-right">Total Invoiced</th>
-                  <th className="text-right">Total Paid</th>
-                  <th className="text-right">Outstanding Balance</th>
-                  <th className="text-center" style={{ width: '220px' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredCustomers.map((cust) => {
-                  const hasPending = cust.outstandingBalance > 0;
-                  return (
-                    <tr key={cust._id}>
-                      <td>
-                        <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{cust.companyName}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          <>
+            {/* Mobile Cards View (<= 768px) */}
+            <div className="mobile-bills-list">
+              {filteredCustomers.map((cust) => {
+                const hasPending = cust.outstandingBalance > 0;
+                return (
+                  <div key={`mob-${cust._id}`} className="mobile-bill-card">
+                    <div className="mobile-bill-header">
+                      <div>
+                        <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.96rem' }}>
+                          {cust.companyName}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                           GSTIN: {cust.companyGstin || '37KATPS1500Q1ZR'} {cust.customerPhone && `• Cell: ${cust.customerPhone}`}
                         </div>
-                      </td>
-                      <td className="text-center">
-                        <span className="badge badge-blue">{cust.totalBills}</span>
-                      </td>
-                      <td className="text-center">
-                        {cust.unpaidBillsCount > 0 ? (
-                          <span className="badge badge-amber">{cust.unpaidBillsCount} unpaid</span>
-                        ) : (
-                          <span className="badge badge-green">All Paid</span>
-                        )}
-                      </td>
-                      <td className="text-right" style={{ fontWeight: 600 }}>
-                        {formatCurrency(cust.totalInvoiced)}
-                      </td>
-                      <td className="text-right" style={{ color: '#059669', fontWeight: 600 }}>
-                        {formatCurrency(cust.totalPaid)}
-                      </td>
-                      <td className="text-right" style={{ fontWeight: 800, fontSize: '1.05rem', color: hasPending ? '#dc2626' : '#059669' }}>
-                        {formatCurrency(cust.outstandingBalance)}
-                      </td>
-                      <td className="text-center">
-                        <div className="action-buttons" style={{ justifyContent: 'center' }}>
-                          {hasPending && (
-                            <button
-                              className="btn btn-whatsapp btn-sm"
-                              onClick={() => handleSendReminder(cust)}
-                              title="Send WhatsApp Payment Reminder with Bank details"
-                            >
-                              <WhatsAppIcon size={14} color="#ffffff" /> Reminder
-                            </button>
-                          )}
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => navigate(`/bills?search=${encodeURIComponent(cust.companyName)}`)}
-                            title="View all bills for this customer"
-                          >
-                            View Bills
-                          </button>
+                      </div>
+                      {cust.unpaidBillsCount > 0 ? (
+                        <span className="badge badge-amber">{cust.unpaidBillsCount} unpaid</span>
+                      ) : (
+                        <span className="badge badge-green">All Paid</span>
+                      )}
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, 1fr)',
+                        gap: '8px',
+                        background: '#f8fafc',
+                        borderRadius: '8px',
+                        padding: '8px 10px',
+                        margin: '10px 0',
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: '0.68rem', color: '#52606d', fontWeight: 600 }}>Invoiced</div>
+                        <div className="tabular-num" style={{ fontSize: '0.84rem', fontWeight: 600 }}>{formatCurrency(cust.totalInvoiced)}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.68rem', color: '#52606d', fontWeight: 600 }}>Paid</div>
+                        <div className="tabular-num" style={{ fontSize: '0.84rem', fontWeight: 600, color: '#166534' }}>{formatCurrency(cust.totalPaid)}</div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.68rem', color: '#52606d', fontWeight: 600 }}>Balance</div>
+                        <div className="tabular-num" style={{ fontSize: '0.88rem', fontWeight: 700, color: hasPending ? '#b42318' : '#166534' }}>
+                          {formatCurrency(cust.outstandingBalance)}
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {hasPending && (
+                        <button
+                          type="button"
+                          className="btn btn-whatsapp btn-sm"
+                          style={{ flex: 1 }}
+                          onClick={() => handleSendReminder(cust)}
+                        >
+                          <WhatsAppIcon size={14} color="#ffffff" /> Reminder
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        style={{ flex: 1 }}
+                        onClick={() => navigate(`/bills?search=${encodeURIComponent(cust.companyName)}`)}
+                      >
+                        View Bills ({cust.totalBills})
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="table-container desktop-only-table">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Customer Name (M/s)</th>
+                    <th className="text-center">Total Bills</th>
+                    <th className="text-center">Pending Bills</th>
+                    <th className="text-right">Total Invoiced</th>
+                    <th className="text-right">Total Paid</th>
+                    <th className="text-right">Outstanding Balance</th>
+                    <th className="text-center" style={{ width: '220px' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCustomers.map((cust) => {
+                    const hasPending = cust.outstandingBalance > 0;
+                    return (
+                      <tr key={cust._id}>
+                        <td>
+                          <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{cust.companyName}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            GSTIN: {cust.companyGstin || '37KATPS1500Q1ZR'} {cust.customerPhone && `• Cell: ${cust.customerPhone}`}
+                          </div>
+                        </td>
+                        <td className="text-center tabular-num">
+                          <span className="badge badge-blue">{cust.totalBills}</span>
+                        </td>
+                        <td className="text-center">
+                          {cust.unpaidBillsCount > 0 ? (
+                            <span className="badge badge-amber">{cust.unpaidBillsCount} unpaid</span>
+                          ) : (
+                            <span className="badge badge-green">All Paid</span>
+                          )}
+                        </td>
+                        <td className="text-right tabular-num" style={{ fontWeight: 600 }}>
+                          {formatCurrency(cust.totalInvoiced)}
+                        </td>
+                        <td className="text-right tabular-num" style={{ color: '#166534', fontWeight: 600 }}>
+                          {formatCurrency(cust.totalPaid)}
+                        </td>
+                        <td className="text-right tabular-num" style={{ fontWeight: 700, fontSize: '1.05rem', color: hasPending ? '#b42318' : '#166534' }}>
+                          {formatCurrency(cust.outstandingBalance)}
+                        </td>
+                        <td className="text-center">
+                          <div className="action-buttons" style={{ justifyContent: 'center' }}>
+                            {hasPending && (
+                              <button
+                                type="button"
+                                className="btn btn-whatsapp btn-sm"
+                                onClick={() => handleSendReminder(cust)}
+                                title="Send WhatsApp Payment Reminder with Bank details"
+                              >
+                                <WhatsAppIcon size={14} color="#ffffff" /> Reminder
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => navigate(`/bills?search=${encodeURIComponent(cust.companyName)}`)}
+                              title="View all bills for this customer"
+                            >
+                              View Bills
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
           <div className="empty-state" style={{ padding: '48px 20px', textAlign: 'center' }}>
             <div style={{ fontSize: '3rem', marginBottom: '12px', opacity: 0.4 }}>👥</div>

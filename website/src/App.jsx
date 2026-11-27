@@ -123,7 +123,7 @@ function Sidebar({ onInstall, onLogout }) {
             alignItems: 'center',
             justifyContent: 'space-between',
             color: '#0b5394',
-            transition: 'all 0.2s ease',
+            transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
           }}
         >
           <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700 }}>{t('language')}</span>
