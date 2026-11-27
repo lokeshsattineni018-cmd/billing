@@ -5,8 +5,10 @@ import { notifyPaymentReceived } from '../utils/notifications';
 import { invalidateBillCaches } from '../utils/offlineDb';
 import { CloseIcon } from './Icons';
 import Modal from './Modal';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function PaymentModal({ billId, onClose, onSuccess }) {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [billData, setBillData] = useState(null);
@@ -97,7 +99,7 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <h3 id="payment-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>
-              Record Payment
+              {t('recordPaymentTitle')}
             </h3>
             {billData && (
               <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', color: '#52606d' }}>

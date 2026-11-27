@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { customersAPI } from '../services/api';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
-import { SearchIcon, PlusIcon, WhatsAppIcon, DownloadIcon, CloseIcon } from '../components/Icons';
+import { SearchIcon, PlusIcon, WhatsAppIcon, DownloadIcon, CloseIcon, LedgerIcon } from '../components/Icons';
 import PaymentModal from '../components/PaymentModal';
 import Modal from '../components/Modal';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function CustomerDirectory() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -156,10 +158,10 @@ export default function CustomerDirectory() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
         <div>
           <h1 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-            Customer Master & Payment Center
+            {t('customersMasterTitle')}
           </h1>
           <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0' }}>
-            Record invoice payments, track live balances & customer contact details
+            {t('customersMasterSubtitle')}
           </p>
         </div>
 
@@ -171,7 +173,7 @@ export default function CustomerDirectory() {
             style={{ fontWeight: 700, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
             title="Open Outstanding Customer Ledger & Payment Reminders"
           >
-            📋 Outstanding Ledger
+            <LedgerIcon size={16} /> {t('outstandingLedgerBtn')}
           </button>
           <button
             type="button"
@@ -180,7 +182,7 @@ export default function CustomerDirectory() {
             style={{ fontWeight: 700, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
             title="Export complete customer directory as CSV"
           >
-            <DownloadIcon size={16} /> Export CSV
+            <DownloadIcon size={16} /> {t('exportCsvBtn')}
           </button>
           <button
             type="button"
@@ -188,7 +190,7 @@ export default function CustomerDirectory() {
             onClick={() => navigate('/new-bill')}
             style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            <PlusIcon size={16} color="#ffffff" /> Create Invoice
+            <PlusIcon size={16} color="#ffffff" /> {t('createInvoice')}
           </button>
         </div>
       </div>
@@ -198,13 +200,13 @@ export default function CustomerDirectory() {
         <input
           type="text"
           className="form-input"
-          placeholder="Search by customer name, phone, or GSTIN..."
+          placeholder={t('searchCustomersPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{ flex: 1 }}
         />
         <button type="submit" className="btn btn-primary" style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <SearchIcon size={16} color="#ffffff" /> Search
+          <SearchIcon size={16} color="#ffffff" /> {t('searchBtn')}
         </button>
         {search && (
           <button

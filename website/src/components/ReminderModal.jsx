@@ -3,8 +3,10 @@ import { billsAPI } from '../services/api';
 import { formatCurrency, useToast, Toast, copyToClipboard } from '../utils/helpers';
 import { WhatsAppIcon, CloseIcon } from './Icons';
 import Modal from './Modal';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ReminderModal({ billId, onClose }) {
+  const { t } = useLanguage();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [customMsg, setCustomMsg] = useState('');
@@ -83,7 +85,7 @@ export default function ReminderModal({ billId, onClose }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <h3 id="reminder-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>
-              Send Payment Reminder
+              {t('sendPaymentReminderTitle')}
             </h3>
             {data && (
               <p style={{ margin: '2px 0 0 0', fontSize: '0.84rem', color: '#52606d' }}>

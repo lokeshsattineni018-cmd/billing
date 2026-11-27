@@ -363,7 +363,7 @@ export default function BillDetail() {
             onClick={handlePrint}
             title="Direct Print (Ctrl + P)"
           >
-            <PrintIcon size={18} color="#0b5394" /> Print Invoice
+            <PrintIcon size={18} color="#0b5394" /> {t('printInvoice')}
           </button>
 
           {!bill.isVoided && (
@@ -373,7 +373,7 @@ export default function BillDetail() {
               onClick={handleShareWhatsApp}
               disabled={sharing}
             >
-              <WhatsAppIcon size={18} color="#ffffff" /> WhatsApp
+              <WhatsAppIcon size={18} color="#ffffff" /> {t('shareWhatsApp')}
             </button>
           )}
 
@@ -396,7 +396,7 @@ export default function BillDetail() {
               style={{ padding: '10px 14px', border: '1px solid #cbd5e1', fontWeight: 600 }}
               onClick={() => navigate('/new-bill', { state: { editBill: bill } })}
             >
-              Edit Bill
+              {t('editBill')}
             </button>
           )}
 
@@ -411,7 +411,7 @@ export default function BillDetail() {
           )}
 
           <button className="btn btn-ghost btn-sm" onClick={() => navigate('/bills')}>
-            <ArrowLeftIcon size={16} /> Back
+            <ArrowLeftIcon size={16} /> {t('back')}
           </button>
         </div>
 
@@ -644,7 +644,7 @@ export default function BillDetail() {
       {/* Screen Invoice Details Card (Hidden during Print) */}
       <div className="card no-print" style={{ marginBottom: '24px' }}>
         <div className="card-header">
-          <h3 className="card-title">Invoice Details</h3>
+          <h3 className="card-title">{t('invoiceDetails')}</h3>
           <span className={`badge ${bill.isVoided ? 'badge-amber' : bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`} style={{ fontSize: '0.82rem', padding: '5px 12px' }}>
             {bill.isVoided ? 'VOIDED' : `Status: ${bill.paymentStatus || 'Pending'}`}
           </span>

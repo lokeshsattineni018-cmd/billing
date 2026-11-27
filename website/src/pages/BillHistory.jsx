@@ -288,7 +288,7 @@ export default function BillHistory() {
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h1 style={{ margin: 0 }}>Invoice History</h1>
+            <h1 style={{ margin: 0 }}>{t('invoiceHistory')}</h1>
             {isUpdating && (
               <span
                 style={{
@@ -313,11 +313,11 @@ export default function BillHistory() {
                     display: 'inline-block',
                   }}
                 />
-                Updating...
+                {t('updatingStatus')}
               </span>
             )}
           </div>
-          <p>View, print, download, share or export invoices for GST & CA filing</p>
+          <p>{t('invoiceHistorySubtitle')}</p>
         </div>
 
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -329,7 +329,7 @@ export default function BillHistory() {
                 title="Export all filtered bills to CSV for GST / CA accounting"
                 style={{ fontWeight: 600 }}
               >
-                <ExportIcon size={16} /> Export Excel (CSV)
+                <ExportIcon size={16} /> {t('exportExcel')}
               </button>
               <button
                 className="btn btn-secondary"
@@ -337,14 +337,14 @@ export default function BillHistory() {
                 title="Export sales vouchers in standard Tally Prime XML"
                 style={{ fontWeight: 700, border: '1.5px solid #0b5394', color: '#0b5394' }}
               >
-                Tally XML
+                {t('tallyXml')}
               </button>
               <button
                 className="btn btn-primary"
                 onClick={() => navigate('/reports')}
                 style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700 }}
               >
-                Sales Reports
+                {t('salesReports')}
               </button>
             </>
           )}
@@ -359,7 +359,7 @@ export default function BillHistory() {
             <input
               type="text"
               className="form-input"
-              placeholder="Search customer or invoice #..."
+              placeholder={t('searchInvoicesPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{ width: '100%', height: '44px', paddingRight: '40px', borderRadius: '10px' }}

@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { DownloadIcon, WhatsAppIcon, ShareIcon, CloseIcon, MailIcon } from './Icons';
 import { formatCurrency, copyToClipboard } from '../utils/helpers';
 import Modal from './Modal';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ShareModal({ bill, onClose, showToast }) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
@@ -116,7 +118,7 @@ export default function ShareModal({ bill, onClose, showToast }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
           <div>
             <h3 id="share-modal-title" style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#0f172a' }}>
-              Share Tax Invoice
+              {t('shareTaxInvoiceTitle')}
             </h3>
             <p style={{ margin: '3px 0 0 0', fontSize: '0.82rem', color: '#52606d' }}>
               Invoice #{bill.billNo} • {bill.companyName} • {amountStr}

@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { billsAPI, settingsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
 import { TrendingUpIcon, FileCheckIcon, WhatsAppIcon, SearchIcon } from '../components/Icons';
 
 export default function CustomerLedger() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { toast, showToast } = useToast();
 
   const [ledgerData, setLedgerData] = useState({ customers: [], summary: {} });
@@ -95,8 +97,8 @@ Phone: ${settings?.phone || '9441429745'}`;
       <Toast toast={toast} />
 
       <div className="page-header">
-        <h1>Customer Ledger &amp; Balances</h1>
-        <p>Track receivables, outstanding balances, and send 1-click WhatsApp payment reminders</p>
+        <h1>{t('customerLedger')}</h1>
+        <p>{t('customerLedgerSubtitle')}</p>
       </div>
 
       {/* Summary KPI Cards */}
@@ -106,7 +108,7 @@ Phone: ${settings?.phone || '9441429745'}`;
             <div className="stat-value" style={{ color: '#d97706' }}>
               {formatCurrency(ledgerData.summary?.totalReceivables || 0)}
             </div>
-            <div className="stat-label">Total Outstanding Balance</div>
+            <div className="stat-label">{t('totalOutstandingBalance')}</div>
           </div>
           <div className="stat-icon-wrapper" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#d97706' }}>
             <TrendingUpIcon size={20} />
