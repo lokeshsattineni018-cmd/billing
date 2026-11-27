@@ -75,28 +75,26 @@ export default function ShedModeSyncBar() {
 
   return (
     <>
-      {/* Top Fixed Alert Bar */}
+      {/* Top In-Flow Alert Bar */}
       <div
+        className="shed-sync-bar no-print"
         style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 9999,
+          position: 'relative',
+          width: '100%',
+          zIndex: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '7px 16px',
           fontSize: '0.82rem',
-          fontWeight: 700,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          fontWeight: 600,
           background: !isOnline
-            ? 'linear-gradient(90deg, #b45309 0%, #d97706 100%)'
+            ? '#b45309'
             : isSyncing
-            ? 'linear-gradient(90deg, #0b5394 0%, #2563eb 100%)'
+            ? '#0b5394'
             : justSyncedCount > 0
-            ? 'linear-gradient(90deg, #15803d 0%, #16a34a 100%)'
-            : 'linear-gradient(90deg, #0369a1 0%, #0284c7 100%)',
+            ? '#166534'
+            : '#0369a1',
           color: '#ffffff',
           letterSpacing: '0.01em',
         }}

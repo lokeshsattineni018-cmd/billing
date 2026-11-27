@@ -326,9 +326,9 @@ export default function BillHistory() {
             <>
               <button
                 className="btn btn-secondary"
-                onClick={() => billsAPI.exportCSV({ search, dateFrom, dateTo, paymentStatus })}
+                onClick={() => billsAPI.exportCSV({ search, dateFrom, dateTo, paymentStatus: statusFilter })}
                 title="Export all filtered bills to CSV for GST / CA accounting"
-                style={{ fontWeight: 700 }}
+                style={{ fontWeight: 600 }}
               >
                 <ExportIcon size={16} /> Export Excel (CSV)
               </button>

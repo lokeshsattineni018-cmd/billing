@@ -248,42 +248,53 @@ function AppLayout() {
 
   return (
     <div className="app-layout ui-redesign-shell">
-      {/* True Offline-First Shed Mode & Cloud Sync Bar */}
-      <ShedModeSyncBar />
-      {/* Clean Fixed Mobile Top Header */}
-      <header className="mobile-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => navigate('/')}>
-          <img
-            src={logoImg}
-            alt="Logo"
-            style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }}
-          />
-          <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0b5394' }}>VIJAYA DURGA</span>
-        </div>
+      <div className="app-top-chrome">
+        {/* True Offline-First Shed Mode & Cloud Sync Bar */}
+        <ShedModeSyncBar />
+        {/* Clean Mobile & Tablet Top Header */}
+        <header className="mobile-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => navigate('/')}>
+            <img
+              src={logoImg}
+              alt="Logo"
+              style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }}
+            />
+            <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0b5394' }}>VIJAYA DURGA</span>
+          </div>
 
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <button
-            type="button"
-            onClick={toggleLang}
-            style={{
-              padding: '10px 14px',
-              fontSize: '0.82rem',
-              fontWeight: 800,
-              background: '#f1f5f9',
-              border: '1px solid #cbd5e1',
-              borderRadius: '8px',
-              color: '#0b5394',
-              minHeight: '48px',
-              minWidth: '48px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {lang === 'en' ? 'తెలుగు' : 'EN'}
-          </button>
-        </div>
-      </header>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={toggleLang}
+              style={{
+                padding: '10px 14px',
+                fontSize: '0.82rem',
+                fontWeight: 800,
+                background: '#f1f5f9',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                color: '#0b5394',
+                minHeight: '48px',
+                minWidth: '48px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {lang === 'en' ? 'తెలుగు' : 'EN'}
+            </button>
+            <button
+              type="button"
+              className="mobile-menu-trigger"
+              onClick={() => setMobileDrawerOpen(true)}
+              aria-label={t('more') || 'Open navigation menu'}
+              title={t('more') || 'Menu'}
+            >
+              <MenuIcon size={20} />
+            </button>
+          </div>
+        </header>
+      </div>
 
       {/* Mobile & Tablet Slide-Out Sidebar Drawer */}
       {mobileDrawerOpen && (
@@ -393,30 +404,32 @@ function AppLayout() {
         </div>
       )}
 
-      {/* Desktop Sidebar */}
-      <Sidebar onInstall={handleInstallApp} onLogout={() => setShowLogoutModal(true)} />
+      <div className="app-workspace">
+        {/* Desktop Sidebar */}
+        <Sidebar onInstall={handleInstallApp} onLogout={() => setShowLogoutModal(true)} />
 
-      {/* Main Content Area */}
-      <main className="main-content">
-        <ErrorBoundary>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/new-bill" element={<NewBill />} />
-              <Route path="/bills" element={<BillHistory />} />
-              <Route path="/bills/:id" element={<BillDetail />} />
-              <Route path="/staff" element={<Staff />} />
-              {isAdmin && <Route path="/reports" element={<Reports />} />}
-              {isAdmin && <Route path="/customers" element={<CustomerDirectory />} />}
-              {isAdmin && <Route path="/ledger" element={<CustomerLedger />} />}
-              {isAdmin && <Route path="/activity-log" element={<ActivityLog />} />}
-              {isAdmin && <Route path="/recycle-bin" element={<RecycleBin />} />}
-              {isAdmin && <Route path="/settings" element={<Settings />} />}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-        </ErrorBoundary>
-      </main>
+        {/* Main Content Area */}
+        <main className="main-content">
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/new-bill" element={<NewBill />} />
+                <Route path="/bills" element={<BillHistory />} />
+                <Route path="/bills/:id" element={<BillDetail />} />
+                <Route path="/staff" element={<Staff />} />
+                {isAdmin && <Route path="/reports" element={<Reports />} />}
+                {isAdmin && <Route path="/customers" element={<CustomerDirectory />} />}
+                {isAdmin && <Route path="/ledger" element={<CustomerLedger />} />}
+                {isAdmin && <Route path="/activity-log" element={<ActivityLog />} />}
+                {isAdmin && <Route path="/recycle-bin" element={<RecycleBin />} />}
+                {isAdmin && <Route path="/settings" element={<Settings />} />}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
+        </main>
+      </div>
 
       {/* Mobile Bottom Navigation Bar — 5-Tab Layout */}
       <nav className="mobile-bottom-nav">

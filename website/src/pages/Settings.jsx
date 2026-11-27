@@ -1023,11 +1023,11 @@ export default function Settings() {
             <ul style={{ fontSize: '0.84rem', color: '#475569', paddingLeft: '20px', lineHeight: 1.6, margin: 0 }}>
               <li><strong>Included:</strong> Total bills created today, total cash/credit revenue, pending payment balance, and an attached CA-ready CSV spreadsheet.</li>
               <li><strong>Manual:</strong> Click <em>"Send Test Backup Email Now"</em> anytime to get an instant report for yesterday's or today's sales.</li>
-              <li><strong>Free Auto-Trigger (Vercel Free Plan):</strong> Set up a free daily cron on <a href="https://cron-job.org" target="_blank" rel="noreferrer" style={{ color: '#0b5394', fontWeight: 700 }}>cron-job.org</a> calling:
+              <li><strong>Free Auto-Trigger (Vercel Free Plan):</strong> Set up a free daily cron on <a href="https://cron-job.org" target="_blank" rel="noreferrer" style={{ color: '#0b5394', fontWeight: 600 }}>cron-job.org</a> calling:
                 <div style={{ background: '#ffffff', padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontFamily: 'monospace', fontSize: '0.78rem', margin: '6px 0', wordBreak: 'break-all', color: '#0b5394' }}>
-                  {typeof window !== 'undefined' ? window.location.origin : 'https://billing-snowy-three.vercel.app'}/api/backup/daily-summary?secret=vijaya-durga-super-secret-key-2024
+                  {typeof window !== 'undefined' ? window.location.origin : 'https://billing-snowy-three.vercel.app'}/api/backup/daily-summary
                 </div>
-                Schedule it for <strong>{form.backupScheduleTime || '9:00 PM'} IST</strong> every day!
+                Send request header <code>X-Cron-Secret: &lt;BACKUP_CRON_SECRET&gt;</code> and schedule it for <strong>{form.backupScheduleTime || '9:00 PM'} IST</strong> every day.
               </li>
             </ul>
           </div>
