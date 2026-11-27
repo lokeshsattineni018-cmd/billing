@@ -10,6 +10,7 @@ const {
   teluguJaiShreeRamBuffer
 } = require('../assets/logosData');
 const { numberToWords } = require('../utils/numberToWords');
+const { CANONICAL_BANK_DETAILS } = require('../constants/bankDetails');
 
 const teluguFontPath = path.join(__dirname, '../assets/NotoSansTelugu-Bold.ttf');
 
@@ -47,10 +48,11 @@ async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo 
           address: 'D.No. 2-41A, SATTINENI SRINIVASA TATAJI, Near Ramalayam, KOTHOTA - 534 281, Mutyalapalli, West Godavari Dist., A.P.',
           phone: '9441429745',
           bankDetails: {
-            bankName: 'KARUR VYSYA BANK',
-            accountNo: '4805135000002964',
-            ifsc: 'KVBL0004815',
-            branch: 'Narasapur',
+            bankName: CANONICAL_BANK_DETAILS.bankName,
+            accountName: CANONICAL_BANK_DETAILS.accountName,
+            accountNo: CANONICAL_BANK_DETAILS.accountNo,
+            ifsc: CANONICAL_BANK_DETAILS.ifsc,
+            branch: CANONICAL_BANK_DETAILS.branch,
           },
         };
       }
@@ -707,7 +709,7 @@ async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo 
       }
 
       // 6. BANK PAYMENT DETAILS & SIGNATURE (Identical to Bill)
-      const footerH = 52;
+      const footerH = 62;
       const leftFooterW = Math.round(W * 0.58);
       const rightFooterW = W - leftFooterW;
 
@@ -715,20 +717,23 @@ async function generateVoucherPDFBuffer({ type = 'worker', data = {}, voucherNo 
       doc.rect(L + leftFooterW, y, rightFooterW, footerH).fillAndStroke('#ffffff', borderBlue);
 
       // Bank Details Left Box
-      doc.font('Helvetica-Bold').fontSize(7.6).fillColor(primaryBlue);
-      doc.text('Bank Account Details:', L + 10, y + 6);
+      doc.font('Helvetica-Bold').fontSize(7.5).fillColor(primaryBlue);
+      doc.text(CANONICAL_BANK_DETAILS.title, L + 10, y + 6);
 
-      doc.font('Helvetica-Bold').fontSize(7.8).fillColor(textDark);
+      doc.font('Helvetica-Bold').fontSize(7.4).fillColor(textDark);
       doc.text('Bank: ', L + 10, y + 17, { continued: true });
-      doc.font('Helvetica-Bold').text(settings.bankDetails?.bankName || 'KARUR VYSYA BANK');
+      doc.font('Helvetica-Bold').text(settings.bankDetails?.bankName || settings.bankName || CANONICAL_BANK_DETAILS.bankName);
 
-      doc.font('Helvetica-Bold').text('A/C No: ', L + 10, y + 27, { continued: true });
-      doc.font('Helvetica-Bold').text(settings.bankDetails?.accountNo || '4805135000002964');
+      doc.font('Helvetica-Bold').text('A/C Name: ', L + 10, y + 27, { continued: true });
+      doc.font('Helvetica-Bold').text(settings.bankDetails?.accountName || CANONICAL_BANK_DETAILS.accountName);
 
-      doc.font('Helvetica-Bold').text('IFSC: ', L + 10, y + 37, { continued: true });
-      doc.font('Helvetica-Bold').text(`${settings.bankDetails?.ifsc || 'KVBL0004815'}   |   `, { continued: true });
+      doc.font('Helvetica-Bold').text('A/C No: ', L + 10, y + 37, { continued: true });
+      doc.font('Helvetica-Bold').text(settings.bankDetails?.accountNo || settings.accountNo || CANONICAL_BANK_DETAILS.accountNo);
+
+      doc.font('Helvetica-Bold').text('IFSC: ', L + 10, y + 47, { continued: true });
+      doc.font('Helvetica-Bold').text(`${settings.bankDetails?.ifsc || settings.ifsc || CANONICAL_BANK_DETAILS.ifsc}   |   `, { continued: true });
       doc.font('Helvetica-Bold').text('Branch: ', { continued: true });
-      doc.font('Helvetica-Bold').text(settings.bankDetails?.branch || 'Narasapur');
+      doc.font('Helvetica-Bold').text(settings.bankDetails?.branch || settings.branch || CANONICAL_BANK_DETAILS.branch);
 
       // Signature Right Box
       const sigX = L + leftFooterW;

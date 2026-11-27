@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { staffAPI } from '../services/api';
 import { formatCurrency, formatDate, numberToWords, useToast, Toast, playSuccessSound } from '../utils/helpers';
+import { CANONICAL_BANK_DETAILS } from '../constants/bankDetails';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import VoucherBillModal from '../components/VoucherBillModal';
 import WorkerPaymentModal from '../components/WorkerPaymentModal';
+import Modal from '../components/Modal';
 import { saveOfflineStaff, getAllOfflineStaff, getMasterCache } from '../utils/offlineDb';
 import { enqueueShedAction } from '../services/syncManager';
 import {
@@ -18,6 +20,7 @@ import {
   IceIcon,
   RefreshIcon,
   PrintIcon,
+  CloseIcon,
 } from '../components/Icons';
 import { lazyWithRetry } from '../utils/chunkLoadRecovery';
 
@@ -61,6 +64,7 @@ export default function Staff() {
   const [staffNames, setStaffNames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showClearDraftModal, setShowClearDraftModal] = useState(false);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -504,7 +508,7 @@ export default function Staff() {
 
           setEntries((prev) => [offlineEntry, ...prev]);
           playSuccessSound();
-          showToast(`⚡ Shed Mode: Recorded ${formData.staffName}'s peeling labor offline!`, 'info');
+          showToast(`Shed Mode: Recorded ${formData.staffName}'s peeling labor offline`, 'info');
           setModalOpen(false);
           return;
         }
@@ -544,7 +548,7 @@ export default function Staff() {
 
           setEntries((prev) => [offlineEntry, ...prev]);
           playSuccessSound();
-          showToast(`⚡ Shed Mode: Recorded ${formData.staffName}'s peeling labor offline!`, 'info');
+          showToast(`Shed Mode: Recorded ${formData.staffName}'s peeling labor offline`, 'info');
           setModalOpen(false);
           return;
         } catch (offlineErr) {}
@@ -700,7 +704,7 @@ export default function Staff() {
           };
         });
         setBulkRows(rows);
-        showToast(`Loaded ${rows.length} workers from registry!`, 'success');
+        showToast(`Loaded ${rows.length} workers from registry`, 'success');
         return;
       }
       showToast('No previous worker records found to copy', 'error');
@@ -723,20 +727,23 @@ export default function Staff() {
     }
 
     setBulkRows(rows);
-    showToast(t('copyYesterdaySuccess') || `Loaded ${rows.length} workers from previous team!`, 'success');
+    showToast(t('copyYesterdaySuccess') || `Loaded ${rows.length} workers from previous team`, 'success');
   };
 
   const handleClearDraft = () => {
-    if (window.confirm(t('discardDraftConfirm') || 'Clear unsaved draft entries?')) {
-      localStorage.removeItem(BULK_DRAFT_KEY);
-      setBulkRows([
-        { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
-        { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
-        { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
-      ]);
-      setBulkModalOpen(false);
-      showToast('Draft entries cleared', 'info');
-    }
+    setShowClearDraftModal(true);
+  };
+
+  const confirmClearDraft = () => {
+    localStorage.removeItem(BULK_DRAFT_KEY);
+    setBulkRows([
+      { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
+      { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
+      { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
+    ]);
+    setBulkModalOpen(false);
+    setShowClearDraftModal(false);
+    showToast('Draft entries cleared', 'info');
   };
 
   const handleSaveBulk = async () => {
@@ -783,7 +790,7 @@ export default function Staff() {
 
         setEntries((prev) => [...newOfflineEntries, ...prev]);
         playSuccessSound();
-        showToast(`⚡ Shed Mode: Saved ${validRows.length} peeling entries offline!`, 'info');
+        showToast(`Shed Mode: Saved ${validRows.length} peeling entries offline`, 'info');
         localStorage.removeItem(BULK_DRAFT_KEY);
         setBulkModalOpen(false);
         setBulkRows([
@@ -798,7 +805,7 @@ export default function Staff() {
         date: bulkDate,
         entries: validRows,
       });
-      showToast(res.data.message || `Saved ${validRows.length} entries!`, 'success');
+      showToast(res.data.message || `Saved ${validRows.length} entries`, 'success');
       localStorage.removeItem(BULK_DRAFT_KEY);
       setBulkModalOpen(false);
       setBulkRows([
@@ -842,7 +849,7 @@ export default function Staff() {
 
           setEntries((prev) => [...newOfflineEntries, ...prev]);
           playSuccessSound();
-          showToast(`⚡ Shed Mode: Saved ${validRows.length} peeling entries offline!`, 'info');
+          showToast(`Shed Mode: Saved ${validRows.length} peeling entries offline`, 'info');
           localStorage.removeItem(BULK_DRAFT_KEY);
           setBulkModalOpen(false);
           setBulkRows([
@@ -890,7 +897,7 @@ export default function Staff() {
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
-          transition: isPulling ? 'none' : 'all 0.25s ease',
+          transition: isPulling ? 'none' : 'height 180ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms cubic-bezier(0.22, 1, 0.36, 1)',
           gap: '8px',
           color: '#64748b',
           fontSize: '0.78rem',
@@ -918,7 +925,7 @@ export default function Staff() {
         }}
       >
         <div>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
             {activeTab === 'ice' ? (
               <>
                 <IceIcon size={24} color="#0284c7" />
@@ -930,15 +937,9 @@ export default function Staff() {
                 <span>{t('wastageTrackerTitle') || 'Prawn Head Wastage Sales'}</span>
               </>
             ) : activeTab === 'accounts' ? (
-              <>
-                <span style={{ fontSize: '1.3rem' }}>📒</span>
-                <span>{t('workerAccountsTitle') || 'Worker Accounts & Wage Ledger'}</span>
-              </>
+              <span>{t('workerAccountsTitle') || 'Worker Accounts & Wage Ledger'}</span>
             ) : activeTab === 'net' ? (
-              <>
-                <span style={{ fontSize: '1.3rem' }}>📊</span>
-                <span>{t('dailyNetTitle') || 'Daily Operations Net Summary'}</span>
-              </>
+              <span>{t('dailyNetTitle') || 'Daily Operations Net Summary'}</span>
             ) : activeTab === 'calendar' ? (
               <>
                 <span style={{ fontSize: '1.3rem' }}>📅</span>
@@ -950,7 +951,7 @@ export default function Staff() {
                 <span>{t('workerLaborTitle') || t('staff') || 'Workers Labor & Daily Operations'}</span>
               </>
             )}
-          </h2>
+          </h1>
           <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '0.85rem' }}>
             {activeTab === 'ice'
               ? (t('iceTrackerSubtitle') || 'Track daily ice block purchases, suppliers, recipients, factory usage & cooling expenses')
@@ -966,7 +967,7 @@ export default function Staff() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="u-flex-wrap-gap">
           <button
             className="btn btn-secondary staff-header-refresh"
             onClick={handleRefresh}
@@ -987,7 +988,7 @@ export default function Staff() {
           className={`staff-tab-btn ${activeTab === 'entries' ? 'active' : ''}`}
           onClick={() => setActiveTab('entries')}
         >
-          <span>👥 {t('workerLaborTitle') || 'Workers Labor'}</span>
+          <span>{t('workerLaborTitle') || 'Workers Labor'}</span>
           <span className="staff-tab-badge">
             {entries.length}
           </span>
@@ -998,7 +999,7 @@ export default function Staff() {
           className={`staff-tab-btn ${activeTab === 'ice' ? 'active' : ''}`}
           onClick={() => setActiveTab('ice')}
         >
-          <span>🧊 {t('iceBlocks') || 'Ice Blocks'}</span>
+          <span>{t('iceBlocks') || 'Ice Blocks'}</span>
         </button>
 
         <button
@@ -1006,7 +1007,7 @@ export default function Staff() {
           className={`staff-tab-btn ${activeTab === 'wastage' ? 'active' : ''}`}
           onClick={() => setActiveTab('wastage')}
         >
-          <span>🦐 {t('prawnHeadWastage') || 'Wastage'}</span>
+          <span>{t('prawnHeadWastage') || 'Wastage'}</span>
         </button>
 
         <button
@@ -1014,7 +1015,7 @@ export default function Staff() {
           className={`staff-tab-btn ${activeTab === 'accounts' ? 'active' : ''}`}
           onClick={() => setActiveTab('accounts')}
         >
-          <span>📒 {t('workerAccounts') || 'Accounts'}</span>
+          <span>{t('workerAccounts') || 'Accounts'}</span>
           <span className="staff-tab-badge">
             {summary?.staffAccounts?.length || 0}
           </span>
@@ -1025,7 +1026,7 @@ export default function Staff() {
           className={`staff-tab-btn ${activeTab === 'net' ? 'active' : ''}`}
           onClick={() => setActiveTab('net')}
         >
-          <span>📊 {t('dailyOperations') || 'Net Summary'}</span>
+          <span>{t('dailyOperations') || 'Net Summary'}</span>
         </button>
 
         <button
@@ -1033,7 +1034,7 @@ export default function Staff() {
           className={`staff-tab-btn ${activeTab === 'calendar' ? 'active' : ''}`}
           onClick={() => setActiveTab('calendar')}
         >
-          <span>📅 {t('attendanceCalendar') || 'Calendar'}</span>
+          <span>{t('attendanceCalendar') || 'Calendar'}</span>
         </button>
       </div>
 
@@ -1070,7 +1071,7 @@ export default function Staff() {
                       <span className="staff-glance-subcol-label">Processed</span>
                       <span className="staff-glance-subcol-val">{processedKg.toLocaleString('en-IN')} <span style={{ fontSize: '0.72rem', fontWeight: 600, opacity: 0.8 }}>kg</span></span>
                     </div>
-                    <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
+                    <div className="staff-glance-subcol u-text-right" >
                       <span className="staff-glance-subcol-label">To Pay</span>
                       <span className="staff-glance-subcol-val" style={{ color: '#ea580c' }}>{formatCurrency(pendingWages)}</span>
                     </div>
@@ -1079,16 +1080,16 @@ export default function Staff() {
 
                 {/* Desktop Detailed KPI Grid */}
                 <div className="staff-desktop-stats">
-                  <div className="staff-kpi-grid" style={{ marginBottom: '20px' }}>
+                  <div className="staff-kpi-grid u-mb-20" >
                     {/* Period Workers */}
                     <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0b5394' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="u-flex-between">
                         <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                           {periodLabel} Workers
                         </span>
                         <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>{badgeLabel}</span>
                       </div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#0b5394', marginTop: '6px' }}>
                         {workersCount}
                         <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b', marginLeft: '6px' }}>present</span>
                       </div>
@@ -1099,13 +1100,13 @@ export default function Staff() {
 
                     {/* Period Weight Processed */}
                     <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0891b2' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="u-flex-between">
                         <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                           {periodLabel} Processed
                         </span>
                         <ScaleIcon size={16} color="#0891b2" />
                       </div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0891b2', marginTop: '6px' }}>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#0891b2', marginTop: '6px' }}>
                         {processedKg.toLocaleString('en-IN')}
                         <span style={{ fontSize: '0.9rem', fontWeight: 700, marginLeft: '4px' }}>kg</span>
                       </div>
@@ -1116,13 +1117,13 @@ export default function Staff() {
 
                     {/* Period Total Wages */}
                     <div className="staff-kpi-card" style={{ borderLeft: '4px solid #16a34a' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="u-flex-between">
                         <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                           {periodLabel} Wages
                         </span>
                         <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>Earned</span>
                       </div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#16a34a', marginTop: '6px' }}>
                         {formatCurrency(totalWages)}
                       </div>
                       <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
@@ -1132,13 +1133,13 @@ export default function Staff() {
 
                     {/* Period Outstanding Wages to Pay */}
                     <div className="staff-kpi-card" style={{ borderLeft: '4px solid #ea580c' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="u-flex-between">
                         <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                           {periodLabel} Pending
                         </span>
                         <span className="badge badge-amber" style={{ fontSize: '0.7rem' }}>To Pay</span>
                       </div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ea580c', marginTop: '6px' }}>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#ea580c', marginTop: '6px' }}>
                         {formatCurrency(pendingWages)}
                       </div>
                       <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
@@ -1162,10 +1163,10 @@ export default function Staff() {
                 background: '#fafcff',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div className="u-flex-between-mb">
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0b5394', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    <span>⚡ {t('bulkStaffAttendanceEntry') || 'Bulk Staff Attendance Entry'}</span>
+                    <span>{t('bulkStaffAttendanceEntry') || 'Bulk Staff Attendance Entry'}</span>
                     {bulkRows.some((r) => r.staffName?.trim() || r.quantity) && (
                       <span style={{ fontSize: '0.72rem', color: '#16a34a', background: '#dcfce7', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>
                         ✓ {t('draftSaved') || 'Draft Auto-Saved'}
@@ -1213,7 +1214,7 @@ export default function Staff() {
                   }}
                   title="Auto-fill worker names from yesterday's attendance team"
                 >
-                  <span>{t('copyYesterdayTeam') || "⚡ Copy Yesterday's Team"}</span>
+                  <span>{t('copyYesterdayTeam') || "Copy Yesterday's Team"}</span>
                 </button>
               </div>
 
@@ -1270,7 +1271,7 @@ export default function Staff() {
                       </div>
                       <div className="bulk-row-total-bar">
                         <span style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 700 }}>Total:</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div className="u-flex-row">
                           <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0b5394' }}>
                             {formatCurrency(rowTotal)}
                           </span>
@@ -1312,7 +1313,7 @@ export default function Staff() {
                       onClick={handleClearDraft}
                       style={{ color: '#ef4444', fontWeight: 700, fontSize: '0.8rem' }}
                     >
-                      🗑️ {t('clearDraft') || 'Clear Draft'}
+                      {t('clearDraft') || 'Clear Draft'}
                     </button>
                   )}
                   <button
@@ -1352,7 +1353,7 @@ export default function Staff() {
                 gap: '10px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="u-flex-row">
                 <span style={{ fontSize: '0.88rem', color: '#1e40af', fontWeight: 700 }}>
                   Showing work records for: <strong>{selectedWorkerFilter}</strong>
                 </span>
@@ -1360,16 +1361,16 @@ export default function Staff() {
                   {entries.length} entries
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="u-flex-row">
                 <button
                   type="button"
                   className="btn btn-sm"
                   onClick={() => handlePrintWorkerStatement(selectedWorkerFilter)}
                   disabled={printingStatement}
                   style={{
-                    background: '#7c3aed',
+                    background: '#0b5394',
                     color: '#ffffff',
-                    fontWeight: 800,
+                    fontWeight: 600,
                     fontSize: '0.8rem',
                     display: 'flex',
                     alignItems: 'center',
@@ -1377,7 +1378,6 @@ export default function Staff() {
                     border: 'none',
                     padding: '6px 12px',
                     borderRadius: '6px',
-                    boxShadow: '0 2px 4px rgba(124, 58, 237, 0.2)',
                   }}
                   title={`Print official settlement / wage bill for ${selectedWorkerFilter}`}
                 >
@@ -1493,7 +1493,6 @@ export default function Staff() {
                 onClick={() => setBulkModalOpen(!bulkModalOpen)}
                 style={{ border: '1.5px solid #0b5394', color: '#0b5394' }}
               >
-                <span>⚡</span>
                 <span>{bulkModalOpen ? (t('hideBulkEntry') || 'Hide Bulk').replace(/^⚡\s*/, '') : (t('bulkAttendance') || 'Bulk Attendance').replace(/^⚡\s*/, '')}</span>
               </button>
 
@@ -1523,7 +1522,7 @@ export default function Staff() {
                   {search ? 'No Matching Work Entries' : 'No Work Entries Found'}
                 </h4>
                 <p style={{ margin: 0, fontSize: '0.85rem' }}>
-                  {search ? `No entries matched "${search}". Clear search or try another worker name.` : 'Click "+ Add Work Entry" or "⚡ Bulk Attendance" above to record staff labor.'}
+                  {search ? `No entries matched "${search}". Clear search or try another worker name.` : 'Click "+ Add Work Entry" or "Bulk Attendance" above to record staff labor.'}
                 </p>
               </div>
             ) : (
@@ -1556,7 +1555,7 @@ export default function Staff() {
                               </span>
                               {entry.isOffline && (
                                 <span style={{ fontSize: '0.65rem', background: '#fef3c7', color: '#92400e', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
-                                  ⚡ Offline
+                                  Offline
                                 </span>
                               )}
                               <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>• {formatDate(entry.date)}</span>
@@ -1585,19 +1584,19 @@ export default function Staff() {
 
                       {/* Clean Details Strip */}
                       <div className="worker-clean-details-bar">
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span className="u-flex-row-tight">
                           <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Weight:</span>
                           <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>{entry.quantity} kg</strong>
                         </span>
                         <span style={{ color: '#cbd5e1' }}>|</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span className="u-flex-row-tight">
                           <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Rate:</span>
                           <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>₹{entry.price}/kg</strong>
                         </span>
                         {entry.paymentStatus !== 'Paid' && (
                           <>
                             <span style={{ color: '#cbd5e1' }}>|</span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span className="u-flex-row-tight">
                               <span style={{ color: '#b45309', fontSize: '0.72rem' }}>Due:</span>
                               <strong style={{ color: '#b45309', fontSize: '0.86rem' }}>
                                 ₹{Math.max(0, (entry.totalAmount || 0) - (entry.amountPaid || 0)).toFixed(0)}
@@ -1619,9 +1618,9 @@ export default function Staff() {
                           type="button"
                           className="btn btn-secondary btn-sm"
                           onClick={() => handlePrintEntryBill(entry, index)}
-                          style={{ color: '#7c3aed', borderColor: '#ddd6fe', fontWeight: 700, background: '#f5f3ff', flex: '0 0 auto', padding: '0 12px' }}
+                          style={{ color: '#0b5394', borderColor: '#cbd5e1', fontWeight: 600, background: '#f8fafc', flex: '0 0 auto', padding: '0 12px' }}
                         >
-                          <PrintIcon size={14} color="#7c3aed" />
+                          <PrintIcon size={14} color="#0b5394" />
                           <span>Bill</span>
                         </button>
 
@@ -1647,23 +1646,27 @@ export default function Staff() {
                         </button>
 
                         {canEditDelete && (
-                          <div style={{ display: 'flex', gap: '4px', marginLeft: 'auto' }}>
+                          <div style={{ display: 'flex', gap: '6px', marginLeft: 'auto' }}>
                             <button
+                              type="button"
                               className="btn btn-secondary btn-sm"
-                              style={{ width: '34px', padding: 0, justifyContent: 'center' }}
+                              style={{ minWidth: '48px', minHeight: '48px', padding: 0, justifyContent: 'center' }}
                               onClick={() => handleOpenEdit(entry)}
                               title="Edit"
+                              aria-label={`Edit entry for ${entry.staffName}`}
                             >
-                              <EditIcon size={14} />
+                              <EditIcon size={16} />
                             </button>
 
                             <button
+                              type="button"
                               className="btn btn-ghost btn-sm"
-                              style={{ color: '#ef4444', width: '34px', padding: 0, justifyContent: 'center' }}
+                              style={{ color: '#b42318', minWidth: '48px', minHeight: '48px', padding: 0, justifyContent: 'center' }}
                               onClick={() => handlePromptDelete(entry)}
                               title="Delete"
+                              aria-label={`Delete entry for ${entry.staffName}`}
                             >
-                              <TrashIcon size={14} color="#ef4444" />
+                              <TrashIcon size={16} color="#b42318" />
                             </button>
                           </div>
                         )}
@@ -1699,7 +1702,7 @@ export default function Staff() {
                     <tbody>
                       {displayedEntries.map((entry, index) => (
                         <tr key={entry._id}>
-                          <td style={{ textAlign: 'center' }}>
+                          <td className="u-text-center">
                             {entry.paymentStatus !== 'Paid' ? (
                               <input
                                 type="checkbox"
@@ -1722,7 +1725,7 @@ export default function Staff() {
                             </strong>
                             {entry.isOffline && (
                               <span style={{ fontSize: '0.68rem', background: '#fef3c7', color: '#92400e', padding: '1px 5px', borderRadius: '4px', fontWeight: 800, marginLeft: '6px' }}>
-                                ⚡ Offline
+                                Offline
                               </span>
                             )}
                             {entry.staffPhone && (
@@ -1739,7 +1742,7 @@ export default function Staff() {
                               </span>
                             )}
                           </td>
-                          <td className="text-right" style={{ fontWeight: 700 }}>
+                          <td className="text-right u-fw-bold" >
                             {entry.quantity} kg
                           </td>
                           <td className="text-right">₹{entry.price?.toFixed(2)}</td>
@@ -1770,10 +1773,10 @@ export default function Staff() {
                                 style={{
                                   padding: '4px 8px',
                                   fontSize: '0.75rem',
-                                  background: '#f5f3ff',
-                                  color: '#7c3aed',
-                                  border: '1px solid #ddd6fe',
-                                  fontWeight: 800,
+                                  background: '#e8f1fa',
+                                  color: '#0b5394',
+                                  border: '1px solid #bfdbfe',
+                                  fontWeight: 600,
                                   display: 'inline-flex',
                                   alignItems: 'center',
                                   gap: '4px',
@@ -1781,7 +1784,7 @@ export default function Staff() {
                                 onClick={() => handlePrintEntryBill(entry, index)}
                                 title="Generate & View Worker Wage Bill"
                               >
-                                <PrintIcon size={13} color="#7c3aed" /> Bill
+                                <PrintIcon size={13} color="#0b5394" /> Bill
                               </button>
                               <button
                                 className={`btn btn-sm ${entry.paymentStatus === 'Paid' ? 'btn-ghost' : 'btn-primary'}`}
@@ -1808,12 +1811,14 @@ export default function Staff() {
                                     <EditIcon size={13} /> Edit
                                   </button>
                                   <button
+                                    type="button"
                                     className="btn btn-ghost btn-sm"
-                                    style={{ padding: '4px 8px', color: '#ef4444' }}
+                                    style={{ padding: '4px 8px', color: '#b42318' }}
                                     onClick={() => handlePromptDelete(entry)}
                                     title="Delete entry"
+                                    aria-label={`Delete work entry for ${entry.staffName}`}
                                   >
-                                    <TrashIcon size={13} color="#ef4444" />
+                                    <TrashIcon size={13} color="#b42318" />
                                   </button>
                                 </>
                               )}
@@ -1878,17 +1883,17 @@ export default function Staff() {
                     </div>
 
                     <div className="worker-clean-details-bar">
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span className="u-flex-row-tight">
                         <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Total Weight:</span>
                         <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>{acc.totalKg} kg</strong>
                       </span>
                       <span style={{ color: '#cbd5e1' }}>|</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span className="u-flex-row-tight">
                         <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Avg Rate:</span>
                         <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>₹{acc.avgRate}/kg</strong>
                       </span>
                       <span style={{ color: '#cbd5e1' }}>|</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span className="u-flex-row-tight">
                         <span style={{ color: '#16a34a', fontSize: '0.72rem' }}>Paid:</span>
                         <strong style={{ color: '#16a34a', fontSize: '0.86rem' }}>{formatCurrency(acc.totalPaid)}</strong>
                       </span>
@@ -1908,18 +1913,18 @@ export default function Staff() {
                         style={{
                           flex: 1,
                           fontSize: '0.8rem',
-                          fontWeight: 800,
-                          background: '#f5f3ff',
-                          color: '#7c3aed',
-                          border: '1px solid #ddd6fe',
+                          fontWeight: 600,
+                          background: '#e8f1fa',
+                          color: '#0b5394',
+                          border: '1px solid #bfdbfe',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '6px',
-                          height: '36px',
+                          minHeight: '48px',
                         }}
                       >
-                        <PrintIcon size={14} color="#7c3aed" /> Wage Statement
+                        <PrintIcon size={14} color="#0b5394" /> Wage Statement
                       </button>
                     </div>
                   </div>
@@ -1962,7 +1967,7 @@ export default function Staff() {
                         <td className="text-center">
                           <span className="badge badge-blue">{acc.daysWorkedCount} days</span>
                         </td>
-                        <td className="text-right" style={{ fontWeight: 700 }}>
+                        <td className="text-right u-fw-bold" >
                           {acc.totalKg} kg
                         </td>
                         <td className="text-right">₹{acc.avgRate?.toFixed(2)}</td>
@@ -2004,17 +2009,17 @@ export default function Staff() {
                               onClick={() => handlePrintWorkerStatement(acc.staffName)}
                               style={{
                                 fontSize: '0.78rem',
-                                fontWeight: 800,
-                                background: '#f5f3ff',
-                                color: '#7c3aed',
-                                border: '1px solid #ddd6fe',
+                                fontWeight: 600,
+                                background: '#e8f1fa',
+                                color: '#0b5394',
+                                border: '1px solid #bfdbfe',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '4px',
                               }}
                               title={`Print complete wage statement bill for ${acc.staffName}`}
                             >
-                              <PrintIcon size={13} color="#7c3aed" /> Bill
+                              <PrintIcon size={13} color="#0b5394" /> Bill
                             </button>
                           </div>
                         </td>
@@ -2061,15 +2066,27 @@ export default function Staff() {
       )}
 
       {/* MODAL: SINGLE WORK ENTRY (CREATE / EDIT) */}
-      {modalOpen && (
-        <div className="modal-backdrop" onClick={() => setModalOpen(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                {editingEntry ? 'Edit Work Entry' : 'Record Staff Work'}
-              </h3>
-              <button className="btn btn-ghost btn-sm" onClick={() => setModalOpen(false)}>✕</button>
-            </div>
+      <Modal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        maxWidth="480px"
+        labelledBy="staff-work-modal-title"
+      >
+        <div>
+          <div className="u-flex-between-mb">
+            <h3 id="staff-work-modal-title" style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              {editingEntry ? 'Edit Work Entry' : 'Record Staff Work'}
+            </h3>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setModalOpen(false)}
+              aria-label="Close work entry modal"
+              style={{ minWidth: '48px', minHeight: '48px' }}
+            >
+              <CloseIcon size={18} />
+            </button>
+          </div>
 
             <form onSubmit={handleSaveEntry}>
               {/* Date */}
@@ -2131,7 +2148,7 @@ export default function Staff() {
 
               {/* Quantity (KG) and Price (₹/KG) */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-                <div className="form-group" style={{ margin: 0 }}>
+                <div className="form-group u-m-0" >
                   <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem' }}>
                     Quantity (KG) *
                   </label>
@@ -2147,7 +2164,7 @@ export default function Staff() {
                   />
                 </div>
 
-                <div className="form-group" style={{ margin: 0 }}>
+                <div className="form-group u-m-0" >
                   <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem' }}>
                     Price / KG (₹) *
                   </label>
@@ -2185,14 +2202,14 @@ export default function Staff() {
                     {liveQty || 0} kg × ₹{livePrice || 0}/kg
                   </div>
                 </div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0b5394' }}>
+                <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0b5394' }}>
                   {formatCurrency(liveTotal)}
                 </div>
               </div>
 
               {/* Work Type & Payment Status */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-                <div className="form-group" style={{ margin: 0 }}>
+                <div className="form-group u-m-0" >
                   <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem' }}>
                     Work Type
                   </label>
@@ -2210,7 +2227,7 @@ export default function Staff() {
                   </select>
                 </div>
 
-                <div className="form-group" style={{ margin: 0 }}>
+                <div className="form-group u-m-0" >
                   <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem' }}>
                     Payment Status
                   </label>
@@ -2226,7 +2243,7 @@ export default function Staff() {
               </div>
 
               {/* Optional Notes */}
-              <div className="form-group" style={{ marginBottom: '16px' }}>
+              <div className="form-group u-mb-16" >
                 <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem' }}>
                   Remarks / Notes (Optional)
                 </label>
@@ -2252,7 +2269,7 @@ export default function Staff() {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  style={{ flex: 1.5, background: '#0b5394', fontWeight: 800 }}
+                  style={{ flex: 1.5, background: '#0b5394', fontWeight: 700 }}
                   disabled={saving}
                 >
                   {saving ? 'Saving...' : editingEntry ? 'Update Entry' : 'Save Work Entry'}
@@ -2260,8 +2277,7 @@ export default function Staff() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+      </Modal>
 
       {/* ── 1. HIDDEN PRINTABLE BILL: SINGLE WORKER WAGE VOUCHER ── */}
       {activeBillEntry && (
@@ -2270,20 +2286,20 @@ export default function Staff() {
             {/* Top Bar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #0b5394', padding: '4px 12px', fontSize: '0.82rem', fontWeight: 'bold', color: '#0b5394' }}>
               <div>WORKER BILL</div>
-              <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 900, letterSpacing: '1px' }}>॥ జై శ్రీరామ్ ॥</div>
+              <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 700, letterSpacing: '1px' }}>॥ జై శ్రీరామ్ ॥</div>
               <div>Cell: 9441429745</div>
             </div>
 
             {/* Company Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1.5px solid #0b5394', padding: '8px 16px' }}>
               <div style={{ width: '88px', textAlign: 'left', flexShrink: 0 }}>
-                <img src={ganeshaImg} alt="Lord Ganesha" style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
+                <img src={ganeshaImg} alt="Lord Ganesha" width={84} height={84} style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
               </div>
               <div style={{ flex: 1, textAlign: 'center', padding: '0 8px' }}>
-                <img src={durgaImg} alt="Durga Maa" style={{ width: '54px', height: '54px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }} />
-                <h1 style={{ color: '#0b5394', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '0.8px', margin: '0 0 2px 0', fontFamily: 'Arial, sans-serif' }}>
+                <img src={durgaImg} alt="Durga Maa" width={54} height={54} style={{ width: '54px', height: '54px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }} />
+                <div style={{ color: '#0b5394', fontSize: '1.6rem', fontWeight: 800, letterSpacing: '0.8px', margin: '0 0 2px 0', fontFamily: 'Arial, sans-serif' }}>
                   VIJAYA DURGA SEA FOODS
-                </h1>
+                </div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#000000', margin: '2px 0' }}>
                   Prop: SATTINENI VENKATA DHANA LAXMI &nbsp;|&nbsp; GSTIN: 37KATPS1500Q1ZR
                 </div>
@@ -2292,27 +2308,27 @@ export default function Staff() {
                 </div>
               </div>
               <div style={{ width: '88px', textAlign: 'right', flexShrink: 0 }}>
-                <img src={ramDarbarImg} alt="Ram Darbar" style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
+                <img src={ramDarbarImg} alt="Ram Darbar" width={84} height={84} style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
               </div>
             </div>
 
             {/* Voucher No & Date Row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.85rem' }}>
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
-                <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                <span className="u-inv-label">Voucher No.</span>
+                <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                   {activeBillEntry.voucherNo || (viewingVoucher?.voucherNo || 'WB-1')}
                 </span>
               </div>
               <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(activeBillEntry.date)}</span>
+                <span className="u-inv-label">Date:</span>
+                <span className="u-text-ink-bold">{formatDate(activeBillEntry.date)}</span>
               </div>
             </div>
 
             {/* Worker Name Row */}
             <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1.5px solid #0b5394', padding: '6px 10px', gap: '10px', fontSize: '0.9rem' }}>
-              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Worker Name:</span>
+              <span className="u-inv-label">Worker Name:</span>
               <strong style={{ fontSize: '1.05rem', color: '#000000' }}>{activeBillEntry.staffName}</strong>
               {activeBillEntry.staffPhone && (
                 <span style={{ fontSize: '0.8rem', color: '#64748b', marginLeft: 'auto' }}>
@@ -2324,11 +2340,11 @@ export default function Staff() {
             {/* Shift & Status Row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.82rem' }}>
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Work Category & Shift: </span>
+                <span className="u-inv-label">Work Category & Shift: </span>
                 <span style={{ fontWeight: 'bold' }}>{activeBillEntry.workType || 'Processing'} ({activeBillEntry.shift || 'Full Day'})</span>
               </div>
               <div style={{ padding: '5px 10px' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Payment Status: </span>
+                <span className="u-inv-label">Payment Status: </span>
                 <span style={{ fontWeight: 'bold', color: activeBillEntry.paymentStatus === 'Paid' ? '#16a34a' : activeBillEntry.paymentStatus === 'Partial' ? '#0284c7' : '#d97706' }}>
                   {activeBillEntry.paymentStatus === 'Partial' ? `Partial (₹${activeBillEntry.amountPaid || 0})` : (activeBillEntry.paymentStatus || 'Pending')}
                 </span>
@@ -2365,20 +2381,20 @@ export default function Staff() {
                 {/* 2 Blank lines for authentic invoice layout spacing */}
                 {[1, 2].map((i) => (
                   <tr key={i} style={{ height: '22px', borderBottom: '1px solid #c8d9e8' }}>
-                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                    <td className="u-inv-br"></td>
+                    <td className="u-inv-br"></td>
+                    <td className="u-inv-br"></td>
+                    <td className="u-inv-br"></td>
                     <td></td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr style={{ background: '#e8f1f8', borderTop: '1.5px solid #0b5394', fontWeight: 'bold' }}>
-                  <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 900 }}>
+                  <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 700 }}>
                     TOTAL WAGE AMOUNT:
                   </td>
-                  <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 900, color: '#000000' }}>
+                  <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 700, color: '#000000' }}>
                     ₹{Number(activeBillEntry.totalAmount).toFixed(2)}
                   </td>
                 </tr>
@@ -2388,25 +2404,26 @@ export default function Staff() {
             {/* Notes if present */}
             {activeBillEntry.notes && (
               <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#fafafa' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Notes / Remarks: </span>{activeBillEntry.notes}
+                <span className="u-inv-label">Notes / Remarks: </span>{activeBillEntry.notes}
               </div>
             )}
 
             {/* Amount in Words */}
             <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
-              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Amount in Words: </span>
-              <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(activeBillEntry.totalAmount)}</span>
+              <span className="u-inv-label">Amount in Words: </span>
+              <span className="u-text-ink-bold">{numberToWords(activeBillEntry.totalAmount)}</span>
             </div>
 
             {/* Bank Details & Proprietor Signature (Worker signature removed as requested) */}
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', borderTop: '1.5px solid #0b5394', fontSize: '0.74rem', lineHeight: '1.4' }}>
               <div style={{ borderRight: '1.5px solid #0b5394', padding: '8px 12px', background: '#fafafa' }}>
                 <div style={{ fontWeight: 'bold', color: '#0b5394', marginBottom: '2px', fontSize: '0.76rem' }}>
-                  Bank Account Details:
+                  {CANONICAL_BANK_DETAILS.title}
                 </div>
-                <div><strong>Bank:</strong> KARUR VYSYA BANK</div>
-                <div><strong>A/C No:</strong> 4805135000002964</div>
-                <div><strong>IFSC:</strong> KVBL0004815 &nbsp;|&nbsp; <strong>Branch:</strong> Narasapur</div>
+                <div><strong>Bank:</strong> {CANONICAL_BANK_DETAILS.bankName}</div>
+                <div><strong>A/C Name:</strong> {CANONICAL_BANK_DETAILS.accountName}</div>
+                <div><strong>A/C No:</strong> {CANONICAL_BANK_DETAILS.accountNo}</div>
+                <div><strong>IFSC:</strong> {CANONICAL_BANK_DETAILS.ifsc} &nbsp;|&nbsp; <strong>Branch:</strong> {CANONICAL_BANK_DETAILS.branch}</div>
               </div>
 
               <div style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center', background: '#ffffff' }}>
@@ -2429,20 +2446,20 @@ export default function Staff() {
             {/* Top Bar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #0b5394', padding: '4px 12px', fontSize: '0.82rem', fontWeight: 'bold', color: '#0b5394' }}>
               <div>WORKER WAGE STATEMENT & SETTLEMENT BILL</div>
-              <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 900, letterSpacing: '1px' }}>॥ జై శ్రీరామ్ ॥</div>
+              <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 700, letterSpacing: '1px' }}>॥ జై శ్రీరామ్ ॥</div>
               <div>Cell: 9441429745</div>
             </div>
 
             {/* Company Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1.5px solid #0b5394', padding: '8px 16px' }}>
               <div style={{ width: '88px', textAlign: 'left', flexShrink: 0 }}>
-                <img src={ganeshaImg} alt="Lord Ganesha" style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
+                <img src={ganeshaImg} alt="Lord Ganesha" width={84} height={84} style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
               </div>
               <div style={{ flex: 1, textAlign: 'center', padding: '0 8px' }}>
-                <img src={durgaImg} alt="Durga Maa" style={{ width: '54px', height: '54px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }} />
-                <h1 style={{ color: '#0b5394', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '0.8px', margin: '0 0 2px 0', fontFamily: 'Arial, sans-serif' }}>
+                <img src={durgaImg} alt="Durga Maa" width={54} height={54} style={{ width: '54px', height: '54px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }} />
+                <div style={{ color: '#0b5394', fontSize: '1.6rem', fontWeight: 800, letterSpacing: '0.8px', margin: '0 0 2px 0', fontFamily: 'Arial, sans-serif' }}>
                   VIJAYA DURGA SEA FOODS
-                </h1>
+                </div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#000000', margin: '2px 0' }}>
                   Prop: SATTINENI VENKATA DHANA LAXMI &nbsp;|&nbsp; GSTIN: 37KATPS1500Q1ZR
                 </div>
@@ -2451,27 +2468,27 @@ export default function Staff() {
                 </div>
               </div>
               <div style={{ width: '88px', textAlign: 'right', flexShrink: 0 }}>
-                <img src={ramDarbarImg} alt="Ram Darbar" style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
+                <img src={ramDarbarImg} alt="Ram Darbar" width={84} height={84} style={{ width: '84px', height: '84px', objectFit: 'contain' }} />
               </div>
             </div>
 
             {/* Statement No & Date Row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.85rem' }}>
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Statement No.</span>
-                <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                <span className="u-inv-label">Statement No.</span>
+                <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                   STMT-{statementWorker.replace(/\s+/g, '').slice(0, 4).toUpperCase()}-{Date.now().toString().slice(-4)}
                 </span>
               </div>
               <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(new Date())}</span>
+                <span className="u-inv-label">Date:</span>
+                <span className="u-text-ink-bold">{formatDate(new Date())}</span>
               </div>
             </div>
 
             {/* Worker Name Row */}
             <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1.5px solid #0b5394', padding: '6px 10px', gap: '10px', fontSize: '0.9rem' }}>
-              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Worker Name:</span>
+              <span className="u-inv-label">Worker Name:</span>
               <strong style={{ fontSize: '1.05rem', color: '#000000' }}>{statementWorker}</strong>
               {statementSummary.staffPhone && (
                 <span style={{ fontSize: '0.8rem', color: '#64748b', marginLeft: 'auto' }}>
@@ -2483,13 +2500,13 @@ export default function Staff() {
             {/* Period & Days Worked Row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1.5px solid #0b5394', fontSize: '0.82rem' }}>
               <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Period: </span>
+                <span className="u-inv-label">Period: </span>
                 <span style={{ fontWeight: 'bold' }}>
                   {dateFrom && dateTo ? `${formatDate(dateFrom)} to ${formatDate(dateTo)}` : dateFilter === 'week' ? 'Past 7 Days' : dateFilter === 'month' ? 'This Month' : 'All-Time Record'}
                 </span>
               </div>
               <div style={{ padding: '5px 10px' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Days Worked: </span>
+                <span className="u-inv-label">Days Worked: </span>
                 <span style={{ fontWeight: 'bold' }}>{statementSummary.daysWorkedCount} days ({statementEntries.length} sessions)</span>
               </div>
             </div>
@@ -2525,16 +2542,16 @@ export default function Staff() {
               <tfoot>
                 {/* Grand Total Row */}
                 <tr style={{ background: '#e8f1f8', borderTop: '1.5px solid #0b5394', fontWeight: 'bold' }}>
-                  <td colSpan={3} style={{ textAlign: 'right', padding: '6px 10px', color: '#0b5394', fontSize: '0.88rem', fontWeight: 900 }}>
+                  <td colSpan={3} style={{ textAlign: 'right', padding: '6px 10px', color: '#0b5394', fontSize: '0.88rem', fontWeight: 700 }}>
                     TOTAL PROCESSED:
                   </td>
-                  <td style={{ textAlign: 'right', padding: '6px', fontWeight: 900, color: '#0b5394', borderRight: '1.5px solid #0b5394' }}>
+                  <td style={{ textAlign: 'right', padding: '6px', fontWeight: 700, color: '#0b5394', borderRight: '1.5px solid #0b5394' }}>
                     {statementSummary.totalKg} kg
                   </td>
-                  <td style={{ textAlign: 'right', padding: '6px 8px', color: '#0b5394', fontWeight: 900, borderRight: '1.5px solid #0b5394' }}>
+                  <td style={{ textAlign: 'right', padding: '6px 8px', color: '#0b5394', fontWeight: 700, borderRight: '1.5px solid #0b5394' }}>
                     TOTAL:
                   </td>
-                  <td style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.95rem', fontWeight: 900, color: '#000000', borderRight: '1.5px solid #0b5394' }}>
+                  <td style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.95rem', fontWeight: 700, color: '#000000', borderRight: '1.5px solid #0b5394' }}>
                     ₹{statementSummary.totalEarned.toFixed(2)}
                   </td>
                   <td></td>
@@ -2545,7 +2562,7 @@ export default function Staff() {
                   <td colSpan={3} style={{ textAlign: 'right', padding: '5px 10px', color: '#16a34a', fontWeight: 'bold' }}>
                     Amount Paid: ₹{statementSummary.totalPaid.toFixed(2)}
                   </td>
-                  <td colSpan={4} style={{ textAlign: 'right', padding: '6px 10px', fontWeight: 900, fontSize: '0.95rem', color: statementSummary.pendingBalance > 0 ? '#b12704' : '#16a34a' }}>
+                  <td colSpan={4} style={{ textAlign: 'right', padding: '6px 10px', fontWeight: 700, fontSize: '0.95rem', color: statementSummary.pendingBalance > 0 ? '#b12704' : '#16a34a' }}>
                     NET BALANCE PAYABLE: ₹{statementSummary.pendingBalance.toFixed(2)}
                   </td>
                 </tr>
@@ -2554,8 +2571,8 @@ export default function Staff() {
 
             {/* Amount in Words */}
             <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
-              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Total Earned in Words: </span>
-              <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(statementSummary.totalEarned)}</span>
+              <span className="u-inv-label">Total Earned in Words: </span>
+              <span className="u-text-ink-bold">{numberToWords(statementSummary.totalEarned)}</span>
             </div>
 
             {/* Bank Details & Signatures */}
@@ -2609,16 +2626,28 @@ export default function Staff() {
         />
       )}
       {/* ── BATCH WORKER PAYMENT CONFIRMATION MODAL ── */}
-      {showBatchModal && (
-        <div className="modal-backdrop" onClick={() => setShowBatchModal(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.2rem' }}>⚡</span>
-                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>Batch Worker Payment</h3>
-              </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowBatchModal(false)}>✕</button>
+      <Modal
+        isOpen={showBatchModal}
+        onClose={() => setShowBatchModal(false)}
+        disableBackdropClose={batchPaying}
+        maxWidth="440px"
+        labelledBy="batch-worker-pay-modal-title"
+      >
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <div className="u-flex-row">
+              <h3 id="batch-worker-pay-modal-title" style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>Batch Worker Payment</h3>
             </div>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShowBatchModal(false)}
+              aria-label="Close batch payment modal"
+              style={{ minWidth: '48px', minHeight: '48px' }}
+            >
+              <CloseIcon size={18} />
+            </button>
+          </div>
 
             <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', marginBottom: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -2629,13 +2658,13 @@ export default function Staff() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Total Wage Amount:</span>
-                <span style={{ fontSize: '1.1rem', fontWeight: 900, color: '#16a34a' }}>
+                <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#16a34a' }}>
                   {formatCurrency(selectedEntryIds.length > 0 ? selectedPendingTotal : pendingTotalWage)}
                 </span>
               </div>
             </div>
 
-            <div className="form-group" style={{ marginBottom: '16px' }}>
+            <div className="form-group u-mb-16" >
               <label className="form-label" style={{ fontWeight: 700, fontSize: '0.82rem' }}>Payment Mode</label>
               <select
                 className="form-input"
@@ -2674,8 +2703,7 @@ export default function Staff() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal
@@ -2709,6 +2737,19 @@ export default function Staff() {
             setEntryToDelete(null);
           }
         }}
+      />
+
+      {/* Clear Bulk Draft Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showClearDraftModal}
+        title={lang === 'te' ? 'సేవ్ చేయని డ్రాఫ్ట్ క్లియర్ చేయాలా?' : 'Clear Unsaved Draft?'}
+        message={t('discardDraftConfirm') || 'Clear unsaved draft entries?'}
+        confirmText={lang === 'te' ? 'అవును, క్లియర్ చేయి' : 'Yes, Clear Draft'}
+        cancelText={lang === 'te' ? 'రద్దు చేయి' : 'Cancel'}
+        confirmType="warning"
+        warningText={lang === 'te' ? 'బల్క్ ఎంట్రీ ఫారమ్‌లోని సేవ్ చేయని వివరాలు తొలగించబడతాయి.' : 'All unsaved bulk entry rows in the draft will be cleared.'}
+        onConfirm={confirmClearDraft}
+        onClose={() => setShowClearDraftModal(false)}
       />
     </div>
   );

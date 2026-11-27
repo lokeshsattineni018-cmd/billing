@@ -2,13 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { customersAPI } from '../services/api';
 import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
-import { SearchIcon, PlusIcon, WhatsAppIcon, DownloadIcon } from '../components/Icons';
+import { SearchIcon, PlusIcon, WhatsAppIcon, DownloadIcon, CloseIcon, LedgerIcon } from '../components/Icons';
 import PaymentModal from '../components/PaymentModal';
+import Modal from '../components/Modal';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function CustomerDirectory() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [search, setSearch] = useState('');
   const { toast, showToast } = useToast();
 
@@ -40,11 +44,13 @@ export default function CustomerDirectory() {
 
   const loadCustomers = async (searchQuery = '') => {
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await customersAPI.list(searchQuery);
       setCustomers(res.data || []);
     } catch (err) {
       if (import.meta.env.DEV) { console.error('Failed to load customers:', err); }
+      setLoadError('Failed to load customer records. Please check connection and retry.');
       showToast('Failed to load customer records', 'error');
     } finally {
       setLoading(false);
@@ -154,15 +160,15 @@ export default function CustomerDirectory() {
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
         <div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-            Customer Master & Payment Center
-          </h2>
+          <h1 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+            {t('customersMasterTitle')}
+          </h1>
           <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0' }}>
-            Record invoice payments, track live balances & customer contact details
+            {t('customersMasterSubtitle')}
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="u-flex-wrap-gap">
           <button
             type="button"
             className="btn btn-secondary"
@@ -170,7 +176,7 @@ export default function CustomerDirectory() {
             style={{ fontWeight: 700, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
             title="Open Outstanding Customer Ledger & Payment Reminders"
           >
-            📋 Outstanding Ledger
+            <LedgerIcon size={16} /> {t('outstandingLedgerBtn')}
           </button>
           <button
             type="button"
@@ -179,7 +185,7 @@ export default function CustomerDirectory() {
             style={{ fontWeight: 700, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
             title="Export complete customer directory as CSV"
           >
-            <DownloadIcon size={16} /> Export CSV
+            <DownloadIcon size={16} /> {t('exportCsvBtn')}
           </button>
           <button
             type="button"
@@ -187,7 +193,7 @@ export default function CustomerDirectory() {
             onClick={() => navigate('/new-bill')}
             style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            <PlusIcon size={16} color="#ffffff" /> Create Invoice
+            <PlusIcon size={16} color="#ffffff" /> {t('createInvoice')}
           </button>
         </div>
       </div>
@@ -197,13 +203,13 @@ export default function CustomerDirectory() {
         <input
           type="text"
           className="form-input"
-          placeholder="Search by customer name, phone, or GSTIN..."
+          placeholder={t('searchCustomersPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{ flex: 1 }}
         />
         <button type="submit" className="btn btn-primary" style={{ background: '#0b5394', color: '#ffffff', fontWeight: 700, padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <SearchIcon size={16} color="#ffffff" /> Search
+          <SearchIcon size={16} color="#ffffff" /> {t('searchBtn')}
         </button>
         {search && (
           <button
@@ -222,6 +228,13 @@ export default function CustomerDirectory() {
       {/* Customers Table */}
       {loading ? (
         <div className="spinner" style={{ minHeight: '300px' }}></div>
+      ) : loadError ? (
+        <div className="card" style={{ padding: '40px 20px', textAlign: 'center' }}>
+          <p style={{ color: '#991b1b', fontWeight: 700, margin: '0 0 12px 0' }}>{loadError}</p>
+          <button type="button" className="btn btn-primary" onClick={() => loadCustomers(search)}>
+            Retry
+          </button>
+        </div>
       ) : customers.length === 0 ? (
         <div className="card" style={{ padding: '48px 20px', textAlign: 'center' }}>
           <div style={{ fontSize: '3rem', marginBottom: '12px', opacity: 0.4 }}>👥</div>
@@ -253,150 +266,245 @@ export default function CustomerDirectory() {
           </div>
         </div>
       ) : (
-        <div className="card" style={{ padding: '0', overflow: 'hidden', borderRadius: '16px', border: '1px solid rgba(226, 232, 240, 0.9)' }}>
-          <div className="table-container">
-            <table className="table" style={{ margin: 0 }}>
-              <thead>
-                <tr style={{ background: '#f8fafc' }}>
-                  <th>Customer Name</th>
-                  <th>Phone / GSTIN</th>
-                  <th className="text-right">Outstanding Balance</th>
-                  <th className="text-right">Lifetime Sales</th>
-                  <th style={{ textAlign: 'center' }}>Total Bills</th>
-                  <th style={{ textAlign: 'center' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {customers.map((c, idx) => (
-                  <tr key={idx}>
-                    <td>
-                      <div
-                        style={{ fontWeight: 800, color: '#0b5394', fontSize: '0.95rem', cursor: 'pointer' }}
-                        onClick={() => handleOpenLedger(c)}
-                        title="Click to view all invoices and record payments"
-                      >
-                        {c.name}
+        <>
+          {/* Mobile Cards View (<= 768px) */}
+          <div className="mobile-bills-list">
+            {customers.map((c, idx) => (
+              <div key={`mob-${idx}`} className="mobile-bill-card">
+                <div className="mobile-bill-header">
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenLedger(c)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        textAlign: 'left',
+                        fontWeight: 700,
+                        color: '#0b5394',
+                        fontSize: '0.96rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {c.name}
+                    </button>
+                    {c.lastBillDate && (
+                      <div style={{ fontSize: '0.72rem', color: '#52606d', marginTop: '2px' }}>
+                        Last bill: {formatDate(c.lastBillDate)}
                       </div>
-                      {c.lastBillDate && (
-                        <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                          Last bill: {formatDate(c.lastBillDate)}
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: 600 }}>{c.phone ? `+91 ${c.phone}` : '—'}</div>
-                      <div style={{ fontSize: '0.74rem', color: '#64748b' }}>{c.gstin || 'No GSTIN'}</div>
-                    </td>
-                    <td className="text-right">
-                      <span style={{ fontWeight: 900, fontSize: '0.95rem', color: c.outstandingBalance > 0 ? '#d97706' : '#16a34a' }}>
-                        {formatCurrency(c.outstandingBalance)}
-                      </span>
-                    </td>
-                    <td className="text-right" style={{ fontWeight: 800 }}>
+                    )}
+                  </div>
+                  <span className="badge badge-blue tabular-num">{c.totalBills} bills</span>
+                </div>
+
+                <div style={{ fontSize: '0.82rem', color: '#334e68', marginBottom: '8px' }}>
+                  <div>{c.phone ? `+91 ${c.phone}` : 'No phone'}</div>
+                  <div style={{ fontSize: '0.74rem', color: '#52606d' }}>{c.gstin || 'No GSTIN'}</div>
+                </div>
+
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '8px',
+                    background: '#f8fafc',
+                    borderRadius: '8px',
+                    padding: '8px 10px',
+                    marginBottom: '10px',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: '0.7rem', color: '#52606d', fontWeight: 600 }}>Outstanding</div>
+                    <div className="tabular-num" style={{ fontSize: '0.95rem', fontWeight: 700, color: c.outstandingBalance > 0 ? '#92400e' : '#166534' }}>
+                      {formatCurrency(c.outstandingBalance)}
+                    </div>
+                  </div>
+                  <div className="u-text-right">
+                    <div style={{ fontSize: '0.7rem', color: '#52606d', fontWeight: 600 }}>Lifetime Sales</div>
+                    <div className="tabular-num" style={{ fontSize: '0.95rem', fontWeight: 700, color: '#102a43' }}>
                       {formatCurrency(c.totalInvoiced)}
-                    </td>
-                    <td style={{ textAlign: 'center', fontWeight: 600 }}>
-                      {c.totalBills}
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                        <button
-                          type="button"
-                          className="btn btn-primary btn-sm"
+                    </div>
+                  </div>
+                </div>
+
+                <div className="u-flex-wrap-gap">
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => handleOpenLedger(c)}
+                    style={{
+                      flex: 1,
+                      background: c.outstandingBalance > 0 ? '#0b5394' : '#f1f5f9',
+                      color: c.outstandingBalance > 0 ? '#ffffff' : '#334e68',
+                      fontWeight: 600,
+                      border: 'none',
+                    }}
+                  >
+                    {c.outstandingBalance > 0 ? 'Receive Payment' : 'View Invoices'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => handleOpenEditModal(c)}
+                    style={{ fontWeight: 600 }}
+                  >
+                    Edit Contact
+                  </button>
+                  {c.phone && (
+                    <button
+                      type="button"
+                      className="btn btn-whatsapp btn-sm"
+                      onClick={() => handleWhatsAppContact(c)}
+                      aria-label={`Chat with ${c.name} on WhatsApp`}
+                    >
+                      <WhatsAppIcon size={16} color="#ffffff" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="card desktop-only-table" style={{ padding: '0', overflow: 'hidden', borderRadius: '16px', border: '1px solid rgba(226, 232, 240, 0.9)' }}>
+            <div className="table-container">
+              <table className="table u-m-0" >
+                <thead>
+                  <tr style={{ background: '#f8fafc' }}>
+                    <th>Customer Name</th>
+                    <th>Phone / GSTIN</th>
+                    <th className="text-right">Outstanding Balance</th>
+                    <th className="text-right">Lifetime Sales</th>
+                    <th className="u-text-center">Total Bills</th>
+                    <th className="u-text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customers.map((c, idx) => (
+                    <tr key={idx}>
+                      <td>
+                        <div
+                          style={{ fontWeight: 700, color: '#0b5394', fontSize: '0.95rem', cursor: 'pointer' }}
                           onClick={() => handleOpenLedger(c)}
-                          style={{
-                            background: c.outstandingBalance > 0 ? '#0b5394' : '#f1f5f9',
-                            color: c.outstandingBalance > 0 ? '#ffffff' : '#475569',
-                            fontWeight: 800,
-                            fontSize: '0.75rem',
-                            padding: '6px 12px',
-                            border: 'none',
-                          }}
-                          title="Record partial/full payments & view invoice breakdown"
+                          title="Click to view all invoices and record payments"
                         >
-                          {c.outstandingBalance > 0 ? 'Receive Payment' : 'View Invoices'}
-                        </button>
-
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => handleOpenEditModal(c)}
-                          style={{ fontWeight: 700, fontSize: '0.75rem', padding: '6px 10px' }}
-                          title="Edit Phone & GSTIN"
-                        >
-                          Edit Contact
-                        </button>
-
-                        {c.phone && (
+                          {c.name}
+                        </div>
+                        {c.lastBillDate && (
+                          <div style={{ fontSize: '0.72rem', color: '#52606d' }}>
+                            Last bill: {formatDate(c.lastBillDate)}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <div className="u-fw-semibold">{c.phone ? `+91 ${c.phone}` : '—'}</div>
+                        <div style={{ fontSize: '0.74rem', color: '#52606d' }}>{c.gstin || 'No GSTIN'}</div>
+                      </td>
+                      <td className="text-right tabular-num">
+                        <span style={{ fontWeight: 700, fontSize: '0.95rem', color: c.outstandingBalance > 0 ? '#92400e' : '#166534' }}>
+                          {formatCurrency(c.outstandingBalance)}
+                        </span>
+                      </td>
+                      <td className="text-right tabular-num u-fw-bold" >
+                        {formatCurrency(c.totalInvoiced)}
+                      </td>
+                      <td className="tabular-num" style={{ textAlign: 'center', fontWeight: 600 }}>
+                        {c.totalBills}
+                      </td>
+                      <td className="u-text-center">
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
                           <button
                             type="button"
-                            className="btn btn-whatsapp btn-sm"
-                            onClick={() => handleWhatsAppContact(c)}
-                            style={{ padding: '6px 10px' }}
-                            title="Chat on WhatsApp"
+                            className="btn btn-primary btn-sm"
+                            onClick={() => handleOpenLedger(c)}
+                            style={{
+                              background: c.outstandingBalance > 0 ? '#0b5394' : '#f1f5f9',
+                              color: c.outstandingBalance > 0 ? '#ffffff' : '#334e68',
+                              fontWeight: 600,
+                              fontSize: '0.75rem',
+                              padding: '6px 12px',
+                              border: 'none',
+                            }}
+                            title="Record partial/full payments & view invoice breakdown"
                           >
-                            <WhatsAppIcon size={14} color="#ffffff" />
+                            {c.outstandingBalance > 0 ? 'Receive Payment' : 'View Invoices'}
                           </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => handleOpenEditModal(c)}
+                            style={{ fontWeight: 600, fontSize: '0.75rem', padding: '6px 10px' }}
+                            title="Edit Phone & GSTIN"
+                          >
+                            Edit Contact
+                          </button>
+
+                          {c.phone && (
+                            <button
+                              type="button"
+                              className="btn btn-whatsapp btn-sm"
+                              onClick={() => handleWhatsAppContact(c)}
+                              style={{ padding: '6px 10px' }}
+                              title="Chat on WhatsApp"
+                              aria-label={`Chat with ${c.name} on WhatsApp`}
+                            >
+                              <WhatsAppIcon size={14} color="#ffffff" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* ========================================================================= */}
       {/* CUSTOMER INVOICES & PAYMENT SETTLEMENT MODAL                              */}
       {/* ========================================================================= */}
-      {ledgerCustomer && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.65)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9990,
-            padding: '16px',
-            backdropFilter: 'blur(4px)',
-          }}
-          onClick={() => setLedgerCustomer(null)}
-        >
-          <div
-            style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              padding: '24px',
-              maxWidth: '840px',
-              width: '100%',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.25)',
-              maxHeight: '92vh',
-              overflowY: 'auto',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
+      <Modal
+        isOpen={Boolean(ledgerCustomer)}
+        onClose={() => setLedgerCustomer(null)}
+        maxWidth="840px"
+        zIndex={9990}
+        labelledBy="customer-ledger-modal-title"
+        contentStyle={{ padding: '24px', borderRadius: '16px', maxHeight: '92vh', overflowY: 'auto' }}
+      >
+        {ledgerCustomer && (
+          <div>
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 900, color: '#0f172a' }}>
+                <h3 id="customer-ledger-modal-title" style={{ margin: 0, fontSize: '1.3rem', fontWeight: 700, color: '#0f172a' }}>
                   {ledgerCustomer.name}
                 </h3>
-                <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', color: '#64748b' }}>
+                <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', color: '#52606d' }}>
                   {ledgerCustomer.phone ? `+91 ${ledgerCustomer.phone}` : 'No phone'} • {ledgerCustomer.gstin || 'No GSTIN'}
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setLedgerCustomer(null)}
-                style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#94a3b8' }}
+                aria-label="Close customer ledger modal"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#52606d',
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                }}
               >
-                ×
+                <CloseIcon size={18} />
               </button>
             </div>
 
@@ -417,7 +525,7 @@ export default function CustomerDirectory() {
                 <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                   Total Invoiced
                 </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', marginTop: '2px' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>
                   {formatCurrency(ledgerCustomer.totalInvoiced)}
                 </div>
               </div>
@@ -425,7 +533,7 @@ export default function CustomerDirectory() {
                 <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                   Total Collected
                 </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#16a34a', marginTop: '2px' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#16a34a', marginTop: '2px' }}>
                   {formatCurrency(ledgerCustomer.totalPaid)}
                 </div>
               </div>
@@ -433,7 +541,7 @@ export default function CustomerDirectory() {
                 <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#d97706', textTransform: 'uppercase' }}>
                   Current Outstanding Due
                 </div>
-                <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#d97706', marginTop: '2px' }}>
+                <div style={{ fontSize: '1.35rem', fontWeight: 700, color: '#d97706', marginTop: '2px' }}>
                   {formatCurrency(ledgerCustomer.outstandingBalance)}
                 </div>
               </div>
@@ -525,7 +633,7 @@ export default function CustomerDirectory() {
             )}
 
             {/* Invoices List */}
-            <h4 style={{ margin: '0 0 12px 0', fontSize: '1rem', fontWeight: 900, color: '#0f172a' }}>
+            <h4 style={{ margin: '0 0 12px 0', fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>
               Invoice Breakdown ({customerBills.length})
             </h4>
 
@@ -535,7 +643,7 @@ export default function CustomerDirectory() {
               <p style={{ color: '#64748b', fontSize: '0.85rem' }}>No bills found for this customer.</p>
             ) : (
               <div className="table-container">
-                <table className="table" style={{ margin: 0 }}>
+                <table className="table u-m-0" >
                   <thead>
                     <tr style={{ background: '#f8fafc' }}>
                       <th>Invoice #</th>
@@ -543,8 +651,8 @@ export default function CustomerDirectory() {
                       <th className="text-right">Total Amount</th>
                       <th className="text-right">Paid</th>
                       <th className="text-right">Balance Due</th>
-                      <th style={{ textAlign: 'center' }}>Status</th>
-                      <th style={{ textAlign: 'center' }}>Action</th>
+                      <th className="u-text-center">Status</th>
+                      <th className="u-text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -565,10 +673,10 @@ export default function CustomerDirectory() {
                         <td className="text-right" style={{ fontWeight: 800, color: '#16a34a' }}>
                           {formatCurrency(b.paidAmount)}
                         </td>
-                        <td className="text-right" style={{ fontWeight: 900, color: b.balanceDue > 0 ? '#d97706' : '#16a34a' }}>
+                        <td className="text-right" style={{ fontWeight: 700, color: b.balanceDue > 0 ? '#d97706' : '#16a34a' }}>
                           {formatCurrency(b.balanceDue)}
                         </td>
-                        <td style={{ textAlign: 'center' }}>
+                        <td className="u-text-center">
                           <span
                             className={`badge ${
                               b.paymentStatus === 'Paid'
@@ -582,7 +690,7 @@ export default function CustomerDirectory() {
                             {b.paymentStatus || 'Pending'}
                           </span>
                         </td>
-                        <td style={{ textAlign: 'center' }}>
+                        <td className="u-text-center">
                           {b.balanceDue > 0 ? (
                             <button
                               type="button"
@@ -610,62 +718,58 @@ export default function CustomerDirectory() {
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* Edit Customer Contact Modal */}
-      {editModalOpen && selectedCustomer && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.65)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '16px',
-            backdropFilter: 'blur(4px)',
-          }}
-          onClick={() => setEditModalOpen(false)}
-        >
-          <div
-            style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              padding: '24px',
-              maxWidth: '480px',
-              width: '100%',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
+      <Modal
+        isOpen={Boolean(editModalOpen && selectedCustomer)}
+        onClose={() => setEditModalOpen(false)}
+        maxWidth="480px"
+        labelledBy="edit-customer-modal-title"
+        contentStyle={{ padding: '24px', borderRadius: '16px' }}
+      >
+        {selectedCustomer && (
+          <div>
+            <div className="u-flex-between-mb">
+              <h3 id="edit-customer-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>
                 Customer Contact Details
               </h3>
               <button
+                type="button"
                 onClick={() => setEditModalOpen(false)}
-                style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: '#94a3b8' }}
+                aria-label="Close contact details modal"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#52606d',
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                }}
               >
-                ×
+                <CloseIcon size={18} />
               </button>
             </div>
 
-            <p style={{ margin: '0 0 16px 0', fontSize: '0.9rem', color: '#0b5394', fontWeight: 800 }}>
+            <p style={{ margin: '0 0 16px 0', fontSize: '0.9rem', color: '#0b5394', fontWeight: 700 }}>
               {selectedCustomer.name}
             </p>
 
             <form onSubmit={handleSaveContact} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                <label htmlFor="edit-customer-phone" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334e68', marginBottom: '4px' }}>
                   Customer Mobile Phone:
                 </label>
                 <input
+                  id="edit-customer-phone"
                   type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
                   className="form-input"
                   placeholder="10-digit mobile number"
                   value={customerPhone}
@@ -675,10 +779,11 @@ export default function CustomerDirectory() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                <label htmlFor="edit-customer-gstin" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334e68', marginBottom: '4px' }}>
                   Customer GSTIN:
                 </label>
                 <input
+                  id="edit-customer-gstin"
                   type="text"
                   className="form-input"
                   placeholder="e.g. 37KATPS1500Q1ZR"
@@ -688,12 +793,40 @@ export default function CustomerDirectory() {
                 />
               </div>
 
+              <div>
+                <label htmlFor="edit-customer-address" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334e68', marginBottom: '4px' }}>
+                  Address / Village:
+                </label>
+                <textarea
+                  id="edit-customer-address"
+                  className="form-input"
+                  rows={2}
+                  placeholder="Village, Mandal, District..."
+                  value={customerAddress}
+                  onChange={(e) => setCustomerAddress(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="edit-customer-notes" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334e68', marginBottom: '4px' }}>
+                  Notes:
+                </label>
+                <textarea
+                  id="edit-customer-notes"
+                  className="form-input"
+                  rows={2}
+                  placeholder="Internal notes about this buyer..."
+                  value={customerNotes}
+                  onChange={(e) => setCustomerNotes(e.target.value)}
+                />
+              </div>
+
               <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                 <button
                   type="submit"
                   className="btn btn-primary"
                   disabled={savingContact}
-                  style={{ flex: 1, fontWeight: 800, padding: '11px', background: '#0b5394', color: '#ffffff' }}
+                  style={{ flex: 1, fontWeight: 700, padding: '11px', background: '#0b5394', color: '#ffffff' }}
                 >
                   {savingContact ? 'Saving...' : 'Save Contact Details'}
                 </button>
@@ -701,15 +834,15 @@ export default function CustomerDirectory() {
                   type="button"
                   className="btn btn-ghost"
                   onClick={() => setEditModalOpen(false)}
-                  style={{ padding: '11px 16px', color: '#64748b' }}
+                  style={{ padding: '11px 16px', color: '#52606d' }}
                 >
                   Cancel
                 </button>
               </div>
             </form>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* Single Invoice Payment Modal */}
       {paymentBillId && (

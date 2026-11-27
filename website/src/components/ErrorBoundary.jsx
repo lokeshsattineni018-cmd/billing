@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { isChunkLoadError, ChunkLoadFallback } from '../utils/chunkLoadRecovery';
+import { WarningIcon, RefreshIcon, DashboardIcon } from './Icons';
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
@@ -71,16 +72,16 @@ export default class ErrorBoundary extends Component {
                 margin: '0 auto 16px auto',
               }}
             >
-              ⚠️
+              <WarningIcon size={24} color="#b42318" />
             </div>
 
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '0 0 6px 0' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#102a43', margin: '0 0 6px 0' }}>
               Something went wrong
             </h3>
-            <p style={{ fontSize: '0.9rem', color: '#0b5394', fontWeight: 700, margin: '0 0 10px 0' }}>
+            <p style={{ fontSize: '0.9rem', color: '#0b5394', fontWeight: 600, margin: '0 0 10px 0' }}>
               ఏదో పొరపాటు జరిగింది
             </p>
-            <p style={{ fontSize: '0.85rem', color: '#64748b', lineHeight: 1.5, margin: '0 0 20px 0' }}>
+            <p style={{ fontSize: '0.85rem', color: '#52606d', lineHeight: 1.5, margin: '0 0 20px 0' }}>
               {this.props.message ||
                 "An unexpected display issue occurred in this section. Your business data is safe."}
             </p>
@@ -94,11 +95,14 @@ export default class ErrorBoundary extends Component {
                   background: '#0b5394',
                   padding: '9px 18px',
                   fontSize: '0.85rem',
-                  fontWeight: 800,
+                  fontWeight: 600,
                   borderRadius: '8px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
                 }}
               >
-                🔄 Try Again / మళ్లీ ప్రయత్నించండి
+                <RefreshIcon size={15} color="#ffffff" /> Try Again / మళ్లీ ప్రయత్నించండి
               </button>
               <button
                 type="button"
@@ -107,11 +111,14 @@ export default class ErrorBoundary extends Component {
                 style={{
                   padding: '9px 18px',
                   fontSize: '0.85rem',
-                  fontWeight: 700,
+                  fontWeight: 600,
                   borderRadius: '8px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
                 }}
               >
-                🏠 Dashboard
+                <DashboardIcon size={15} /> Dashboard
               </button>
             </div>
 

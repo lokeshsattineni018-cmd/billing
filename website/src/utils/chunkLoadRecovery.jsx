@@ -92,7 +92,7 @@ export function ChunkLoadFallback({ onReload }) {
             cursor: 'pointer',
           }}
         >
-          🔄 Reload / రీలోడ్ చేయండి
+          Reload / రీలోడ్ చేయండి
         </button>
       </div>
     </div>

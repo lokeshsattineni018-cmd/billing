@@ -1,7 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { PrintIcon, WhatsAppIcon, ArrowLeftIcon, DownloadIcon } from './Icons';
-import { formatDate, numberToWords } from '../utils/helpers';
+import { formatDate, numberToWords, useToast, Toast } from '../utils/helpers';
+import { CANONICAL_BANK_DETAILS } from '../constants/bankDetails';
 import { staffAPI } from '../services/api';
+import Modal from './Modal';
 import ganeshaImg from '../assets/ganesha.jpg';
 import durgaImg from '../assets/durga.jpg';
 import ramDarbarImg from '../assets/ram_darbar.jpg';
@@ -16,14 +18,12 @@ export default function VoucherBillModal({
   const printAreaRef = useRef(null);
   const [sharingPdf, setSharingPdf] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const { toast, showToast } = useToast();
 
-  // Close on Escape key press
+  // Ctrl+P shortcut for silent printing (Escape handled by shared Modal)
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) return undefined;
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
         e.preventDefault();
         handlePrint();
@@ -115,7 +115,7 @@ export default function VoucherBillModal({
       if (import.meta.env.DEV) {
         console.error('PDF download error:', err);
       }
-      alert('Could not download PDF. Please try again.');
+      showToast('Could not download PDF. Please try again.', 'error');
     } finally {
       setDownloadingPdf(false);
     }
@@ -255,38 +255,16 @@ Thank you!`;
   const isPaid = paymentStatus === 'Paid' || paymentStatus === 'Settled';
 
   return (
-    <div
-      className="modal-backdrop"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.75)',
-        backdropFilter: 'blur(5px)',
-        zIndex: 9999,
-        overflowY: 'auto',
-        padding: '24px 16px',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-      }}
-      onClick={onClose}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="860px"
+      alignTop
+      labelledBy="voucher-modal-title"
+      contentStyle={{ background: '#f8fafc', borderRadius: '16px', padding: '20px 24px' }}
     >
-      <div
-        className="modal-content"
-        style={{
-          width: '100%',
-          maxWidth: '860px',
-          background: '#f8fafc',
-          borderRadius: '16px',
-          padding: '20px 24px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          margin: '20px auto',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div>
+        <Toast toast={toast} />
         {/* ── TOP ACTION HEADER (LIKE NORMAL BILL PAGE) ── */}
         <div
           className="bill-detail-header no-print"
@@ -311,15 +289,16 @@ Thank you!`;
               <ArrowLeftIcon size={16} /> Back
             </button>
             <h2
+              id="voucher-modal-title"
               style={{
                 fontFamily: 'var(--font-heading)',
                 fontSize: '1.35rem',
-                fontWeight: 800,
+                fontWeight: 700,
                 margin: 0,
                 color: '#0f172a',
               }}
             >
-              {modalTitle} <span style={{ color: '#0b5394' }}>{resolvedVoucherNo}</span>
+              {modalTitle} <span className="u-text-brand">{resolvedVoucherNo}</span>
             </h2>
             <span
               className={`badge ${isPaid ? 'badge-green' : 'badge-amber'}`}
@@ -449,7 +428,7 @@ Thank you!`;
                 ? 'WORKER BILL'
                 : 'WORKER WAGE STATEMENT & SETTLEMENT BILL'}
             </div>
-            <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 900, letterSpacing: '1px' }}>
+            <div style={{ textAlign: 'center', fontSize: '0.95rem', fontWeight: 700, letterSpacing: '1px' }}>
               ॥ జై శ్రీరామ్ ॥
             </div>
             <div>Cell: 9441429745</div>
@@ -469,6 +448,8 @@ Thank you!`;
               <img
                 src={ganeshaImg}
                 alt="Lord Ganesha"
+                width={80}
+                height={80}
                 style={{ width: '80px', height: '80px', objectFit: 'contain' }}
               />
             </div>
@@ -476,20 +457,22 @@ Thank you!`;
               <img
                 src={durgaImg}
                 alt="Durga Maa"
+                width={52}
+                height={52}
                 style={{ width: '52px', height: '52px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }}
               />
-              <h1
+              <div
                 style={{
                   color: '#0b5394',
                   fontSize: '1.55rem',
-                  fontWeight: 900,
+                  fontWeight: 800,
                   letterSpacing: '0.8px',
                   margin: '0 0 2px 0',
                   fontFamily: 'Arial, sans-serif',
                 }}
               >
                 VIJAYA DURGA SEA FOODS
-              </h1>
+              </div>
               <div style={{ fontSize: '0.78rem', fontWeight: 'bold', color: '#000000', margin: '2px 0' }}>
                 Prop: SATTINENI VENKATA DHANA LAXMI &nbsp;|&nbsp; GSTIN: 37KATPS1500Q1ZR
               </div>
@@ -501,6 +484,8 @@ Thank you!`;
               <img
                 src={ramDarbarImg}
                 alt="Ram Darbar"
+                width={80}
+                height={80}
                 style={{ width: '80px', height: '80px', objectFit: 'contain' }}
               />
             </div>
@@ -519,14 +504,14 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
-                  <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                  <span className="u-inv-label">Voucher No.</span>
+                  <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                     {resolvedVoucherNo}
                   </span>
                 </div>
                 <div style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
-                  <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(data.date)}</span>
+                  <span className="u-inv-label">Date:</span>
+                  <span className="u-text-ink-bold">{formatDate(data.date)}</span>
                 </div>
               </div>
 
@@ -540,11 +525,11 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Ice From (Supplier): </span>
+                  <span className="u-inv-label">Ice From (Supplier): </span>
                   <strong style={{ color: '#000000' }}>{data.iceFrom || data.supplierName || 'Sri Rama Ice Plant'}</strong>
                 </div>
                 <div style={{ padding: '6px 10px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Ice To (Receiver): </span>
+                  <span className="u-inv-label">Ice To (Receiver): </span>
                   <strong style={{ color: '#000000' }}>{data.iceTo || 'Factory / Cold Storage'}</strong>
                 </div>
               </div>
@@ -557,7 +542,7 @@ Thank you!`;
                   padding: '5px 10px',
                 }}
               >
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Payment Status: </span>
+                <span className="u-inv-label">Payment Status: </span>
                 <span style={{ fontWeight: 'bold', color: data.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>
                   {data.paymentStatus || 'Paid'}
                 </span>
@@ -592,20 +577,20 @@ Thank you!`;
                   </tr>
                   {[1, 2].map((i) => (
                     <tr key={i} style={{ height: '22px', borderBottom: '1px solid #c8d9e8' }}>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
                       <td></td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr style={{ background: '#e8f1f8', borderTop: '1.5px solid #0b5394', fontWeight: 'bold' }}>
-                    <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 900 }}>
+                    <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 700 }}>
                       TOTAL AMOUNT:
                     </td>
-                    <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 900, color: '#000000' }}>
+                    <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 700, color: '#000000' }}>
                       ₹{Number(data.totalAmount).toFixed(2)}
                     </td>
                   </tr>
@@ -614,8 +599,8 @@ Thank you!`;
 
               {/* Amount in Words (NO Notes / Remarks row as requested) */}
               <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Amount in Words: </span>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(data.totalAmount)}</span>
+                <span className="u-inv-label">Amount in Words: </span>
+                <span className="u-text-ink-bold">{numberToWords(data.totalAmount)}</span>
               </div>
             </>
           )}
@@ -632,14 +617,14 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
-                  <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                  <span className="u-inv-label">Voucher No.</span>
+                  <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                     {resolvedVoucherNo}
                   </span>
                 </div>
                 <div style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
-                  <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(data.date)}</span>
+                  <span className="u-inv-label">Date:</span>
+                  <span className="u-text-ink-bold">{formatDate(data.date)}</span>
                 </div>
               </div>
 
@@ -653,11 +638,11 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Buyer Name: </span>
+                  <span className="u-inv-label">Buyer Name: </span>
                   <strong style={{ color: '#000000' }}>{data.buyerName || '—'}</strong>
                 </div>
                 <div style={{ padding: '6px 10px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Category: </span>
+                  <span className="u-inv-label">Category: </span>
                   <strong style={{ color: '#000000' }}>{data.category || 'Prawn Head'}</strong>
                 </div>
               </div>
@@ -672,11 +657,11 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Vehicle No: </span>
+                  <span className="u-inv-label">Vehicle No: </span>
                   <span style={{ fontWeight: 'bold' }}>{data.vehicleNo || '—'}</span>
                 </div>
                 <div style={{ padding: '5px 10px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Payment Status: </span>
+                  <span className="u-inv-label">Payment Status: </span>
                   <span style={{ fontWeight: 'bold', color: data.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>
                     {data.paymentStatus || 'Paid'}
                   </span>
@@ -712,20 +697,20 @@ Thank you!`;
                   </tr>
                   {[1, 2].map((i) => (
                     <tr key={i} style={{ height: '22px', borderBottom: '1px solid #c8d9e8' }}>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
                       <td></td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr style={{ background: '#e8f1f8', borderTop: '1.5px solid #0b5394', fontWeight: 'bold' }}>
-                    <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 900 }}>
+                    <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 700 }}>
                       TOTAL SALE AMOUNT:
                     </td>
-                    <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 900, color: '#000000' }}>
+                    <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 700, color: '#000000' }}>
                       ₹{Number(data.totalAmount).toFixed(2)}
                     </td>
                   </tr>
@@ -734,8 +719,8 @@ Thank you!`;
 
               {/* Amount in Words */}
               <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Amount in Words: </span>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(data.totalAmount)}</span>
+                <span className="u-inv-label">Amount in Words: </span>
+                <span className="u-text-ink-bold">{numberToWords(data.totalAmount)}</span>
               </div>
             </>
           )}
@@ -752,14 +737,14 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Voucher No.</span>
-                  <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                  <span className="u-inv-label">Voucher No.</span>
+                  <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                     {resolvedVoucherNo}
                   </span>
                 </div>
                 <div style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
-                  <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(data.date)}</span>
+                  <span className="u-inv-label">Date:</span>
+                  <span className="u-text-ink-bold">{formatDate(data.date)}</span>
                 </div>
               </div>
 
@@ -774,7 +759,7 @@ Thank you!`;
                   fontSize: '0.9rem',
                 }}
               >
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Worker Name:</span>
+                <span className="u-inv-label">Worker Name:</span>
                 <strong style={{ fontSize: '1.05rem', color: '#000000' }}>{data.staffName}</strong>
                 {data.staffPhone && (
                   <span style={{ fontSize: '0.8rem', color: '#64748b', marginLeft: 'auto' }}>
@@ -793,11 +778,11 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Work Category & Shift: </span>
+                  <span className="u-inv-label">Work Category & Shift: </span>
                   <span style={{ fontWeight: 'bold' }}>{data.workType || 'Processing'} ({data.shift || 'Full Day'})</span>
                 </div>
                 <div style={{ padding: '5px 10px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Payment Status: </span>
+                  <span className="u-inv-label">Payment Status: </span>
                   <span style={{ fontWeight: 'bold', color: data.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>
                     {data.paymentStatus || 'Pending'}
                   </span>
@@ -833,20 +818,20 @@ Thank you!`;
                   </tr>
                   {[1, 2].map((i) => (
                     <tr key={i} style={{ height: '22px', borderBottom: '1px solid #c8d9e8' }}>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                      <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
+                      <td className="u-inv-br"></td>
                       <td></td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr style={{ background: '#e8f1f8', borderTop: '1.5px solid #0b5394', fontWeight: 'bold' }}>
-                    <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 900 }}>
+                    <td colSpan={4} style={{ textAlign: 'right', padding: '8px 12px', color: '#0b5394', fontSize: '0.9rem', fontWeight: 700 }}>
                       TOTAL WAGE AMOUNT:
                     </td>
-                    <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 900, color: '#000000' }}>
+                    <td style={{ textAlign: 'right', padding: '8px 10px', fontSize: '1.05rem', fontWeight: 700, color: '#000000' }}>
                       ₹{Number(data.totalAmount).toFixed(2)}
                     </td>
                   </tr>
@@ -855,8 +840,8 @@ Thank you!`;
 
               {/* Amount in Words */}
               <div style={{ borderTop: '1.5px solid #0b5394', padding: '6px 10px', fontSize: '0.8rem', background: '#ffffff' }}>
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Amount in Words: </span>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>{numberToWords(data.totalAmount)}</span>
+                <span className="u-inv-label">Amount in Words: </span>
+                <span className="u-text-ink-bold">{numberToWords(data.totalAmount)}</span>
               </div>
             </>
           )}
@@ -873,14 +858,14 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '6px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Statement No.</span>
-                  <span style={{ fontWeight: 900, color: '#b12704', fontSize: '0.95rem' }}>
+                  <span className="u-inv-label">Statement No.</span>
+                  <span style={{ fontWeight: 700, color: '#b12704', fontSize: '0.95rem' }}>
                     {resolvedVoucherNo}
                   </span>
                 </div>
                 <div style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
-                  <span style={{ fontWeight: 'bold', color: '#000000' }}>{formatDate(new Date())}</span>
+                  <span className="u-inv-label">Date:</span>
+                  <span className="u-text-ink-bold">{formatDate(new Date())}</span>
                 </div>
               </div>
 
@@ -895,7 +880,7 @@ Thank you!`;
                   fontSize: '0.9rem',
                 }}
               >
-                <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Worker Name:</span>
+                <span className="u-inv-label">Worker Name:</span>
                 <strong style={{ fontSize: '1.05rem', color: '#000000' }}>{data.workerName}</strong>
                 {data.summary?.staffPhone && (
                   <span style={{ fontSize: '0.8rem', color: '#64748b', marginLeft: 'auto' }}>
@@ -914,11 +899,11 @@ Thank you!`;
                 }}
               >
                 <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Days Worked: </span>
+                  <span className="u-inv-label">Days Worked: </span>
                   <span style={{ fontWeight: 'bold' }}>{data.summary?.daysWorkedCount || data.entries?.length || 0} days</span>
                 </div>
                 <div style={{ padding: '5px 10px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Total Weight Processed: </span>
+                  <span className="u-inv-label">Total Weight Processed: </span>
                   <span style={{ fontWeight: 'bold' }}>{data.summary?.totalKg || 0} kg</span>
                 </div>
               </div>
@@ -956,7 +941,7 @@ Thank you!`;
                     <td colSpan={6} style={{ textAlign: 'right', padding: '6px 12px', color: '#0b5394', fontSize: '0.85rem' }}>
                       TOTAL EARNED:
                     </td>
-                    <td style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.95rem', fontWeight: 900, color: '#000000' }}>
+                    <td style={{ textAlign: 'right', padding: '6px 8px', fontSize: '0.95rem', fontWeight: 700, color: '#000000' }}>
                       ₹{Number(data.summary?.totalEarned || 0).toFixed(2)}
                     </td>
                   </tr>
@@ -969,10 +954,10 @@ Thank you!`;
                     </td>
                   </tr>
                   <tr style={{ background: '#fef3c7', borderTop: '1.5px solid #0b5394' }}>
-                    <td colSpan={6} style={{ textAlign: 'right', padding: '6px 12px', color: '#b45309', fontSize: '0.9rem', fontWeight: 900 }}>
+                    <td colSpan={6} style={{ textAlign: 'right', padding: '6px 12px', color: '#b45309', fontSize: '0.9rem', fontWeight: 700 }}>
                       PENDING BALANCE DUE:
                     </td>
-                    <td style={{ textAlign: 'right', padding: '6px 8px', fontSize: '1.05rem', fontWeight: 900, color: '#b45309' }}>
+                    <td style={{ textAlign: 'right', padding: '6px 8px', fontSize: '1.05rem', fontWeight: 700, color: '#b45309' }}>
                       ₹{Number(data.summary?.pendingBalance || 0).toFixed(2)}
                     </td>
                   </tr>
@@ -1000,11 +985,12 @@ Thank you!`;
               }}
             >
               <div style={{ fontWeight: 'bold', color: '#0b5394', marginBottom: '2px', fontSize: '0.76rem' }}>
-                Bank Account Details:
+                {CANONICAL_BANK_DETAILS.title}
               </div>
-              <div><strong>Bank:</strong> KARUR VYSYA BANK</div>
-              <div><strong>A/C No:</strong> 4805135000002964</div>
-              <div><strong>IFSC:</strong> KVBL0004815 &nbsp;|&nbsp; <strong>Branch:</strong> Narasapur</div>
+              <div><strong>Bank:</strong> {CANONICAL_BANK_DETAILS.bankName}</div>
+              <div><strong>A/C Name:</strong> {CANONICAL_BANK_DETAILS.accountName}</div>
+              <div><strong>A/C No:</strong> {CANONICAL_BANK_DETAILS.accountNo}</div>
+              <div><strong>IFSC:</strong> {CANONICAL_BANK_DETAILS.ifsc} &nbsp;|&nbsp; <strong>Branch:</strong> {CANONICAL_BANK_DETAILS.branch}</div>
             </div>
 
             <div
@@ -1036,6 +1022,6 @@ Thank you!`;
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

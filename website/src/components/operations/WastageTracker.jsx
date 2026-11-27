@@ -12,8 +12,10 @@ import {
   ScaleIcon,
   CheckIcon,
   RefreshIcon,
+  CloseIcon,
 } from '../Icons';
 import ConfirmModal from '../ConfirmModal';
+import Modal from '../Modal';
 
 export default function WastageTracker() {
   const { t } = useLanguage();
@@ -240,7 +242,7 @@ export default function WastageTracker() {
 
       if (editingEntry) {
         await staffAPI.updateWastage(editingEntry._id, payload);
-        showToast('Wastage sales record updated!', 'success');
+        showToast('Wastage sales record updated', 'success');
       } else {
         if (typeof navigator !== 'undefined' && !navigator.onLine) {
           const tempId = `offline_wastage_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
@@ -262,13 +264,13 @@ export default function WastageTracker() {
 
           setEntries((prev) => [offlineWastage, ...prev]);
           playSuccessSound();
-          showToast(`⚡ Shed Mode: Recorded ${payload.quantityKg} boxes wastage sales offline!`, 'info');
+          showToast(`Shed Mode: Recorded ${payload.quantityKg} boxes wastage sales offline`, 'info');
           setModalOpen(false);
           return;
         }
 
         await staffAPI.createWastage(payload);
-        showToast('Prawn head wastage sales record saved!', 'success');
+        showToast('Prawn head wastage sales record saved', 'success');
       }
 
       setModalOpen(false);
@@ -296,7 +298,7 @@ export default function WastageTracker() {
 
           setEntries((prev) => [offlineWastage, ...prev]);
           playSuccessSound();
-          showToast(`⚡ Shed Mode: Recorded ${payload.quantityKg} boxes wastage sales offline!`, 'info');
+          showToast(`Shed Mode: Recorded ${payload.quantityKg} boxes wastage sales offline`, 'info');
           setModalOpen(false);
           return;
         } catch (e) {}
@@ -348,7 +350,7 @@ export default function WastageTracker() {
         <div className="staff-glance-top">
           <div>
             <div className="staff-glance-title">{periodLabel} Wastage Revenue</div>
-            <div className="staff-glance-metric-lg" style={{ color: '#16a34a' }}>{formatCurrency(summary?.todayAmount || 0)}</div>
+            <div className="staff-glance-metric-lg u-text-profit" >{formatCurrency(summary?.todayAmount || 0)}</div>
           </div>
           <span className="staff-glance-pill" style={{ background: '#f0fdf4', color: '#16a34a', borderColor: '#bbf7d0' }}>{badgeLabel}</span>
         </div>
@@ -362,25 +364,25 @@ export default function WastageTracker() {
             <span className="staff-glance-subcol-label">Avg Rate</span>
             <span className="staff-glance-subcol-val">₹{summary?.todayAvgRate?.toFixed(2) || '0.00'}</span>
           </div>
-          <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
+          <div className="staff-glance-subcol u-text-right" >
             <span className="staff-glance-subcol-label">All-Time</span>
-            <span className="staff-glance-subcol-val" style={{ color: '#16a34a' }}>{formatCurrency(summary?.totalAmount || 0)}</span>
+            <span className="staff-glance-subcol-val u-text-profit" >{formatCurrency(summary?.totalAmount || 0)}</span>
           </div>
         </div>
       </div>
 
       {/* Desktop Detailed KPI Grid */}
       <div className="staff-desktop-stats">
-        <div className="staff-kpi-grid" style={{ marginBottom: '20px' }}>
+        <div className="staff-kpi-grid u-mb-20" >
           {/* Period Wastage Sold (Boxes) */}
           <div className="staff-kpi-card" style={{ borderLeft: '4px solid #16a34a' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="u-flex-between">
               <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                 {periodLabel} Prawn Head Sold
               </span>
               <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>{badgeLabel}</span>
             </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#16a34a', marginTop: '6px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#16a34a', marginTop: '6px' }}>
               {(summary?.todayKg || 0).toLocaleString('en-IN')}
               <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b', marginLeft: '6px' }}>boxes</span>
             </div>
@@ -391,13 +393,13 @@ export default function WastageTracker() {
 
           {/* Period Wastage Revenue */}
           <div className="staff-kpi-card" style={{ borderLeft: '4px solid #059669' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="u-flex-between">
               <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                 {periodLabel} Revenue
               </span>
               <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>Income</span>
             </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#059669', marginTop: '6px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#059669', marginTop: '6px' }}>
               {formatCurrency(summary?.todayAmount || 0)}
             </div>
             <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
@@ -407,13 +409,13 @@ export default function WastageTracker() {
 
           {/* Average Rate / Box */}
           <div className="staff-kpi-card" style={{ borderLeft: '4px solid #0b5394' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="u-flex-between">
               <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                 {periodLabel} Selling Rate
               </span>
               <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>₹ / BOX</span>
             </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0b5394', marginTop: '6px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#0b5394', marginTop: '6px' }}>
               ₹{summary?.todayAvgRate?.toFixed(2) || '0.00'}
             </div>
             <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
@@ -422,17 +424,17 @@ export default function WastageTracker() {
           </div>
 
           {/* Total Wastage Sales Income */}
-          <div className="staff-kpi-card" style={{ borderLeft: '4px solid #8b5cf6' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+          <div className="staff-kpi-card" style={{ borderLeft: '3px solid #0b5394' }}>
+            <div className="u-flex-between">
+              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#52606d' }}>
                 Total Wastage Sales
               </span>
-              <span className="badge badge-purple" style={{ fontSize: '0.7rem' }}>Lifetime</span>
+              <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>Lifetime</span>
             </div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#8b5cf6', marginTop: '6px' }}>
+            <div className="tabular-num" style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0b5394', marginTop: '6px' }}>
               {formatCurrency(summary?.totalAmount || 0)}
             </div>
-            <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '4px' }}>
+            <div style={{ fontSize: '0.76rem', color: '#52606d', marginTop: '4px' }}>
               From {summary?.totalEntries || 0} recorded sales batches
             </div>
           </div>
@@ -521,7 +523,7 @@ export default function WastageTracker() {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>
           <div className="spinner" style={{ margin: '0 auto 12px auto' }}></div>
-          <p style={{ fontWeight: 600 }}>Loading Wastage Sales Records...</p>
+          <p className="u-fw-semibold">Loading Wastage Sales Records...</p>
         </div>
       ) : displayedEntries.length === 0 ? (
         <div
@@ -586,7 +588,7 @@ export default function WastageTracker() {
                   </div>
 
                   <div className="worker-clean-right">
-                    <span className="worker-wage-val" style={{ color: '#16a34a' }}>{formatCurrency(entry.totalAmount)}</span>
+                    <span className="worker-wage-val u-text-profit" >{formatCurrency(entry.totalAmount)}</span>
                     <span
                       className={`badge ${(entry.paymentStatus || 'Paid') === 'Paid' ? 'badge-green' : 'badge-amber'}`}
                       style={{ fontSize: '0.68rem', fontWeight: 800, padding: '2px 7px', marginTop: '3px' }}
@@ -597,12 +599,12 @@ export default function WastageTracker() {
                 </div>
 
                 <div className="worker-clean-details-bar">
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="u-flex-row-tight">
                     <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Boxes Sold:</span>
                     <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>{entry.quantityKg} boxes</strong>
                   </span>
                   <span style={{ color: '#cbd5e1' }}>|</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="u-flex-row-tight">
                     <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Rate:</span>
                     <strong style={{ color: 'var(--text-primary)', fontSize: '0.86rem' }}>₹{entry.rate?.toFixed(2)} / box</strong>
                   </span>
@@ -643,7 +645,7 @@ export default function WastageTracker() {
           {/* Desktop Table */}
           <div className="card desktop-only-table" style={{ padding: 0, overflow: 'hidden' }}>
             <div className="table-responsive">
-              <table className="table" style={{ margin: 0 }}>
+              <table className="table u-m-0" >
                 <thead>
                   <tr>
                     <th style={{ width: '120px' }}>Date</th>
@@ -663,17 +665,17 @@ export default function WastageTracker() {
                         {formatDate(entry.date)}
                       </td>
                       <td>
-                        <span className="badge badge-purple" style={{ fontSize: '0.74rem' }}>
+                        <span className="badge badge-blue" style={{ fontSize: '0.74rem' }}>
                           {entry.category || 'Prawn Head'}
                         </span>
                       </td>
                       <td className="text-right">
-                        <span style={{ fontWeight: 900, color: '#16a34a', fontSize: '0.98rem' }}>
+                        <span style={{ fontWeight: 700, color: '#16a34a', fontSize: '0.98rem' }}>
                           {entry.quantityKg}
                         </span>
                         <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '4px' }}>boxes</span>
                       </td>
-                      <td className="text-right" style={{ fontWeight: 600 }}>
+                      <td className="text-right u-fw-semibold" >
                         ₹{entry.rate?.toFixed(2)}
                       </td>
                       <td className="text-right">
@@ -725,25 +727,37 @@ export default function WastageTracker() {
       )}
 
       {/* MODAL: RECORD / EDIT WASTAGE SALES */}
-      {modalOpen && (
-        <div className="modal-backdrop" onClick={() => setModalOpen(false)}>
-          <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '460px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ background: '#dcfce7', padding: '6px', borderRadius: '8px', color: '#16a34a' }}>
-                  <ScaleIcon size={20} />
-                </div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>
-                  {editingEntry ? 'Edit Wastage Sales Record' : 'Record Prawn Head Wastage Sold'}
-                </h3>
+      <Modal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        maxWidth="460px"
+        labelledBy="wastage-modal-title"
+      >
+        <div>
+          <div className="u-flex-between-mb">
+            <div className="u-flex-row">
+              <div style={{ background: '#dcfce7', padding: '6px', borderRadius: '8px', color: '#16a34a' }}>
+                <ScaleIcon size={20} />
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setModalOpen(false)}>✕</button>
+              <h3 id="wastage-modal-title" style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>
+                {editingEntry ? 'Edit Wastage Sales Record' : 'Record Prawn Head Wastage Sold'}
+              </h3>
             </div>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setModalOpen(false)}
+              aria-label="Close wastage modal"
+              style={{ minWidth: '48px', minHeight: '48px' }}
+            >
+              <CloseIcon size={18} />
+            </button>
+          </div>
 
             <form onSubmit={handleSaveModal}>
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
                 <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: 700 }}>Date</label>
+                  <label className="form-label u-fw-bold" >Date</label>
                   <input
                     type="date"
                     className="form-input"
@@ -754,7 +768,7 @@ export default function WastageTracker() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: 700 }}>Category</label>
+                  <label className="form-label u-fw-bold" >Category</label>
                   <input
                     type="text"
                     className="form-input"
@@ -768,7 +782,7 @@ export default function WastageTracker() {
               {/* Dynamic Calculation Row: Prawn Head * Rate = Total */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: 700 }}>
+                  <label className="form-label u-fw-bold" >
                     Prawn Head Sold (Boxes) <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
@@ -785,7 +799,7 @@ export default function WastageTracker() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: 700 }}>
+                  <label className="form-label u-fw-bold" >
                     Rate per Box (₹) <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
@@ -822,7 +836,7 @@ export default function WastageTracker() {
                     {liveBoxes} boxes × ₹{liveRate.toFixed(2)}
                   </div>
                 </div>
-                <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#15803d' }}>
+                <div style={{ fontSize: '1.45rem', fontWeight: 700, color: '#15803d' }}>
                   {formatCurrency(liveTotal)}
                 </div>
               </div>
@@ -874,8 +888,7 @@ export default function WastageTracker() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal

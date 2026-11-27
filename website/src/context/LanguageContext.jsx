@@ -5,6 +5,11 @@ const LanguageContext = createContext();
 export const translations = {
   en: {
     // Nav & Common
+    navHome: 'Home',
+    navNew: 'New',
+    navStaff: 'Staff',
+    more: 'More',
+    recycleBin: 'Recycle Bin',
     dashboard: 'Dashboard',
     newInvoice: 'New Invoice',
     invoiceHistory: 'Invoice History',
@@ -116,14 +121,12 @@ export const translations = {
     downloadPdf: 'Download PDF',
     shareWhatsApp: 'WhatsApp',
     reBill: 'Re-Bill',
+    editBill: 'Edit Bill',
+    invoiceDetails: 'Invoice Details',
     taxInvoiceHeader: 'TAX INVOICE / CASH / CREDIT',
     jaiShreeRam: '॥ జై శ్రీరామ్ ॥',
     proprietor: 'Proprietor',
     bankDetails: 'BANK PAYMENT DETAILS:',
-    staff: 'Staff & Labor',
-    staffWages: 'Staff & Wages',
-    staffWork: 'Staff Attendance & Wages',
-    staffSubtitle: 'Track daily labor attendance, processing quantity (KG), rates, and wage accounts',
     amountInWords: 'Amount in Words',
     subtotal: 'Items Subtotal',
     total: 'TOTAL',
@@ -151,10 +154,10 @@ export const translations = {
 
     // Staff & Operations Extensions
     addWorkEntry: '+ Add Work Entry',
-    bulkAttendance: '⚡ Bulk Attendance',
+    bulkAttendance: 'Bulk Attendance',
     hideBulkEntry: 'Hide Bulk Entry',
-    copyYesterdayTeam: "⚡ Copy Yesterday's Team",
-    copyYesterdaySuccess: 'Loaded workers from previous team!',
+    copyYesterdayTeam: "Copy Yesterday's Team",
+    copyYesterdaySuccess: 'Loaded workers from previous team.',
     attendanceCalendar: 'Attendance Calendar',
     monthlyCalendar: 'Monthly Attendance Calendar',
     workerAccounts: 'Worker Accounts & Ledgers',
@@ -165,7 +168,6 @@ export const translations = {
     workerName: 'Worker Name',
     workerPhone: 'Phone Number',
     quantityKg: 'Quantity (KG)',
-    ratePerKg: 'Rate (₹/KG)',
     workType: 'Work Type',
     shift: 'Shift',
     notes: 'Notes',
@@ -269,9 +271,30 @@ export const translations = {
     printIceBill: 'Print Ice Bill',
     singleWorkerBill: 'Print Bill',
     workerStatementBill: 'Print Statement',
+
+    // Bill History, Customers & Modals
+    invoiceHistorySubtitle: 'View, print, download, share or export invoices for GST & CA filing',
+    searchInvoicesPlaceholder: 'Search customer or invoice #...',
+    updatingStatus: 'Updating...',
+    customersMasterTitle: 'Customer Master & Payment Center',
+    customersMasterSubtitle: 'Record invoice payments, track live balances & customer contact details',
+    outstandingLedgerBtn: 'Outstanding Ledger',
+    exportCsvBtn: 'Export CSV',
+    searchCustomersPlaceholder: 'Search by customer name, phone, or GSTIN...',
+    searchBtn: 'Search',
+    customerLedgerSubtitle: 'Track receivables, outstanding balances, and send 1-click WhatsApp payment reminders',
+    totalOutstandingBalance: 'Total Outstanding Balance',
+    sendPaymentReminderTitle: 'Send Payment Reminder',
+    recordPaymentTitle: 'Record Payment',
+    shareTaxInvoiceTitle: 'Share Tax Invoice',
   },
   te: {
     // Nav & Common
+    navHome: 'హోమ్',
+    navNew: 'కొత్త బిల్లు',
+    navStaff: 'సిబ్బంది',
+    more: 'మరిన్ని',
+    recycleBin: 'తొలగించినవి',
     dashboard: 'డ్యాష్‌బోర్డ్',
     newInvoice: 'కొత్త బిల్లు',
     invoiceHistory: 'బిల్లుల చరిత్ర',
@@ -383,6 +406,8 @@ export const translations = {
     downloadPdf: 'PDF డౌన్‌లోడ్',
     shareWhatsApp: 'వాట్సాప్‌లో పంపండి',
     reBill: 'మళ్లీ బిల్లు చేయండి',
+    editBill: 'బిల్లు సవరించు',
+    invoiceDetails: 'ఇన్వాయిస్ వివరాలు',
     taxInvoiceHeader: 'TAX INVOICE / CASH / CREDIT',
     jaiShreeRam: '॥ జై శ్రీరామ్ ॥',
     proprietor: 'ప్రొప్రైటర్',
@@ -414,10 +439,10 @@ export const translations = {
 
     // Staff & Operations Extensions (Telugu)
     addWorkEntry: '+ కూలీ పని నమోదు',
-    bulkAttendance: '⚡ బల్క్ హాజరు',
+    bulkAttendance: 'బల్క్ హాజరు',
     hideBulkEntry: 'బల్క్ నమోదు దాచండి',
-    copyYesterdayTeam: "⚡ నిన్నటి బృందాన్ని తీసుకురండి",
-    copyYesterdaySuccess: 'నిన్నటి కార్మికుల వివరాలు లోడ్ అయ్యాయి!',
+    copyYesterdayTeam: "నిన్నటి బృందాన్ని తీసుకురండి",
+    copyYesterdaySuccess: 'నిన్నటి కార్మికుల వివరాలు లోడ్ అయ్యాయి.',
     attendanceCalendar: 'హాజరు క్యాలెండర్',
     monthlyCalendar: 'నెలవారీ హాజరు క్యాలెండర్',
     workerAccounts: 'కార్మికుల ఖాతా లెడ్జర్లు',
@@ -428,7 +453,6 @@ export const translations = {
     workerName: 'కార్మికుని పేరు',
     workerPhone: 'ఫోన్ నంబర్',
     quantityKg: 'తూకం (కేజీలు)',
-    ratePerKg: 'ధర (రూ./కేజీ)',
     workType: 'పని రకం',
     shift: 'షిఫ్ట్',
     notes: 'గమనికలు',
@@ -532,6 +556,22 @@ export const translations = {
     printIceBill: 'ఐస్ బిల్లు ప్రింట్',
     singleWorkerBill: 'బిల్లు ప్రింట్',
     workerStatementBill: 'స్టేట్‌మెంట్ ప్రింట్',
+
+    // Bill History, Customers & Modals (Telugu)
+    invoiceHistorySubtitle: 'GST & CA ఫైలింగ్ కోసం బిల్లులను చూడండి, ప్రింట్ చేయండి, డౌన్‌లోడ్ లేదా షేర్ చేయండి',
+    searchInvoicesPlaceholder: 'కస్టమర్ పేరు లేదా బిల్లు నం. వెతకండి...',
+    updatingStatus: 'అప్‌డేట్ అవుతోంది...',
+    customersMasterTitle: 'ఖాతాదారుల వివరాలు & చెల్లింపు కేంద్రం',
+    customersMasterSubtitle: 'బిల్లు చెల్లింపులు నమోదు చేయండి, బ్యాలెన్స్ మరియు ఫోన్ వివరాలను చూడండి',
+    outstandingLedgerBtn: 'బాకీల లెడ్జర్',
+    exportCsvBtn: 'CSV ఎగుమతి',
+    searchCustomersPlaceholder: 'కస్టమర్ పేరు, ఫోన్ లేదా GSTIN వెతకండి...',
+    searchBtn: 'వెతకండి',
+    customerLedgerSubtitle: 'రావలసిన బాకీలను చూడండి మరియు వాట్సాప్‌లో చెల్లింపు రిమైండర్లు పంపండి',
+    totalOutstandingBalance: 'మొత్తం రావలసిన బాకీ',
+    sendPaymentReminderTitle: 'చెల్లింపు రిమైండర్ పంపండి',
+    recordPaymentTitle: 'చెల్లింపు నమోదు చేయండి',
+    shareTaxInvoiceTitle: 'ట్యాక్స్ ఇన్వాయిస్ షేర్ చేయండి',
   },
 };
 
@@ -539,6 +579,10 @@ export function LanguageProvider({ children }) {
   const [lang, setLang] = useState(() => {
     return localStorage.getItem('srsf_lang') || 'en';
   });
+
+  useEffect(() => {
+    document.documentElement.lang = lang === 'te' ? 'te' : 'en';
+  }, [lang]);
 
   const toggleLang = () => {
     const nextLang = lang === 'en' ? 'te' : 'en';

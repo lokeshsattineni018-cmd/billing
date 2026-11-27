@@ -60,7 +60,7 @@ export default function DailyNetSummary() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="u-flex-row">
           <label style={{ fontSize: '0.84rem', fontWeight: 700, color: '#475569' }}>Inspect Date:</label>
           <input
             type="date"
@@ -83,7 +83,7 @@ export default function DailyNetSummary() {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>
           <div className="spinner" style={{ margin: '0 auto 12px auto' }}></div>
-          <p style={{ fontWeight: 600 }}>Calculating Daily Operations Summary...</p>
+          <p className="u-fw-semibold">Calculating Daily Operations Summary...</p>
         </div>
       ) : (
         <>
@@ -125,11 +125,11 @@ export default function DailyNetSummary() {
               </div>
               <div className="staff-glance-subcol">
                 <span className="staff-glance-subcol-label">Inflow</span>
-                <span className="staff-glance-subcol-val" style={{ color: '#16a34a' }}>
+                <span className="staff-glance-subcol-val u-text-profit" >
                   + {formatCurrency(wastageRevenue)}
                 </span>
               </div>
-              <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
+              <div className="staff-glance-subcol u-text-right" >
                 <span className="staff-glance-subcol-label">Recovery</span>
                 <span className="staff-glance-subcol-val">
                   {totalOperatingCosts > 0 ? `${Math.round((wastageRevenue / totalOperatingCosts) * 100)}%` : '0%'}
@@ -139,7 +139,7 @@ export default function DailyNetSummary() {
           </div>
 
           {/* Mobile Compact 3-Component Breakdown Rows */}
-          <div className="staff-mobile-glance" style={{ marginBottom: '16px' }}>
+          <div className="staff-mobile-glance u-mb-16" >
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {/* 1. Worker Labor */}
               <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderLeft: '4px solid #0b5394', borderRadius: '12px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
@@ -152,7 +152,7 @@ export default function DailyNetSummary() {
                     <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{data?.labor?.workerCount || 0} staff • {data?.labor?.totalKg || 0} kg</div>
                   </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
+                <div className="u-text-right">
                   <div style={{ fontWeight: 800, fontSize: '0.96rem', color: '#0f172a' }}>{formatCurrency(laborWages)}</div>
                   <span className="badge badge-amber" style={{ fontSize: '0.62rem', padding: '1px 6px' }}>Expense</span>
                 </div>
@@ -169,7 +169,7 @@ export default function DailyNetSummary() {
                     <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{data?.ice?.totalBlocks || 0} blocks • {data?.ice?.totalBlocks > 0 ? `₹${(iceCost / data.ice.totalBlocks).toFixed(2)}` : '₹0'}/blk</div>
                   </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
+                <div className="u-text-right">
                   <div style={{ fontWeight: 800, fontSize: '0.96rem', color: '#0f172a' }}>{formatCurrency(iceCost)}</div>
                   <span className="badge badge-amber" style={{ fontSize: '0.62rem', padding: '1px 6px' }}>Expense</span>
                 </div>
@@ -186,7 +186,7 @@ export default function DailyNetSummary() {
                     <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{data?.wastage?.totalKg || 0} kg • {data?.wastage?.totalKg > 0 ? `₹${(wastageRevenue / data.wastage.totalKg).toFixed(2)}` : '₹0'}/kg</div>
                   </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
+                <div className="u-text-right">
                   <div style={{ fontWeight: 800, fontSize: '0.96rem', color: '#16a34a' }}>+ {formatCurrency(wastageRevenue)}</div>
                   <span className="badge badge-green" style={{ fontSize: '0.62rem', padding: '1px 6px' }}>Revenue</span>
                 </div>
@@ -235,10 +235,10 @@ export default function DailyNetSummary() {
                       fontWeight: 800,
                     }}
                   >
-                    {isProfit ? 'PROFIT / SURPLUS ✨' : isLoss ? 'NET EXPENSE' : 'BREAK-EVEN'}
+                    {isProfit ? 'PROFIT / SURPLUS' : isLoss ? 'NET EXPENSE' : 'BREAK-EVEN'}
                   </span>
                 </div>
-                <h2 style={{ margin: '10px 0 4px 0', fontSize: '1.45rem', fontWeight: 900, color: '#0f172a' }}>
+                <h2 style={{ margin: '10px 0 4px 0', fontSize: '1.45rem', fontWeight: 700, color: '#102a43' }}>
                   {isProfit ? 'Net Factory Profit' : isLoss ? 'Net Factory Operating Cost' : 'Factory Break-Even'}
                 </h2>
                 <p style={{ margin: 0, color: '#64748b', fontSize: '0.84rem' }}>
@@ -250,14 +250,14 @@ export default function DailyNetSummary() {
                 </p>
               </div>
 
-              <div style={{ textAlign: 'right' }}>
+              <div className="u-text-right">
                 <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>
                   {isProfit ? 'Net Daily Profit' : isLoss ? 'Net Daily Expense' : 'Net Daily Balance'}
                 </div>
                 <div
                   style={{
                     fontSize: '1.9rem',
-                    fontWeight: 900,
+                    fontWeight: 700,
                     marginTop: '4px',
                     letterSpacing: '-0.5px',
                     color: isProfit ? '#16a34a' : isLoss ? '#dc2626' : '#0f172a',
@@ -312,7 +312,7 @@ export default function DailyNetSummary() {
             {/* 1. Worker Labor Wages */}
             <div className="card" style={{ padding: '16px', border: '1px solid #e2e8f0', borderLeft: '4px solid #0b5394', borderRadius: '12px', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="u-flex-row">
                   <div style={{ background: '#f1f5f9', padding: '6px', borderRadius: '8px', color: '#0b5394' }}>
                     <StaffIcon size={18} />
                   </div>
@@ -321,7 +321,7 @@ export default function DailyNetSummary() {
                 <span className="badge badge-amber">Expense</span>
               </div>
 
-              <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', marginBottom: '10px' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', marginBottom: '10px' }}>
                 {formatCurrency(laborWages)}
               </div>
 
@@ -340,7 +340,7 @@ export default function DailyNetSummary() {
             {/* 2. Ice Blocks Used */}
             <div className="card" style={{ padding: '16px', border: '1px solid #e2e8f0', borderLeft: '4px solid #0284c7', borderRadius: '12px', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="u-flex-row">
                   <div style={{ background: '#f1f5f9', padding: '6px', borderRadius: '8px', color: '#0284c7' }}>
                     <IceIcon size={18} />
                   </div>
@@ -349,7 +349,7 @@ export default function DailyNetSummary() {
                 <span className="badge badge-amber">Expense</span>
               </div>
 
-              <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', marginBottom: '10px' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', marginBottom: '10px' }}>
                 {formatCurrency(iceCost)}
               </div>
 
@@ -372,7 +372,7 @@ export default function DailyNetSummary() {
             {/* 3. Prawn Head Wastage Sold */}
             <div className="card" style={{ padding: '16px', border: '1px solid #e2e8f0', borderLeft: '4px solid #16a34a', borderRadius: '12px', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="u-flex-row">
                   <div style={{ background: '#f1f5f9', padding: '6px', borderRadius: '8px', color: '#16a34a' }}>
                     <ScaleIcon size={18} />
                   </div>
@@ -381,7 +381,7 @@ export default function DailyNetSummary() {
                 <span className="badge badge-green">Revenue</span>
               </div>
 
-              <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#16a34a', marginBottom: '10px' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16a34a', marginBottom: '10px' }}>
                 + {formatCurrency(wastageRevenue)}
               </div>
 

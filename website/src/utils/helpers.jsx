@@ -213,7 +213,7 @@ TO: ${customerName}
         title: `Invoice-${bill.billNo}.pdf`,
         text: caption,
       });
-      if (showToast) showToast('Invoice PDF shared successfully!');
+      if (showToast) showToast('Invoice PDF shared successfully');
       return;
     }
   } catch (err) {
@@ -238,7 +238,14 @@ TO: ${customerName}
     if (import.meta.env.DEV) { console.error('Download fallback error:', e); }
   }
 
-  if (showToast) showToast('Invoice PDF downloaded! Opening WhatsApp to attach and send.');
+  if (showToast) {
+    const lang = typeof window !== 'undefined' ? localStorage.getItem('srsf_lang') : 'en';
+    showToast(
+      lang === 'te'
+        ? 'ఇన్‌వాయిస్ PDF డౌన్‌లోడ్ అయింది. పంపడానికి వాట్సాప్ తెరవబడుతోంది'
+        : 'Invoice PDF downloaded. Opening WhatsApp to attach and send.'
+    );
+  }
 
   // 2. Open WhatsApp chat directly without creating blank Safari popup tab
   const waUrl = cleanPhone
@@ -305,4 +312,35 @@ export function playErrorSound() {
     // Silently ignore
   }
 }
+
+/**
+ * Copy text to clipboard with execCommand fallback for older / insecure contexts.
+ */
+export async function copyToClipboard(text) {
+  if (!text) return false;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // Fall through to execCommand fallback
+  }
+  try {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 

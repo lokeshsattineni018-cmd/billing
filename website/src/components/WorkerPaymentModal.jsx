@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { formatCurrency, formatDate } from '../utils/helpers';
 import { staffAPI } from '../services/api';
-import { CheckIcon } from './Icons';
+import { CheckIcon, CloseIcon } from './Icons';
+import Modal from './Modal';
 
 export default function WorkerPaymentModal({
   isOpen,
@@ -14,6 +15,7 @@ export default function WorkerPaymentModal({
   const [payDate, setPayDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [payNotes, setPayNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -33,20 +35,9 @@ export default function WorkerPaymentModal({
     setPayMode(entry.paymentMode || 'Cash');
     setPayDate(entry.paymentDate ? entry.paymentDate.split('T')[0] : new Date().toISOString().split('T')[0]);
     setPayNotes(entry.notes || '');
+    setConfirmReset(false);
     setError('');
   }, [isOpen, entry]);
-
-  // Close on Escape key press
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && !submitting) {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, submitting, onClose]);
 
   if (!isOpen || !entry) return null;
 
@@ -79,9 +70,6 @@ export default function WorkerPaymentModal({
   };
 
   const handleResetToPending = async () => {
-    if (!window.confirm(`Reset wage payment for ${entry.staffName} to Pending (₹0.00)?`)) {
-      return;
-    }
     setSubmitting(true);
     setError('');
     try {
@@ -90,6 +78,7 @@ export default function WorkerPaymentModal({
         status: 'Pending',
       });
       onSuccess(res.data.entry || { ...entry, amountPaid: 0, paymentStatus: 'Pending', paymentDate: null });
+      setConfirmReset(false);
       onClose();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to reset payment');
@@ -141,42 +130,21 @@ export default function WorkerPaymentModal({
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.75)',
-        backdropFilter: 'blur(5px)',
-        zIndex: 9999,
-        overflowY: 'auto',
-        padding: '24px 16px',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-      onClick={() => {
-        if (!submitting) onClose();
-      }}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      disableBackdropClose={submitting}
+      disableEscapeClose={submitting}
+      maxWidth="520px"
+      alignTop
+      labelledBy="worker-payment-modal-title"
+      contentStyle={{ padding: 0, borderRadius: '16px', overflow: 'hidden', border: '1px solid #e2e8f0' }}
     >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '520px',
-          background: '#ffffff',
-          borderRadius: '16px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          overflow: 'hidden',
-          border: '1px solid #e2e8f0',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div>
         {/* Header */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #0b5394, #083b6f)',
+            background: '#0b5394',
             color: '#ffffff',
             padding: '18px 22px',
             display: 'flex',
@@ -185,35 +153,37 @@ export default function WorkerPaymentModal({
           }}
         >
           <div>
-            <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.85, fontWeight: 700 }}>
+            <div style={{ fontSize: '0.75rem', opacity: 0.9, fontWeight: 600 }}>
               Worker Wage Payment
             </div>
-            <h3 style={{ margin: '3px 0 0 0', fontSize: '1.25rem', fontWeight: 800 }}>
+            <h3 id="worker-payment-modal-title" style={{ margin: '3px 0 0 0', fontSize: '1.25rem', fontWeight: 700 }}>
               {entry.staffName}
             </h3>
             <div style={{ fontSize: '0.78rem', opacity: 0.9, marginTop: '2px' }}>
-              📅 {formatDate(entry.date)} &nbsp;•&nbsp; {entry.quantity} kg @ ₹{entry.price}/kg
+              {formatDate(entry.date)} &nbsp;•&nbsp; {entry.quantity} kg @ ₹{entry.price}/kg
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={submitting}
+            aria-label="Close payment modal"
             style={{
-              background: 'rgba(255,255,255,0.15)',
+              background: 'rgba(255,255,255,0.16)',
               border: 'none',
-              borderRadius: '50%',
-              width: '32px',
-              height: '32px',
+              borderRadius: '8px',
+              width: '48px',
+              height: '48px',
+              minWidth: '48px',
+              minHeight: '48px',
               color: '#ffffff',
-              fontSize: '1.1rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            ✕
+            <CloseIcon size={18} color="#ffffff" />
           </button>
         </div>
 
@@ -232,7 +202,7 @@ export default function WorkerPaymentModal({
             <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
               Total Wage
             </div>
-            <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0b5394', marginTop: '3px' }}>
+            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0b5394', marginTop: '3px' }}>
               {formatCurrency(totalAmount)}
             </div>
           </div>
@@ -241,7 +211,7 @@ export default function WorkerPaymentModal({
             <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
               Already Paid
             </div>
-            <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#16a34a', marginTop: '3px' }}>
+            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#16a34a', marginTop: '3px' }}>
               {formatCurrency(currentPaid)}
             </div>
           </div>
@@ -250,7 +220,7 @@ export default function WorkerPaymentModal({
             <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
               Balance Due
             </div>
-            <div style={{ fontSize: '1.15rem', fontWeight: 900, color: balanceDue > 0 ? '#ea580c' : '#16a34a', marginTop: '3px' }}>
+            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: balanceDue > 0 ? '#ea580c' : '#16a34a', marginTop: '3px' }}>
               {formatCurrency(balanceDue)}
             </div>
           </div>
@@ -260,14 +230,14 @@ export default function WorkerPaymentModal({
         <form onSubmit={handleSubmit} style={{ padding: '20px 22px' }}>
           {error && (
             <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#b91c1c', fontSize: '0.85rem', marginBottom: '16px', fontWeight: 600 }}>
-              ⚠️ {error}
+              {error}
             </div>
           )}
 
           {/* Amount Paying Input */}
-          <div style={{ marginBottom: '16px' }}>
+          <div className="u-mb-16">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a' }}>
+              <label htmlFor="worker-pay-amount" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>
                 Amount Paying Now (₹) *
               </label>
               <div style={{ display: 'flex', gap: '6px' }}>
@@ -313,7 +283,9 @@ export default function WorkerPaymentModal({
                 ₹
               </span>
               <input
+                id="worker-pay-amount"
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 min="0"
                 max={totalAmount}
@@ -338,31 +310,32 @@ export default function WorkerPaymentModal({
           </div>
 
           {/* Payment Mode */}
-          <div style={{ marginBottom: '16px' }}>
+          <div className="u-mb-16">
             <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', display: 'block', marginBottom: '6px' }}>
               Payment Mode
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
               {[
-                { id: 'Cash', label: '💵 Cash' },
-                { id: 'UPI', label: '📱 PhonePe / UPI' },
-                { id: 'Bank Transfer', label: '🏦 Bank Transfer' },
+                { id: 'Cash', label: 'Cash' },
+                { id: 'UPI', label: 'PhonePe / UPI' },
+                { id: 'Bank Transfer', label: 'Bank Transfer' },
               ].map((m) => (
                 <button
                   key={m.id}
                   type="button"
                   onClick={() => setPayMode(m.id)}
                   style={{
-                    padding: '8px 6px',
+                    padding: '10px 6px',
+                    minHeight: '44px',
                     borderRadius: '8px',
                     border: payMode === m.id ? '2px solid #0b5394' : '1px solid #cbd5e1',
                     background: payMode === m.id ? '#eff6ff' : '#ffffff',
-                    color: payMode === m.id ? '#0b5394' : '#475569',
-                    fontWeight: payMode === m.id ? 800 : 600,
-                    fontSize: '0.78rem',
+                    color: payMode === m.id ? '#0b5394' : '#334e68',
+                    fontWeight: payMode === m.id ? 700 : 600,
+                    fontSize: '0.8rem',
                     cursor: 'pointer',
                     textAlign: 'center',
-                    transition: 'all 0.15s ease',
+                    transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1), color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 >
                   {m.label}
@@ -372,7 +345,7 @@ export default function WorkerPaymentModal({
           </div>
 
           {/* Payment Date */}
-          <div style={{ marginBottom: '16px' }}>
+          <div className="u-mb-16">
             <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', display: 'block', marginBottom: '6px' }}>
               Payment Date
             </label>
@@ -430,7 +403,7 @@ export default function WorkerPaymentModal({
               <div
                 style={{
                   fontSize: '0.95rem',
-                  fontWeight: 900,
+                  fontWeight: 700,
                   color:
                     resultingStatus === 'Paid'
                       ? '#047857'
@@ -441,7 +414,7 @@ export default function WorkerPaymentModal({
                 }}
               >
                 {resultingStatus === 'Paid' && '✓ Full Wage Paid (Settled)'}
-                {resultingStatus === 'Partial' && `⚡ Partial Payment (₹${resultingRemaining.toFixed(2)} Remaining Due)`}
+                {resultingStatus === 'Partial' && `Partial Payment (₹${resultingRemaining.toFixed(2)} Remaining Due)`}
                 {resultingStatus === 'Pending' && '⏳ Unpaid / Pending'}
               </div>
             </div>
@@ -460,13 +433,40 @@ export default function WorkerPaymentModal({
           </div>
 
           {/* Footer Actions */}
+          {confirmReset && (
+            <div style={{ marginBottom: '12px', padding: '10px 12px', borderRadius: '8px', background: '#fff5f5', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#b42318' }}>
+                Reset wage payment to ₹0.00 (Pending)?
+              </span>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setConfirmReset(false)}
+                  disabled={submitting}
+                >
+                  Keep
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  style={{ background: '#b42318', color: '#ffffff', border: 'none', fontWeight: 600 }}
+                  onClick={handleResetToPending}
+                  disabled={submitting}
+                >
+                  {submitting ? 'Resetting...' : 'Confirm Reset'}
+                </button>
+              </div>
+            </div>
+          )}
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            {currentPaid > 0 && (
+            {currentPaid > 0 && !confirmReset && (
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
-                style={{ color: '#ef4444', fontWeight: 700, padding: '8px 12px' }}
-                onClick={handleResetToPending}
+                style={{ color: '#b42318', fontWeight: 600, padding: '8px 12px' }}
+                onClick={() => setConfirmReset(true)}
                 disabled={submitting}
               >
                 Reset to Pending
@@ -504,6 +504,6 @@ export default function WorkerPaymentModal({
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   );
 }

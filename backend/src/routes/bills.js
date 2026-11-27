@@ -13,6 +13,7 @@ const structuredLogger = require('../utils/structuredLogger');
 const { generateBillPDFBuffer } = require('../services/pdfService');
 const { calculateVerifiedBillTotals } = require('../utils/billingCalculations');
 const { handleServerError, captureException } = require('../utils/errorTracker');
+const { CANONICAL_BANK_DETAILS } = require('../constants/bankDetails');
 
 const router = express.Router();
 
@@ -476,19 +477,19 @@ router.get('/:id/reminder', protect, restrictTo('owner', 'admin'), async (req, r
     waMsg += `Invoice Date: ${billDate}\n`;
     waMsg += `Pending Amount: Rs. ${amount}\n`;
     waMsg += `━━━━━━━━━━━━━━━━━━━\n`;
-    waMsg += `Bank Account Details for Payment:\n`;
-    waMsg += `• Bank: ${settings.bankName || 'KARUR VYSYA BANK'}\n`;
-    waMsg += `• Account Name: ${settings.legalName || 'SATTINENI VENKATA DHANA LAXMI'}\n`;
-    waMsg += `• A/c Number: ${settings.accountNo || '4805135000002964'}\n`;
-    waMsg += `• IFSC Code: ${settings.ifscCode || 'KVBL0004815'}\n`;
-    waMsg += `• Branch: ${settings.branch || 'Narasapur'}\n`;
+    waMsg += `${CANONICAL_BANK_DETAILS.title}\n`;
+    waMsg += `• A/C Name: ${CANONICAL_BANK_DETAILS.accountName}\n`;
+    waMsg += `• Bank: ${settings.bankName || CANONICAL_BANK_DETAILS.bankName}\n`;
+    waMsg += `• A/c Number: ${settings.accountNo || CANONICAL_BANK_DETAILS.accountNo}\n`;
+    waMsg += `• IFSC Code: ${settings.ifsc || settings.ifscCode || CANONICAL_BANK_DETAILS.ifsc}\n`;
+    waMsg += `• Branch: ${settings.branch || CANONICAL_BANK_DETAILS.branch}\n`;
     waMsg += `━━━━━━━━━━━━━━━━━━━\n`;
     waMsg += `Kindly clear the payment at your earliest convenience.\n`;
     waMsg += `Thank you for your continuous business.\n`;
     waMsg += `Vijaya Durga Sea Foods • Ph: ${settings.phone || '9441429745'}`;
 
     // Formatted Compact SMS Message
-    const smsMsg = `VIJAYA DURGA SEA FOODS: Dear ${bill.companyName}, gentle reminder for pending Invoice #${bill.billNo} dated ${billDate} for Rs. ${amount}. Bank: KVB A/c 4805135000002964, IFSC: KVBL0004815. Please clear payment. Ph: 9441429745`;
+    const smsMsg = `VIJAYA DURGA SEA FOODS: Dear ${bill.companyName}, gentle reminder for pending Invoice #${bill.billNo} dated ${billDate} for Rs. ${amount}. Bank: KVB (${CANONICAL_BANK_DETAILS.accountName}) A/c ${settings.accountNo || CANONICAL_BANK_DETAILS.accountNo}, IFSC: ${settings.ifsc || CANONICAL_BANK_DETAILS.ifsc}, Branch: ${settings.branch || CANONICAL_BANK_DETAILS.branch}. Please clear payment. Ph: ${settings.phone || '9441429745'}`;
 
     await logActivity(req, 'SEND_REMINDER', String(bill.billNo), {
       customer: bill.companyName,

@@ -172,7 +172,7 @@ function ProfitLossWidget() {
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.3px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', letterSpacing: '-0.3px' }}>
                 Live Profit &amp; Loss (P&amp;L)
               </h3>
               <span
@@ -204,7 +204,7 @@ function ProfitLossWidget() {
                     gap: '4px',
                   }}
                 >
-                  ⚠️ Stale / Offline
+                  Stale / Offline
                 </span>
               )}
             </div>
@@ -241,8 +241,8 @@ function ProfitLossWidget() {
               { id: 'today', label: 'Today' },
               { id: 'this_week', label: 'This Week' },
               { id: 'this_month', label: 'This Month' },
-              { id: 'single_day', label: '📅 Single Day' },
-              { id: 'custom', label: '🗓️ Range' },
+              { id: 'single_day', label: 'Single Day' },
+              { id: 'custom', label: 'Range' },
             ].map((pItem) => {
               const active = period === pItem.id;
               return (
@@ -257,11 +257,11 @@ function ProfitLossWidget() {
                     padding: '10px 16px',
                     minHeight: '48px',
                     fontSize: '0.82rem',
-                    fontWeight: active ? 800 : 600,
-                    color: active ? '#0b5394' : '#64748b',
+                    fontWeight: active ? 700 : 600,
+                    color: active ? '#0b5394' : '#52606d',
                     cursor: 'pointer',
                     boxShadow: active ? '0 2px 5px rgba(0,0,0,0.06)' : 'none',
-                    transition: 'all 0.15s ease',
+                    transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 >
                   {pItem.label}
@@ -288,20 +288,21 @@ function ProfitLossWidget() {
             marginBottom: '18px',
           }}
         >
-          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#334155' }}>
+          <label htmlFor="pnl-single-date" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334e68' }}>
             Inspect Specific Date:
-          </span>
+          </label>
           <input
+            id="pnl-single-date"
             type="date"
             className="form-input"
             value={singleDate}
             onChange={(e) => setSingleDate(e.target.value)}
-            style={{ width: 'auto', height: '34px', fontSize: '0.82rem', padding: '0 10px' }}
+            style={{ width: 'auto', minHeight: '48px', fontSize: '0.88rem', padding: '0 12px' }}
           />
           <button
             type="submit"
             className="btn btn-primary btn-sm"
-            style={{ background: '#0b5394', fontWeight: 800, height: '34px', padding: '0 14px' }}
+            style={{ background: '#0b5394', fontWeight: 700, minHeight: '48px', padding: '0 16px' }}
           >
             Load Day
           </button>
@@ -313,7 +314,7 @@ function ProfitLossWidget() {
               setSingleDate(t);
               loadPnl({ period: 'single_day', startDate: t, endDate: t });
             }}
-            style={{ height: '34px', fontSize: '0.76rem', fontWeight: 700 }}
+            style={{ minHeight: '48px', fontSize: '0.8rem', fontWeight: 600 }}
           >
             Today
           </button>
@@ -327,7 +328,7 @@ function ProfitLossWidget() {
               setSingleDate(yStr);
               loadPnl({ period: 'single_day', startDate: yStr, endDate: yStr });
             }}
-            style={{ height: '34px', fontSize: '0.76rem', fontWeight: 700 }}
+            style={{ minHeight: '48px', fontSize: '0.8rem', fontWeight: 600 }}
           >
             Yesterday
           </button>
@@ -351,29 +352,31 @@ function ProfitLossWidget() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569' }}>From:</span>
+            <label htmlFor="pnl-custom-start" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334e68' }}>From:</label>
             <input
+              id="pnl-custom-start"
               type="date"
               className="form-input"
               value={customStart}
               onChange={(e) => setCustomStart(e.target.value)}
-              style={{ width: 'auto', height: '34px', fontSize: '0.82rem', padding: '0 10px' }}
+              style={{ width: 'auto', minHeight: '48px', fontSize: '0.88rem', padding: '0 12px' }}
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#475569' }}>To:</span>
+            <label htmlFor="pnl-custom-end" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334e68' }}>To:</label>
             <input
+              id="pnl-custom-end"
               type="date"
               className="form-input"
               value={customEnd}
               onChange={(e) => setCustomEnd(e.target.value)}
-              style={{ width: 'auto', height: '34px', fontSize: '0.82rem', padding: '0 10px' }}
+              style={{ width: 'auto', minHeight: '48px', fontSize: '0.88rem', padding: '0 12px' }}
             />
           </div>
           <button
             type="submit"
             className="btn btn-primary btn-sm"
-            style={{ background: '#0b5394', fontWeight: 800, height: '34px', padding: '0 16px' }}
+            style={{ background: '#0b5394', fontWeight: 700, minHeight: '48px', padding: '0 18px' }}
           >
             Apply Range
           </button>
@@ -384,7 +387,7 @@ function ProfitLossWidget() {
       {loading ? (
         <div style={{ padding: '36px 0', textAlign: 'center' }}>
           <div className="spinner" style={{ width: '28px', height: '28px', margin: '0 auto 10px' }} />
-          <span style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: 600 }}>Calculating profit &amp; loss metrics...</span>
+          <span style={{ fontSize: '0.82rem', color: '#52606d', fontWeight: 600 }}>Calculating profit &amp; loss metrics...</span>
         </div>
       ) : (
         <>
@@ -423,7 +426,7 @@ function ProfitLossWidget() {
             <div className="staff-glance-grid">
               <div className="staff-glance-subcol">
                 <span className="staff-glance-subcol-label">Revenue</span>
-                <span className="staff-glance-subcol-val" style={{ color: '#16a34a' }}>
+                <span className="staff-glance-subcol-val u-text-profit" >
                   {formatCurrency(revenue.totalRevenue)}
                 </span>
                 <span style={{ fontSize: '0.66rem', color: '#64748b', marginTop: '2px' }}>
@@ -439,9 +442,9 @@ function ProfitLossWidget() {
                   {expenses.iceBlocks || 0} Blocks
                 </span>
               </div>
-              <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
+              <div className="staff-glance-subcol u-text-right" >
                 <span className="staff-glance-subcol-label">Margin</span>
-                <span className="staff-glance-subcol-val" style={{ color: '#0b5394' }}>
+                <span className="staff-glance-subcol-val u-text-brand" >
                   {pnl.marginPercent}%
                 </span>
                 <span style={{ fontSize: '0.66rem', color: '#64748b', marginTop: '2px' }}>
@@ -471,7 +474,7 @@ function ProfitLossWidget() {
 
           {/* Desktop Detailed Bento KPI Grid */}
           <div className="staff-desktop-stats">
-            <div className="dashboard-stats-grid" style={{ marginBottom: '20px' }}>
+            <div className="dashboard-stats-grid u-mb-20" >
             {/* 1. Total Revenue Card */}
             <div className="stat-card-compact">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -479,7 +482,7 @@ function ProfitLossWidget() {
                   <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     Total Revenue
                   </span>
-                  <div className="stat-value" style={{ fontSize: 'clamp(1.18rem, 1.45vw, 1.55rem)', fontWeight: 900, color: '#059669', marginTop: '4px', letterSpacing: '-0.5px', whiteSpace: 'nowrap' }}>
+                  <div className="stat-value" style={{ fontSize: 'clamp(1.18rem, 1.45vw, 1.55rem)', fontWeight: 700, color: '#059669', marginTop: '4px', letterSpacing: '-0.5px', whiteSpace: 'nowrap' }}>
                     <CountUp value={revenue.totalRevenue} isCurrency />
                   </div>
                 </div>
@@ -519,7 +522,7 @@ function ProfitLossWidget() {
                   <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     Operating Expenses
                   </span>
-                  <div className="stat-value" style={{ fontSize: 'clamp(1.18rem, 1.45vw, 1.55rem)', fontWeight: 900, color: '#c2410c', marginTop: '4px', letterSpacing: '-0.5px', whiteSpace: 'nowrap' }}>
+                  <div className="stat-value" style={{ fontSize: 'clamp(1.18rem, 1.45vw, 1.55rem)', fontWeight: 700, color: '#c2410c', marginTop: '4px', letterSpacing: '-0.5px', whiteSpace: 'nowrap' }}>
                     <CountUp value={expenses.totalExpenses} isCurrency />
                   </div>
                 </div>
@@ -563,7 +566,7 @@ function ProfitLossWidget() {
                     className="stat-value"
                     style={{
                       fontSize: 'clamp(1.18rem, 1.45vw, 1.55rem)',
-                      fontWeight: 900,
+                      fontWeight: 700,
                       color: isProfit ? '#047857' : '#b91c1c',
                       marginTop: '4px',
                       letterSpacing: '-0.5px',
@@ -618,7 +621,7 @@ function ProfitLossWidget() {
                   <span className="stat-label" style={{ fontSize: '0.74rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     Operating Margin
                   </span>
-                  <div className="stat-value" style={{ fontSize: 'clamp(1.18rem, 1.45vw, 1.55rem)', fontWeight: 900, color: '#0b5394', marginTop: '4px', letterSpacing: '-0.5px', whiteSpace: 'nowrap' }}>
+                  <div className="stat-value" style={{ fontSize: 'clamp(1.18rem, 1.45vw, 1.55rem)', fontWeight: 700, color: '#0b5394', marginTop: '4px', letterSpacing: '-0.5px', whiteSpace: 'nowrap' }}>
                     {pnl.marginPercent}%
                   </div>
                 </div>
@@ -695,7 +698,7 @@ function ProfitLossWidget() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#059669', fontSize: '0.76rem', fontWeight: 800 }}>
                     <InvoiceIcon size={14} /> Seafood Sales (Invoices)
                   </div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#0f172a', margin: '4px 0' }}>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: '4px 0' }}>
                     {formatCurrency(revenue.invoiceSales)}
                   </div>
                   <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
@@ -708,7 +711,7 @@ function ProfitLossWidget() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#059669', fontSize: '0.76rem', fontWeight: 800 }}>
                     <ScaleIcon size={14} /> Prawn Head Wastage
                   </div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#0f172a', margin: '4px 0' }}>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: '4px 0' }}>
                     {formatCurrency(revenue.wastageSales)}
                   </div>
                   <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
@@ -721,7 +724,7 @@ function ProfitLossWidget() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ea580c', fontSize: '0.76rem', fontWeight: 800 }}>
                     <StaffIcon size={14} /> Worker Peeling Labor
                   </div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#0f172a', margin: '4px 0' }}>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: '4px 0' }}>
                     {formatCurrency(expenses.staffWages)}
                   </div>
                   <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
@@ -734,7 +737,7 @@ function ProfitLossWidget() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ea580c', fontSize: '0.76rem', fontWeight: 800 }}>
                     <IceIcon size={14} /> Ice Procurement
                   </div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#0f172a', margin: '4px 0' }}>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: '4px 0' }}>
                     {formatCurrency(expenses.iceExpenses)}
                   </div>
                   <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
@@ -760,7 +763,7 @@ function ProfitLossWidget() {
                 <div style={{ fontSize: '0.82rem', fontWeight: 700, color: isProfit ? '#065f46' : '#991b1b' }}>
                   Day Inflow ({formatCurrency(revenue.totalRevenue)}) − Day Costs ({formatCurrency(expenses.totalExpenses)})
                 </div>
-                <div style={{ fontSize: '0.92rem', fontWeight: 900, color: isProfit ? '#047857' : '#b91c1c' }}>
+                <div style={{ fontSize: '0.92rem', fontWeight: 700, color: isProfit ? '#047857' : '#b91c1c' }}>
                   Net Margin: {isProfit ? '+' : ''}{formatCurrency(pnl.netProfit)} ({pnl.marginPercent}%)
                 </div>
               </div>
@@ -768,7 +771,7 @@ function ProfitLossWidget() {
           ) : (
             <>
               {/* Mobile Collapsible Daily Timeline Accordion Dropdown */}
-              <div className="staff-mobile-glance" style={{ marginBottom: '16px' }}>
+              <div className="staff-mobile-glance u-mb-16" >
                 <button
                   type="button"
                   onClick={() => setTimelineOpen(!timelineOpen)}
@@ -783,15 +786,15 @@ function ProfitLossWidget() {
                     borderRadius: timelineOpen ? '12px 12px 0 0' : '12px',
                     padding: '12px 14px',
                     cursor: 'pointer',
-                    color: '#0f172a',
-                    fontWeight: 800,
+                    color: '#102a43',
+                    fontWeight: 700,
                     fontSize: '0.86rem',
                     boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
-                    transition: 'all 0.15s ease',
+                    transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>📅 Daily Timeline</span>
+                  <span className="u-flex-row">
+                    <span>Daily Timeline</span>
                     <span style={{ fontSize: '0.7rem', background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
                       {data?.timeline?.length || 0} active days
                     </span>
@@ -850,7 +853,7 @@ function ProfitLossWidget() {
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <span
                                   style={{
-                                    fontWeight: 900,
+                                    fontWeight: 700,
                                     fontSize: '0.92rem',
                                     color: dayProfit ? '#16a34a' : '#dc2626',
                                   }}
@@ -1025,7 +1028,7 @@ function ProfitLossWidget() {
                                 Wages: {formatCurrency(day.staffWages)} • Ice: {formatCurrency(day.iceExpenses)}
                               </div>
                             </td>
-                            <td className="text-right" style={{ fontWeight: 900, color: dayProfit ? '#047857' : '#b91c1c' }}>
+                            <td className="text-right" style={{ fontWeight: 700, color: dayProfit ? '#047857' : '#b91c1c' }}>
                               {dayProfit ? '+' : ''}{formatCurrency(day.netProfit)}
                             </td>
                             <td className="text-center">

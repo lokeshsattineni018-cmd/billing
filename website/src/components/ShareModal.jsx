@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DownloadIcon, WhatsAppIcon, ShareIcon } from './Icons';
-import { formatCurrency } from '../utils/helpers';
+import { DownloadIcon, WhatsAppIcon, ShareIcon, CloseIcon, MailIcon } from './Icons';
+import { formatCurrency, copyToClipboard } from '../utils/helpers';
+import Modal from './Modal';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ShareModal({ bill, onClose, showToast }) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
@@ -33,7 +36,7 @@ export default function ShareModal({ bill, onClose, showToast }) {
           files: [pdfFile],
           title: `Tax Invoice #${bill.billNo} - VIJAYA DURGA SEA FOODS`,
         });
-        if (showToast) showToast('Invoice shared successfully!');
+        if (showToast) showToast('Invoice shared successfully');
         onClose();
         navigate('/');
         return;
@@ -60,7 +63,7 @@ export default function ShareModal({ bill, onClose, showToast }) {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(fileBlobUrl);
-      if (showToast) showToast('Invoice PDF downloaded!');
+      if (showToast) showToast('Invoice PDF downloaded');
     } catch (err) {
       if (import.meta.env.DEV) { console.error('Download error:', err); }
       window.open(pdfUrl, '_blank');
@@ -91,58 +94,54 @@ export default function ShareModal({ bill, onClose, showToast }) {
   };
 
   // 5. Copy Link to Clipboard
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(publicUrl);
-    setCopied(true);
-    if (showToast) showToast('Invoice link copied to clipboard!');
-    setTimeout(() => setCopied(false), 2500);
+  const handleCopyLink = async () => {
+    const ok = await copyToClipboard(publicUrl);
+    if (ok) {
+      setCopied(true);
+      if (showToast) showToast('Invoice link copied to clipboard');
+      setTimeout(() => setCopied(false), 2500);
+    } else if (showToast) {
+      showToast('Could not copy link automatically. Please copy from the bar below.', 'error');
+    }
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.65)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-        padding: '16px',
-        backdropFilter: 'blur(6px)',
-      }}
-      onClick={onClose}
+    <Modal
+      isOpen={Boolean(bill)}
+      onClose={onClose}
+      maxWidth="460px"
+      labelledBy="share-modal-title"
+      contentStyle={{ padding: '24px', borderRadius: '20px', border: '1px solid #e2e8f0' }}
     >
-      <div
-        style={{
-          background: '#ffffff',
-          borderRadius: '20px',
-          padding: '24px',
-          maxWidth: '460px',
-          width: '100%',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          border: '1px solid #e2e8f0',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div>
         {/* Modal Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: '#0f172a' }}>
-              Share Tax Invoice
+            <h3 id="share-modal-title" style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#0f172a' }}>
+              {t('shareTaxInvoiceTitle')}
             </h3>
-            <p style={{ margin: '3px 0 0 0', fontSize: '0.82rem', color: '#64748b' }}>
+            <p style={{ margin: '3px 0 0 0', fontSize: '0.82rem', color: '#52606d' }}>
               Invoice #{bill.billNo} • {bill.companyName} • {amountStr}
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#94a3b8', padding: '0 4px' }}
+            aria-label="Close share modal"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#52606d',
+              minWidth: '48px',
+              minHeight: '48px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '8px',
+            }}
           >
-            ×
+            <CloseIcon size={18} />
           </button>
         </div>
 
@@ -166,7 +165,7 @@ export default function ShareModal({ bill, onClose, showToast }) {
               fontWeight: 800,
               fontSize: '0.84rem',
               gap: '8px',
-              transition: 'all 0.15s ease',
+              transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
             <ShareIcon size={22} color="#0b5394" />
@@ -188,10 +187,10 @@ export default function ShareModal({ bill, onClose, showToast }) {
               background: '#f0fdf4',
               color: '#16a34a',
               cursor: 'pointer',
-              fontWeight: 800,
+              fontWeight: 700,
               fontSize: '0.84rem',
               gap: '8px',
-              transition: 'all 0.15s ease',
+              transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
             <WhatsAppIcon size={22} color="#16a34a" />
@@ -217,7 +216,7 @@ export default function ShareModal({ bill, onClose, showToast }) {
               fontWeight: 700,
               fontSize: '0.84rem',
               gap: '8px',
-              transition: 'all 0.15s ease',
+              transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
             <DownloadIcon size={22} color="#334155" />
@@ -242,10 +241,10 @@ export default function ShareModal({ bill, onClose, showToast }) {
               fontWeight: 700,
               fontSize: '0.84rem',
               gap: '8px',
-              transition: 'all 0.15s ease',
+              transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
-            <span style={{ fontSize: '1.35rem' }}>✉️</span>
+            <MailIcon size={22} color="#334155" />
             <span>Send Email</span>
           </button>
         </div>
@@ -268,13 +267,13 @@ export default function ShareModal({ bill, onClose, showToast }) {
               fontWeight: 800,
               cursor: 'pointer',
               whiteSpace: 'nowrap',
-              transition: 'all 0.15s ease',
+              transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
-            {copied ? 'Copied!' : 'Copy Link'}
+            {copied ? 'Copied' : 'Copy Link'}
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrashIcon } from './Icons';
+import Modal from './Modal';
 
 const DELETE_REASONS = [
   {
@@ -89,12 +90,16 @@ export default function DeleteInvoiceModal({
   };
 
   return (
-    <div className="modal-backdrop" onClick={loading ? undefined : onClose}>
-      <div
-        className="modal-content fade-in"
-        onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '460px', padding: '24px' }}
-      >
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      disableBackdropClose={loading}
+      disableEscapeClose={loading}
+      maxWidth="460px"
+      labelledBy="delete-invoice-modal-title"
+      contentStyle={{ padding: '24px' }}
+    >
+      <div>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
           <div
@@ -112,7 +117,7 @@ export default function DeleteInvoiceModal({
             <TrashIcon size={24} color="#dc2626" />
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
+            <h3 id="delete-invoice-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>
               {isTe ? `ఇన్‌వాయిస్ #${billNo} తొలగించాలా?` : `Delete Invoice #${billNo}?`}
             </h3>
             <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
@@ -229,7 +234,7 @@ export default function DeleteInvoiceModal({
 
         {/* STEP 2: Final Confirmation Tap */}
         {step === 2 && (
-          <div style={{ marginBottom: '20px' }}>
+          <div className="u-mb-20">
             <div
               style={{
                 background: '#fef2f2',
@@ -241,7 +246,7 @@ export default function DeleteInvoiceModal({
               }}
             >
               <p style={{ margin: '0 0 8px 0', fontSize: '1rem', fontWeight: 800, color: '#991b1b' }}>
-                ⚠️ {isTe ? `ఇన్‌వాయిస్ #${billNo}ను ఖచ్చితంగా తొలగించాలా?` : `Are you sure you want to delete Invoice #${billNo}?`}
+                {isTe ? `ఇన్‌వాయిస్ #${billNo}ను ఖచ్చితంగా తొలగించాలా?` : `Are you sure you want to delete Invoice #${billNo}?`}
               </p>
               <p style={{ margin: 0, fontSize: '0.86rem', color: '#7f1d1d', fontWeight: 600 }}>
                 {isTe ? 'కారణం:' : 'Reason:'} <strong>{getFullReasonText()}</strong>
@@ -284,56 +289,55 @@ export default function DeleteInvoiceModal({
                   cursor: selectedReasonId ? 'pointer' : 'not-allowed',
                 }}
               >
-                {isTe ? 'ముందుకు వెళ్ళు ➔' : 'Next Step ➔'}
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setStep(1)}
-                disabled={loading}
-                style={{ minHeight: '48px', minWidth: '90px', fontWeight: 700, padding: '10px 18px' }}
-              >
-                {isTe ? '⬅ వెనుకకు' : '⬅ Back'}
-              </button>
-              <button
-                type="button"
-                className="btn"
-                onClick={handleFinalConfirm}
-                disabled={loading}
-                style={{
-                  minHeight: '48px',
-                  background: '#dc2626',
-                  color: '#ffffff',
-                  fontWeight: 800,
-                  padding: '10px 24px',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 2px 10px rgba(220, 38, 38, 0.3)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                {loading ? (
-                  <>
-                    <span className="btn-spinner" style={{ width: '16px', height: '16px' }}></span>
-                    <span>{isTe ? 'తొలగిస్తోంది...' : 'Deleting...'}</span>
-                  </>
-                ) : (
-                  <>
-                    <span>🗑️</span>
-                    <span>{isTe ? 'ఖచ్చితంగా తొలగించు' : 'Confirm Delete'}</span>
-                  </>
-                )}
+                  {isTe ? 'ముందుకు వెళ్ళు' : 'Next Step'}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setStep(1)}
+                  disabled={loading}
+                  style={{ minHeight: '48px', minWidth: '90px', fontWeight: 600, padding: '10px 18px' }}
+                >
+                  {isTe ? 'వెనుకకు' : 'Back'}
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={handleFinalConfirm}
+                  disabled={loading}
+                  style={{
+                    minHeight: '48px',
+                    background: '#b42318',
+                    color: '#ffffff',
+                    fontWeight: 600,
+                    padding: '10px 24px',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  {loading ? (
+                    <>
+                      <span className="btn-spinner" style={{ width: '16px', height: '16px' }}></span>
+                      <span>{isTe ? 'తొలగిస్తోంది...' : 'Deleting...'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <TrashIcon size={16} color="#ffffff" />
+                      <span>{isTe ? 'ఖచ్చితంగా తొలగించు' : 'Confirm Delete'}</span>
+                    </>
+                  )}
               </button>
             </>
           )}
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

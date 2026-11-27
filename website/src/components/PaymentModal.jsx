@@ -3,8 +3,12 @@ import { billsAPI } from '../services/api';
 import { formatCurrency, formatDate } from '../utils/helpers';
 import { notifyPaymentReceived } from '../utils/notifications';
 import { invalidateBillCaches } from '../utils/offlineDb';
+import { CloseIcon } from './Icons';
+import Modal from './Modal';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function PaymentModal({ billId, onClose, onSuccess }) {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [billData, setBillData] = useState(null);
@@ -81,53 +85,46 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.65)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-        padding: '16px',
-        backdropFilter: 'blur(4px)',
-      }}
-      onClick={onClose}
+    <Modal
+      isOpen={Boolean(billId)}
+      onClose={onClose}
+      disableBackdropClose={submitting}
+      disableEscapeClose={submitting}
+      maxWidth="520px"
+      labelledBy="payment-modal-title"
+      contentStyle={{ padding: '24px', borderRadius: '16px', maxHeight: '90vh', overflowY: 'auto' }}
     >
-      <div
-        style={{
-          background: '#ffffff',
-          borderRadius: '16px',
-          padding: '24px',
-          maxWidth: '520px',
-          width: '100%',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div className="u-flex-between-mb">
           <div>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#0f172a' }}>
-              Record Payment
+            <h3 id="payment-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>
+              {t('recordPaymentTitle')}
             </h3>
             {billData && (
-              <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', color: '#64748b' }}>
+              <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', color: '#52606d' }}>
                 Invoice #{billData.billNo} • {billData.companyName}
               </p>
             )}
           </div>
           <button
+            type="button"
             onClick={onClose}
-            style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: '#94a3b8' }}
+            aria-label="Close payment modal"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#52606d',
+              minWidth: '48px',
+              minHeight: '48px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '8px',
+            }}
           >
-            ×
+            <CloseIcon size={18} />
           </button>
         </div>
 
@@ -186,7 +183,7 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
                 <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#d97706', textTransform: 'uppercase' }}>
                   Balance Due
                 </div>
-                <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#d97706', marginTop: '2px' }}>
+                <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#d97706', marginTop: '2px' }}>
                   {formatCurrency(billData.balanceDue)}
                 </div>
               </div>
@@ -196,7 +193,7 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155' }}>
+                  <label htmlFor="payment-modal-amount" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155' }}>
                     Payment Amount (INR):
                   </label>
                   {billData.balanceDue > 0 && (
@@ -210,7 +207,7 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
                         padding: '2px 8px',
                         borderRadius: '4px',
                         fontSize: '0.72rem',
-                        fontWeight: 800,
+                        fontWeight: 700,
                         cursor: 'pointer',
                       }}
                     >
@@ -219,7 +216,9 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
                   )}
                 </div>
                 <input
+                  id="payment-modal-amount"
                   type="number"
+                  inputMode="decimal"
                   className="form-input"
                   placeholder="Enter amount paid"
                   value={amount}
@@ -234,10 +233,11 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  <label htmlFor="payment-modal-mode" style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
                     Payment Mode:
                   </label>
                   <select
+                    id="payment-modal-mode"
                     className="form-input"
                     value={mode}
                     onChange={(e) => setMode(e.target.value)}
@@ -251,10 +251,11 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  <label htmlFor="payment-modal-date" style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
                     Payment Date:
                   </label>
                   <input
+                    id="payment-modal-date"
                     type="date"
                     className="form-input"
                     value={date}
@@ -265,10 +266,11 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                <label htmlFor="payment-modal-notes" style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
                   Notes / Remarks (Optional):
                 </label>
                 <input
+                  id="payment-modal-notes"
                   type="text"
                   className="form-input"
                   placeholder="e.g. Received via PhonePe from buyer"
@@ -344,6 +346,6 @@ export default function PaymentModal({ billId, onClose, onSuccess }) {
           </div>
         ) : null}
       </div>
-    </div>
+    </Modal>
   );
 }

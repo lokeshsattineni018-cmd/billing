@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { encryptText } = require('../utils/crypto');
+const { CANONICAL_BANK_DETAILS } = require('../constants/bankDetails');
 
 const settingsSchema = new mongoose.Schema({
   businessName: {
@@ -24,19 +25,19 @@ const settingsSchema = new mongoose.Schema({
   },
   bankName: {
     type: String,
-    default: 'KARUR VYSYA BANK',
+    default: CANONICAL_BANK_DETAILS.bankName,
   },
   accountNo: {
     type: String,
-    default: '4805135000002964',
+    default: CANONICAL_BANK_DETAILS.accountNo,
   },
   ifsc: {
     type: String,
-    default: 'KVBL0004815',
+    default: CANONICAL_BANK_DETAILS.ifsc,
   },
   branch: {
     type: String,
-    default: 'Narasapur',
+    default: CANONICAL_BANK_DETAILS.branch,
   },
   backupEmail: {
     type: String,

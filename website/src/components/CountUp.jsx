@@ -7,6 +7,17 @@ export default function CountUp({ value = 0, isCurrency = false, duration = 750,
   const targetVal = Number(value) || 0;
 
   useEffect(() => {
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion) {
+      startVal.current = targetVal;
+      setDisplayValue(targetVal);
+      return undefined;
+    }
+
     let startTime = null;
     let animId = null;
     const initial = startVal.current;
@@ -14,7 +25,7 @@ export default function CountUp({ value = 0, isCurrency = false, duration = 750,
 
     if (diff === 0) {
       setDisplayValue(targetVal);
-      return;
+      return undefined;
     }
 
     const step = (timestamp) => {
@@ -38,8 +49,8 @@ export default function CountUp({ value = 0, isCurrency = false, duration = 750,
   }, [targetVal, duration]);
 
   if (isCurrency) {
-    return <span style={{ whiteSpace: 'nowrap' }}>{prefix}{formatCurrency(displayValue)}{suffix}</span>;
+    return <span className="tabular-num" style={{ whiteSpace: 'nowrap' }}>{prefix}{formatCurrency(displayValue)}{suffix}</span>;
   }
 
-  return <span style={{ whiteSpace: 'nowrap' }}>{prefix}{Math.round(displayValue).toLocaleString('en-IN')}{suffix}</span>;
+  return <span className="tabular-num" style={{ whiteSpace: 'nowrap' }}>{prefix}{Math.round(displayValue).toLocaleString('en-IN')}{suffix}</span>;
 }

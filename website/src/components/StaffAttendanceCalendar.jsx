@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { formatCurrency, formatDate } from '../utils/helpers';
 import { useLanguage } from '../context/LanguageContext';
 import { StaffIcon, PrintIcon, CheckIcon, CloseIcon } from './Icons';
+import Modal from './Modal';
 
 export default function StaffAttendanceCalendar({ entries = [], staffNames = [], defaultWorker = '' }) {
   const { t } = useLanguage();
@@ -160,7 +161,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
         {/* Worker Picker */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0b5394', whiteSpace: 'nowrap' }}>
-            👤 {t('selectWorker') || 'Select Worker'}:
+            {t('selectWorker') || 'Select Worker'}:
           </label>
           <select
             className="form-input"
@@ -190,7 +191,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
         </div>
 
         {/* Month Navigator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="u-flex-row">
           <button
             type="button"
             className="btn btn-secondary btn-sm"
@@ -252,7 +253,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
             <div className="staff-glance-title">
               {activeWorker ? `${activeWorker}'s Wages` : 'Monthly Wages Earned'}
             </div>
-            <div className="staff-glance-metric-lg" style={{ color: '#0b5394' }}>
+            <div className="staff-glance-metric-lg u-text-brand" >
               {formatCurrency(monthlyStats.totalEarnings)}
             </div>
           </div>
@@ -276,7 +277,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
               <span style={{ fontSize: '0.72rem', fontWeight: 600, opacity: 0.8 }}>kg</span>
             </span>
           </div>
-          <div className="staff-glance-subcol" style={{ textAlign: 'right' }}>
+          <div className="staff-glance-subcol u-text-right" >
             <span className="staff-glance-subcol-label">Pending</span>
             <span
               className="staff-glance-subcol-val"
@@ -310,9 +311,9 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
           }}
         >
           <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>
-            📅 {t('presentDays') || 'Days Present'}
+            {t('presentDays') || 'Days Present'}
           </div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', marginTop: '4px' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', marginTop: '4px' }}>
             {monthlyStats.daysPresent}{' '}
             <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>
               / {daysInMonth} days
@@ -332,9 +333,9 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
           }}
         >
           <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>
-            ⚖️ {t('totalKgProcessed') || 'Total KG Processed'}
+            {t('totalKgProcessed') || 'Total KG Processed'}
           </div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', marginTop: '4px' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', marginTop: '4px' }}>
             {monthlyStats.totalKg.toLocaleString('en-IN')}{' '}
             <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>KG</span>
           </div>
@@ -352,9 +353,9 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
           }}
         >
           <div style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>
-            💰 {t('totalWagesEarned') || 'Total Wages Earned'}
+            {t('totalWagesEarned') || 'Total Wages Earned'}
           </div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a', marginTop: '4px' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', marginTop: '4px' }}>
             {formatCurrency(monthlyStats.totalEarnings)}
           </div>
         </div>
@@ -383,7 +384,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
           <div
             style={{
               fontSize: '1.5rem',
-              fontWeight: 900,
+              fontWeight: 700,
               color: monthlyStats.unpaidAmount > 0 ? '#dc2626' : '#16a34a',
               marginTop: '4px',
             }}
@@ -470,16 +471,16 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    boxShadow: isPresent ? '0 2px 6px rgba(34, 197, 94, 0.08)' : 'none',
-                    transition: 'all 0.15s ease',
+                    boxShadow: isPresent ? '0 1px 4px rgba(22, 101, 52, 0.08)' : 'none',
+                    transition: 'background-color 150ms cubic-bezier(0.22, 1, 0.36, 1), border-color 150ms cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="u-flex-between">
                     <span
                       style={{
                         fontSize: '0.92rem',
-                        fontWeight: isPresent ? 900 : 700,
-                        color: isPresent ? '#15803d' : '#94a3b8',
+                        fontWeight: isPresent ? 700 : 600,
+                        color: isPresent ? '#166534' : '#52606d',
                       }}
                     >
                       {day}
@@ -496,7 +497,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
                           alignItems: 'center',
                           justifyContent: 'center',
                           fontSize: '0.65rem',
-                          fontWeight: 900,
+                          fontWeight: 700,
                         }}
                         title="Present"
                       >
@@ -546,41 +547,43 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
       </div>
 
       {/* Printable Wage Slip Modal */}
-      {showSlipModal && (
-        <div className="modal-backdrop" onClick={() => setShowSlipModal(false)}>
+      <Modal
+        isOpen={showSlipModal}
+        onClose={() => setShowSlipModal(false)}
+        maxWidth="640px"
+        labelledBy="wage-slip-modal-title"
+        contentStyle={{ padding: '24px' }}
+      >
+        <div>
+          {/* Modal Header */}
           <div
-            className="modal-content fade-in"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '640px', padding: '24px' }}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '16px',
+              borderBottom: '1px solid #e2e8f0',
+              paddingBottom: '12px',
+            }}
           >
-            {/* Modal Header */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '16px',
-                borderBottom: '1px solid #e2e8f0',
-                paddingBottom: '12px',
-              }}
-            >
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0b5394' }}>
-                  📑 {t('wageSlip') || 'Worker Monthly Wage Slip'}
-                </h3>
-                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                  VIJAYA DURGA AGENCIES • Labor Statement
-                </span>
-              </div>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => setShowSlipModal(false)}
-                style={{ padding: '6px' }}
-              >
-                <CloseIcon size={18} />
-              </button>
+            <div>
+              <h3 id="wage-slip-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0b5394' }}>
+                {t('wageSlip') || 'Worker Monthly Wage Slip'}
+              </h3>
+              <span style={{ fontSize: '0.78rem', color: '#52606d' }}>
+                Vijaya Durga Agencies • Labor Statement
+              </span>
             </div>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShowSlipModal(false)}
+              aria-label="Close wage slip modal"
+              style={{ padding: '6px', minWidth: '48px', minHeight: '48px' }}
+            >
+              <CloseIcon size={18} />
+            </button>
+          </div>
 
             {/* Slip Paper Content */}
             <div
@@ -594,7 +597,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
               }}
             >
               <div style={{ textAlign: 'center', borderBottom: '2px solid #0b5394', paddingBottom: '12px', marginBottom: '14px' }}>
-                <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: '#0b5394' }}>
+                <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0b5394' }}>
                   VIJAYA DURGA AGENCIES
                 </h2>
                 <div style={{ fontSize: '0.78rem', color: '#475569', marginTop: '2px' }}>
@@ -612,11 +615,11 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
                 </div>
                 <div>
                   <span style={{ color: '#64748b', fontWeight: 600 }}>Days Present: </span>
-                  <strong style={{ color: '#16a34a' }}>{monthlyStats.daysPresent} days</strong>
+                  <strong className="u-text-profit">{monthlyStats.daysPresent} days</strong>
                 </div>
                 <div>
                   <span style={{ color: '#64748b', fontWeight: 600 }}>Total Processed: </span>
-                  <strong style={{ color: '#0b5394' }}>{monthlyStats.totalKg} KG</strong>
+                  <strong className="u-text-brand">{monthlyStats.totalKg} KG</strong>
                 </div>
                 <div>
                   <span style={{ color: '#64748b', fontWeight: 600 }}>Daily Avg Output: </span>
@@ -638,12 +641,12 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
               >
                 <div>
                   <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>Total Wages Payable</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0b5394' }}>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0b5394' }}>
                     {formatCurrency(monthlyStats.totalEarnings)}
                   </div>
                 </div>
 
-                <div style={{ textAlign: 'right' }}>
+                <div className="u-text-right">
                   <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>Payment Status</div>
                   <div
                     style={{
@@ -688,8 +691,7 @@ export default function StaffAttendanceCalendar({ entries = [], staffNames = [],
               </button>
             </div>
           </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

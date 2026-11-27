@@ -2,14 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { billsAPI, settingsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { formatCurrency, formatDateTime, numberToWords, useToast, Toast, shareInvoicePDFOnWhatsApp } from '../utils/helpers';
-import { PrintIcon, DownloadIcon, WhatsAppIcon, PlusIcon, ArrowLeftIcon, ShareIcon } from '../components/Icons';
+import { formatCurrency, formatDateTime, useToast, Toast, shareInvoicePDFOnWhatsApp } from '../utils/helpers';
+import { PrintIcon, DownloadIcon, WhatsAppIcon, PlusIcon, ArrowLeftIcon, ShareIcon, EditIcon, TrashIcon } from '../components/Icons';
 import ReminderModal from '../components/ReminderModal';
 import PaymentModal from '../components/PaymentModal';
 import ShareModal from '../components/ShareModal';
-import ganeshaImg from '../assets/ganesha.jpg';
-import durgaImg from '../assets/durga.jpg';
-import ramDarbarImg from '../assets/ram_darbar.jpg';
+import OfficialInvoiceSheet from '../components/OfficialInvoiceSheet';
+import { CANONICAL_BANK_DETAILS } from '../constants/bankDetails';
 import { getOfflineBill, saveOfflineBill, getMasterCache, invalidateBillCaches } from '../utils/offlineDb';
 import { flushSyncQueue } from '../services/syncManager';
 import { useLanguage } from '../context/LanguageContext';
@@ -25,6 +24,7 @@ export default function BillDetail() {
   const [bill, setBill] = useState(null);
   const [businessSettings, setBusinessSettings] = useState({ businessName: 'VIJAYA DURGA SEA FOODS' });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null); // { type: 'not_found' | 'network', message }
   const [sharing, setSharing] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
@@ -100,6 +100,7 @@ export default function BillDetail() {
   };
 
   const loadBill = async () => {
+    setLoadError(null);
     try {
       if (id && id.startsWith('offline_')) {
         const offlineData = await getOfflineBill(id);
@@ -127,6 +128,17 @@ export default function BillDetail() {
           return;
         }
       } catch (e) {}
+      if (isMountedRef.current) {
+        const status = error?.response?.status;
+        if (status === 404) {
+          setLoadError({ type: 'not_found', message: 'This invoice could not be found or was deleted.' });
+        } else {
+          setLoadError({
+            type: 'network',
+            message: error?.response?.data?.message || 'Unable to reach the server right now. Check your connection and retry.',
+          });
+        }
+      }
       if (import.meta.env.DEV) { console.error('Failed to load invoice:', error); }
     } finally {
       if (isMountedRef.current) {
@@ -139,7 +151,7 @@ export default function BillDetail() {
     showToast('Syncing offline invoice to MongoDB Atlas cloud...', 'info');
     const result = await flushSyncQueue();
     if (result.synced > 0) {
-      showToast('Successfully synced to MongoDB Atlas!', 'success');
+      showToast('Successfully synced to MongoDB Atlas', 'success');
       loadBill();
     } else {
       showToast('Could not connect to MongoDB Atlas. Retrying when signal strengthens.', 'error');
@@ -180,7 +192,7 @@ export default function BillDetail() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      showToast('PDF downloaded successfully!', 'success');
+      showToast('PDF downloaded successfully', 'success');
     } catch (error) {
       if (import.meta.env.DEV) { console.error('PDF error:', error); }
       showToast('Failed to download PDF', 'error');
@@ -213,7 +225,7 @@ export default function BillDetail() {
       const response = await billsAPI.updatePaymentStatus(id, newStatus);
       setBill(response.data);
       invalidateBillCaches('payment').catch(() => {});
-      showToast(`Invoice #${bill.billNo} marked as ${newStatus}!`);
+      showToast(`Invoice #${bill.billNo} marked as ${newStatus}`);
     } catch (error) {
       if (import.meta.env.DEV) { console.error('Failed to update status:', error); }
       showToast(error.response?.data?.message || 'Failed to update status', 'error');
@@ -270,13 +282,33 @@ export default function BillDetail() {
   if (loading) return <div className="spinner"></div>;
 
   if (!bill) {
+    const isNetworkError = loadError?.type === 'network';
     return (
       <div className="page-container">
-        <div className="empty-state">
-          <p>Invoice not found</p>
-          <button className="btn btn-primary" onClick={() => navigate('/bills')}>
-            Back to Invoices
-          </button>
+        <div className="card" style={{ maxWidth: '480px', margin: '32px auto', textAlign: 'center', padding: '32px 24px' }}>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#102a43', margin: '0 0 8px 0' }}>
+            {isNetworkError ? 'Could not load invoice' : 'Invoice not found'}
+          </h1>
+          <p style={{ color: '#52606d', fontSize: '0.9rem', margin: '0 0 20px 0' }}>
+            {loadError?.message || 'This invoice does not exist or may have been moved to the Recycle Bin.'}
+          </p>
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {isNetworkError && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  setLoading(true);
+                  loadBill();
+                }}
+              >
+                Retry
+              </button>
+            )}
+            <button type="button" className="btn btn-secondary" onClick={() => navigate('/bills')}>
+              Back to Invoices
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -293,25 +325,9 @@ export default function BillDetail() {
     amount: bill.total,
   }];
 
-  const billDate = new Date(bill.date);
-  const dd = String(billDate.getDate()).padStart(2, '0');
-  const mm = String(billDate.getMonth() + 1).padStart(2, '0');
-  const yyyy = billDate.getFullYear();
-  const formattedDate = `${dd}-${mm}-${yyyy}`;
-  const finalAmount = bill.grandTotal || bill.total || 0;
-  const amountInWordsText = numberToWords(finalAmount);
-
   // Check if invoice is from today (for same-day edit rule)
   const isSameDay = new Date(bill.createdAt || bill.date).toDateString() === new Date().toDateString();
   const canEditBill = !bill.isVoided && (isSameDay || user?.role === 'admin' || user?.role === 'owner');
-
-  // Separate Prawn items from Ice item (Ice is not added to prawn total quantity)
-  const prawnItems = itemsList.filter((it) => it.count !== 'Ice' && it.particulars !== 'Ice');
-  const iceItem = itemsList.find((it) => it.count === 'Ice' || it.particulars === 'Ice');
-  const prawnTotalQty = prawnItems.reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
-  const prawnSubtotal = prawnItems.reduce((sum, it) => sum + (Number(it.amount || it.quantity * it.rate) || 0), 0);
-  // If only 1 prawn item, give 2-3 box gap before total quantity
-  const gapRowsCount = prawnItems.length >= 4 ? 0 : (iceItem ? Math.max(0, 3 - prawnItems.length) : Math.max(1, 4 - prawnItems.length));
 
   return (
     <div className="page-container fade-in">
@@ -320,18 +336,18 @@ export default function BillDetail() {
       {/* Screen Header (Hidden during Print) */}
       <div className="bill-detail-header no-print">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>
-              Invoice <span style={{ color: bill.isVoided ? '#dc2626' : '#0b5394' }}>#{bill.billNo}</span>
-            </h2>
+          <div className="u-flex-row">
+            <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
+              Invoice <span className="tabular-num" style={{ color: bill.isVoided ? '#b42318' : '#0b5394' }}>#{bill.billNo}</span>
+            </h1>
             {bill.isVoided && (
-              <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontWeight: 800, fontSize: '0.85rem' }}>
-                ⛔ VOIDED / CANCELLED
+              <span className="badge" style={{ background: '#fee2e2', color: '#b42318', fontWeight: 700, fontSize: '0.85rem' }}>
+                VOIDED / CANCELLED
               </span>
             )}
             {bill.isOffline && (
-              <span className="badge" style={{ background: '#fef3c7', color: '#92400e', fontWeight: 800, fontSize: '0.82rem', border: '1px solid #fcd34d' }}>
-                ⚡ SHED MODE VOUCHER
+              <span className="badge" style={{ background: '#fef3c7', color: '#92400e', fontWeight: 700, fontSize: '0.82rem', border: '1px solid #fcd34d' }}>
+                SHED MODE VOUCHER
               </span>
             )}
           </div>
@@ -348,7 +364,7 @@ export default function BillDetail() {
             onClick={handlePrint}
             title="Direct Print (Ctrl + P)"
           >
-            <PrintIcon size={18} color="#0b5394" /> Print Invoice
+            <PrintIcon size={18} color="#0b5394" /> {t('printInvoice')}
           </button>
 
           {!bill.isVoided && (
@@ -358,7 +374,7 @@ export default function BillDetail() {
               onClick={handleShareWhatsApp}
               disabled={sharing}
             >
-              <WhatsAppIcon size={18} color="#ffffff" /> WhatsApp
+              <WhatsAppIcon size={18} color="#ffffff" /> {t('shareWhatsApp')}
             </button>
           )}
 
@@ -381,7 +397,7 @@ export default function BillDetail() {
               style={{ padding: '10px 14px', border: '1px solid #cbd5e1', fontWeight: 600 }}
               onClick={() => navigate('/new-bill', { state: { editBill: bill } })}
             >
-              Edit Bill
+              {t('editBill')}
             </button>
           )}
 
@@ -396,7 +412,7 @@ export default function BillDetail() {
           )}
 
           <button className="btn btn-ghost btn-sm" onClick={() => navigate('/bills')}>
-            <ArrowLeftIcon size={16} /> Back
+            <ArrowLeftIcon size={16} /> {t('back')}
           </button>
         </div>
 
@@ -438,20 +454,22 @@ export default function BillDetail() {
             <div style={{ display: 'flex', gap: '8px' }}>
               {canEditBill && (
                 <button
+                  type="button"
                   className="btn btn-secondary btn-sm"
-                  style={{ flex: 1, fontWeight: 700, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                  style={{ flex: 1, fontWeight: 600, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                   onClick={() => navigate('/new-bill', { state: { editBill: bill } })}
                 >
-                  ✏️ Edit
+                  <EditIcon size={15} /> Edit
                 </button>
               )}
               {canDeleteBill && (
                 <button
+                  type="button"
                   className="btn btn-secondary btn-sm"
-                  style={{ flex: 1, color: '#dc2626', border: '1px solid #fecaca', background: '#fff5f5', fontWeight: 700, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                  style={{ flex: 1, color: '#b42318', border: '1px solid #fecaca', background: '#fff5f5', fontWeight: 600, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                   onClick={() => setShowDeleteModal(true)}
                 >
-                  🗑️ Delete
+                  <TrashIcon size={15} color="#b42318" /> Delete
                 </button>
               )}
             </div>
@@ -505,19 +523,19 @@ export default function BillDetail() {
                 boxShadow: '0 2px 6px rgba(217, 119, 6, 0.3)',
               }}
             >
-              🔄 Sync to Atlas Cloud Now
+              Sync to Atlas Cloud Now
             </button>
           )}
         </div>
       )}
 
-      {/* Payment Settlement Card (if not voided) */}
+      {/* Payment Summary & Quick Settlement Bar (Single Consolidated Summary) */}
       {!bill.isVoided && (
         <div
           className="no-print"
           style={{
             background: '#ffffff',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border-color)',
             borderRadius: '12px',
             padding: '16px 20px',
             marginBottom: '20px',
@@ -526,33 +544,33 @@ export default function BillDetail() {
             alignItems: 'center',
             flexWrap: 'wrap',
             gap: '16px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+            boxShadow: 'var(--shadow-sm)',
           }}
         >
-          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#52606d' }}>
                 Invoice Total
               </div>
-              <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
+              <div className="tabular-num" style={{ fontSize: '1.15rem', fontWeight: 700, color: '#102a43' }}>
                 {formatCurrency(bill.grandTotal || bill.total)}
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#52606d' }}>
                 Paid Amount
               </div>
-              <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#16a34a' }}>
+              <div className="tabular-num" style={{ fontSize: '1.15rem', fontWeight: 700, color: '#166534' }}>
                 {formatCurrency(bill.paidAmount || (bill.paymentStatus === 'Paid' ? (bill.grandTotal || bill.total) : 0))}
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#d97706', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#92400e' }}>
                 Balance Due
               </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#d97706' }}>
+              <div className="tabular-num" style={{ fontSize: '1.2rem', fontWeight: 700, color: '#92400e' }}>
                 {formatCurrency(Math.max(0, (bill.grandTotal || bill.total) - (bill.paidAmount || (bill.paymentStatus === 'Paid' ? (bill.grandTotal || bill.total) : 0))))}
               </div>
             </div>
@@ -566,21 +584,39 @@ export default function BillDetail() {
                     ? 'badge-blue'
                     : 'badge-amber'
                 }`}
-                style={{ fontSize: '0.8rem', fontWeight: 800, padding: '4px 10px' }}
+                style={{ fontSize: '0.8rem', fontWeight: 600, padding: '4px 10px' }}
               >
-                {bill.paymentStatus}
+                {bill.paymentStatus || 'Pending'}
               </span>
             </div>
           </div>
 
-          {canUpdateStatus && bill.paymentStatus !== 'Paid' && (
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={() => setShowPaymentModal(true)}
-              style={{ background: '#16a34a', color: '#ffffff', fontWeight: 800, padding: '8px 16px' }}
-            >
-              + Record Payment
-            </button>
+          {canUpdateStatus && (
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              {bill.paymentStatus !== 'Paid' && (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setShowPaymentModal(true)}
+                  style={{ background: '#166534', color: '#ffffff', fontWeight: 600, padding: '8px 16px' }}
+                >
+                  + Record Payment
+                </button>
+              )}
+              <button
+                type="button"
+                className={`btn btn-sm ${bill.paymentStatus === 'Paid' ? 'btn-secondary' : 'btn-primary'}`}
+                style={bill.paymentStatus !== 'Paid' ? { background: '#0b5394', color: '#ffffff' } : {}}
+                onClick={() => handleUpdatePaymentStatus(bill.paymentStatus === 'Paid' ? 'Pending' : 'Paid')}
+                disabled={updatingStatus}
+              >
+                {updatingStatus
+                  ? 'Updating...'
+                  : bill.paymentStatus === 'Paid'
+                  ? 'Mark as Pending'
+                  : 'Mark as Paid'}
+              </button>
+            </div>
           )}
         </div>
       )}
@@ -609,13 +645,13 @@ export default function BillDetail() {
       {/* Screen Invoice Details Card (Hidden during Print) */}
       <div className="card no-print" style={{ marginBottom: '24px' }}>
         <div className="card-header">
-          <h3 className="card-title">Invoice Details</h3>
+          <h3 className="card-title">{t('invoiceDetails')}</h3>
           <span className={`badge ${bill.isVoided ? 'badge-amber' : bill.paymentStatus === 'Paid' ? 'badge-green' : 'badge-amber'}`} style={{ fontSize: '0.82rem', padding: '5px 12px' }}>
             {bill.isVoided ? 'VOIDED' : `Status: ${bill.paymentStatus || 'Pending'}`}
           </span>
         </div>
 
-        <div className="detail-grid" style={{ marginBottom: '20px' }}>
+        <div className="detail-grid u-mb-20" >
           <div className="detail-item">
             <span className="detail-label">Invoice Number</span>
             <span className="detail-value">#{bill.billNo}</span>
@@ -681,12 +717,12 @@ export default function BillDetail() {
               {itemsList.map((item, index) => (
                 <tr key={index}>
                   <td style={{ textAlign: 'center', fontWeight: 600 }}>{item.sno || index + 1}</td>
-                  <td style={{ fontWeight: 600 }}>{item.particulars}</td>
+                  <td className="u-fw-semibold">{item.particulars}</td>
                   <td style={{ textAlign: 'center', fontWeight: 600 }}>{item.count ? String(item.count) : (item.particulars === 'Ice' ? 'Ice' : '—')}</td>
-                  <td className="text-right" style={{ fontWeight: 600 }}>{item.quantity} kg</td>
+                  <td className="text-right u-fw-semibold" >{item.quantity} kg</td>
                   <td className="text-right">{formatCurrency(item.rate)}</td>
                   {canSeeSales && (
-                    <td className="text-right" style={{ fontWeight: 700 }}>
+                    <td className="text-right u-fw-bold" >
                       {formatCurrency(item.amount || item.quantity * item.rate)}
                     </td>
                   )}
@@ -695,434 +731,18 @@ export default function BillDetail() {
             </tbody>
           </table>
         </div>
-
-        {/* Grand Total */}
-        <div className="invoice-total-section print-keep-together">
-          <div className="invoice-total-box" style={{ background: '#f8fafc', border: '1px solid var(--border-color)', padding: '16px 20px', borderRadius: '10px' }}>
-            <div className="invoice-total-label" style={{ fontSize: '0.85rem' }}>TOTAL AMOUNT</div>
-            <div className="invoice-total-value" style={{ fontSize: '1.75rem', fontWeight: 800, color: bill.isVoided ? '#dc2626' : '#0b5394', textDecoration: bill.isVoided ? 'line-through' : 'none' }}>
-              {formatCurrency(bill.grandTotal || bill.total)}
-            </div>
-          </div>
-        </div>
-
-        {/* Payment Status Toggle (Owner/Admin) */}
-        {!bill.isVoided && canUpdateStatus && (
-          <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-              Update Payment Status:
-            </span>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                className={`btn btn-sm ${bill.paymentStatus === 'Paid' ? 'btn-primary' : 'btn-secondary'}`}
-                style={bill.paymentStatus === 'Paid' ? { background: '#16a34a', color: '#ffffff' } : {}}
-                onClick={() => handleUpdatePaymentStatus('Paid')}
-                disabled={updatingStatus || bill.paymentStatus === 'Paid'}
-              >
-                {updatingStatus && bill.paymentStatus !== 'Paid' ? 'Updating...' : 'Mark as Paid'}
-              </button>
-              <button
-                className={`btn btn-sm ${bill.paymentStatus !== 'Paid' ? 'btn-primary' : 'btn-secondary'}`}
-                style={bill.paymentStatus !== 'Paid' ? { background: '#d97706', color: '#ffffff' } : {}}
-                onClick={() => handleUpdatePaymentStatus('Pending')}
-                disabled={updatingStatus || bill.paymentStatus === 'Pending'}
-              >
-                {updatingStatus && bill.paymentStatus === 'Paid' ? 'Updating...' : 'Mark as Pending'}
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════════
-          EXACT OFFICIAL INVOICE TEMPLATE (Matches user's reference image 100%)
+          OFFICIAL INVOICE TEMPLATE (Shared with PublicInvoice)
           Visible on screen preview & during window.print()
       ══════════════════════════════════════════════════════════════════════════ */}
-      <div className="official-invoice-frame" style={{ position: 'relative' }}>
-        {/* Screen/Print VOID Watermark */}
-        {bill.isVoided && (
-          <div style={{
-            position: 'absolute',
-            top: '40%',
-            left: '10%',
-            right: '10%',
-            textAlign: 'center',
-            transform: 'rotate(-30deg)',
-            fontSize: '4.5rem',
-            fontWeight: 900,
-            color: 'rgba(220, 38, 38, 0.22)',
-            border: '6px dashed rgba(220, 38, 38, 0.3)',
-            padding: '16px 20px',
-            pointerEvents: 'none',
-            zIndex: 10,
-            letterSpacing: '4px',
-          }}>
-            VOID / CANCELLED
-          </div>
-        )}
-
-        <div style={{
-          border: '1.5px solid #0b5394',
-          background: '#ffffff',
-          color: '#000000',
-          fontFamily: 'Arial, Helvetica, sans-serif',
-          margin: '0 auto',
-          maxWidth: '800px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-          opacity: bill.isVoided ? 0.75 : 1,
-        }}>
-
-          {/* 1. TOP BAR */}
-          <div style={{
-            position: 'relative',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderBottom: '1.5px solid #0b5394',
-            padding: '4px 12px',
-            fontSize: '0.82rem',
-            fontWeight: 'bold',
-            color: '#0b5394'
-          }}>
-            <div style={{ letterSpacing: '0.5px' }}>
-              TAX INVOICE / CASH / CREDIT
-            </div>
-            <div style={{
-              position: 'absolute',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              textAlign: 'center',
-              fontSize: '0.95rem',
-              fontWeight: 900,
-              color: '#0b5394',
-              letterSpacing: '1px',
-              fontFamily: "'Noto Sans Telugu', 'Segoe UI', Arial, sans-serif"
-            }}>
-              ॥ జై శ్రీరామ్ ॥
-            </div>
-            <div>
-              Cell: {businessSettings?.phone || '9441429745'}
-            </div>
-          </div>
-
-          {/* 2. COMPANY HEADER WITH 3 DIVINE EMBLEMS (Exact Reference Style) */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottom: '1.5px solid #0b5394',
-            padding: '8px 16px'
-          }}>
-            {/* Lord Ganesha on Left */}
-            <div style={{ width: '92px', textAlign: 'left', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-              <img
-                src={ganeshaImg}
-                alt="Lord Ganesha"
-                style={{ width: '84px', height: '84px', objectFit: 'contain' }}
-              />
-            </div>
-
-            {/* Center Company Details with Centered Durga Maa Emblem */}
-            <div style={{ flex: 1, textAlign: 'center', padding: '0 8px' }}>
-              <img
-                src={durgaImg}
-                alt="Durga Maa"
-                style={{ width: '54px', height: '54px', objectFit: 'contain', margin: '0 auto 2px auto', display: 'block' }}
-              />
-              <h1 style={{
-                color: '#0b5394',
-                fontSize: '1.65rem',
-                fontWeight: 900,
-                letterSpacing: '0.8px',
-                margin: '0 0 2px 0',
-                fontFamily: 'Arial, sans-serif'
-              }}>
-                {businessSettings?.businessName || 'VIJAYA DURGA SEA FOODS'}
-              </h1>
-              <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#000000', margin: '2px 0' }}>
-                Prop: SATTINENI VENKATA DHANA LAXMI &nbsp;|&nbsp; GSTIN: {bill.companyGstin || '37KATPS1500Q1ZR'}
-              </div>
-              <div style={{ fontSize: '0.68rem', color: '#000000', lineHeight: '1.25' }}>
-                D.No. 2-41A, SATTINENI SRINIVASA TATAJI, Near Ramalayam, KOTHOTA - 534 281, Mutyalapalli, West Godavari Dist., A.P.
-              </div>
-            </div>
-
-            {/* Ram Darbar on Right */}
-            <div style={{ width: '92px', textAlign: 'right', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-              <img
-                src={ramDarbarImg}
-                alt="Ram Darbar"
-                style={{ width: '84px', height: '84px', objectFit: 'contain' }}
-              />
-            </div>
-          </div>
-
-          {/* 3. BILL NO & DATE ROW */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            borderBottom: '1.5px solid #0b5394',
-            fontSize: '0.85rem'
-          }}>
-            <div style={{ padding: '5px 10px', borderRight: '1.5px solid #0b5394', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>No.</span>
-              <span style={{ fontWeight: 900, color: '#b12704', fontSize: '1rem' }}>{bill.billNo}</span>
-            </div>
-            <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Date:</span>
-              <span style={{ fontWeight: 'bold', color: '#000000' }}>{formattedDate}</span>
-            </div>
-          </div>
-
-          {/* 4. M/S CUSTOMER NAME ROW */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            borderBottom: '1.5px solid #0b5394',
-            padding: '5px 10px',
-            gap: '10px',
-            fontSize: '0.9rem'
-          }}>
-            <span style={{ fontWeight: 'bold', color: '#0b5394' }}>M/s</span>
-            <span style={{ fontWeight: 800, color: '#000000', fontSize: '1rem' }}>{bill.companyName}</span>
-          </div>
-
-          {/* 5. GSTIN & CELL ROW */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderBottom: '1.5px solid #0b5394',
-            padding: '5px 10px',
-            fontSize: '0.82rem'
-          }}>
-            <div>
-              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>GSTIN : &nbsp;</span>
-              <span style={{ fontWeight: 'bold', color: '#000000' }}>{bill.companyGstin || ''}</span>
-            </div>
-            <div>
-              <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Cell : &nbsp;</span>
-              <span style={{ fontWeight: 'bold', color: '#000000' }}>{bill.customerPhone || '9441429745'}</span>
-            </div>
-          </div>
-
-          {/* 6. MAIN ITEMS TABLE (HEAD-ON / HEAD-LESS) */}
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
-            <thead>
-              <tr style={{ background: '#f0f5fa', color: '#0b5394', fontWeight: 'bold', textAlign: 'center' }}>
-                <th rowSpan={2} style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '5px 4px', width: '38px' }}>S.<br />No.</th>
-                <th colSpan={3} style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1px solid #0b5394', padding: '4px 4px', background: '#e8f1f8' }}>HEAD-ON / HEAD-LESS</th>
-                <th rowSpan={2} style={{ borderRight: '1.5px solid #0b5394', borderBottom: '1.5px solid #0b5394', padding: '5px 4px', width: '60px' }}>RATE<br />OF TAX</th>
-                <th rowSpan={2} style={{ padding: '5px 8px', width: '105px', textAlign: 'center', borderBottom: '1.5px solid #0b5394', verticalAlign: 'middle' }}>
-                  AMOUNT
-                </th>
-              </tr>
-              <tr style={{ background: '#f8fafc', color: '#0b5394', fontWeight: 'bold', textAlign: 'center', fontSize: '0.72rem', borderBottom: '1.5px solid #0b5394' }}>
-                <th style={{ borderRight: '1.5px solid #0b5394', padding: '3px 4px', width: '65px' }}>COUNT</th>
-                <th style={{ borderRight: '1.5px solid #0b5394', padding: '3px 4px', width: '75px' }}>QTY (kg)</th>
-                <th style={{ borderRight: '1.5px solid #0b5394', padding: '3px 4px', width: '70px' }}>RATE</th>
-              </tr>
-            </thead>
-            <tbody>
-              {prawnItems.map((it, idx) => (
-                <tr key={idx} style={{ height: '24px', borderBottom: '1px solid #c8d9e8' }}>
-                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>{it.sno || idx + 1}</td>
-                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>{it.count || ''}</td>
-                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center' }}>{it.quantity} kg</td>
-                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', paddingRight: '6px' }}>{Number(it.rate).toFixed(2)}</td>
-                  <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>{it.taxRate || ''}</td>
-                  <td style={{ textAlign: 'right', paddingRight: '8px', fontWeight: 'bold' }}>
-                    {Number(it.amount || it.quantity * it.rate).toFixed(2)}
-                  </td>
-                </tr>
-              ))}
-
-              {/* Blank rows (2-3 box gap if 1 item) */}
-              {Array.from({ length: gapRowsCount }).map((_, i) => (
-                <tr key={`empty-${i}`} style={{ height: '20px', borderBottom: '1px solid #c8d9e8' }}>
-                  <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                  <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                  <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                  <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                  <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                  <td></td>
-                </tr>
-              ))}
-
-              {/* If Ice exists: Show Total Prawn Quantity row, then Ice row below it */}
-              {iceItem && (
-                <>
-                  <tr style={{ height: '24px', background: '#f0f5fa', borderTop: '1.5px solid #0b5394', borderBottom: '1px solid #0b5394' }}>
-                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold', color: '#0b5394' }}>TOTAL</td>
-                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 800, color: '#000000' }}>
-                      {Number(prawnTotalQty.toFixed(2))} kg
-                    </td>
-                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                    <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                    <td style={{ textAlign: 'right', paddingRight: '8px', fontWeight: 800, color: '#000000' }}>
-                      {prawnSubtotal.toFixed(2)}
-                    </td>
-                  </tr>
-                  <tr style={{ height: '24px', borderBottom: '1px solid #c8d9e8' }}>
-                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}></td>
-                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>Ice</td>
-                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center' }}>{iceItem.quantity}</td>
-                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'right', paddingRight: '6px' }}>{Number(iceItem.rate).toFixed(2)}</td>
-                    <td style={{ borderRight: '1.5px solid #0b5394', textAlign: 'center', fontWeight: 'bold' }}>{iceItem.taxRate || '0'}</td>
-                    <td style={{ textAlign: 'right', paddingRight: '8px', fontWeight: 'bold' }}>
-                      {Number(iceItem.amount || iceItem.quantity * iceItem.rate).toFixed(2)}
-                    </td>
-                  </tr>
-                </>
-              )}
-            </tbody>
-            <tfoot>
-              <tr style={{
-                background: '#f0f5fa',
-                borderTop: '1.5px solid #0b5394',
-                borderBottom: '1.5px solid #0b5394',
-                height: '26px',
-                fontSize: '0.82rem'
-              }}>
-                <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                <td style={{ borderRight: '1.5px solid #0b5394' }}></td>
-                <td style={{
-                  borderRight: '1.5px solid #0b5394',
-                  textAlign: 'center',
-                  fontWeight: 800,
-                  color: '#000000',
-                  fontSize: '0.82rem'
-                }}>
-                  {iceItem ? '' : `${Number(prawnTotalQty.toFixed(2))} kg`}
-                </td>
-                <td colSpan={2} style={{
-                  borderRight: '1.5px solid #0b5394',
-                  textAlign: 'right',
-                  paddingRight: '8px',
-                  fontWeight: 'bold',
-                  color: '#0b5394'
-                }}>
-                  TOTAL
-                </td>
-                <td style={{
-                  textAlign: 'right',
-                  paddingRight: '8px',
-                  fontWeight: 900,
-                  color: '#000000'
-                }}>
-                  {Number(bill.total || finalAmount).toFixed(2)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-
-          {/* 8. TAX BREAKDOWN TABLE (Vehicle No. replacing Taxable Value) */}
-          <div className="print-keep-together" style={{ borderBottom: '1.5px solid #0b5394' }}>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1.2fr 1fr 1fr 1fr',
-              background: '#e8f1f8',
-              borderBottom: '1px solid #0b5394',
-              fontSize: '0.72rem',
-              fontWeight: 'bold',
-              color: '#0b5394',
-              textAlign: 'center'
-            }}>
-              <div style={{ borderRight: '1px solid #0b5394', padding: '3px 2px' }}>Vehicle No.</div>
-              <div style={{ borderRight: '1px solid #0b5394', padding: '3px 2px' }}>CGST Tax</div>
-              <div style={{ borderRight: '1px solid #0b5394', padding: '3px 2px' }}>SGST Tax</div>
-              <div style={{ padding: '3px 2px' }}>IGST Tax</div>
-            </div>
-
-            {/* Sub-header for Rate/Amount */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1.2fr 0.5fr 0.5fr 0.5fr 0.5fr 1fr',
-              borderBottom: '1px solid #0b5394',
-              fontSize: '0.68rem',
-              textAlign: 'center',
-              background: '#f8fafc'
-            }}>
-              <div style={{ borderRight: '1px solid #0b5394' }}></div>
-              <div style={{ borderRight: '1px solid #0b5394', color: '#0b5394', fontWeight: 'bold' }}>Rate</div>
-              <div style={{ borderRight: '1px solid #0b5394', color: '#0b5394', fontWeight: 'bold' }}>Amount</div>
-              <div style={{ borderRight: '1px solid #0b5394', color: '#0b5394', fontWeight: 'bold' }}>Rate</div>
-              <div style={{ borderRight: '1px solid #0b5394', color: '#0b5394', fontWeight: 'bold' }}>Amount</div>
-              <div style={{ color: '#0b5394', fontWeight: 'bold' }}>Amount</div>
-            </div>
-
-            {/* Tax Values with Vehicle Number in Black */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1.2fr 0.5fr 0.5fr 0.5fr 0.5fr 1fr',
-              fontSize: '0.75rem',
-              textAlign: 'center',
-              height: '20px',
-              alignItems: 'center'
-            }}>
-              <div style={{ borderRight: '1px solid #0b5394', fontWeight: 'bold', color: '#000000' }}>{bill.vehicleNo || ''}</div>
-              <div style={{ borderRight: '1px solid #0b5394', color: '#000000' }}>{bill.cgstRate || ''}</div>
-              <div style={{ borderRight: '1px solid #0b5394', color: '#000000' }}>{bill.cgstAmount ? Number(bill.cgstAmount).toFixed(2) : ''}</div>
-              <div style={{ borderRight: '1px solid #0b5394', color: '#000000' }}>{bill.sgstRate || ''}</div>
-              <div style={{ borderRight: '1px solid #0b5394', color: '#000000' }}>{bill.sgstAmount ? Number(bill.sgstAmount).toFixed(2) : ''}</div>
-              <div style={{ color: '#000000' }}>{bill.igstAmount ? Number(bill.igstAmount).toFixed(2) : ''}</div>
-            </div>
-          </div>
-
-          {/* 9. GRAND TOTAL HIGHLIGHT ROW */}
-          <div className="print-keep-together" style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 125px',
-            borderBottom: '1.5px solid #0b5394',
-            background: '#e8f1f8',
-            fontSize: '0.9rem'
-          }}>
-            <div style={{ borderRight: '1.5px solid #0b5394', padding: '5px 10px', textAlign: 'right', fontWeight: 900, color: '#0b5394' }}>
-              GRAND TOTAL
-            </div>
-            <div style={{ padding: '5px 8px', textAlign: 'right', fontWeight: 900, color: '#000000', fontSize: '0.95rem' }}>
-              {Number(finalAmount).toFixed(2)}
-            </div>
-          </div>
-
-          {/* 10. BANK PAYMENT DETAILS & SIGNATURE */}
-          <div className="print-keep-together" style={{
-            display: 'grid',
-            gridTemplateColumns: '1.4fr 1fr',
-            fontSize: '0.74rem',
-            lineHeight: '1.4'
-          }}>
-            <div style={{ borderRight: '1.5px solid #0b5394', padding: '6px 10px' }}>
-              <div style={{ fontWeight: 'bold', color: '#0b5394' }}>BANK : KARUR VYSYA BANK</div>
-              <div>A/c. NO : <strong>4805135000002964</strong></div>
-              <div>IFSC : <strong>KVBL0004815</strong></div>
-              <div>Branch : Narasapur</div>
-            </div>
-
-            <div style={{ padding: '6px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center' }}>
-              <div style={{ fontWeight: 'bold', color: '#0b5394', fontSize: '0.78rem' }}>
-                For {businessSettings?.businessName || 'VIJAYA DURGA SEA FOODS'}
-              </div>
-              <div style={{ marginTop: '24px', borderTop: '1px solid #000000', paddingTop: '2px', fontWeight: 'bold', color: '#0b5394' }}>
-                Proprietor
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Amount in Words */}
-        <div style={{
-          maxWidth: '800px',
-          margin: '6px auto 0 auto',
-          fontSize: '0.78rem',
-          color: '#000000'
-        }}>
-          <span style={{ fontWeight: 'bold', color: '#0b5394' }}>Amount in Words: &nbsp;</span>
-          <span style={{ fontWeight: 'bold' }}>{amountInWordsText}</span>
-        </div>
-      </div>
+      <OfficialInvoiceSheet
+        bill={bill}
+        businessSettings={businessSettings}
+        bankDetails={CANONICAL_BANK_DETAILS}
+        watermarkText="VOID / CANCELLED"
+      />
 
 
 

@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { billsAPI } from '../services/api';
-import { formatCurrency, useToast } from '../utils/helpers';
-import { WhatsAppIcon } from './Icons';
+import { formatCurrency, useToast, Toast, copyToClipboard } from '../utils/helpers';
+import { WhatsAppIcon, CloseIcon } from './Icons';
+import Modal from './Modal';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ReminderModal({ billId, onClose }) {
+  const { t } = useLanguage();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [customMsg, setCustomMsg] = useState('');
   const [msgMode, setMsgMode] = useState('whatsapp'); // 'whatsapp' | 'sms'
-  const { showToast } = useToast();
+  const { toast, showToast } = useToast();
 
   useEffect(() => {
     if (billId) {
@@ -59,59 +62,55 @@ export default function ReminderModal({ billId, onClose }) {
     onClose();
   };
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!customMsg) return;
-    navigator.clipboard.writeText(customMsg);
-    showToast('Reminder copied to clipboard!', 'success');
+    const ok = await copyToClipboard(customMsg);
+    if (ok) {
+      showToast('Reminder copied to clipboard', 'success');
+    } else {
+      showToast('Failed to copy reminder. Please select text manually.', 'error');
+    }
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.65)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-        padding: '16px',
-        backdropFilter: 'blur(4px)',
-      }}
-      onClick={onClose}
+    <Modal
+      isOpen={Boolean(billId)}
+      onClose={onClose}
+      maxWidth="520px"
+      labelledBy="reminder-modal-title"
+      contentStyle={{ padding: '24px', borderRadius: '14px', maxHeight: '90vh', overflowY: 'auto' }}
     >
-      <div
-        style={{
-          background: '#ffffff',
-          borderRadius: '14px',
-          padding: '24px',
-          maxWidth: '520px',
-          width: '100%',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      <div>
+        <Toast toast={toast} />
+        <div className="u-flex-between-mb">
           <div>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
-              Send Payment Reminder
+            <h3 id="reminder-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>
+              {t('sendPaymentReminderTitle')}
             </h3>
             {data && (
-              <p style={{ margin: '2px 0 0 0', fontSize: '0.84rem', color: '#64748b' }}>
+              <p style={{ margin: '2px 0 0 0', fontSize: '0.84rem', color: '#52606d' }}>
                 Invoice #{data.billNo} • {data.companyName} ({formatCurrency(data.amount)})
               </p>
             )}
           </div>
           <button
+            type="button"
             onClick={onClose}
-            style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: '#94a3b8' }}
+            aria-label="Close reminder modal"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#52606d',
+              minWidth: '48px',
+              minHeight: '48px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '8px',
+            }}
           >
-            ×
+            <CloseIcon size={18} />
           </button>
         </div>
 
@@ -148,11 +147,12 @@ export default function ReminderModal({ billId, onClose }) {
             </div>
 
             {/* Editable Message Box */}
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#64748b', marginBottom: '4px' }}>
+            <div className="u-mb-16">
+              <label htmlFor="reminder-message-preview" style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#52606d', marginBottom: '4px' }}>
                 Message Preview (Editable):
               </label>
               <textarea
+                id="reminder-message-preview"
                 className="form-input"
                 rows={9}
                 value={customMsg}
@@ -168,7 +168,7 @@ export default function ReminderModal({ billId, onClose }) {
             </div>
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <div className="u-flex-wrap-gap">
               {msgMode === 'whatsapp' ? (
                 <button
                   type="button"
@@ -208,6 +208,6 @@ export default function ReminderModal({ billId, onClose }) {
           </div>
         )}
       </div>
-    </div>
+    </Modal>
   );
 }

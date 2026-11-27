@@ -7,6 +7,7 @@ import {
 import { getPendingSyncQueue } from '../utils/offlineDb';
 import { CloseIcon, RefreshIcon, CheckIcon } from './Icons';
 import { formatDateTime } from '../utils/helpers';
+import Modal from './Modal';
 
 export default function ShedModeSyncBar() {
   const [syncState, setSyncState] = useState({
@@ -75,28 +76,26 @@ export default function ShedModeSyncBar() {
 
   return (
     <>
-      {/* Top Fixed Alert Bar */}
+      {/* Top In-Flow Alert Bar */}
       <div
+        className="shed-sync-bar no-print"
         style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 9999,
+          position: 'relative',
+          width: '100%',
+          zIndex: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '7px 16px',
           fontSize: '0.82rem',
-          fontWeight: 700,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          fontWeight: 600,
           background: !isOnline
-            ? 'linear-gradient(90deg, #b45309 0%, #d97706 100%)'
+            ? '#b45309'
             : isSyncing
-            ? 'linear-gradient(90deg, #0b5394 0%, #2563eb 100%)'
+            ? '#0b5394'
             : justSyncedCount > 0
-            ? 'linear-gradient(90deg, #15803d 0%, #16a34a 100%)'
-            : 'linear-gradient(90deg, #0369a1 0%, #0284c7 100%)',
+            ? '#166534'
+            : '#0369a1',
           color: '#ffffff',
           letterSpacing: '0.01em',
         }}
@@ -104,7 +103,7 @@ export default function ShedModeSyncBar() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {!isOnline ? (
             <>
-              <span style={{ fontSize: '1rem', animation: 'pulse 1.5s infinite' }}>⚡</span>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#fef08a', display: 'inline-block', flexShrink: 0 }} />
               <span>
                 <strong>SHED MODE (OFFLINE)</strong> &bull; Factory floor uninterrupted &bull; {pendingCounts.total} records queued
               </span>
@@ -177,86 +176,79 @@ export default function ShedModeSyncBar() {
       </div>
 
       {/* Interactive Shed Queue Modal */}
-      {showQueueModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 10000,
-            backgroundColor: 'rgba(15, 23, 42, 0.65)',
-            backdropFilter: 'blur(3px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
-          }}
-          onClick={() => setShowQueueModal(false)}
-        >
+      <Modal
+        isOpen={showQueueModal}
+        onClose={() => setShowQueueModal(false)}
+        maxWidth="560px"
+        labelledBy="shed-queue-modal-title"
+        contentStyle={{
+          padding: 0,
+          maxHeight: '85vh',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: '16px',
+        }}
+      >
+        <div>
+          {/* Modal Header */}
           <div
             style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              maxWidth: '560px',
-              width: '100%',
-              maxHeight: '85vh',
-              overflow: 'hidden',
+              padding: '18px 24px',
+              borderBottom: '1px solid #e2e8f0',
               display: 'flex',
-              flexDirection: 'column',
-              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2), 0 10px 10px -5px rgba(0,0,0,0.1)',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: '#f8fafc',
             }}
-            onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div
-              style={{
-                padding: '18px 24px',
-                borderBottom: '1px solid #e2e8f0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    background: '#fef3c7',
-                    color: '#d97706',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.2rem',
-                    fontWeight: 800,
-                  }}
-                >
-                  ⚡
-                </div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
-                    Shed Mode Outbox Queue
-                  </h3>
-                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>
-                    IndexedDB Local Storage &bull; {pendingCounts.total} pending transactions
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowQueueModal(false)}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div
                 style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: '#64748b',
-                  padding: '4px',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: '#fef3c7',
+                  color: '#d97706',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
                 }}
               >
-                <CloseIcon size={20} />
-              </button>
+                <RefreshIcon size={18} color="#d97706" />
+              </div>
+              <div>
+                <h3 id="shed-queue-modal-title" style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#0f172a' }}>
+                  Shed Mode Outbox Queue
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.78rem', color: '#52606d' }}>
+                  IndexedDB Local Storage &bull; {pendingCounts.total} pending transactions
+                </p>
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setShowQueueModal(false)}
+              aria-label="Close queue modal"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#52606d',
+                minWidth: '48px',
+                minHeight: '48px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '8px',
+              }}
+            >
+              <CloseIcon size={20} />
+            </button>
+          </div>
 
             {/* Network Status Badge */}
             <div
@@ -269,7 +261,7 @@ export default function ShedModeSyncBar() {
                 justifyContent: 'space-between',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="u-flex-row">
                 <span
                   style={{
                     width: '10px',
@@ -291,9 +283,8 @@ export default function ShedModeSyncBar() {
             {/* Queue Item List */}
             <div style={{ padding: '16px 24px', overflowY: 'auto', flex: 1, maxHeight: '380px' }}>
               {queueItems.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '36px 16px', color: '#94a3b8' }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>☁️</div>
-                  <div style={{ fontWeight: 700, color: '#475569', fontSize: '0.95rem' }}>All Shed Records Synced</div>
+                <div style={{ textAlign: 'center', padding: '36px 16px', color: '#52606d' }}>
+                  <div style={{ fontWeight: 700, color: '#334e68', fontSize: '0.95rem' }}>All Shed Records Synced</div>
                   <div style={{ fontSize: '0.8rem', marginTop: '4px' }}>
                     Zero pending items. All bills, peeling labor, and ice logs are in MongoDB Atlas.
                   </div>
@@ -388,7 +379,7 @@ export default function ShedModeSyncBar() {
             {/* Error Message */}
             {syncError && (
               <div style={{ padding: '8px 24px', background: '#fee2e2', color: '#dc2626', fontSize: '0.8rem', fontWeight: 600 }}>
-                ⚠️ {syncError}
+                {syncError}
               </div>
             )}
 
@@ -403,8 +394,8 @@ export default function ShedModeSyncBar() {
                 justifyContent: 'space-between',
               }}
             >
-              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                🔒 Data is safely stored in browser IndexedDB
+              <div style={{ fontSize: '0.75rem', color: '#52606d' }}>
+                Data is safely stored in browser IndexedDB
               </div>
 
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -439,8 +430,7 @@ export default function ShedModeSyncBar() {
               </div>
             </div>
           </div>
-        </div>
-      )}
+      </Modal>
     </>
   );
 }
