@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { requestNotificationPermission, sendBrowserNotification, getNotificationPermission } from '../utils/notifications';
 import Modal from '../components/Modal';
+import ConfirmModal from '../components/ConfirmModal';
 import {
   LogoutIcon,
   PlusIcon,
@@ -92,6 +93,7 @@ export default function Settings() {
 
   // Password Reset State
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [selectedUserForPassword, setSelectedUserForPassword] = useState(null);
   const [newPassword, setNewPassword] = useState('');
   const [showResetPassword, setShowResetPassword] = useState(false);
@@ -651,13 +653,13 @@ export default function Settings() {
             </div>
 
             <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
-              <button
+                <button
                 type="button"
                 className="btn btn-secondary"
-                style={{ width: '100%', padding: '12px', color: '#ef4444', border: '1px solid #fecaca', background: '#fff5f5', fontWeight: 700 }}
-                onClick={logout}
+                style={{ width: '100%', padding: '12px', color: '#b42318', border: '1px solid #fecaca', background: '#fff5f5', fontWeight: 700 }}
+                onClick={() => setShowSignOutModal(true)}
               >
-                <LogoutIcon size={16} color="#ef4444" /> Sign Out of Account
+                <LogoutIcon size={16} color="#b42318" /> Sign Out of Account
               </button>
             </div>
           </div>
@@ -1640,6 +1642,20 @@ export default function Settings() {
           </form>
         </div>
       </Modal>
+
+      <ConfirmModal
+        isOpen={showSignOutModal}
+        title="Sign Out of Account?"
+        message="Are you sure you want to log out? You will need to sign in again to access the billing portal."
+        confirmText="Sign Out"
+        cancelText="Stay Signed In"
+        variant="warning"
+        onConfirm={() => {
+          setShowSignOutModal(false);
+          logout(true);
+        }}
+        onCancel={() => setShowSignOutModal(false)}
+      />
     </div>
   );
 }

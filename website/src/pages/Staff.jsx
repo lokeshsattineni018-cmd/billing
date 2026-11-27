@@ -63,6 +63,7 @@ export default function Staff() {
   const [staffNames, setStaffNames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showClearDraftModal, setShowClearDraftModal] = useState(false);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -729,16 +730,19 @@ export default function Staff() {
   };
 
   const handleClearDraft = () => {
-    if (window.confirm(t('discardDraftConfirm') || 'Clear unsaved draft entries?')) {
-      localStorage.removeItem(BULK_DRAFT_KEY);
-      setBulkRows([
-        { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
-        { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
-        { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
-      ]);
-      setBulkModalOpen(false);
-      showToast('Draft entries cleared', 'info');
-    }
+    setShowClearDraftModal(true);
+  };
+
+  const confirmClearDraft = () => {
+    localStorage.removeItem(BULK_DRAFT_KEY);
+    setBulkRows([
+      { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
+      { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
+      { staffName: '', quantity: '', price: '', workType: 'Peeling / Seafood Processing', paymentStatus: 'Pending' },
+    ]);
+    setBulkModalOpen(false);
+    setShowClearDraftModal(false);
+    showToast('Draft entries cleared', 'info');
   };
 
   const handleSaveBulk = async () => {
@@ -2738,6 +2742,19 @@ export default function Staff() {
             setEntryToDelete(null);
           }
         }}
+      />
+
+      {/* Clear Bulk Draft Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showClearDraftModal}
+        title={lang === 'te' ? 'సేవ్ చేయని డ్రాఫ్ట్ క్లియర్ చేయాలా?' : 'Clear Unsaved Draft?'}
+        message={t('discardDraftConfirm') || 'Clear unsaved draft entries?'}
+        confirmText={lang === 'te' ? 'అవును, క్లియర్ చేయి' : 'Yes, Clear Draft'}
+        cancelText={lang === 'te' ? 'రద్దు చేయి' : 'Cancel'}
+        confirmType="warning"
+        warningText={lang === 'te' ? 'బల్క్ ఎంట్రీ ఫారమ్‌లోని సేవ్ చేయని వివరాలు తొలగించబడతాయి.' : 'All unsaved bulk entry rows in the draft will be cleared.'}
+        onConfirm={confirmClearDraft}
+        onClose={() => setShowClearDraftModal(false)}
       />
     </div>
   );

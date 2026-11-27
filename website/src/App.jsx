@@ -39,6 +39,26 @@ function PageLoader() {
   return <SkeletonPage />;
 }
 
+function NotFoundPage() {
+  const navigate = useNavigate();
+  return (
+    <div className="page-container fade-in">
+      <div className="card" style={{ maxWidth: '480px', margin: '40px auto', textAlign: 'center', padding: '32px 24px' }}>
+        <div className="tabular-num" style={{ fontSize: '2rem', fontWeight: 700, color: '#0b5394', marginBottom: '6px' }}>404</div>
+        <h1 style={{ fontSize: '1.3rem', fontWeight: 700, color: '#102a43', margin: '0 0 8px 0' }}>
+          Page not found
+        </h1>
+        <p style={{ color: '#52606d', fontSize: '0.9rem', margin: '0 0 20px 0' }}>
+          The page you requested does not exist or requires additional permissions.
+        </p>
+        <button type="button" className="btn btn-primary" onClick={() => navigate('/')}>
+          Go to Dashboard
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
@@ -469,7 +489,7 @@ function AppLayout() {
                 {isAdmin && <Route path="/activity-log" element={<ActivityLog />} />}
                 {isAdmin && <Route path="/recycle-bin" element={<RecycleBin />} />}
                 {isAdmin && <Route path="/settings" element={<Settings />} />}
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Suspense>
           </ErrorBoundary>

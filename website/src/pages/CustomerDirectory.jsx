@@ -781,6 +781,34 @@ export default function CustomerDirectory() {
                 />
               </div>
 
+              <div>
+                <label htmlFor="edit-customer-address" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334e68', marginBottom: '4px' }}>
+                  Address / Village:
+                </label>
+                <textarea
+                  id="edit-customer-address"
+                  className="form-input"
+                  rows={2}
+                  placeholder="Village, Mandal, District..."
+                  value={customerAddress}
+                  onChange={(e) => setCustomerAddress(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="edit-customer-notes" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334e68', marginBottom: '4px' }}>
+                  Notes:
+                </label>
+                <textarea
+                  id="edit-customer-notes"
+                  className="form-input"
+                  rows={2}
+                  placeholder="Internal notes about this buyer..."
+                  value={customerNotes}
+                  onChange={(e) => setCustomerNotes(e.target.value)}
+                />
+              </div>
+
               <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                 <button
                   type="submit"

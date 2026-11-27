@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { EyeIcon, EyeOffIcon } from '../components/Icons';
 import logoImg from '../assets/logo.png';
 
 export default function Login() {
   const { login } = useAuth();
+  const { lang, toggleLang, t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -35,27 +37,48 @@ export default function Login() {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-card fade-in">
-        <div className="login-brand" style={{ textAlign: 'center', marginBottom: '24px' }}>
+    <main className="login-page" style={{ background: '#f7f8fa' }}>
+      <div className="login-card fade-in" style={{ border: '1px solid rgba(16, 42, 67, 0.10)', boxShadow: 'var(--shadow-sm)' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+          <button
+            type="button"
+            onClick={toggleLang}
+            style={{
+              padding: '6px 12px',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              background: '#f8fafc',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+              color: '#0b5394',
+              cursor: 'pointer',
+              minHeight: '40px',
+            }}
+          >
+            {lang === 'en' ? 'తెలుగు' : 'English'}
+          </button>
+        </div>
+
+        <div className="login-brand" style={{ textAlign: 'center', marginBottom: '20px' }}>
           <img
             src={logoImg}
-            alt="VIJAYA DURGA AGENCIES Logo"
+            alt="Vijaya Durga Agencies Logo"
+            width={80}
+            height={80}
             style={{
-              width: '90px',
-              height: '90px',
+              width: '80px',
+              height: '80px',
               borderRadius: '50%',
               objectFit: 'cover',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)',
-              border: 'none',
+              border: '1px solid rgba(16, 42, 67, 0.12)',
               marginBottom: '12px',
             }}
           />
-          <h1 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#0b5394', letterSpacing: '0.5px', lineHeight: '1.2' }}>
-            VIJAYA DURGA AGENCIES
+          <h1 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#0b5394', lineHeight: '1.2', margin: 0 }}>
+            {t('companyTitle') || 'VIJAYA DURGA AGENCIES'}
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '4px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>
-            Invoice &amp; Billing Portal
+          <p style={{ color: '#52606d', fontSize: '0.84rem', marginTop: '4px', fontWeight: 500 }}>
+            {lang === 'te' ? 'ఇన్‌వాయిస్ & బిల్లింగ్ పోర్టల్' : 'Invoice & Billing Portal'}
           </p>
         </div>
 
@@ -79,14 +102,16 @@ export default function Login() {
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="login-email" className="form-label" style={{ fontWeight: 700 }}>Username or Email</label>
+            <label htmlFor="login-email" className="form-label" style={{ fontWeight: 600 }}>
+              {lang === 'te' ? 'యూజర్ నేమ్ లేదా ఇమెయిల్' : 'Username or Email'}
+            </label>
             <input
               id="login-email"
               name="username"
               type="text"
               autoComplete="username"
               className="form-input form-input-lg"
-              placeholder="Enter username or email"
+              placeholder={lang === 'te' ? 'యూజర్ నేమ్ లేదా ఇమెయిల్ నమోదు చేయండి' : 'Enter username or email'}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -95,7 +120,9 @@ export default function Login() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="login-password" className="form-label" style={{ fontWeight: 700 }}>Password</label>
+            <label htmlFor="login-password" className="form-label" style={{ fontWeight: 600 }}>
+              {lang === 'te' ? 'పాస్‌వర్డ్' : 'Password'}
+            </label>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <input
                 id="login-password"
@@ -103,7 +130,7 @@ export default function Login() {
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 className="form-input form-input-lg"
-                placeholder="Enter password"
+                placeholder={lang === 'te' ? 'పాస్‌వర్డ్ నమోదు చేయండి' : 'Enter password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 style={{ paddingRight: '52px', width: '100%' }}
@@ -130,7 +157,7 @@ export default function Login() {
                 }}
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
-                {showPassword ? <EyeOffIcon size={20} color="#0b5394" /> : <EyeIcon size={20} color="#64748b" />}
+                {showPassword ? <EyeOffIcon size={20} color="#0b5394" /> : <EyeIcon size={20} color="#52606d" />}
               </button>
             </div>
           </div>
@@ -138,13 +165,13 @@ export default function Login() {
           <button
             type="submit"
             className="btn btn-primary btn-large"
-            style={{ width: '100%', marginTop: '8px', background: '#0b5394', fontWeight: 800 }}
+            style={{ width: '100%', marginTop: '8px', background: '#0b5394', fontWeight: 600 }}
             disabled={loading}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? (lang === 'te' ? 'లాగిన్ అవుతోంది...' : 'Signing in...') : (lang === 'te' ? 'లాగిన్ అవ్వండి' : 'Sign In')}
           </button>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

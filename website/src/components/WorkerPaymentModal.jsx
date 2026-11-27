@@ -15,6 +15,7 @@ export default function WorkerPaymentModal({
   const [payDate, setPayDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [payNotes, setPayNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export default function WorkerPaymentModal({
     setPayMode(entry.paymentMode || 'Cash');
     setPayDate(entry.paymentDate ? entry.paymentDate.split('T')[0] : new Date().toISOString().split('T')[0]);
     setPayNotes(entry.notes || '');
+    setConfirmReset(false);
     setError('');
   }, [isOpen, entry]);
 
@@ -68,9 +70,6 @@ export default function WorkerPaymentModal({
   };
 
   const handleResetToPending = async () => {
-    if (!window.confirm(`Reset wage payment for ${entry.staffName} to Pending (₹0.00)?`)) {
-      return;
-    }
     setSubmitting(true);
     setError('');
     try {
@@ -79,6 +78,7 @@ export default function WorkerPaymentModal({
         status: 'Pending',
       });
       onSuccess(res.data.entry || { ...entry, amountPaid: 0, paymentStatus: 'Pending', paymentDate: null });
+      setConfirmReset(false);
       onClose();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to reset payment');
@@ -433,13 +433,40 @@ export default function WorkerPaymentModal({
           </div>
 
           {/* Footer Actions */}
+          {confirmReset && (
+            <div style={{ marginBottom: '12px', padding: '10px 12px', borderRadius: '8px', background: '#fff5f5', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#b42318' }}>
+                Reset wage payment to ₹0.00 (Pending)?
+              </span>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setConfirmReset(false)}
+                  disabled={submitting}
+                >
+                  Keep
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  style={{ background: '#b42318', color: '#ffffff', border: 'none', fontWeight: 600 }}
+                  onClick={handleResetToPending}
+                  disabled={submitting}
+                >
+                  {submitting ? 'Resetting...' : 'Confirm Reset'}
+                </button>
+              </div>
+            </div>
+          )}
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            {currentPaid > 0 && (
+            {currentPaid > 0 && !confirmReset && (
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
-                style={{ color: '#ef4444', fontWeight: 700, padding: '8px 12px' }}
-                onClick={handleResetToPending}
+                style={{ color: '#b42318', fontWeight: 600, padding: '8px 12px' }}
+                onClick={() => setConfirmReset(true)}
                 disabled={submitting}
               >
                 Reset to Pending

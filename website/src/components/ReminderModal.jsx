@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { billsAPI } from '../services/api';
-import { formatCurrency, useToast } from '../utils/helpers';
+import { formatCurrency, useToast, Toast, copyToClipboard } from '../utils/helpers';
 import { WhatsAppIcon, CloseIcon } from './Icons';
 import Modal from './Modal';
 
@@ -9,7 +9,7 @@ export default function ReminderModal({ billId, onClose }) {
   const [loading, setLoading] = useState(true);
   const [customMsg, setCustomMsg] = useState('');
   const [msgMode, setMsgMode] = useState('whatsapp'); // 'whatsapp' | 'sms'
-  const { showToast } = useToast();
+  const { toast, showToast } = useToast();
 
   useEffect(() => {
     if (billId) {
@@ -60,10 +60,14 @@ export default function ReminderModal({ billId, onClose }) {
     onClose();
   };
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!customMsg) return;
-    navigator.clipboard.writeText(customMsg);
-    showToast('Reminder copied to clipboard', 'success');
+    const ok = await copyToClipboard(customMsg);
+    if (ok) {
+      showToast('Reminder copied to clipboard', 'success');
+    } else {
+      showToast('Failed to copy reminder. Please select text manually.', 'error');
+    }
   };
 
   return (
@@ -75,6 +79,7 @@ export default function ReminderModal({ billId, onClose }) {
       contentStyle={{ padding: '24px', borderRadius: '14px', maxHeight: '90vh', overflowY: 'auto' }}
     >
       <div>
+        <Toast toast={toast} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <h3 id="reminder-modal-title" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>

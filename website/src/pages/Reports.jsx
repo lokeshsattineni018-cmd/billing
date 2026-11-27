@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { reportsAPI, billsAPI, staffAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { formatCurrency, formatDate, useToast, Toast } from '../utils/helpers';
+import { formatCurrency, formatDate, useToast, Toast, copyToClipboard } from '../utils/helpers';
 import {
   TrendingUpIcon,
   TrendingDownIcon,
@@ -291,10 +291,14 @@ export default function Reports() {
     window.open(url, '_blank');
   };
 
-  const handleCopyReminder = (customer) => {
+  const handleCopyReminder = async (customer) => {
     if (!customer?.reminderMessage) return;
-    navigator.clipboard.writeText(customer.reminderMessage);
-    showToast(`Payment reminder copied for ${customer.companyName}`, 'success');
+    const ok = await copyToClipboard(customer.reminderMessage);
+    if (ok) {
+      showToast(`Payment reminder copied for ${customer.companyName}`, 'success');
+    } else {
+      showToast('Could not copy reminder automatically', 'error');
+    }
   };
 
   const rawSummary = report?.summary || {};

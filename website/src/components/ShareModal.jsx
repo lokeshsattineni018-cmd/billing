@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DownloadIcon, WhatsAppIcon, ShareIcon, CloseIcon, MailIcon } from './Icons';
-import { formatCurrency } from '../utils/helpers';
+import { formatCurrency, copyToClipboard } from '../utils/helpers';
 import Modal from './Modal';
 
 export default function ShareModal({ bill, onClose, showToast }) {
@@ -92,11 +92,15 @@ export default function ShareModal({ bill, onClose, showToast }) {
   };
 
   // 5. Copy Link to Clipboard
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(publicUrl);
-    setCopied(true);
-    if (showToast) showToast('Invoice link copied to clipboard');
-    setTimeout(() => setCopied(false), 2500);
+  const handleCopyLink = async () => {
+    const ok = await copyToClipboard(publicUrl);
+    if (ok) {
+      setCopied(true);
+      if (showToast) showToast('Invoice link copied to clipboard');
+      setTimeout(() => setCopied(false), 2500);
+    } else if (showToast) {
+      showToast('Could not copy link automatically. Please copy from the bar below.', 'error');
+    }
   };
 
   return (

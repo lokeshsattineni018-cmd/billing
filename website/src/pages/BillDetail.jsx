@@ -23,6 +23,7 @@ export default function BillDetail() {
   const [bill, setBill] = useState(null);
   const [businessSettings, setBusinessSettings] = useState({ businessName: 'VIJAYA DURGA SEA FOODS' });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null); // { type: 'not_found' | 'network', message }
   const [sharing, setSharing] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
@@ -98,6 +99,7 @@ export default function BillDetail() {
   };
 
   const loadBill = async () => {
+    setLoadError(null);
     try {
       if (id && id.startsWith('offline_')) {
         const offlineData = await getOfflineBill(id);
@@ -125,6 +127,17 @@ export default function BillDetail() {
           return;
         }
       } catch (e) {}
+      if (isMountedRef.current) {
+        const status = error?.response?.status;
+        if (status === 404) {
+          setLoadError({ type: 'not_found', message: 'This invoice could not be found or was deleted.' });
+        } else {
+          setLoadError({
+            type: 'network',
+            message: error?.response?.data?.message || 'Unable to reach the server right now. Check your connection and retry.',
+          });
+        }
+      }
       if (import.meta.env.DEV) { console.error('Failed to load invoice:', error); }
     } finally {
       if (isMountedRef.current) {
@@ -268,13 +281,33 @@ export default function BillDetail() {
   if (loading) return <div className="spinner"></div>;
 
   if (!bill) {
+    const isNetworkError = loadError?.type === 'network';
     return (
       <div className="page-container">
-        <div className="empty-state">
-          <p>Invoice not found</p>
-          <button className="btn btn-primary" onClick={() => navigate('/bills')}>
-            Back to Invoices
-          </button>
+        <div className="card" style={{ maxWidth: '480px', margin: '32px auto', textAlign: 'center', padding: '32px 24px' }}>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#102a43', margin: '0 0 8px 0' }}>
+            {isNetworkError ? 'Could not load invoice' : 'Invoice not found'}
+          </h1>
+          <p style={{ color: '#52606d', fontSize: '0.9rem', margin: '0 0 20px 0' }}>
+            {loadError?.message || 'This invoice does not exist or may have been moved to the Recycle Bin.'}
+          </p>
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {isNetworkError && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  setLoading(true);
+                  loadBill();
+                }}
+              >
+                Retry
+              </button>
+            )}
+            <button type="button" className="btn btn-secondary" onClick={() => navigate('/bills')}>
+              Back to Invoices
+            </button>
+          </div>
         </div>
       </div>
     );

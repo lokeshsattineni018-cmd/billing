@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { PrintIcon, WhatsAppIcon, ArrowLeftIcon, DownloadIcon } from './Icons';
-import { formatDate, numberToWords } from '../utils/helpers';
+import { formatDate, numberToWords, useToast, Toast } from '../utils/helpers';
 import { staffAPI } from '../services/api';
 import Modal from './Modal';
 import ganeshaImg from '../assets/ganesha.jpg';
@@ -17,6 +17,7 @@ export default function VoucherBillModal({
   const printAreaRef = useRef(null);
   const [sharingPdf, setSharingPdf] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const { toast, showToast } = useToast();
 
   // Ctrl+P shortcut for silent printing (Escape handled by shared Modal)
   useEffect(() => {
@@ -113,7 +114,7 @@ export default function VoucherBillModal({
       if (import.meta.env.DEV) {
         console.error('PDF download error:', err);
       }
-      alert('Could not download PDF. Please try again.');
+      showToast('Could not download PDF. Please try again.', 'error');
     } finally {
       setDownloadingPdf(false);
     }
@@ -262,6 +263,7 @@ Thank you!`;
       contentStyle={{ background: '#f8fafc', borderRadius: '16px', padding: '20px 24px' }}
     >
       <div>
+        <Toast toast={toast} />
         {/* ── TOP ACTION HEADER (LIKE NORMAL BILL PAGE) ── */}
         <div
           className="bill-detail-header no-print"
